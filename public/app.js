@@ -34,7 +34,9 @@ const TRANSLATIONS = {
     add_project_title: "Add New Project",
     form_new_project_path: "New Project Folder Path",
     btn_use_default_project: "Use Default Folder",
-    btn_add_project_confirm: "Add Project"
+    btn_add_project_confirm: "Add Project",
+    mode_agent: "Agent Mode (MCP)",
+    mode_chat: "Normal Chat Mode"
   },
   ar: {
     app_title: "منصة GDA",
@@ -70,7 +72,9 @@ const TRANSLATIONS = {
     add_project_title: "إضافة مشروع جديد",
     form_new_project_path: "مسار مجلد المشروع الجديد",
     btn_use_default_project: "استخدام المجلد الافتراضي",
-    btn_add_project_confirm: "إضافة المشروع"
+    btn_add_project_confirm: "إضافة المشروع",
+    mode_agent: "وضع الوكيل الذكي (MCP)",
+    mode_chat: "وضع المحادثة العادية"
   }
 };
 
@@ -107,6 +111,7 @@ const elAgentStatusText = document.getElementById('agent-status-text');
 const elProjectExplorer = document.getElementById('project-explorer');
 const elBtnLangToggle = document.getElementById('btn-lang-toggle');
 const elBtnAddProject = document.getElementById('btn-add-project');
+const elSelectChatMode = document.getElementById('select-chat-mode');
 
 // Server status indicators
 const elServerIndicator = document.getElementById('server-indicator');
@@ -638,17 +643,22 @@ async function startBrowserAgentLoop(prompt) {
   let turn = 0;
   let running = true;
 
-  // Retrieve active MCP tools
-  const toolsRes = await fetch('/api/tools');
-  const toolsData = await toolsRes.json();
-  const openAiTools = (toolsData.tools || []).map(t => ({
-    type: 'function',
-    function: {
-      name: `${t.serverName}__${t.originalName}`,
-      description: t.description || '',
-      parameters: t.inputSchema
-    }
-  }));
+  // Retrieve active MCP tools only if NOT in normal chat mode
+  const chatMode = elSelectChatMode.value;
+  let openAiTools = [];
+
+  if (chatMode !== 'chat') {
+    const toolsRes = await fetch('/api/tools');
+    const toolsData = await toolsRes.json();
+    openAiTools = (toolsData.tools || []).map(t => ({
+      type: 'function',
+      function: {
+        name: `${t.serverName}__${t.originalName}`,
+        description: t.description || '',
+        parameters: t.inputSchema
+      }
+    }));
+  }
 
   const url = (config.provider === 'custom' ? config.customUrl : PROVIDER_URLS[config.provider]) + '/chat/completions';
 
@@ -939,6 +949,7 @@ function updateToolStatus(callId, status) {
   }
 }
 
+// Update tool result log box
 function updateToolResult(data) {
   updateToolStatus(data.callId, data.isError ? 'error' : 'success');
   const el = document.getElementById(`tool-call-${data.callId}`);

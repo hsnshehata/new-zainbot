@@ -146,11 +146,12 @@ wss.on('connection', (ws) => {
           model,
           autoApprove,
           sessionId,
+          chatMode = 'agent',
           history = []
         } = data;
 
         // Fetch active MCP tools and format them for OpenAI JSON schema
-        const mcpTools = await mcpManager.getCombinedTools();
+        const mcpTools = chatMode === 'chat' ? [] : await mcpManager.getCombinedTools();
         const openAiTools = mcpTools.map(t => ({
           type: 'function',
           function: {
