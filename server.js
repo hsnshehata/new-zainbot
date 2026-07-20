@@ -4,6 +4,7 @@ const WebSocket = require('ws');
 const path = require('path');
 const { McpManager } = require('./src/mcp_client');
 const { streamCompletion } = require('./src/providers');
+const sessionManager = require('./src/sessions');
 
 const app = express();
 const server = http.createServer(app);
@@ -11,14 +12,14 @@ const wss = new WebSocket.Server({ noServer: true });
 
 const PORT = process.env.PORT || 3000;
 
-// Initialize MCP Manager with the config file path
+// Initialize MCP Manager
 const mcpManager = new McpManager(path.join(__dirname, 'mcp_config.json'));
 mcpManager.startAll();
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API to list registered MCP servers and their active tools
+// API to list registered MCP servers and tools
 app.get('/api/tools', async (req, res) => {
   try {
     const tools = await mcpManager.getCombinedTools();
@@ -35,6 +36,51 @@ app.get('/api/tools', async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Sessions API
+app.get('/api/sessions', (req, res) => {
+  res.json({ success: true, sessions: sessionManager.listSessions() });
+});
+
+app.get('/api/sessions/:id', (req, res) => {
+  const session = sessionManager.getSession(req.params.id);
+  if (!session) {
+    return res.status(404).json({ success: false, error: 'Session not found' });
+  }
+  res.json({ success: true, session });
+});
+
+app.post('/api/sessions/:id', (req, res) => {
+  try {
+    const session = sessionManager.saveSession(req.params.id, req.body);
+    res.json({ success: true, session });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/sessions/:id', (req, res) => {
+  const deleted = sessionManager.deleteSession(req.params.id);
+  res.json({ success: true, deleted });
+});
+
+// Projects / CWD API
+app.get('/api/projects', (req, res) => {
+  res.json({
+    success: true,
+    activeCwd: sessionManager.getActiveCwd(),
+    projects: sessionManager.listRecentProjects()
+  });
+});
+
+app.post('/api/projects/switch', (req, res) => {
+  try {
+    const newCwd = sessionManager.setActiveCwd(req.body.path);
+    res.json({ success: true, activeCwd: newCwd });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
   }
 });
 
@@ -68,6 +114,29 @@ wss.on('connection', (ws) => {
         return;
       }
 
+      // Handle client-side executed tool requests
+      if (data.type === 'execute_tool') {
+        const { callId, serverName, toolName, arguments: args } = data;
+        console.log(`Executing tool request from browser: ${serverName}__${toolName}`);
+        try {
+          const response = await mcpManager.executeTool(serverName, toolName, args);
+          ws.send(JSON.stringify({
+            type: 'tool_result',
+            callId,
+            content: JSON.stringify(response),
+            isError: false
+          }));
+        } catch (execError) {
+          ws.send(JSON.stringify({
+            type: 'tool_result',
+            callId,
+            content: `Tool Execution Error: ${execError.message}`,
+            isError: true
+          }));
+        }
+        return;
+      }
+
       if (data.type === 'prompt') {
         const {
           prompt,
@@ -76,6 +145,7 @@ wss.on('connection', (ws) => {
           customUrl,
           model,
           autoApprove,
+          sessionId,
           history = []
         } = data;
 
@@ -144,7 +214,19 @@ wss.on('connection', (ws) => {
           const toolCalls = completionResult.toolCalls;
 
           if (!toolCalls || toolCalls.length === 0) {
-            // No tools to execute: agent finished this turn
+            // Auto-save session on turn end
+            if (sessionId) {
+              // Extract a short title from the prompt if it's the first message
+              const title = history.length === 0 ? (prompt.slice(0, 30) + '...') : undefined;
+              sessionManager.saveSession(sessionId, {
+                title,
+                cwd: sessionManager.getActiveCwd(),
+                provider,
+                model,
+                messages
+              });
+            }
+
             ws.send(JSON.stringify({ type: 'done', messages }));
             running = false;
             break;
@@ -209,6 +291,7 @@ wss.on('connection', (ws) => {
             if (approved) {
               ws.send(JSON.stringify({ type: 'tool_executing', callId: tc.id }));
               try {
+                // Set the active CWD context for GDA tool executions
                 const response = await mcpManager.executeTool(serverName, toolName, finalArgs);
                 outputContent = JSON.stringify(response);
               } catch (execError) {

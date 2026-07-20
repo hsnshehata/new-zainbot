@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,34 +17,44 @@
     <aside class="sidebar">
       <div class="logo-area">
         <div class="logo-glow"></div>
-        <h1>GDA Console</h1>
-        <p>Gravity Developer Agent</p>
+        <h1 data-i18n="app_title">GDA Console</h1>
+        <p data-i18n="app_subtitle">Gravity Developer Agent</p>
       </div>
 
-      <div class="sidebar-section">
-        <h3>LLM Status</h3>
+      <div class="sidebar-section" style="margin-bottom: 20px;">
+        <h3 data-i18n="llm_status">LLM Status</h3>
         <div class="status-card" id="status-card">
           <span class="indicator red" id="provider-indicator"></span>
-          <span id="provider-text">Not Configured</span>
+          <span id="provider-text" data-i18n="provider_not_configured">Not Configured</span>
         </div>
       </div>
 
-      <div class="sidebar-section">
-        <h3>Active MCP Servers</h3>
+      <button id="btn-new-session" class="btn primary" style="width: 100%; margin-bottom: 20px;" data-i18n="btn_new_session">+ New Session</button>
+
+      <!-- Nested Projects Explorer (Folders & Chats) -->
+      <div class="sidebar-section scrollable" style="flex-grow: 1; max-height: 45vh; margin-bottom: 20px;">
+        <h3 data-i18n="recent_sessions">Recent Sessions</h3>
+        <div class="project-explorer" id="project-explorer">
+          <div class="loading">Loading sessions explorer...</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section" style="margin-bottom: 20px;">
+        <h3 data-i18n="active_mcp_servers">Active MCP Servers</h3>
         <ul class="mcp-list" id="mcp-list">
           <li class="loading">Discovering servers...</li>
         </ul>
       </div>
 
-      <div class="sidebar-section scrollable">
-        <h3>Available Tools</h3>
+      <div class="sidebar-section scrollable" style="max-height: 20vh; margin-bottom: 20px;">
+        <h3 data-i18n="available_tools">Available Tools</h3>
         <ul class="tools-list" id="tools-list">
           <li class="loading">Loading tools...</li>
         </ul>
       </div>
 
       <div class="sidebar-footer">
-        <button id="btn-settings" class="btn secondary">Settings</button>
+        <button id="btn-settings" class="btn secondary" data-i18n="btn_settings">Settings</button>
       </div>
     </aside>
 
@@ -53,27 +63,37 @@
       
       <!-- Top Control Bar -->
       <header class="top-bar">
-        <div class="model-badge" id="model-badge">
-          Model: <span id="current-model">Not Set</span>
+        <div class="top-bar-left" style="display: flex; gap: 15px; align-items: center;">
+          <div class="model-badge" id="model-badge">
+            Model: <span id="current-model">Not Set</span>
+          </div>
+          <div class="project-badge" id="project-badge" style="background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: 20px; padding: 6px 16px; font-size: 14px; color: var(--color-cyan);">
+            Folder: <span id="current-project">Loading...</span>
+          </div>
+          <div class="agent-status idle" id="agent-status">
+            <span class="pulse-dot"></span>
+            <span id="agent-status-text">Idle</span>
+          </div>
         </div>
         <div class="controls">
+          <button id="btn-lang-toggle" class="btn secondary">🌐 AR / EN</button>
           <div class="switch-container">
-            <span class="label">Auto-Approve Tools</span>
+            <span class="label" data-i18n="auto_approve">Auto-Approve Tools</span>
             <label class="switch">
               <input type="checkbox" id="chk-auto-approve">
               <span class="slider round"></span>
             </label>
           </div>
-          <button id="btn-clear-chat" class="btn text-danger">Clear Console</button>
+          <button id="btn-clear-chat" class="btn text-danger" data-i18n="btn_clear">Clear Console</button>
         </div>
       </header>
 
       <!-- Chat Console Logs -->
       <section class="console-logs" id="console-logs">
-        <div class="system-message">
+        <div class="system-message" id="welcome-message-container">
           <div class="icon">🤖</div>
           <div class="content">
-            <p>Welcome to Gravity Developer Agent (GDA). Write your programming task below. GDA can read files, write code, run commands, and browse web pages using local MCP tools.</p>
+            <p data-i18n="welcome_text">Welcome to Gravity Developer Agent (GDA). Write your programming task below. GDA can read files, write code, run commands, and browse web pages using local MCP tools.</p>
           </div>
         </div>
       </section>
@@ -81,7 +101,7 @@
       <!-- Input Bar -->
       <footer class="input-panel">
         <div class="input-container">
-          <textarea id="prompt-input" placeholder="اكتب المهمة البرمجية هنا أو باللغة الإنجليزية..." dir="auto"></textarea>
+          <textarea id="prompt-input" placeholder="اكتب المهمة البرمجية هنا أو باللغة الإنجليزية..." data-i18n-placeholder="input_placeholder" dir="auto"></textarea>
           <button id="btn-send" class="btn primary">
             <svg viewBox="0 0 24 24" width="20" height="20">
               <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
@@ -96,12 +116,12 @@
   <div class="modal" id="modal-settings">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>GDA Settings</h2>
+        <h2 data-i18n="settings_title">GDA Settings</h2>
         <span class="close-modal" id="close-settings">&times;</span>
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label for="select-provider">LLM Provider</label>
+          <label for="select-provider" data-i18n="form_provider">LLM Provider</label>
           <select id="select-provider">
             <option value="tokenrouter">TokenRouter (GLM 5.2 Free)</option>
             <option value="xai">xAI (Grok)</option>
@@ -115,22 +135,27 @@
         </div>
 
         <div class="form-group" id="group-custom-url" style="display: none;">
-          <label for="input-custom-url">Custom Base URL</label>
+          <label for="input-custom-url" data-i18n="form_custom_url">Custom Base URL</label>
           <input type="text" id="input-custom-url" placeholder="https://api.example.com/v1">
         </div>
 
         <div class="form-group">
-          <label for="input-api-key">API Key</label>
+          <label for="input-api-key" data-i18n="form_api_key">API Key</label>
           <input type="password" id="input-api-key" placeholder="Enter provider API key">
         </div>
 
         <div class="form-group">
-          <label for="input-model">Model Name</label>
+          <label for="input-model" data-i18n="form_model">Model Name</label>
           <input type="text" id="input-model" placeholder="Default model will be used if empty">
+        </div>
+
+        <div class="form-group">
+          <label for="input-project-path" data-i18n="form_project">Workspace Project Path</label>
+          <input type="text" id="input-project-path" placeholder="d:\VS PROJECTS\agy-with-grok">
         </div>
       </div>
       <div class="modal-footer">
-        <button id="btn-save-settings" class="btn primary">Save Changes</button>
+        <button id="btn-save-settings" class="btn primary" data-i18n="btn_save">Save Changes</button>
       </div>
     </div>
   </div>
@@ -164,7 +189,7 @@
 
   <!-- Markdown Parser Script -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <!-- GDA Frontend App Script -->
+  <!-- GDA App Logic Script -->
   <script src="app.js"></script>
 </body>
 </html>

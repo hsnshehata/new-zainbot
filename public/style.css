@@ -159,6 +159,7 @@ body {
   color: var(--color-text-muted);
   text-align: center;
   font-style: italic;
+  font-size: 13px;
 }
 
 .sidebar-footer {
@@ -668,4 +669,130 @@ input:checked + .slider:before {
 @keyframes modalSlide {
   from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
+}
+
+/* Agent Status Indicator */
+.agent-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-glass);
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--color-text-muted);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+.agent-status.thinking .pulse-dot {
+  background: var(--color-cyan);
+  box-shadow: 0 0 10px var(--color-cyan);
+  animation: pulse 1.2s infinite alternate;
+}
+.agent-status.executing .pulse-dot {
+  background: var(--color-amber);
+  box-shadow: 0 0 10px var(--color-amber);
+  animation: pulse 0.8s infinite alternate;
+}
+.agent-status.idle .pulse-dot {
+  background: var(--color-text-muted);
+  box-shadow: none;
+  animation: none;
+}
+@keyframes pulse {
+  from { transform: scale(0.8); opacity: 0.5; }
+  to { transform: scale(1.2); opacity: 1; }
+}
+
+/* Project Explorer (Sleek Sidebar folder explorer) */
+.project-explorer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.project-folder {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.project-folder-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-glass);
+  transition: all 0.2s ease;
+}
+
+.project-folder-header:hover, .project-folder.active .project-folder-header {
+  border-color: var(--color-cyan);
+  background: rgba(0, 229, 255, 0.05);
+}
+
+.project-folder-contents {
+  list-style: none;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-left: 1px dashed rgba(255, 255, 255, 0.05);
+  margin-left: 18px;
+  margin-top: 4px;
+}
+
+.project-folder-contents li {
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 6px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.project-folder-contents li:hover, .project-folder-contents li.active {
+  color: #fff;
+  background: rgba(138, 43, 226, 0.1);
+}
+
+.project-folder-contents li .chat-time {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-left: 8px;
+}
+
+.project-folder-contents li .delete-session {
+  opacity: 0;
+  color: var(--color-red);
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.2s ease;
+  margin-left: 8px;
+}
+
+.project-folder-contents li:hover .delete-session {
+  opacity: 1;
+}
+
+.no-sessions-text {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--color-text-muted);
+  padding: 6px 12px;
 }
