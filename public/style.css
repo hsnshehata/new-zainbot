@@ -656,6 +656,8 @@ input:checked + .slider:before {
   padding: 15px;
   border-radius: 8px;
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: 400px;
   margin: 15px 0;
   border: 1px solid var(--border-glass);
 }
