@@ -283,7 +283,7 @@ input:checked + .slider:before {
 .system-message, .message {
   display: flex;
   gap: 15px;
-  max-width: 85%;
+  max-width: 750px;
   animation: fadeIn 0.3s ease;
   min-width: 0;
 }
