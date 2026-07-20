@@ -320,17 +320,6 @@ async function fetchExplorer() {
     const projData = await projRes.json();
     
     const sessRes = await fetch('/api/sessions');
-    const sessData = await res.json(); // Fix potential typo sessRes
-  } catch (err) {
-    // Try to safely fetch and fall back if needed
-  }
-  
-  // Fully safe fetch wrapper
-  try {
-    const projRes = await fetch('/api/projects');
-    const projData = await projRes.json();
-    
-    const sessRes = await fetch('/api/sessions');
     const sessData = await sessRes.json();
 
     if (projData.success && sessData.success) {
@@ -534,11 +523,13 @@ function handleServerMessage(data) {
       finalizeAgentMessage();
       setAgentStatus('idle', trans.idle);
       toggleSendControls(false);
+      saveCurrentSession();
       break;
     case 'error':
       appendSystemError(data.text);
       setAgentStatus('idle', trans.idle);
       toggleSendControls(false);
+      saveCurrentSession();
       break;
   }
 }
@@ -551,6 +542,30 @@ function toggleSendControls(isRunning) {
   } else {
     elBtnSend.style.display = 'inline-flex';
     elBtnStop.style.display = 'none';
+  }
+}
+
+// Auto-persistence database saver
+async function saveCurrentSession() {
+  if (!currentSessionId || currentChatHistory.length === 0) return;
+  try {
+    const firstUserMsg = currentChatHistory.find(m => m.role === 'user');
+    const title = firstUserMsg ? (firstUserMsg.content.slice(0, 30) + '...') : 'New Session';
+
+    await fetch(`/api/sessions/${currentSessionId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: title,
+        cwd: activeCwd,
+        provider: config.provider,
+        model: config.model,
+        messages: currentChatHistory
+      })
+    });
+    fetchExplorer();
+  } catch (e) {
+    console.error('Auto-save failed:', e);
   }
 }
 
@@ -593,6 +608,9 @@ async function startBrowserAgentLoop(prompt) {
   // Display user bubble
   appendMessage('user', prompt);
   currentChatHistory.push({ role: 'user', content: prompt });
+  
+  // Persist user prompt immediately
+  saveCurrentSession();
 
   const maxTurns = 12;
   let turn = 0;
@@ -615,6 +633,7 @@ async function startBrowserAgentLoop(prompt) {
   while (running && turn < maxTurns) {
     if (abortAgentLoop) {
       appendSystemWarning(currentLang === 'ar' ? '⏹️ تم إيقاف التشغيل بواسطة المستخدم.' : '⏹️ Execution stopped by user.');
+      saveCurrentSession();
       break;
     }
 
@@ -701,34 +720,23 @@ async function startBrowserAgentLoop(prompt) {
 
       if (abortAgentLoop) {
         appendSystemWarning(currentLang === 'ar' ? '⏹️ تم إيقاف التشغيل بواسطة المستخدم.' : '⏹️ Execution stopped by user.');
+        saveCurrentSession();
         break;
       }
 
       // Add assistant response to history
       if (accumulatedText) {
         currentChatHistory.push({ role: 'assistant', content: accumulatedText });
+        saveCurrentSession();
       }
 
       const finalToolCalls = accumulatedToolCalls.filter(Boolean);
 
       if (finalToolCalls.length === 0) {
-        // Save session on finish
-        await fetch(`/api/sessions/${currentSessionId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: currentChatHistory.length <= 2 ? (prompt.slice(0, 30) + '...') : undefined,
-            cwd: activeCwd,
-            provider: config.provider,
-            model: config.model,
-            messages: currentChatHistory
-          })
-        });
-
         finalizeAgentMessage();
         setAgentStatus('idle', trans.idle);
-        fetchExplorer();
         toggleSendControls(false);
+        saveCurrentSession();
         running = false;
         break;
       }
@@ -739,6 +747,7 @@ async function startBrowserAgentLoop(prompt) {
         content: accumulatedText || null,
         tool_calls: finalToolCalls
       });
+      saveCurrentSession();
 
       for (const tc of finalToolCalls) {
         if (abortAgentLoop) break;
@@ -815,6 +824,9 @@ async function startBrowserAgentLoop(prompt) {
           name: fullFunctionName,
           content: outputContent
         });
+        
+        // Persist tool outcome immediately
+        saveCurrentSession();
       }
 
       setAgentStatus('thinking', trans.thinking);
@@ -823,6 +835,7 @@ async function startBrowserAgentLoop(prompt) {
       appendSystemError(err.message);
       setAgentStatus('idle', trans.idle);
       toggleSendControls(false);
+      saveCurrentSession();
       break;
     }
   }
@@ -873,6 +886,7 @@ function finalizeAgentMessage() {
   currentAgentMessageElement = null;
 }
 
+// Render tool calling banner
 function renderToolCall(data) {
   const isAr = /[\u0600-\u06FF]/.test(elPromptInput.value);
   const prefix = isAr ? 'الوكيل يستدعي أداة:' : 'Agent is calling tool:';
@@ -1040,20 +1054,23 @@ connectWebSocket();
 fetchTools();
 createNewSession();
 
-// Get active workspace project path from backend
-fetch('/api/projects')
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
-      activeCwd = data.activeCwd;
-      elCurrentProject.innerText = activeCwd.split(/[\\/]/).pop() || activeCwd;
-      if (!config.projectPath) {
+// Startup workspace sync
+if (config.projectPath) {
+  switchProjectFolder(config.projectPath);
+} else {
+  // If no path saved, get default from server
+  fetch('/api/projects')
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        activeCwd = data.activeCwd;
+        elCurrentProject.innerText = activeCwd.split(/[\\/]/).pop() || activeCwd;
         config.projectPath = activeCwd;
         elInputProjectPath.value = activeCwd;
         localStorage.setItem('gda_config', JSON.stringify(config));
+        fetchExplorer();
       }
-      fetchExplorer();
-    }
-  });
+    });
+}
 
 setInterval(fetchTools, 15000);
