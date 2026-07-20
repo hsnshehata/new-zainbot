@@ -30,7 +30,11 @@ const TRANSLATIONS = {
     executing: "Running tool...",
     server_connected: "Server: Connected",
     server_offline: "Server: Offline",
-    server_reconnecting: "Server: Connecting..."
+    server_reconnecting: "Server: Connecting...",
+    add_project_title: "Add New Project",
+    form_new_project_path: "New Project Folder Path",
+    btn_use_default_project: "Use Default Folder",
+    btn_add_project_confirm: "Add Project"
   },
   ar: {
     app_title: "منصة GDA",
@@ -62,7 +66,11 @@ const TRANSLATIONS = {
     executing: "جاري تشغيل الأداة...",
     server_connected: "الخادم: متصل",
     server_offline: "الخادم: غير متصل",
-    server_reconnecting: "الخادم: جاري الاتصال..."
+    server_reconnecting: "الخادم: جاري الاتصال...",
+    add_project_title: "إضافة مشروع جديد",
+    form_new_project_path: "مسار مجلد المشروع الجديد",
+    btn_use_default_project: "استخدام المجلد الافتراضي",
+    btn_add_project_confirm: "إضافة المشروع"
   }
 };
 
@@ -75,6 +83,7 @@ let pendingApprovalResolver = null;
 let currentAgentMessageElement = null;
 let currentSessionId = null;
 let activeCwd = '';
+let defaultServerCwd = ''; // Save the default backend folder on startup
 let abortAgentLoop = false;
 const pendingToolResolvers = new Map();
 
@@ -97,12 +106,13 @@ const elAgentStatus = document.getElementById('agent-status');
 const elAgentStatusText = document.getElementById('agent-status-text');
 const elProjectExplorer = document.getElementById('project-explorer');
 const elBtnLangToggle = document.getElementById('btn-lang-toggle');
+const elBtnAddProject = document.getElementById('btn-add-project');
 
 // Server status indicators
 const elServerIndicator = document.getElementById('server-indicator');
 const elServerStatusText = document.getElementById('server-status-text');
 
-// Modal Elements
+// Modal Settings Elements
 const elModalSettings = document.getElementById('modal-settings');
 const elBtnSaveSettings = document.getElementById('btn-save-settings');
 const elCloseSettings = document.getElementById('close-settings');
@@ -112,6 +122,13 @@ const elInputCustomUrl = document.getElementById('input-custom-url');
 const elInputApiKey = document.getElementById('input-api-key');
 const elInputModel = document.getElementById('input-model');
 const elInputProjectPath = document.getElementById('input-project-path');
+
+// Add Project Modal Elements
+const elModalAddProject = document.getElementById('modal-add-project');
+const elCloseAddProject = document.getElementById('close-add-project');
+const elInputNewProjectPath = document.getElementById('input-new-project-path');
+const elBtnUseDefaultProject = document.getElementById('btn-use-default-project');
+const elBtnSubmitNewProject = document.getElementById('btn-submit-new-project');
 
 // Approval Modal Elements
 const elModalApproval = document.getElementById('modal-approval');
@@ -329,6 +346,11 @@ async function fetchExplorer() {
       const projects = projData.projects;
       const sessions = sessData.sessions;
       const trans = TRANSLATIONS[currentLang];
+
+      // Save default server CWD from the startup response if not populated yet
+      if (!defaultServerCwd && projects.length > 0) {
+        defaultServerCwd = projects[projects.length - 1]; // usually the very first initial root
+      }
 
       // Group sessions by CWD
       const sessionsByCwd = {};
@@ -1011,6 +1033,30 @@ elBtnStop.addEventListener('click', () => {
   setAgentStatus('idle', TRANSLATIONS[currentLang].idle);
 });
 
+// Add Project Dialog actions
+elBtnAddProject.addEventListener('click', () => {
+  elInputNewProjectPath.value = '';
+  elModalAddProject.classList.add('active');
+});
+
+elCloseAddProject.addEventListener('click', () => {
+  elModalAddProject.classList.remove('active');
+});
+
+elBtnUseDefaultProject.addEventListener('click', () => {
+  elInputNewProjectPath.value = defaultServerCwd || activeCwd;
+});
+
+elBtnSubmitNewProject.addEventListener('click', () => {
+  const path = elInputNewProjectPath.value.trim();
+  if (path) {
+    switchProjectFolder(path);
+  } else {
+    switchProjectFolder(defaultServerCwd || activeCwd);
+  }
+  elModalAddProject.classList.remove('active');
+});
+
 function sendPrompt() {
   const prompt = elPromptInput.value.trim();
   if (!prompt) return;
@@ -1064,6 +1110,7 @@ if (config.projectPath) {
     .then(data => {
       if (data.success) {
         activeCwd = data.activeCwd;
+        defaultServerCwd = data.activeCwd;
         elCurrentProject.innerText = activeCwd.split(/[\\/]/).pop() || activeCwd;
         config.projectPath = activeCwd;
         elInputProjectPath.value = activeCwd;

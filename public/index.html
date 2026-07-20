@@ -33,7 +33,10 @@
 
       <!-- Nested Projects Explorer (Folders & Chats) -->
       <div class="sidebar-section scrollable" style="flex-grow: 1; max-height: 45vh; margin-bottom: 20px;">
-        <h3 data-i18n="recent_sessions">Recent Sessions</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 data-i18n="recent_sessions">Recent Sessions</h3>
+          <button id="btn-add-project" class="btn secondary" style="padding: 4px 8px; font-size: 11px;">+ Project</button>
+        </div>
         <div class="project-explorer" id="project-explorer">
           <div class="loading">Loading sessions explorer...</div>
         </div>
@@ -167,6 +170,28 @@
       </div>
       <div class="modal-footer">
         <button id="btn-save-settings" class="btn primary" data-i18n="btn_save">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Project Modal -->
+  <div class="modal" id="modal-add-project">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 data-i18n="add_project_title">Add New Project</h2>
+        <span class="close-modal" id="close-add-project">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="input-new-project-path" data-i18n="form_new_project_path">New Project Folder Path</label>
+          <input type="text" id="input-new-project-path" placeholder="e.g. d:\VS PROJECTS\my-project">
+        </div>
+        <div style="margin-top: 15px;">
+          <button id="btn-use-default-project" class="btn secondary" style="font-size: 13px; width: 100%;" data-i18n="btn_use_default_project">Use Default Folder</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-submit-new-project" class="btn primary" data-i18n="btn_add_project_confirm">Add Project</button>
       </div>
     </div>
   </div>
