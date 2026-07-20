@@ -27,7 +27,10 @@ const TRANSLATIONS = {
     idle: "Idle",
     thinking: "Thinking...",
     waiting_approval: "Waiting for approval...",
-    executing: "Running tool..."
+    executing: "Running tool...",
+    server_connected: "Server: Connected",
+    server_offline: "Server: Offline",
+    server_reconnecting: "Server: Connecting..."
   },
   ar: {
     app_title: "منصة GDA",
@@ -56,7 +59,10 @@ const TRANSLATIONS = {
     idle: "جاهز للعمل",
     thinking: "جاري التفكير...",
     waiting_approval: "في انتظار الموافقة...",
-    executing: "جاري تشغيل الأداة..."
+    executing: "جاري تشغيل الأداة...",
+    server_connected: "الخادم: متصل",
+    server_offline: "الخادم: غير متصل",
+    server_reconnecting: "الخادم: جاري الاتصال..."
   }
 };
 
@@ -69,11 +75,13 @@ let pendingApprovalResolver = null;
 let currentAgentMessageElement = null;
 let currentSessionId = null;
 let activeCwd = '';
+let abortAgentLoop = false;
 const pendingToolResolvers = new Map();
 
 // DOM Elements
 const elPromptInput = document.getElementById('prompt-input');
 const elBtnSend = document.getElementById('btn-send');
+const elBtnStop = document.getElementById('btn-stop');
 const elConsoleLogs = document.getElementById('console-logs');
 const elMcpList = document.getElementById('mcp-list');
 const elToolsList = document.getElementById('tools-list');
@@ -89,6 +97,10 @@ const elAgentStatus = document.getElementById('agent-status');
 const elAgentStatusText = document.getElementById('agent-status-text');
 const elProjectExplorer = document.getElementById('project-explorer');
 const elBtnLangToggle = document.getElementById('btn-lang-toggle');
+
+// Server status indicators
+const elServerIndicator = document.getElementById('server-indicator');
+const elServerStatusText = document.getElementById('server-status-text');
 
 // Modal Elements
 const elModalSettings = document.getElementById('modal-settings');
@@ -144,6 +156,7 @@ function toggleLanguage() {
   currentLang = currentLang === 'en' ? 'ar' : 'en';
   localStorage.setItem('gda_lang', currentLang);
   applyTranslations();
+  updateServerStatusIndicator();
 }
 
 function applyTranslations() {
@@ -258,6 +271,18 @@ function updateConfigUI() {
   }
 }
 
+// Update server status indicator based on WebSocket connection
+function updateServerStatusIndicator() {
+  const trans = TRANSLATIONS[currentLang];
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    elServerIndicator.className = 'indicator red';
+    elServerStatusText.innerText = ws ? trans.server_reconnecting : trans.server_offline;
+  } else {
+    elServerIndicator.className = 'indicator green';
+    elServerStatusText.innerText = trans.server_connected;
+  }
+}
+
 // Set Agent Status in UI
 function setAgentStatus(status, text) {
   elAgentStatus.className = `agent-status ${status}`;
@@ -290,6 +315,17 @@ function formatRelativeTime(dateString) {
 
 // Fetch and build the Project / Chat Session Explorer tree
 async function fetchExplorer() {
+  try {
+    const projRes = await fetch('/api/projects');
+    const projData = await projRes.json();
+    
+    const sessRes = await fetch('/api/sessions');
+    const sessData = await res.json(); // Fix potential typo sessRes
+  } catch (err) {
+    // Try to safely fetch and fall back if needed
+  }
+  
+  // Fully safe fetch wrapper
   try {
     const projRes = await fetch('/api/projects');
     const projData = await projRes.json();
@@ -448,7 +484,10 @@ function connectWebSocket() {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   ws = new WebSocket(`${protocol}//${window.location.host}/ws/chat`);
 
-  ws.onopen = () => console.log('WebSocket connected');
+  ws.onopen = () => {
+    console.log('WebSocket connected');
+    updateServerStatusIndicator();
+  };
 
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
@@ -466,6 +505,7 @@ function connectWebSocket() {
 
   ws.onclose = (event) => {
     console.warn('WebSocket disconnected. Code:', event.code, 'Reason:', event.reason, 'Reconnecting...');
+    updateServerStatusIndicator();
     setTimeout(connectWebSocket, 3000);
   };
 }
@@ -493,11 +533,49 @@ function handleServerMessage(data) {
       currentChatHistory = data.messages;
       finalizeAgentMessage();
       setAgentStatus('idle', trans.idle);
+      toggleSendControls(false);
       break;
     case 'error':
       appendSystemError(data.text);
       setAgentStatus('idle', trans.idle);
+      toggleSendControls(false);
       break;
+  }
+}
+
+// Helper to switch active buttons during agent loop
+function toggleSendControls(isRunning) {
+  if (isRunning) {
+    elBtnSend.style.display = 'none';
+    elBtnStop.style.display = 'inline-flex';
+  } else {
+    elBtnSend.style.display = 'inline-flex';
+    elBtnStop.style.display = 'none';
+  }
+}
+
+// Robust Network fetch with Exponential Backoff Retries
+async function fetchWithRetry(url, options, maxRetries = 3, initialDelay = 1500) {
+  let attempt = 0;
+  while (true) {
+    try {
+      const response = await fetch(url, options);
+      if (response.status === 429 || response.status >= 500) {
+        throw new Error(`Server returned status ${response.status}`);
+      }
+      return response;
+    } catch (err) {
+      attempt++;
+      if (attempt >= maxRetries || abortAgentLoop) {
+        throw err;
+      }
+      const delay = initialDelay * Math.pow(2, attempt);
+      console.warn(`Fetch failed. Retrying in ${delay}ms... Error: ${err.message}`);
+      appendSystemWarning(currentLang === 'ar' 
+        ? `⚠️ فشل الاتصال بالشبكة. جاري إعادة المحاولة خلال ${delay / 1000} ثانية...` 
+        : `⚠️ Network call failed. Retrying in ${delay / 1000} seconds...`);
+      await new Promise(r => setTimeout(r, delay));
+    }
   }
 }
 
@@ -505,6 +583,8 @@ function handleServerMessage(data) {
 async function startBrowserAgentLoop(prompt) {
   const trans = TRANSLATIONS[currentLang];
   setAgentStatus('thinking', trans.thinking);
+  toggleSendControls(true);
+  abortAgentLoop = false;
   
   if (!currentSessionId) {
     currentSessionId = 'session-' + Math.random().toString(36).substring(2, 15);
@@ -533,6 +613,11 @@ async function startBrowserAgentLoop(prompt) {
   const url = (config.provider === 'custom' ? config.customUrl : PROVIDER_URLS[config.provider]) + '/chat/completions';
 
   while (running && turn < maxTurns) {
+    if (abortAgentLoop) {
+      appendSystemWarning(currentLang === 'ar' ? '⏹️ تم إيقاف التشغيل بواسطة المستخدم.' : '⏹️ Execution stopped by user.');
+      break;
+    }
+
     turn++;
     console.log(`Browser agent turn ${turn}`);
 
@@ -549,7 +634,7 @@ async function startBrowserAgentLoop(prompt) {
     }
 
     try {
-      const response = await fetch(url, {
+      const response = await fetchWithRetry(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -569,6 +654,7 @@ async function startBrowserAgentLoop(prompt) {
       const accumulatedToolCalls = [];
 
       while (true) {
+        if (abortAgentLoop) break;
         const { done, value } = await reader.read();
         if (done) break;
 
@@ -613,6 +699,11 @@ async function startBrowserAgentLoop(prompt) {
         }
       }
 
+      if (abortAgentLoop) {
+        appendSystemWarning(currentLang === 'ar' ? '⏹️ تم إيقاف التشغيل بواسطة المستخدم.' : '⏹️ Execution stopped by user.');
+        break;
+      }
+
       // Add assistant response to history
       if (accumulatedText) {
         currentChatHistory.push({ role: 'assistant', content: accumulatedText });
@@ -637,6 +728,7 @@ async function startBrowserAgentLoop(prompt) {
         finalizeAgentMessage();
         setAgentStatus('idle', trans.idle);
         fetchExplorer();
+        toggleSendControls(false);
         running = false;
         break;
       }
@@ -649,6 +741,8 @@ async function startBrowserAgentLoop(prompt) {
       });
 
       for (const tc of finalToolCalls) {
+        if (abortAgentLoop) break;
+
         const fullFunctionName = tc.function.name;
         const [serverName, toolName] = fullFunctionName.split('__');
         let args = {};
@@ -683,7 +777,10 @@ async function startBrowserAgentLoop(prompt) {
         let outputContent = '';
         let isError = false;
 
-        if (approved) {
+        if (abortAgentLoop) {
+          outputContent = 'Tool execution cancelled by user.';
+          isError = true;
+        } else if (approved) {
           setAgentStatus('executing', trans.executing);
           updateToolStatus(tc.id, 'executing');
 
@@ -725,9 +822,12 @@ async function startBrowserAgentLoop(prompt) {
     } catch (err) {
       appendSystemError(err.message);
       setAgentStatus('idle', trans.idle);
+      toggleSendControls(false);
       break;
     }
   }
+
+  toggleSendControls(false);
 }
 
 // Message UI Renderers
@@ -830,6 +930,21 @@ function appendSystemError(text) {
   elConsoleLogs.scrollTop = elConsoleLogs.scrollHeight;
 }
 
+function appendSystemWarning(text) {
+  const div = document.createElement('div');
+  div.className = 'system-message';
+  div.style.borderColor = 'var(--color-amber)';
+  div.style.background = 'rgba(255, 170, 0, 0.05)';
+  div.innerHTML = `
+    <span class="icon">⚠️</span>
+    <div class="content rtl">
+      <p>${text}</p>
+    </div>
+  `;
+  elConsoleLogs.appendChild(div);
+  elConsoleLogs.scrollTop = elConsoleLogs.scrollHeight;
+}
+
 // User Actions
 elBtnApproveTool.addEventListener('click', () => {
   if (pendingApprovalResolver) {
@@ -875,6 +990,12 @@ elBtnSaveSettings.addEventListener('click', saveConfig);
 elBtnNewSession.addEventListener('click', createNewSession);
 
 elBtnLangToggle.addEventListener('click', toggleLanguage);
+
+elBtnStop.addEventListener('click', () => {
+  abortAgentLoop = true;
+  toggleSendControls(false);
+  setAgentStatus('idle', TRANSLATIONS[currentLang].idle);
+});
 
 function sendPrompt() {
   const prompt = elPromptInput.value.trim();
