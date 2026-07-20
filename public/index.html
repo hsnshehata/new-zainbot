@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gravity Developer Agent (GDA)</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Fonts Cairo (Arabic) and Outfit (English) -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- App Container -->
+  <div class="app-container">
+
+    <!-- Left Sidebar -->
+    <aside class="sidebar">
+      <div class="logo-area">
+        <div class="logo-glow"></div>
+        <h1>GDA Console</h1>
+        <p>Gravity Developer Agent</p>
+      </div>
+
+      <div class="sidebar-section">
+        <h3>LLM Status</h3>
+        <div class="status-card" id="status-card">
+          <span class="indicator red" id="provider-indicator"></span>
+          <span id="provider-text">Not Configured</span>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <h3>Active MCP Servers</h3>
+        <ul class="mcp-list" id="mcp-list">
+          <li class="loading">Discovering servers...</li>
+        </ul>
+      </div>
+
+      <div class="sidebar-section scrollable">
+        <h3>Available Tools</h3>
+        <ul class="tools-list" id="tools-list">
+          <li class="loading">Loading tools...</li>
+        </ul>
+      </div>
+
+      <div class="sidebar-footer">
+        <button id="btn-settings" class="btn secondary">Settings</button>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="main-workspace">
+      
+      <!-- Top Control Bar -->
+      <header class="top-bar">
+        <div class="model-badge" id="model-badge">
+          Model: <span id="current-model">Not Set</span>
+        </div>
+        <div class="controls">
+          <div class="switch-container">
+            <span class="label">Auto-Approve Tools</span>
+            <label class="switch">
+              <input type="checkbox" id="chk-auto-approve">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <button id="btn-clear-chat" class="btn text-danger">Clear Console</button>
+        </div>
+      </header>
+
+      <!-- Chat Console Logs -->
+      <section class="console-logs" id="console-logs">
+        <div class="system-message">
+          <div class="icon">🤖</div>
+          <div class="content">
+            <p>Welcome to Gravity Developer Agent (GDA). Write your programming task below. GDA can read files, write code, run commands, and browse web pages using local MCP tools.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Input Bar -->
+      <footer class="input-panel">
+        <div class="input-container">
+          <textarea id="prompt-input" placeholder="اكتب المهمة البرمجية هنا أو باللغة الإنجليزية..." dir="auto"></textarea>
+          <button id="btn-send" class="btn primary">
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+          </button>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal" id="modal-settings">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>GDA Settings</h2>
+        <span class="close-modal" id="close-settings">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="select-provider">LLM Provider</label>
+          <select id="select-provider">
+            <option value="tokenrouter">TokenRouter (GLM 5.2 Free)</option>
+            <option value="xai">xAI (Grok)</option>
+            <option value="openrouter">OpenRouter (All Models)</option>
+            <option value="deepseek">DeepSeek API</option>
+            <option value="siliconflow">SiliconFlow (Qwen/DeepSeek)</option>
+            <option value="gemini">Google Gemini</option>
+            <option value="openai">OpenAI</option>
+            <option value="custom">Custom Endpoint</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="group-custom-url" style="display: none;">
+          <label for="input-custom-url">Custom Base URL</label>
+          <input type="text" id="input-custom-url" placeholder="https://api.example.com/v1">
+        </div>
+
+        <div class="form-group">
+          <label for="input-api-key">API Key</label>
+          <input type="password" id="input-api-key" placeholder="Enter provider API key">
+        </div>
+
+        <div class="form-group">
+          <label for="input-model">Model Name</label>
+          <input type="text" id="input-model" placeholder="Default model will be used if empty">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-save-settings" class="btn primary">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual Tool Approval Modal -->
+  <div class="modal" id="modal-approval">
+    <div class="modal-content large">
+      <div class="modal-header">
+        <h2>Authorization Requested</h2>
+      </div>
+      <div class="modal-body">
+        <div class="approval-header">
+          <span class="warning-icon">⚠️</span>
+          <div>
+            <h3>The Agent wants to run a tool:</h3>
+            <p><strong id="approval-server-name"></strong> &rarr; <strong id="approval-tool-name" class="highlight"></strong></p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Review and modify tool arguments (JSON):</label>
+          <textarea id="approval-arguments" class="code-editor"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-deny-tool" class="btn danger">Deny Tool</button>
+        <button id="btn-approve-tool" class="btn success">Approve & Execute</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Markdown Parser Script -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</body>
+</html>

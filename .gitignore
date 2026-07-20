@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.local
+.env.production
+.env.development
+.env.staging
+package-lock.json
+*.log
+api key an lik.txt
