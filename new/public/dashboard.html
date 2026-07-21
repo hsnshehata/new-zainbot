@@ -1072,15 +1072,15 @@
 
         <!-- ==================== 7. ADMIN KEYS FAILOVER PANEL ==================== -->
         <section id="page-admin" class="db-page">
-          <h2 style="color:var(--orange); margin-bottom:8px;"><i class="fas fa-shield-alt"></i> ZainBot Global AI Failover & Keys</h2>
-          <p style="color:var(--text-muted); font-size:14px; margin-bottom:24px;">Super Admin panel. Add global API keys, assign priority ranks, and manage auto-switch sequences to prevent system-wide model failures.</p>
+          <h2 style="color:var(--orange); margin-bottom:8px;"><i class="fas fa-shield-alt"></i> <span data-i18n="admin_title">ZainBot Global AI Failover & Keys</span></h2>
+          <p style="color:var(--text-muted); font-size:14px; margin-bottom:24px;" data-i18n="admin_desc">Super Admin panel. Add global API keys, assign priority ranks, and manage auto-switch sequences to prevent system-wide model failures.</p>
 
           <div style="display:grid; grid-template-columns: 2fr 1fr; gap:24px;">
             <!-- Registered server keys list with failover status -->
             <div class="glass-card" style="display:flex; flex-direction:column;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                <h3>Active Global API Keys & Priority Order</h3>
-                <button id="adminResetKeysBtn" class="btn btn-primary btn-sm" style="background:var(--orange); border-color:var(--orange); color:#000;"><i class="fas fa-redo"></i> Reset Failed Keys</button>
+                <h3 data-i18n="admin_active_keys">Active Global API Keys & Priority Order</h3>
+                <button id="adminResetKeysBtn" class="btn btn-primary btn-sm" style="background:var(--orange); border-color:var(--orange); color:#000;"><i class="fas fa-redo"></i> <span data-i18n="admin_btn_reset">Reset Failed Keys</span></button>
               </div>
               <div id="adminKeysListContainer" style="display:flex; flex-direction:column; border:1px solid var(--glass-border); border-radius:var(--radius-sm); overflow:hidden;">
                 <!-- Key rows rendered dynamically -->
@@ -1089,14 +1089,14 @@
 
             <!-- Create new global server key -->
             <div class="glass-card">
-              <h3>Register Global Provider Key</h3>
+              <h3 data-i18n="admin_register_key">Register Global Provider Key</h3>
               <form id="adminKeyAddForm" style="margin-top:16px;">
                 <div class="form-group">
-                  <label>Key Name / Description</label>
+                  <label data-i18n="admin_label_name">Key Name / Description</label>
                   <input type="text" id="adminKeyName" class="form-control" placeholder="Primary OpenAI" required />
                 </div>
                 <div class="form-group">
-                  <label>AI Provider</label>
+                  <label data-i18n="admin_label_provider">AI Provider</label>
                   <select id="adminKeyProvider" class="form-control">
                     <option value="openai">OpenAI</option>
                     <option value="gemini">Google Gemini</option>
@@ -1106,22 +1106,22 @@
                   </select>
                 </div>
                 <div class="form-group">
-                  <label>API Key</label>
+                  <label data-i18n="admin_label_key">API Key</label>
                   <input type="password" id="adminKeySecret" class="form-control" placeholder="sk-..." required />
                 </div>
                 <div class="form-group">
-                  <label>Default Model</label>
+                  <label data-i18n="admin_label_model">Default Model</label>
                   <input type="text" id="adminKeyModel" class="form-control" placeholder="gpt-4o-mini / gemini-1.5-flash" required />
                 </div>
                 <div class="form-group">
-                  <label>Priority Rank (1 = Highest)</label>
+                  <label data-i18n="admin_label_priority">Priority Rank (1 = Highest)</label>
                   <input type="number" id="adminKeyPriority" class="form-control" value="1" min="1" required />
                 </div>
                 <div class="form-group">
-                  <label>Base URL (Optional)</label>
+                  <label data-i18n="admin_label_base_url">Base URL (Optional)</label>
                   <input type="text" id="adminKeyBaseUrl" class="form-control" placeholder="https://api.openai.com/v1" />
                 </div>
-                <button type="submit" class="btn btn-primary btn-sm btn-block" style="background:var(--orange); color:#000; border-color:var(--orange)">Register Server Key</button>
+                <button type="submit" class="btn btn-primary btn-sm btn-block" style="background:var(--orange); color:#000; border-color:var(--orange)" data-i18n="admin_btn_register">Register Server Key</button>
               </form>
             </div>
           </div>

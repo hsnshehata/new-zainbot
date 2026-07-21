@@ -103,7 +103,25 @@
       btn_cancel: 'Cancel',
       btn_save: 'Save Rule',
       label_faq_question: 'Question / Keywords',
-      label_faq_answer: 'Expected Answer'
+      label_faq_answer: 'Expected Answer',
+      admin_title: 'ZainBot Global AI Failover & Keys',
+      admin_desc: 'Super Admin panel. Add global API keys, assign priority ranks, and manage auto-switch sequences to prevent system-wide model failures.',
+      admin_active_keys: 'Active Global API Keys & Priority Order',
+      admin_btn_reset: 'Reset Failed Keys',
+      admin_register_key: 'Register Global Provider Key',
+      admin_label_name: 'Key Name / Description',
+      admin_label_provider: 'AI Provider',
+      admin_label_key: 'API Key',
+      admin_label_model: 'Default Model',
+      admin_label_priority: 'Priority Rank (1 = Highest)',
+      admin_label_base_url: 'Base URL (Optional)',
+      admin_btn_register: 'Register Server Key',
+      admin_no_keys: 'No global server keys registered. Register one on the right.',
+      admin_status_working: 'WORKING',
+      admin_status_failed: 'FAILED',
+      admin_lbl_provider: 'Provider',
+      admin_lbl_model: 'Model',
+      admin_lbl_priority: 'Priority'
     },
     ar: {
       menu_overview: 'نظرة عامة',
@@ -185,9 +203,26 @@
       label_backup_url: 'رابط Endpoint مخصص',
       btn_save_backup_settings: 'حفظ مفتاح الطوارئ',
       btn_cancel: 'إلغاء',
-      btn_save: 'حفظ القاعدة',
       label_faq_question: 'السؤال / الكلمات المفتاحية',
-      label_faq_answer: 'الإجابة المتوقعة'
+      label_faq_answer: 'الإجابة المتوقعة',
+      admin_title: 'إدارة حماية السقوط ومفاتيح النظام العامة',
+      admin_desc: 'لوحة التحكم للمدير العام. إضافة مفاتيح API الخاصة بالنظام، تحديد مستويات الأولوية، وإدارة التسلسل التلقائي للتحول لمنع تعطل البوتات.',
+      admin_active_keys: 'مفاتيح الوصول العامة النشطة وترتيب الأولوية',
+      admin_btn_reset: 'إعادة تهيئة المفاتيح المعطلة',
+      admin_register_key: 'تسجيل مفتاح نظام عام جديد',
+      admin_label_name: 'اسم المفتاح / الوصف',
+      admin_label_provider: 'مزود الذكاء الاصطناعي',
+      admin_label_key: 'مفتاح الـ API',
+      admin_label_model: 'النموذج الافتراضي',
+      admin_label_priority: 'مستوى الأولوية (1 = الأعلى)',
+      admin_label_base_url: 'رابط Endpoint مخصص (اختياري)',
+      admin_btn_register: 'تسجيل مفتاح النظام',
+      admin_no_keys: 'لا توجد مفاتيح نظام عامة مسجلة حالياً. قم بإضافة مفتاح من النموذج الجانبي.',
+      admin_status_working: 'يعمل',
+      admin_status_failed: 'معطل',
+      admin_lbl_provider: 'المزود',
+      admin_lbl_model: 'النموذج',
+      admin_lbl_priority: 'الأولوية'
     }
   };
 
@@ -245,6 +280,7 @@
     renderOrders();
     renderBookings();
     renderApiKeys();
+    renderAdminKeys();
   }
 
   // Tab switching handler
@@ -993,8 +1029,10 @@
     if (!container) return;
     container.innerHTML = '';
 
+    const t = translations[currentLanguage] || translations.en;
+
     if (adminKeys.length === 0) {
-      container.innerHTML = `<div style="padding:24px; text-align:center; color:var(--text-muted);">No global server keys registered. Register one on the right.</div>`;
+      container.innerHTML = `<div style="padding:24px; text-align:center; color:var(--text-muted);">${t.admin_no_keys}</div>`;
       return;
     }
 
@@ -1003,7 +1041,7 @@
       row.className = 'admin-key-row';
       
       const badgeClass = key.status === 'working' ? 'badge-success' : 'badge-danger';
-      const statusText = key.status === 'working' ? 'WORKING' : 'FAILED';
+      const statusText = key.status === 'working' ? t.admin_status_working : t.admin_status_failed;
       const opacity = key.isActive ? '1' : '0.5';
 
       row.innerHTML = `
@@ -1014,7 +1052,7 @@
             <h4 style="font-size:14px; font-weight:600; display:inline-block; margin-right:8px;">${key.name}</h4>
             <span class="badge ${badgeClass}" style="transform:scale(0.8);">${statusText}</span>
             <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
-              Provider: <strong>${key.provider}</strong> | Model: <strong>${key.defaultModel}</strong> | Priority: <strong>${key.priority}</strong>
+              ${t.admin_lbl_provider}: <strong>${key.provider}</strong> | ${t.admin_lbl_model}: <strong>${key.defaultModel}</strong> | ${t.admin_lbl_priority}: <strong>${key.priority}</strong>
             </div>
             ${key.errorMessage ? `<div style="font-size:10px; color:var(--red); margin-top:2px;">Error: ${key.errorMessage}</div>` : ''}
           </div>
