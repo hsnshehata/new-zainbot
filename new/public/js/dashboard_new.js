@@ -344,8 +344,9 @@
   async function loadBots() {
     try {
       const res = await apiFetch('/api/bots');
-      if (res && res.success && res.data.length > 0) {
-        currentBot = res.data[0]; // pick first bot
+      const bots = (res && res.success) ? res.data : (Array.isArray(res) ? res : []);
+      if (bots.length > 0) {
+        currentBot = bots[0]; // pick first bot
         
         // Inject data-bot-id inside chat snippet
         const widgetSnippetCode = document.getElementById('widgetSnippetCode');
@@ -817,6 +818,12 @@
       }
 
       // Load backup key settings
+      const backupKeysSec = document.getElementById('backupKeysSection');
+      if (backupKeysSec) {
+        const isGrowth = currentUser && currentUser.subscriptionTier && currentUser.subscriptionTier.startsWith('growth');
+        backupKeysSec.style.display = isGrowth ? 'block' : 'none';
+      }
+
       document.getElementById('backupProvider').value = currentBot.backupProvider || 'openai';
       document.getElementById('backupApiKey').value = currentBot.backupApiKey || '';
       document.getElementById('backupModel').value = currentBot.backupModel || '';

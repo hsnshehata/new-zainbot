@@ -64,6 +64,25 @@ router.get('/me', authenticate, async (req, res) => {
   }
 });
 
+// Get user profile data (expected by dashboard_new.js)
+router.get('/profile', authenticate, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      logger.warn('❌ User not found for profile', { userId: req.user.userId });
+      return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
+    }
+    logger.info('✅ User profile fetched', { userId: req.user.userId });
+    res.status(200).json({
+      success: true,
+      data: user
+    });
+  } catch (err) {
+    logger.error('❌ Error fetching profile', { err });
+    res.status(500).json({ success: false, message: 'خطأ في السيرفر' });
+  }
+});
+
 // Get all users (Superadmin only)
 router.get('/', authenticate, async (req, res) => {
   if (req.user.role !== 'superadmin') {

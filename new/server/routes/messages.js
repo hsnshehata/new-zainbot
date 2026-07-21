@@ -142,6 +142,30 @@ async function getSocialUsername(userId, bot, platform) {
   }
 }
 
+// Get conversations by query param (expected by dashboard_new.js)
+router.get("/conversations", authenticate, async (req, res) => {
+  try {
+    const botId = req.query.botId;
+    if (!botId) {
+      return res.status(400).json({ success: false, message: "botId parameter is required" });
+    }
+    const bot = await Bot.findById(botId);
+    if (!bot) {
+      return res.status(404).json({ success: false, message: "Bot not found" });
+    }
+    
+    // Find conversations
+    const conversations = await Conversation.find({ botId }).lean();
+    res.status(200).json({
+      success: true,
+      data: conversations
+    });
+  } catch (err) {
+    logger.error("Error in get conversations route", { err });
+    res.status(500).json({ success: false, message: "خطأ في السيرفر" });
+  }
+});
+
 // Get conversations for a bot (using messagesController.getMessages)
 router.get("/:botId", authenticate, async (req, res) => {
   try {
