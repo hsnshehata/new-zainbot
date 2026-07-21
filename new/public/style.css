@@ -1143,6 +1143,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   margin-top: 20px;
   overflow: hidden;
   position: relative;
+  direction: ltr !important;
   -webkit-mask: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
   mask: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
 }
