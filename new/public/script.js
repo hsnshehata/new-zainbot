@@ -508,6 +508,8 @@
       optionEl.value = opt.value;
       optionEl.setAttribute('data-convs', opt.convs);
       optionEl.textContent = lang === 'ar' ? opt.ar : opt.en;
+      optionEl.style.background = '#0b0c16';
+      optionEl.style.color = '#ffffff';
       if (opt.value === currentVal) {
         optionEl.selected = true;
       }

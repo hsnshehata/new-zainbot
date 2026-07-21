@@ -1774,3 +1774,15 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   .reveal { opacity: 1; transform: none; }
   .gradient-text { animation: none; }
 }
+
+/* Pricing Select & Option styling */
+#growthPlanSelector {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+#growthPlanSelector option {
+  background: #0b0c16 !important;
+  color: #ffffff !important;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+}
