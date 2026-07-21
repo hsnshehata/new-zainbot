@@ -1303,6 +1303,8 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   max-width: 720px;
   margin: 0 auto;
   position: relative;
+  overflow: hidden;
+  direction: ltr !important;
 }
 .testimonial-track {
   display: flex;
@@ -1318,6 +1320,9 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   text-align: center;
   position: relative;
 }
+html[dir="rtl"] .testimonial-card {
+  direction: rtl;
+}
 .testimonial-card::before {
   content: '\201C';
   position: absolute;
@@ -1326,6 +1331,11 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   font-family: Georgia, serif;
   color: rgba(124,58,237,0.2);
   line-height: 1;
+}
+html[dir="rtl"] .testimonial-card::before {
+  left: auto;
+  right: 24px;
+  content: '\201D';
 }
 .testimonial-stars {
   display: flex;
