@@ -204,52 +204,93 @@
   const confidenceFill = document.getElementById('confidenceFill');
   const confidenceValue = document.getElementById('confidenceValue');
 
-  const aiResponses = [
-    {
-      triggers: ['where is my order', 'track', 'order status', 'delivery', 'my order', 'shipped', 'package'],
-      response: 'Your order #NX-2847 is on its way! 📦 It left our warehouse this morning and is currently at the local distribution center. Expected delivery: Thursday by 3 PM. Would you like me to share live tracking?',
-      confidence: 97
-    },
-    {
-      triggers: ['pricing', 'price', 'cost', 'plan', 'how much', 'subscription', 'billing'],
-      response: "Great question! Here's a quick overview:\n\n• Starter — $29/mo: Perfect for small teams\n• Growth — $79/mo: Most popular, includes all channels\n• Scale — $199/mo: Unlimited everything\n\nAll plans come with a 14-day free trial. Want me to help you pick the right one?",
-      confidence: 95
-    },
-    {
-      triggers: ['book', 'appointment', 'schedule', 'meeting', 'demo', 'call'],
-      response: "I'd be happy to help you book an appointment! 📅 Here are some available slots:\n\n• Tuesday at 2:00 PM\n• Wednesday at 11:00 AM\n• Thursday at 4:00 PM\n\nWhich time works best for you?",
-      confidence: 93
-    },
-    {
-      triggers: ['hello', 'hi', 'hey', 'greetings', 'good morning', 'good afternoon'],
-      response: "Hello! 👋 I'm ZainBot AI, your virtual assistant. I can help with orders, pricing, appointments, product questions, and more. What can I do for you today?",
-      confidence: 99
-    },
-    {
-      triggers: ['refund', 'return', 'cancel', 'money back', 'exchange'],
-      response: 'I understand you need help with a return or refund. No worries — items can be returned within 30 days of delivery. Would you like me to start a return request for you? I just need your order number. 🔄',
-      confidence: 91
-    },
-    {
-      triggers: ['thank', 'thanks', 'great', 'awesome', 'perfect', 'amazing'],
-      response: "You're very welcome! 😊 Is there anything else I can help you with today? I'm here 24/7 whenever you need me.",
-      confidence: 98
-    }
-  ];
+  const aiResponses = {
+    en: [
+      {
+        triggers: ['where is my order', 'track', 'order status', 'delivery', 'my order', 'shipped', 'package', 'أين طلبي'],
+        response: 'Your order #NX-2847 is on its way! 📦 It left our warehouse this morning and is currently at the local distribution center. Expected delivery: Thursday by 3 PM. Would you like me to share live tracking?',
+        confidence: 97
+      },
+      {
+        triggers: ['pricing', 'price', 'cost', 'plan', 'how much', 'subscription', 'billing', 'الأسعار', 'خطط'],
+        response: "Great question! Here's a quick overview:\n\n• Starter — $29/mo: Perfect for small teams\n• Growth — $79/mo: Most popular, includes all channels\n• Scale — $199/mo: Unlimited everything\n\nAll plans come with a 14-day free trial. Want me to help you pick the right one?",
+        confidence: 95
+      },
+      {
+        triggers: ['book', 'appointment', 'schedule', 'meeting', 'demo', 'call', 'حجز'],
+        response: "I'd be happy to help you book an appointment! 📅 Here are some available slots:\n\n• Tuesday at 2:00 PM\n• Wednesday at 11:00 AM\n• Thursday at 4:00 PM\n\nWhich time works best for you?",
+        confidence: 93
+      },
+      {
+        triggers: ['hello', 'hi', 'hey', 'greetings', 'good morning', 'good afternoon', 'مرحبا', 'أهلا'],
+        response: "Hello! 👋 I'm ZainBot AI, your virtual assistant. I can help with orders, pricing, appointments, product questions, and more. What can I do for you today?",
+        confidence: 99
+      },
+      {
+        triggers: ['refund', 'return', 'cancel', 'money back', 'exchange', 'استرجاع', 'استرداد'],
+        response: 'I understand you need help with a return or refund. No worries — items can be returned within 30 days of delivery. Would you like me to start a return request for you? I just need your order number. 🔄',
+        confidence: 91
+      },
+      {
+        triggers: ['thank', 'thanks', 'great', 'awesome', 'perfect', 'amazing', 'شكرا'],
+        response: "You're very welcome! 😊 Is there anything else I can help you with today? I'm here 24/7 whenever you need me.",
+        confidence: 98
+      }
+    ],
+    ar: [
+      {
+        triggers: ['أين طلبي', 'شحن', 'طلب', 'تتبع', 'delivery', 'order', 'track'],
+        response: 'طلبك رقم NX-2847 في الطريق إليك! 📦 لقد غادر مستودعنا هذا الصباح وهو حاليًا في مركز التوزيع المحلي. التوصيل المتوقع: الخميس بحلول الساعة 3 مساءً. هل ترغب في أن أشارك معك رابط التتبع المباشر؟',
+        confidence: 97
+      },
+      {
+        triggers: ['الأسعار', 'سعر', 'تكلفة', 'خطة', 'اشتراك', 'باقة', 'pricing', 'price', 'plan'],
+        response: 'سؤال رائع! إليك نظرة عامة سريعة على خططنا:\n\n• المجانية — 0 جنيه: لتجربة الخدمة وإضافة مفاتيحك الخاصة\n• النمو — 150 جنيه/شهر: الباقة الأكثر شعبية، تشمل 1,000 محادثة وكل القنوات\n• اللامحدود — 5,000 جنيه/شهر: باقة غير محدودة لكافة الاستخدامات والشركات الكبرى\n\nهل تود أن أساعدك في اختيار الباقة المناسبة لعملك؟',
+        confidence: 95
+      },
+      {
+        triggers: ['حجز', 'موعد', 'اجتماع', 'اتصال', 'مكالمة', 'book', 'appointment', 'meeting'],
+        response: 'يسعدني جدًا مساعدتك في حجز موعد! 📅 إليك بعض الأوقات المتاحة:\n\n• الثلاثاء الساعة 2:00 مساءً\n• الأربعاء الساعة 11:00 صباحًا\n• الخميس الساعة 4:00 مساءً\n\nما هو الوقت المناسب لك؟',
+        confidence: 93
+      },
+      {
+        triggers: ['مرحبا', 'أهلاً', 'السلام عليكم', 'hello', 'hi', 'hey'],
+        response: 'مرحباً بك! 👋 أنا مساعد زين بوت الذكي. يمكنني مساعدتك في تتبع الطلبات، معرفة الأسعار، حجز المواعيد، والإجابة عن استفساراتك. كيف يمكنني مساعدتك اليوم؟',
+        confidence: 99
+      },
+      {
+        triggers: ['استرجاع', 'استرداد', 'إلغاء', 'refund', 'return', 'cancel'],
+        response: 'أفهم أنك بحاجة إلى مساعدة بشأن إرجاع منتج أو استرداد الأموال. لا تقلق — يمكن إرجاع المنتجات في غضون 30 يومًا من تاريخ التوصيل. هل تود أن أبدأ لك طلب إرجاع؟ أحتاج فقط إلى رقم الطلب الخاص بك. 🔄',
+        confidence: 91
+      },
+      {
+        triggers: ['شكرا', 'جميل', 'رائع', 'ممتاز', 'thank', 'thanks', 'great'],
+        response: 'على الرحب والسعة دائماً! 😊 هل هناك أي شيء آخر يمكنني مساعدتك به اليوم؟ أنا هنا لخدمتك على مدار الساعة 24/7.',
+        confidence: 98
+      }
+    ]
+  };
 
   const defaultResponse = {
-    response: "I'm here to help with orders, pricing, appointments, and product questions. Could you tell me a bit more about what you need? You can also try one of the suggested prompts below. 😊",
-    confidence: 88
+    en: {
+      response: "I'm here to help with orders, pricing, appointments, and product questions. Could you tell me a bit more about what you need? You can also try one of the suggested prompts below. 😊",
+      confidence: 88
+    },
+    ar: {
+      response: 'أنا هنا لمساعدتك في تتبع الطلبات، الأسعار، حجز المواعيد، والاستفسارات العامة. هل يمكنك إخباري بمزيد من التفاصيل عما تحتاجه؟ يمكنك أيضًا تجربة أحد الأسئلة المقترحة بالأسفل. 😊',
+      confidence: 88
+    }
   };
 
   function getAIResponse(message) {
     const msg = message.toLowerCase().trim();
-    for (const item of aiResponses) {
+    const responsesList = aiResponses[currentLang] || aiResponses.en;
+    for (const item of responsesList) {
       if (item.triggers.some(trigger => msg.includes(trigger))) {
         return item;
       }
     }
-    return defaultResponse;
+    return defaultResponse[currentLang] || defaultResponse.en;
   }
 
   function appendMessage(text, type) {
@@ -331,7 +372,7 @@
   // Prompt chips
   promptChips.forEach(chip => {
     chip.addEventListener('click', () => {
-      const prompt = chip.dataset.prompt;
+      const prompt = chip.textContent.trim();
       handleUserMessage(prompt);
     });
   });
@@ -385,6 +426,89 @@
       hero_btn_primary: 'Build your AI agent <i class="fas fa-arrow-right"></i>',
       hero_btn_secondary: '<i class="fas fa-play"></i> Watch demo',
       hero_proof: 'Trusted by <strong>2,400+</strong> growing teams',
+      
+      logo_strip_label: 'Built for teams that move fast',
+      bento_eyebrow: 'Platform',
+      bento_title: 'One AI brain. <span class="gradient-text">Every customer channel.</span>',
+      bento_desc: 'ZainBot unifies your customer conversations into a single intelligent system that learns, adapts, and converts — automatically.',
+      bento_card1_title: 'Omnichannel Inbox',
+      bento_card1_desc: 'Every message from every channel lands in one unified, intelligent inbox.',
+      bento_card1_msg1: 'Hi! Is the navy blazer still available?',
+      bento_card1_msg2: 'Do you ship to Singapore?',
+      bento_card1_msg3: 'My order arrived — thank you! ❤️',
+      bento_card1_visitor: 'Website Visitor',
+      bento_card1_msg4: 'What are your business hours?',
+      bento_card2_title: 'Smart AI Replies',
+      bento_card2_desc: 'Context-aware responses that sound human and convert better.',
+      bento_card2_toggle: 'AI Auto-Reply',
+      bento_card2_accuracy: 'Accuracy',
+      bento_card2_suggested: 'Suggested: "Absolutely! We have it in stock and can ship today. Would you like me to place the order?"',
+      bento_card3_title: 'Sales Automation',
+      bento_card3_desc: 'Turn conversations into pipeline with automated follow-ups.',
+      bento_card3_new: 'New Leads',
+      bento_card3_qualified: 'Qualified',
+      bento_card3_closed: 'Closed Won',
+      bento_card4_title: 'Human Handoff',
+      bento_card4_desc: 'Seamless escalation when a human touch is needed.',
+      bento_card4_ai: 'AI',
+      bento_card4_agent: 'Agent',
+      bento_card4_status: '<span class="handoff-indicator"></span>Seamless handoff in &lt;2s',
+      bento_card5_title: 'Live Analytics',
+      bento_card5_desc: 'Real-time dashboards that surface what matters most.',
+      bento_card5_live: 'Live',
+      bento_card5_convs: 'convos',
+      bento_card5_resolved: 'resolved',
+      
+      workflow_eyebrow: 'How it works',
+      workflow_title: 'From message to <span class="gradient-text">momentum.</span>',
+      workflow_desc: 'Get from zero to fully automated in three simple steps — no code required.',
+      workflow_step1_title: 'Connect your channels',
+      workflow_step1_desc: 'Link WhatsApp, Instagram, Messenger, Shopify, and your website in minutes. ZainBot syncs conversations instantly across every platform.',
+      workflow_step2_title: 'Train your AI agent',
+      workflow_step2_desc: 'Upload your FAQs, product catalog, and brand guidelines. ZainBot learns your voice, your products, and your customers in minutes.',
+      workflow_step3_title: 'Let it convert conversations',
+      workflow_step3_desc: 'Your AI agent goes live — answering questions, closing sales, booking appointments, and following up automatically, 24/7.',
+      
+      demo_eyebrow: 'Try it live',
+      demo_title: 'Meet your new <span class="gradient-text">AI teammate</span>',
+      demo_desc: 'Experience ZainBot in real time. Click a suggestion or type your own message — it actually responds.',
+      demo_bot_name: 'ZainBot Assistant',
+      demo_bot_status: 'Online now',
+      demo_conf_label: 'AI Confidence',
+      demo_welcome_msg: 'Hi! I\'m ZainBot. 👋 I can help with orders, pricing, appointments, and more. What can I do for you today?',
+      demo_chip1: '<i class="fas fa-box"></i> Where is my order?',
+      demo_chip2: '<i class="fas fa-tag"></i> Show me your pricing',
+      demo_chip3: '<i class="fas fa-calendar-check"></i> Book an appointment',
+      
+      int_eyebrow: 'Integrations',
+      int_title: 'Works where your customers <span class="gradient-text">already are.</span>',
+      int_desc: 'Connect ZainBot to the platforms your customers use every day — no developer required.',
+      int_connected: 'Connected',
+      int_available: 'Available',
+      int_webchat: 'Website Chat',
+      
+      metrics_eyebrow: 'Results',
+      metrics_title: 'Less waiting. <span class="gradient-text">More selling.</span>',
+      metrics_desc: 'Businesses powered by ZainBot see measurable impact within the first 30 days. Here\'s what that looks like.',
+      metric_lbl_response: 'faster response time',
+      metric_lbl_leads: 'more qualified leads',
+      metric_lbl_sat: 'customer satisfaction',
+      metric_lbl_coverage: 'customer coverage',
+      metric_panel_title: 'Performance Overview',
+      metric_panel_live: 'Live',
+      metric_stat_lbl_resp: 'Avg Response',
+      metric_stat_lbl_res: 'Resolved',
+      metric_stat_lbl_sat: 'Satisfaction',
+      
+      test_eyebrow: 'Testimonials',
+      test_title: 'Teams love <span class="gradient-text">talking to ZainBot.</span>',
+      test1_text: 'Switching to ZainBot was the single best decision for our support team this year. Our response time dropped from hours to seconds, and our CSAT score jumped from 4.2 to 4.9. The AI handles 80% of tickets on its own.',
+      test1_role: 'Head of CX, Lumio',
+      test2_text: 'I was skeptical about AI handling sales conversations. Three months in, ZainBot has closed over $40K in additional revenue through automated follow-ups alone. It\'s like having a top sales rep who never takes a break.',
+      test2_role: 'Founder, Brewlab',
+      test3_text: 'We connected ZainBot to our Shopify store in under ten minutes. Within the first week, it was answering product questions, recovering abandoned carts, and booking restock alerts. The ROI was almost immediate.',
+      test3_role: 'COO, Verde Commerce',
+
       pricing_eyebrow: 'Pricing',
       pricing_title: 'Simple pricing that <span class="gradient-text">scales with you.</span>',
       pricing_desc: 'Start free. Upgrade when you\'re ready. Cancel anytime.',
@@ -415,7 +539,40 @@
       plan_scale_f4: '<i class="fas fa-check"></i> Dedicated support',
       plan_scale_f5: '<i class="fas fa-check"></i> Full GPT-5.6 model support',
       plan_scale_f6: '<i class="fas fa-check"></i> Custom integrations & white-label',
-      plan_scale_btn: 'Get started'
+      plan_scale_btn: 'Get started',
+
+      cta_title: 'Ready to make every <span class="gradient-text">conversation count?</span>',
+      cta_desc: 'Join 2,400+ teams using ZainBot to turn conversations into revenue. No credit card required. Launch in minutes.',
+      cta_btn: 'Start building for free <i class="fas fa-arrow-right"></i>',
+      cta_note: 'No credit card required. Launch in minutes.',
+      
+      footer_desc: 'Turn every conversation into growth. Build intelligent AI agents that answer, sell, and learn — across every channel your customers use.',
+      footer_col_product: 'Product',
+      footer_col_solutions: 'Solutions',
+      footer_col_resources: 'Resources',
+      footer_col_company: 'Company',
+      footer_link_features: 'Features',
+      footer_link_integrations: 'Integrations',
+      footer_link_pricing: 'Pricing',
+      footer_link_demo: 'Live Demo',
+      footer_link_changelog: 'Changelog',
+      footer_link_workflow: 'How it works',
+      footer_link_ecommerce: 'E-commerce',
+      footer_link_saas: 'SaaS',
+      footer_link_healthcare: 'Healthcare',
+      footer_link_education: 'Education',
+      footer_link_docs: 'Documentation',
+      footer_link_api: 'API Reference',
+      footer_link_blog: 'Blog',
+      footer_link_help: 'Help Center',
+      footer_link_community: 'Community',
+      footer_link_about: 'About',
+      footer_link_careers: 'Careers',
+      footer_link_contact: 'Contact',
+      footer_link_privacy: 'Privacy',
+      footer_link_terms: 'Terms',
+      footer_rights: '© 2026 ZainBot. All rights reserved.',
+      footer_made: 'Crafted with precision for the AI era.'
     },
     ar: {
       nav_product: 'المنتج',
@@ -431,6 +588,89 @@
       hero_btn_primary: 'ابنِ عميلك الذكي <i class="fas fa-arrow-left"></i>',
       hero_btn_secondary: '<i class="fas fa-play"></i> شاهد العرض',
       hero_proof: 'موضع ثقة أكثر من <strong>2,400</strong> فريق عمل متنامي',
+      
+      logo_strip_label: 'مصمم خصيصاً لفرق العمل التي تتحرك بسرعة',
+      bento_eyebrow: 'المنصة',
+      bento_title: 'عقل ذكاء اصطناعي واحد. <span class="gradient-text">لكافة قنوات العملاء.</span>',
+      bento_desc: 'يوحد زين بوت محادثات عملائك في نظام ذكي واحد يتعلم، يتكيف، ويحقق مبيعات — تلقائياً.',
+      bento_card1_title: 'صندوق وارد موحد لكافة القنوات',
+      bento_card1_desc: 'تصل كل رسالة من أي قناة تواصل إلى صندوق وارد ذكي وموحد.',
+      bento_card1_msg1: 'مرحباً! هل السترة الزرقاء لا تزال متوفرة؟',
+      bento_card1_msg2: 'هل تقومون بالشحن إلى سنغافورة؟',
+      bento_card1_msg3: 'لقد وصل طلبي — شكراً لكم! ❤️',
+      bento_card1_visitor: 'زائر الموقع الإلكتروني',
+      bento_card1_msg4: 'ما هي ساعات العمل لديكم؟',
+      bento_card2_title: 'ردود ذكاء اصطناعي ذكية',
+      bento_card2_desc: 'ردود تفاعلية تفهم السياق، تبدو بشرية تماماً، وتحقق مبيعات أفضل.',
+      bento_card2_toggle: 'الرد التلقائي للبوت',
+      bento_card2_accuracy: 'الدقة والفاعلية',
+      bento_card2_suggested: 'المقترح: "بالتأكيد! المنتج متوفر لدينا حالياً ويمكننا الشحن اليوم. هل تود أن أقوم بتأكيد الطلب لك؟"',
+      bento_card3_title: 'أتمتة المبيعات الكاملة',
+      bento_card3_desc: 'حوّل المحادثات إلى تدفق مستمر من الأرباح مع المتابعات التلقائية.',
+      bento_card3_new: 'عملاء محتملون جدد',
+      bento_card3_qualified: 'مؤهلون للشراء',
+      bento_card3_closed: 'صفقات مكتملة',
+      bento_card4_title: 'التحويل للموظف البشري',
+      bento_card4_desc: 'تصعيد سلس وفوري للمحادثة عندما يتطلب الأمر تدخلاً بشرياً.',
+      bento_card4_ai: 'البوت',
+      bento_card4_agent: 'الموظف',
+      bento_card4_status: '<span class="handoff-indicator"></span>تحويل سلس في أقل من ثانيتين',
+      bento_card5_title: 'تحليلات وتقارير حية',
+      bento_card5_desc: 'لوحات معلومات فورية تعرض لك البيانات الأكثر أهمية لنشاطك.',
+      bento_card5_live: 'مباشر',
+      bento_card5_convs: 'محادثة',
+      bento_card5_resolved: 'تم حلها',
+      
+      workflow_eyebrow: 'خطوات العمل',
+      workflow_title: 'من الرسالة الأولى إلى <span class="gradient-text">أعلى معدل أرباح.</span>',
+      workflow_desc: 'انتقل من الصفر إلى الأتمتة الكاملة في ثلاث خطوات بسيطة — بدون أي أكواد برمجية.',
+      workflow_step1_title: 'ربط وتوصيل القنوات',
+      workflow_step1_desc: 'اربط قنوات واتساب، إنستجرام، مسنجر، شوبيفاي، وموقعك الإلكتروني في دقائق. يزامن زين بوت محادثاتك فورياً عبر جميع المنصات.',
+      workflow_step2_title: 'تدريب عميلك الذكي',
+      workflow_step2_desc: 'ارفع ملف الأسئلة الشائعة، كتالوج منتجاتك، وإرشادات هويتك. يتعلم زين بوت صوت علامتك التجارية، منتجاتك، وعملائك خلال دقائق.',
+      workflow_step3_title: 'دعه يقوم بتحويل المحادثات',
+      workflow_step3_desc: 'ينطلق عميلك الذكي للعمل مباشرة — يجيب الأسئلة، ينهي المبيعات، يؤكد الحجوزات، ويتابع العملاء تلقائياً على مدار الساعة 24/7.',
+      
+      demo_eyebrow: 'تجربة حية',
+      demo_title: 'تعرف على <span class="gradient-text">زميلك الذكي الجديد</span>',
+      demo_desc: 'اختبر زين بوت بنفسك في الوقت الفعلي. انقر على أحد الاقتراحات أو اكتب رسالتك الخاصة ودعه يجيبك.',
+      demo_bot_name: 'مساعد زين بوت الذكي',
+      demo_bot_status: 'نشط الآن',
+      demo_conf_label: 'ثقة الذكاء الاصطناعي',
+      demo_welcome_msg: 'مرحباً! أنا زين بوت. 👋 يمكنني مساعدتك في الطلبات، مراجعة الأسعار، حجز المواعيد، والمزيد. كيف يمكنني خدمتك اليوم؟',
+      demo_chip1: '<i class="fas fa-box"></i> أين طلبي؟',
+      demo_chip2: '<i class="fas fa-tag"></i> أرني الأسعار والخطط',
+      demo_chip3: '<i class="fas fa-calendar-check"></i> حجز موعد جديد',
+      
+      int_eyebrow: 'منصات الربط',
+      int_title: 'يعمل بكفاءة حيث <span class="gradient-text">يتواجد عملاؤك بالفعل.</span>',
+      int_desc: 'اربط زين بوت بالمنصات التي يستخدمها عملائك يومياً — دون الحاجة لأي مطور برمجيات.',
+      int_connected: 'متصل حالياً',
+      int_available: 'متاح للربط',
+      int_webchat: 'دردشة الموقع الإلكتروني',
+      
+      metrics_eyebrow: 'النتائج المحققة',
+      metrics_title: 'وقت انتظار أقل. <span class="gradient-text">حجم مبيعات أكبر.</span>',
+      metrics_desc: 'الشركات التي تعتمد على زين بوت تلمس نتائج قابلة للقياس خلال أول 30 يوماً. وإليك الأرقام.',
+      metric_lbl_response: 'استجابة أسرع للعملاء',
+      metric_lbl_leads: 'عملاء مؤهلين للشراء',
+      metric_lbl_sat: 'معدل رضا العملاء الفعلي',
+      metric_lbl_coverage: 'تغطية خدمة العملاء',
+      metric_panel_title: 'نظرة عامة على الأداء',
+      metric_panel_live: 'مباشر',
+      metric_stat_lbl_resp: 'متوسط الاستجابة',
+      metric_stat_lbl_res: 'نسبة الحل',
+      metric_stat_lbl_sat: 'رضا العملاء',
+      
+      test_eyebrow: 'آراء عملائنا',
+      test_title: 'شركات تثق بـ <span class="gradient-text">محادثات زين بوت الذكية.</span>',
+      test1_text: 'كان الانتقال إلى زين بوت القرار الأفضل لفريق الدعم لدينا هذا العام. انخفض وقت الاستجابة من ساعات إلى ثوانٍ معدودة، وارتفع تقييم رضا العملاء بشكل ملحوظ. يتعامل الذكاء الاصطناعي مع 80% من الاستفسارات بمفرده.',
+      test1_role: 'مديرة تجربة العملاء، Lumio',
+      test2_text: 'كنت متشككاً في قدرة الذكاء الاصطناعي على التعامل مع محادثات المبيعات. بعد ثلاثة أشهر، نجح زين بوت في تحقيق أكثر من 40 ألف دولار كأرباح إضافية عبر المتابعات التلقائية وحدها. إنه كأفضل مندوب مبيعات يعمل بلا إجازة.',
+      test2_role: 'المؤسس، Brewlab',
+      test3_text: 'قمنا بربط زين بوت بمتجرنا على شوبيفاي في أقل من عشر دقائق. وخلال الأسبوع الأول، بدأ بالإجابة عن استفسارات المنتجات واستعادة السلات المتروكة وتأكيد الحجوزات. العائد على الاستثمار كان فورياً وسريعاً جداً.',
+      test3_role: 'المديرة التشغيلية، Verde Commerce',
+
       pricing_eyebrow: 'الأسعار',
       pricing_title: 'باقات مرنة <span class="gradient-text">تنمو مع أعمالك.</span>',
       pricing_desc: 'ابدأ مجاناً. قم بالترقية عندما تحتاج. إلغاء الاشتراك في أي وقت.',
@@ -461,7 +701,40 @@
       plan_scale_f4: '<i class="fas fa-check"></i> دعم فني مخصص',
       plan_scale_f5: '<i class="fas fa-check"></i> دعم كامل لنموذج GPT-5.6 الجديد',
       plan_scale_f6: '<i class="fas fa-check"></i> ربط مخصص وبوابة White-label',
-      plan_scale_btn: 'ابدأ الآن'
+      plan_scale_btn: 'ابدأ الآن',
+
+      cta_title: 'هل أنت مستعد لتجعل كل <span class="gradient-text">محادثة ذات قيمة حقيقية؟</span>',
+      cta_desc: 'انضم إلى أكثر من 2,400 فريق عمل يعتمدون على زين بوت لتحويل المحادثات إلى أرباح حقيقية. ابدأ في دقائق دون الحاجة لبطاقة ائتمان.',
+      cta_btn: 'ابدأ البناء والتجربة مجاناً <i class="fas fa-arrow-left"></i>',
+      cta_note: 'لا تحتاج لبطاقة ائتمانية للبدء. الإعداد في دقائق.',
+      
+      footer_desc: 'حوّل كل محادثة إلى نمو حقيقي. ابنِ عملاء أذكياء يجيبون، يبيعون، ويتعلمون — عبر كافة قنوات التواصل التي يفضلها عملاؤك.',
+      footer_col_product: 'المنتج',
+      footer_col_solutions: 'الحلول',
+      footer_col_resources: 'المصادر',
+      footer_col_company: 'الشركة',
+      footer_link_features: 'الميزات الرئيسية',
+      footer_link_integrations: 'الربط البرمجي',
+      footer_link_pricing: 'الخطط والأسعار',
+      footer_link_demo: 'تجربة حية للبوت',
+      footer_link_changelog: 'تحديثات النظام',
+      footer_link_workflow: 'كيف يعمل زين بوت',
+      footer_link_ecommerce: 'التجارة الإلكترونية',
+      footer_link_saas: 'الشركات الناشئة SaaS',
+      footer_link_healthcare: 'الرعاية الصحية',
+      footer_link_education: 'التعليم الأكاديمي',
+      footer_link_docs: 'المستندات الفنية',
+      footer_link_api: 'مرجع واجهة الـ API',
+      footer_link_blog: 'المدونة البرمجية',
+      footer_link_help: 'مركز المساعدة الدعم',
+      footer_link_community: 'المجتمع والمنتدى',
+      footer_link_about: 'من نحن',
+      footer_link_careers: 'الوظائف المتاحة',
+      footer_link_contact: 'اتصل بنا',
+      footer_link_privacy: 'سياسة الخصوصية',
+      footer_link_terms: 'شروط الاستخدام',
+      footer_rights: '© 2026 جميع الحقوق محفوظة لشركة زين بوت.',
+      footer_made: 'صنع بدقة وعناية لعصر الذكاء الاصطناعي الجديد.'
     }
   };
 
@@ -542,6 +815,11 @@
         el.innerHTML = langTranslations[lang][key];
       }
     });
+
+    const demoChatInput = document.getElementById('demoChatInput');
+    if (demoChatInput) {
+      demoChatInput.placeholder = lang === 'ar' ? 'اكتب رسالتك هنا...' : 'Type your message...';
+    }
 
     updateGrowthSelectorOptions(lang);
     updateGrowthUI();
