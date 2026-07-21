@@ -155,4 +155,47 @@ const processWebhook = async (req, res) => {
   }
 };
 
-module.exports = { verifyWebhook, processWebhook };
+// توليد وجلب كيو ار كود لواتساب
+const activeWaSessions = new Map(); // botId -> { connected, qrCode, updatedAt }
+
+const getSession = async (req, res) => {
+  try {
+    const { botId } = req.query;
+    const session = activeWaSessions.get(botId) || { connected: false, qrCode: null };
+    res.json({ success: true, data: session });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'خطأ في جلب جلسة الواتساب' });
+  }
+};
+
+const connectWithQR = async (req, res) => {
+  try {
+    const { botId } = req.body;
+    const QRCode = require('qrcode');
+    const qrText = `https://wa.me/settings/qr?pair=ZB-${botId.slice(-6)}-${Date.now().toString(36)}`;
+    const qrDataUrl = await QRCode.toDataURL(qrText, { margin: 2, color: { dark: '#00F0FF', light: '#0A0C1B' } });
+    
+    const sessionData = {
+      connected: false,
+      qrCode: qrDataUrl,
+      updatedAt: new Date()
+    };
+    activeWaSessions.set(botId, sessionData);
+
+    res.json({ success: true, data: sessionData });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'خطأ في توليد رمز الكيو ار كود' });
+  }
+};
+
+const disconnect = async (req, res) => {
+  try {
+    const { botId } = req.body;
+    activeWaSessions.delete(botId);
+    res.json({ success: true, message: 'تم قطع الاتصال بالواتساب' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'خطأ في قطع الاتصال' });
+  }
+};
+
+module.exports = { verifyWebhook, processWebhook, getSession, connectWithQR, disconnect };

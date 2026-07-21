@@ -1212,8 +1212,197 @@
   document.querySelectorAll('.modal-close-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       faqModal.classList.remove('active');
+      const channelModal = document.getElementById('channelModal');
+      if (channelModal) channelModal.classList.remove('active');
     });
   });
+
+  // Global Channel Configuration Modal Handler
+  window.configureChannel = async function(type) {
+    if (!currentBot) return;
+    const modal = document.getElementById('channelModal');
+    const modalTitle = document.getElementById('channelModalTitle');
+    const modalBody = document.getElementById('channelModalBody');
+
+    if (!modal) return;
+    modal.classList.add('active');
+
+    if (type === 'whatsapp') {
+      modalTitle.innerHTML = `<i class="fab fa-whatsapp" style="color:var(--green)"></i> ${currentLanguage === 'ar' ? 'ربط واتساب عبر الرمز (QR Code)' : 'Connect WhatsApp via QR Code'}`;
+      modalBody.innerHTML = `
+        <div style="text-align:center; padding:16px;">
+          <div id="waQrContainer" style="background:rgba(255,255,255,0.03); padding:20px; border-radius:16px; border:1px solid var(--glass-border); display:inline-block; margin-bottom:16px;">
+            <div style="color:var(--cyan); font-weight:600;"><i class="fas fa-spinner fa-spin"></i> ${currentLanguage === 'ar' ? 'جاري توليد الرمز...' : 'Generating QR Code...'}</div>
+          </div>
+          <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px; line-height:1.6;">
+            ${currentLanguage === 'ar' ? 'افتح تطبيق الواتساب على هاتفك > الأجهزة المرتبطة > ربط جهاز > وقم بمسح الرمز أعلاه.' : 'Open WhatsApp on your phone > Linked Devices > Link a Device > Scan the QR code above.'}
+          </p>
+          <button id="waDisconnectBtn" class="btn btn-secondary btn-sm" style="border-color:var(--red); color:var(--red);">${currentLanguage === 'ar' ? 'إلغاء الربط' : 'Disconnect Session'}</button>
+        </div>
+      `;
+
+      try {
+        const res = await apiFetch('/api/whatsapp/connect-qr', {
+          method: 'POST',
+          body: JSON.stringify({ botId: currentBot._id })
+        });
+        if (res && res.success && res.data.qrCode) {
+          document.getElementById('waQrContainer').innerHTML = `<img src="${res.data.qrCode}" alt="WhatsApp QR Code" style="width:220px; height:220px; border-radius:12px; border:2px solid var(--cyan);" />`;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+
+      document.getElementById('waDisconnectBtn')?.addEventListener('click', async () => {
+        await apiFetch('/api/whatsapp/disconnect', { method: 'POST', body: JSON.stringify({ botId: currentBot._id }) });
+        modal.classList.remove('active');
+        loadChannelsData();
+      });
+    }
+
+    else if (type === 'facebook') {
+      modalTitle.innerHTML = `<i class="fab fa-facebook-messenger" style="color:var(--blue)"></i> ${currentLanguage === 'ar' ? 'ربط صفحة فيسبوك مباشرة' : 'Facebook Page Direct Connect'}`;
+      modalBody.innerHTML = `
+        <form id="fbDirectForm">
+          <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label>${currentLanguage === 'ar' ? 'مفتاح وصول الصفحة (Page Access Token)' : 'Page Access Token'}</label>
+              <button type="button" class="btn btn-secondary btn-sm info-hint-toggle" style="padding:2px 8px; font-size:11px; color:var(--cyan); border-color:var(--cyan);"><i class="fas fa-info-circle"></i> ${currentLanguage === 'ar' ? 'كيف أحصل عليه؟' : 'How to get?'}</button>
+            </div>
+            <div class="info-hint-box" style="display:none; background:rgba(0,240,255,0.06); border:1px solid var(--cyan); padding:10px 14px; border-radius:8px; font-size:12px; color:var(--text); margin-bottom:10px;">
+              ${currentLanguage === 'ar' ? '1. ادخل إلى developers.facebook.com وأنشئ تطبيقا.<br>2. اختر صفحة الفيسبوك الخاصة بك وولّد مفتاح وصول الصفحة (Page Access Token).<br>3. قم بنسخ المفتاح ولصقه في الحقل أدناه.' : '1. Go to developers.facebook.com and select your App.<br>2. Select your FB Page in Graph API Explorer & generate Page Access Token.<br>3. Copy & paste the token below.'}
+            </div>
+            <input type="password" id="fbTokenInput" class="form-control" placeholder="EAA..." value="${currentBot.facebookApiKey || ''}" required />
+          </div>
+          <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label>${currentLanguage === 'ar' ? 'معرّف الصفحة (Page ID)' : 'Page ID'}</label>
+            </div>
+            <input type="text" id="fbPageIdInput" class="form-control" placeholder="1023948574..." value="${currentBot.facebookPageId || ''}" required />
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+            <button type="button" class="btn btn-secondary btn-sm modal-close-btn">${currentLanguage === 'ar' ? 'إلغاء' : 'Cancel'}</button>
+            <button type="submit" class="btn btn-primary btn-sm">${currentLanguage === 'ar' ? 'حفظ الربط' : 'Save Connection'}</button>
+          </div>
+        </form>
+      `;
+
+      document.querySelector('.info-hint-toggle')?.addEventListener('click', () => {
+        const box = document.querySelector('.info-hint-box');
+        box.style.display = box.style.display === 'none' ? 'block' : 'none';
+      });
+
+      document.getElementById('fbDirectForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const facebookApiKey = document.getElementById('fbTokenInput').value.trim();
+        const facebookPageId = document.getElementById('fbPageIdInput').value.trim();
+
+        const res = await apiFetch(`/api/bots/${currentBot._id}/link-social`, {
+          method: 'PATCH',
+          body: JSON.stringify({ facebookApiKey, facebookPageId })
+        });
+        if (res && res.success) {
+          modal.classList.remove('active');
+          loadChannelsData();
+        }
+      });
+    }
+
+    else if (type === 'instagram') {
+      modalTitle.innerHTML = `<i class="fab fa-instagram" style="color:var(--purple-light)"></i> ${currentLanguage === 'ar' ? 'ربط حساب إنستجرام مباشرة' : 'Instagram Direct Connect'}`;
+      modalBody.innerHTML = `
+        <form id="igDirectForm">
+          <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label>${currentLanguage === 'ar' ? 'مفتاح وصول إنستجرام (Instagram Access Token)' : 'Instagram Access Token'}</label>
+              <button type="button" class="btn btn-secondary btn-sm info-hint-toggle" style="padding:2px 8px; font-size:11px; color:var(--cyan); border-color:var(--cyan);"><i class="fas fa-info-circle"></i> ${currentLanguage === 'ar' ? 'كيف أحصل عليه؟' : 'How to get?'}</button>
+            </div>
+            <div class="info-hint-box" style="display:none; background:rgba(0,240,255,0.06); border:1px solid var(--cyan); padding:10px 14px; border-radius:8px; font-size:12px; color:var(--text); margin-bottom:10px;">
+              ${currentLanguage === 'ar' ? '1. قم بربط حساب إنستجرام التجاري بصفحتك على فيسبوك.<br>2. انسخ مفتاح الوصول المستخرج من Meta Developer Console.<br>3. ضع المفتاح ومعرف الحساب في الحقول أدناه.' : '1. Link your IG Business account to your Facebook Page.<br>2. Generate Page/IG Access Token in Meta Developer Console.<br>3. Copy & paste the token and account ID below.'}
+            </div>
+            <input type="password" id="igTokenInput" class="form-control" placeholder="EAA..." value="${currentBot.instagramApiKey || ''}" required />
+          </div>
+          <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label>${currentLanguage === 'ar' ? 'معرّف حساب إنستجرام (Instagram Page ID)' : 'Instagram Page ID'}</label>
+            </div>
+            <input type="text" id="igPageIdInput" class="form-control" placeholder="178414..." value="${currentBot.instagramPageId || ''}" required />
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+            <button type="button" class="btn btn-secondary btn-sm modal-close-btn">${currentLanguage === 'ar' ? 'إلغاء' : 'Cancel'}</button>
+            <button type="submit" class="btn btn-primary btn-sm">${currentLanguage === 'ar' ? 'حفظ الربط' : 'Save Connection'}</button>
+          </div>
+        </form>
+      `;
+
+      document.querySelector('.info-hint-toggle')?.addEventListener('click', () => {
+        const box = document.querySelector('.info-hint-box');
+        box.style.display = box.style.display === 'none' ? 'block' : 'none';
+      });
+
+      document.getElementById('igDirectForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const instagramApiKey = document.getElementById('igTokenInput').value.trim();
+        const instagramPageId = document.getElementById('igPageIdInput').value.trim();
+
+        const res = await apiFetch(`/api/bots/${currentBot._id}/link-social`, {
+          method: 'PATCH',
+          body: JSON.stringify({ instagramApiKey, instagramPageId })
+        });
+        if (res && res.success) {
+          modal.classList.remove('active');
+          loadChannelsData();
+        }
+      });
+    }
+
+    else if (type === 'telegram') {
+      modalTitle.innerHTML = `<i class="fab fa-telegram" style="color:var(--cyan)"></i> ${currentLanguage === 'ar' ? 'ربط بوت تيليجرام مباشرة' : 'Telegram Bot Direct Connect'}`;
+      modalBody.innerHTML = `
+        <form id="tgDirectForm">
+          <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label>${currentLanguage === 'ar' ? 'توكن البوت (Telegram Bot Token)' : 'Telegram Bot Token'}</label>
+              <button type="button" class="btn btn-secondary btn-sm info-hint-toggle" style="padding:2px 8px; font-size:11px; color:var(--cyan); border-color:var(--cyan);"><i class="fas fa-info-circle"></i> ${currentLanguage === 'ar' ? 'كيف أحصل عليه؟' : 'How to get?'}</button>
+            </div>
+            <div class="info-hint-box" style="display:none; background:rgba(0,240,255,0.06); border:1px solid var(--cyan); padding:10px 14px; border-radius:8px; font-size:12px; color:var(--text); margin-bottom:10px;">
+              ${currentLanguage === 'ar' ? '1. افتح تطبيق تيليجرام وابحث عن الحساب الرسمي @BotFather.<br>2. أرسل الأمر /newbot واتبع التعليمات لإنشاء بوت جديد.<br>3. انسخ التوكن الناتج (مثل 123456:ABC-DEF...) وضعه أدناه.' : '1. Open Telegram and search for @BotFather.<br>2. Send /newbot and follow instructions to create a new bot.<br>3. Copy the token (e.g. 123456:ABC-DEF...) and paste it below.'}
+            </div>
+            <input type="text" id="tgTokenInput" class="form-control" placeholder="123456789:AA..." value="${currentBot.telegramUserId || ''}" required />
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+            <button type="button" class="btn btn-secondary btn-sm modal-close-btn">${currentLanguage === 'ar' ? 'إلغاء' : 'Cancel'}</button>
+            <button type="submit" class="btn btn-primary btn-sm">${currentLanguage === 'ar' ? 'حفظ الربط' : 'Save Connection'}</button>
+          </div>
+        </form>
+      `;
+
+      document.querySelector('.info-hint-toggle')?.addEventListener('click', () => {
+        const box = document.querySelector('.info-hint-box');
+        box.style.display = box.style.display === 'none' ? 'block' : 'none';
+      });
+
+      document.getElementById('tgDirectForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const telegramToken = document.getElementById('tgTokenInput').value.trim();
+
+        const res = await apiFetch(`/api/bots/${currentBot._id}/link-social`, {
+          method: 'PATCH',
+          body: JSON.stringify({ telegramUserId: telegramToken })
+        });
+        if (res && res.success) {
+          modal.classList.remove('active');
+          loadChannelsData();
+        }
+      });
+    }
+
+    modal.querySelectorAll('.modal-close-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        modal.classList.remove('active');
+      });
+    });
+  };
 
   // Logout Event click
   if (sidebarLogout) {

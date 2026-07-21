@@ -638,6 +638,11 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
       }
     }
 
+    if (conversation.isHumanHandling) {
+      logger.info('🛑 Human handoff is active for conversation; skipping bot auto-reply', { conversationId: conversation._id });
+      return null;
+    }
+
     const isAssistantBotId = botId === ASSISTANT_BOT_ID;
 
     // لو المساعد أرسل سياق بوت آخر في بداية الرسالة، نفصله ونستخدمه لجلب القواعد فقط

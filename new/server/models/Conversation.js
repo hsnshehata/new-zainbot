@@ -18,6 +18,7 @@ const conversationSchema = new mongoose.Schema({
   pendingDraftAt: { type: Date },
   mutedUntil: { type: Date },
   mutedBy: { type: String },
+  isHumanHandling: { type: Boolean, default: false },
 });
 
 // إضافة Index على messages.timestamp لتسريع الـ Sort

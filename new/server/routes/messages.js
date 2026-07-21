@@ -363,4 +363,21 @@ router.get("/download/:botId", authenticate, async (req, res) => {
   }
 });
 
+// مسار التبديل بين الرد الآلي والتفاعل البشري (Human Handoff)
+router.patch("/conversations/:id/handoff", authenticate, async (req, res) => {
+  try {
+    const { isHumanHandling } = req.body;
+    const conversation = await Conversation.findById(req.params.id);
+    if (!conversation) {
+      return res.status(404).json({ success: false, message: "المحادثة غير موجودة" });
+    }
+    conversation.isHumanHandling = Boolean(isHumanHandling);
+    await conversation.save();
+    res.json({ success: true, isHumanHandling: conversation.isHumanHandling });
+  } catch (err) {
+    logger.error("Error updating human handoff", { err });
+    res.status(500).json({ success: false, message: "خطأ في تعديل حالة المحادثة" });
+  }
+});
+
 module.exports = router;
