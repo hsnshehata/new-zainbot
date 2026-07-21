@@ -575,64 +575,67 @@
   <section class="pricing" id="pricing">
     <div class="container">
       <div class="section-header reveal">
-        <span class="section-eyebrow">Pricing</span>
-        <h2>Simple pricing that <span class="gradient-text">scales with you.</span></h2>
-        <p>Start free. Upgrade when you're ready. Cancel anytime.</p>
+        <span class="section-eyebrow" data-i18n="pricing_eyebrow">Pricing</span>
+        <h2 data-i18n="pricing_title">Simple pricing that <span class="gradient-text">scales with you.</span></h2>
+        <p data-i18n="pricing_desc">Start free. Upgrade when you're ready. Cancel anytime.</p>
       </div>
 
-      <div class="pricing-toggle reveal">
-        <span class="toggle-option active" id="monthlyLabel">Monthly</span>
-        <label class="pricing-switch" aria-label="Toggle billing period">
-          <input type="checkbox" id="pricingToggle" />
-          <span class="pricing-slider"></span>
-        </label>
-        <span class="toggle-option" id="yearlyLabel">Yearly <span class="save-badge">Save 20%</span></span>
-      </div>
-
-      <div class="pricing-grid reveal">
+      <div class="pricing-grid reveal" style="margin-top:40px;">
+        <!-- FREE PLAN -->
         <div class="pricing-card">
-          <div class="pricing-plan">Starter</div>
-          <div class="pricing-price"><span class="price" data-plan="starter">29</span><span class="price-period">/mo</span></div>
-          <p class="pricing-desc">Perfect for small teams getting started with AI.</p>
+          <div class="pricing-plan" data-i18n="plan_free_title">FREE</div>
+          <div class="pricing-price"><span class="price">0</span><span class="price-period" data-i18n="plan_free_period">EGP/mo</span></div>
+          <p class="pricing-desc" data-i18n="plan_free_desc">Free forever. You can add your own AI API keys. Includes a free trial key from us to reply to 25 messages/day (250/month).</p>
           <ul class="pricing-features">
-            <li><i class="fas fa-check"></i> 1 AI agent</li>
-            <li><i class="fas fa-check"></i> 2,000 conversations / mo</li>
-            <li><i class="fas fa-check"></i> 3 channels</li>
-            <li><i class="fas fa-check"></i> Email support</li>
-            <li><i class="fas fa-check"></i> Basic analytics</li>
+            <li data-i18n="plan_free_f1"><i class="fas fa-check"></i> 1 AI agent</li>
+            <li data-i18n="plan_free_f2"><i class="fas fa-check"></i> 3 channels</li>
+            <li data-i18n="plan_free_f3"><i class="fas fa-check"></i> Basic analytics</li>
           </ul>
-          <a href="#cta" class="btn btn-secondary btn-block">Get started</a>
+          <a href="/register.html" class="btn btn-secondary btn-block" data-i18n="plan_free_btn">Get started</a>
         </div>
 
+        <!-- GROWTH PLAN -->
         <div class="pricing-card pricing-popular">
-          <div class="popular-badge">Most popular</div>
-          <div class="pricing-plan">Growth</div>
-          <div class="pricing-price"><span class="price" data-plan="growth">79</span><span class="price-period">/mo</span></div>
-          <p class="pricing-desc">For growing businesses that need full power.</p>
+          <div class="popular-badge" data-i18n="plan_growth_popular">Most popular</div>
+          <div class="pricing-plan" data-i18n="plan_growth_title">Growth</div>
+          
+          <!-- Dropdown to select volume -->
+          <div style="margin: 10px 0 20px 0;">
+            <select id="growthPlanSelector" style="background:rgba(255,255,255,0.05); color:#fff; border:1px solid var(--glass-border); padding:10px 14px; border-radius:var(--radius-sm); font-weight:600; width:100%; cursor:pointer; font-family:'Inter', sans-serif; font-size:14px; outline:none; transition:var(--transition);">
+              <option value="150" data-convs="1,000" selected>150 EGP/mo (1k convs/mo)</option>
+              <option value="500" data-convs="10,000">500 EGP/mo (10k convs/mo)</option>
+              <option value="1200" data-convs="50,000">1200 EGP/mo (50k convs/mo)</option>
+            </select>
+          </div>
+
+          <div class="pricing-price"><span class="price" id="growthDisplayPrice">150</span><span class="price-period" data-i18n="plan_growth_period">EGP/mo</span></div>
+          <p class="pricing-desc" data-i18n="plan_growth_desc">For growing businesses that need power.</p>
           <ul class="pricing-features">
-            <li><i class="fas fa-check"></i> 5 AI agents</li>
-            <li><i class="fas fa-check"></i> 10,000 conversations / mo</li>
-            <li><i class="fas fa-check"></i> All channels</li>
-            <li><i class="fas fa-check"></i> Priority support</li>
-            <li><i class="fas fa-check"></i> Advanced analytics</li>
-            <li><i class="fas fa-check"></i> Custom AI training</li>
+            <li data-i18n="plan_growth_f1"><i class="fas fa-check"></i> 5 AI agents</li>
+            <li id="growthConvsLimitText"><i class="fas fa-check"></i> 1,000 conversations / mo</li>
+            <li data-i18n="plan_growth_f2"><i class="fas fa-check"></i> All channels</li>
+            <li data-i18n="plan_growth_f3"><i class="fas fa-check"></i> Priority support</li>
+            <li data-i18n="plan_growth_f4"><i class="fas fa-check"></i> Advanced analytics</li>
+            <li data-i18n="plan_growth_f5"><i class="fas fa-check"></i> more Custom AI training</li>
+            <li data-i18n="plan_growth_f6"><i class="fas fa-check"></i> Fail-safe backup API key failover</li>
           </ul>
-          <a href="#cta" class="btn btn-primary btn-block">Start free trial</a>
+          <a href="/register.html" class="btn btn-primary btn-block" data-i18n="plan_growth_btn">Start free trial</a>
         </div>
 
+        <!-- SCALE PLAN -->
         <div class="pricing-card">
-          <div class="pricing-plan">Scale</div>
-          <div class="pricing-price"><span class="price" data-plan="scale">199</span><span class="price-period">/mo</span></div>
-          <p class="pricing-desc">For high-volume teams that need everything.</p>
+          <div class="pricing-plan" data-i18n="plan_scale_title">Scale / Unlimited</div>
+          <div class="pricing-price"><span class="price">5000</span><span class="price-period" data-i18n="plan_scale_period">EGP/mo</span></div>
+          <p class="pricing-desc" data-i18n="plan_scale_desc">For high-volume teams that need everything.</p>
           <ul class="pricing-features">
-            <li><i class="fas fa-check"></i> Unlimited AI agents</li>
-            <li><i class="fas fa-check"></i> Unlimited conversations</li>
-            <li><i class="fas fa-check"></i> All channels + API access</li>
-            <li><i class="fas fa-check"></i> Dedicated support</li>
-            <li><i class="fas fa-check"></i> Custom integrations</li>
-            <li><i class="fas fa-check"></i> White-label option</li>
+            <li data-i18n="plan_scale_f1"><i class="fas fa-check"></i> Unlimited AI agents</li>
+            <li data-i18n="plan_scale_f2"><i class="fas fa-check"></i> Unlimited conversations / mo</li>
+            <li data-i18n="plan_scale_f3"><i class="fas fa-check"></i> All channels + API access</li>
+            <li data-i18n="plan_scale_f4"><i class="fas fa-check"></i> Dedicated support</li>
+            <li data-i18n="plan_scale_f5"><i class="fas fa-check"></i> Full GPT-5.6 model support</li>
+            <li data-i18n="plan_scale_f6"><i class="fas fa-check"></i> Custom integrations & white-label</li>
           </ul>
-          <a href="#cta" class="btn btn-secondary btn-block">Contact sales</a>
+          <a href="/register.html" class="btn btn-secondary btn-block" data-i18n="plan_scale_btn">Get started</a>
         </div>
       </div>
     </div>

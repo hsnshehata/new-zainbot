@@ -138,30 +138,7 @@
   if (counters.length) counterObserver.observe(counters[0].closest('.metrics'));
 
   /* ===== PRICING TOGGLE ===== */
-  const pricingToggle = document.getElementById('pricingToggle');
-  const monthlyLabel = document.getElementById('monthlyLabel');
-  const yearlyLabel = document.getElementById('yearlyLabel');
-  const prices = {
-    starter: { monthly: 29, yearly: 23 },
-    growth: { monthly: 79, yearly: 63 },
-    scale: { monthly: 199, yearly: 159 }
-  };
-
-  pricingToggle.addEventListener('change', () => {
-    const isYearly = pricingToggle.checked;
-    monthlyLabel.classList.toggle('active', !isYearly);
-    yearlyLabel.classList.toggle('active', isYearly);
-
-    document.querySelectorAll('.price').forEach(el => {
-      const plan = el.dataset.plan;
-      const newPrice = prices[plan][isYearly ? 'yearly' : 'monthly'];
-      el.style.opacity = '0';
-      setTimeout(() => {
-        el.textContent = newPrice;
-        el.style.opacity = '1';
-      }, 150);
-    });
-  });
+  // Pricing toggle removed in favor of EGP flat rates with Growth volume options.
 
   /* ===== TESTIMONIAL CAROUSEL ===== */
   const track = document.getElementById('testimonialTrack');
@@ -407,7 +384,38 @@
       hero_subtitle: 'Deploy intelligent AI agents that answer, sell, follow up, and learn from every customer conversation — across WhatsApp, Instagram, Messenger, your website, and online store. All from one beautifully simple platform.',
       hero_btn_primary: 'Build your AI agent <i class="fas fa-arrow-right"></i>',
       hero_btn_secondary: '<i class="fas fa-play"></i> Watch demo',
-      hero_proof: 'Trusted by <strong>2,400+</strong> growing teams'
+      hero_proof: 'Trusted by <strong>2,400+</strong> growing teams',
+      pricing_eyebrow: 'Pricing',
+      pricing_title: 'Simple pricing that <span class="gradient-text">scales with you.</span>',
+      pricing_desc: 'Start free. Upgrade when you\'re ready. Cancel anytime.',
+      plan_free_title: 'FREE',
+      plan_free_period: 'EGP/mo',
+      plan_free_desc: 'Free forever. You can add your own AI API keys. Includes a free trial key from us to reply to 25 messages/day (250/month).',
+      plan_free_f1: '<i class="fas fa-check"></i> 1 AI agent',
+      plan_free_f2: '<i class="fas fa-check"></i> 3 channels',
+      plan_free_f3: '<i class="fas fa-check"></i> Basic analytics',
+      plan_free_btn: 'Get started',
+      plan_growth_popular: 'Most popular',
+      plan_growth_title: 'Growth',
+      plan_growth_period: 'EGP/mo',
+      plan_growth_desc: 'For growing businesses that need power.',
+      plan_growth_f1: '<i class="fas fa-check"></i> 5 AI agents',
+      plan_growth_f2: '<i class="fas fa-check"></i> All channels',
+      plan_growth_f3: '<i class="fas fa-check"></i> Priority support',
+      plan_growth_f4: '<i class="fas fa-check"></i> Advanced analytics',
+      plan_growth_f5: '<i class="fas fa-check"></i> more Custom AI training',
+      plan_growth_f6: '<i class="fas fa-check"></i> Fail-safe backup API key failover',
+      plan_growth_btn: 'Start free trial',
+      plan_scale_title: 'Scale / Unlimited',
+      plan_scale_period: 'EGP/mo',
+      plan_scale_desc: 'For high-volume teams that need everything.',
+      plan_scale_f1: '<i class="fas fa-check"></i> Unlimited AI agents',
+      plan_scale_f2: '<i class="fas fa-check"></i> Unlimited conversations / mo',
+      plan_scale_f3: '<i class="fas fa-check"></i> All channels + API access',
+      plan_scale_f4: '<i class="fas fa-check"></i> Dedicated support',
+      plan_scale_f5: '<i class="fas fa-check"></i> Full GPT-5.6 model support',
+      plan_scale_f6: '<i class="fas fa-check"></i> Custom integrations & white-label',
+      plan_scale_btn: 'Get started'
     },
     ar: {
       nav_product: 'المنتج',
@@ -422,12 +430,94 @@
       hero_subtitle: 'قم بنشر عملاء أذكياء يجيبون، يبيعون، يتابعون، ويتعلمون من كل محادثة مع العميل — عبر واتساب، إنستجرام، مسنجر، موقعك الإلكتروني، ومتجرك الإلكتروني. كل ذلك من منصة واحدة بسيطة وجميلة.',
       hero_btn_primary: 'ابنِ عميلك الذكي <i class="fas fa-arrow-left"></i>',
       hero_btn_secondary: '<i class="fas fa-play"></i> شاهد العرض',
-      hero_proof: 'موضع ثقة أكثر من <strong>2,400</strong> فريق عمل متنامي'
+      hero_proof: 'موضع ثقة أكثر من <strong>2,400</strong> فريق عمل متنامي',
+      pricing_eyebrow: 'الأسعار',
+      pricing_title: 'باقات مرنة <span class="gradient-text">تنمو مع أعمالك.</span>',
+      pricing_desc: 'ابدأ مجاناً. قم بالترقية عندما تحتاج. إلغاء الاشتراك في أي وقت.',
+      plan_free_title: 'المجانية',
+      plan_free_period: 'جنيه/شهرياً',
+      plan_free_desc: 'مجاني للأبد. يمكنك إضافة مفاتيح الذكاء الاصطناعي الخاصة بك، مع توفير مفتاح تجريبي مجاني من عندنا للرد على 25 رسالة يومياً (بإجمالي 250 شهرياً).',
+      plan_free_f1: '<i class="fas fa-check"></i> عميل ذكاء اصطناعي واحد (1)',
+      plan_free_f2: '<i class="fas fa-check"></i> 3 قنوات تواصل',
+      plan_free_f3: '<i class="fas fa-check"></i> إحصائيات أساسية',
+      plan_free_btn: 'ابدأ الآن',
+      plan_growth_popular: 'الأكثر شعبية',
+      plan_growth_title: 'باقة النمو (Growth)',
+      plan_growth_period: 'جنيه/شهرياً',
+      plan_growth_desc: 'للشركات النامية التي تحتاج إلى قوة وميزات متقدمة.',
+      plan_growth_f1: '<i class="fas fa-check"></i> 5 عملاء ذكاء اصطناعي',
+      plan_growth_f2: '<i class="fas fa-check"></i> جميع قنوات التواصل',
+      plan_growth_f3: '<i class="fas fa-check"></i> دعم ذو أولوية',
+      plan_growth_f4: '<i class="fas fa-check"></i> تحليلات متقدمة',
+      plan_growth_f5: '<i class="fas fa-check"></i> تدريب مخصص إضافي للبوت',
+      plan_growth_f6: '<i class="fas fa-check"></i> إضافة مفتاح API احتياطي في حال نفاذ الباقة',
+      plan_growth_btn: 'ابدأ الفترة التجريبية',
+      plan_scale_title: 'باقة اللامحدود (Scale)',
+      plan_scale_period: 'جنيه/شهرياً',
+      plan_scale_desc: 'للشركات الكبرى ذات الاحتياجات الحجمية العالية.',
+      plan_scale_f1: '<i class="fas fa-check"></i> عدد غير محدود من العملاء',
+      plan_scale_f2: '<i class="fas fa-check"></i> محادثات شهرية غير محدودة',
+      plan_scale_f3: '<i class="fas fa-check"></i> كافة القنوات + صلاحية API',
+      plan_scale_f4: '<i class="fas fa-check"></i> دعم فني مخصص',
+      plan_scale_f5: '<i class="fas fa-check"></i> دعم كامل لنموذج GPT-5.6 الجديد',
+      plan_scale_f6: '<i class="fas fa-check"></i> ربط مخصص وبوابة White-label',
+      plan_scale_btn: 'ابدأ الآن'
     }
   };
 
   const langToggleBtn = document.getElementById('langToggle');
   let currentLang = localStorage.getItem('zainbot_lang') || 'en';
+
+  const growthPlanSelector = document.getElementById('growthPlanSelector');
+  const growthDisplayPrice = document.getElementById('growthDisplayPrice');
+  const growthConvsLimitText = document.getElementById('growthConvsLimitText');
+
+  function updateGrowthUI() {
+    if (!growthPlanSelector) return;
+    const value = growthPlanSelector.value;
+    const selectedOption = growthPlanSelector.options[growthPlanSelector.selectedIndex];
+    if (!selectedOption) return;
+    const convs = selectedOption.getAttribute('data-convs');
+    
+    if (growthDisplayPrice) {
+      growthDisplayPrice.textContent = value;
+    }
+    
+    if (growthConvsLimitText) {
+      if (currentLang === 'ar') {
+        growthConvsLimitText.innerHTML = `<i class="fas fa-check"></i> ${convs} محادثة / شهرياً`;
+      } else {
+        growthConvsLimitText.innerHTML = `<i class="fas fa-check"></i> ${convs} conversations / mo`;
+      }
+    }
+  }
+
+  function updateGrowthSelectorOptions(lang) {
+    if (!growthPlanSelector) return;
+    const optionsData = [
+      { value: '150', convs: '1,000', en: '150 EGP/mo (1k convs/mo)', ar: '150 جنيه/شهرياً (1,000 محادثة)' },
+      { value: '500', convs: '10,000', en: '500 EGP/mo (10k convs/mo)', ar: '500 جنيه/شهرياً (10,000 محادثة)' },
+      { value: '1200', convs: '50,000', en: '1200 EGP/mo (50k convs/mo)', ar: '1200 جنيه/شهرياً (50,000 محادثة)' }
+    ];
+    
+    const currentVal = growthPlanSelector.value;
+    growthPlanSelector.innerHTML = '';
+    
+    optionsData.forEach(opt => {
+      const optionEl = document.createElement('option');
+      optionEl.value = opt.value;
+      optionEl.setAttribute('data-convs', opt.convs);
+      optionEl.textContent = lang === 'ar' ? opt.ar : opt.en;
+      if (opt.value === currentVal) {
+        optionEl.selected = true;
+      }
+      growthPlanSelector.appendChild(optionEl);
+    });
+  }
+
+  if (growthPlanSelector) {
+    growthPlanSelector.addEventListener('change', updateGrowthUI);
+  }
 
   function applyLanguage(lang) {
     currentLang = lang;
@@ -450,6 +540,9 @@
         el.innerHTML = langTranslations[lang][key];
       }
     });
+
+    updateGrowthSelectorOptions(lang);
+    updateGrowthUI();
   }
 
   if (langToggleBtn) {
