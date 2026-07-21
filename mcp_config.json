@@ -7,6 +7,14 @@
         "chrome-devtools-mcp@latest",
         "--isolated"
       ]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "d:/VS PROJECTS"
+      ]
     }
   }
 }

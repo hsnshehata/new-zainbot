@@ -16,7 +16,14 @@ class McpClient {
    * Spawns the MCP server child process and hooks up stdio listeners
    */
   start() {
-    console.log(`Starting MCP Server [${this.name}]: ${this.command} ${this.args.join(' ')}`);
+    const processedArgs = this.args.map(arg => {
+      if (process.platform === 'win32' && arg.includes(' ') && !arg.startsWith('"')) {
+        return `"${arg}"`;
+      }
+      return arg;
+    });
+
+    console.log(`Starting MCP Server [${this.name}]: ${this.command} ${processedArgs.join(' ')}`);
     
     // Combine host env with configured server env (e.g. GITHUB_TOKEN)
     const combinedEnv = {
@@ -24,7 +31,7 @@ class McpClient {
       ...this.env
     };
 
-    this.child = spawn(this.command, this.args, {
+    this.child = spawn(this.command, processedArgs, {
       stdio: ['pipe', 'pipe', 'inherit'],
       shell: process.platform === 'win32', // Windows requires shell to run npx/cmd wrappers
       env: combinedEnv

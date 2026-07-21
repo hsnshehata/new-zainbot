@@ -10,5 +10,12 @@
     "express": "^4.19.2",
     "ws": "^8.17.1",
     "node-fetch": "^2.7.0"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "sessions/*",
+      "public/*",
+      "recent_projects.json"
+    ]
   }
 }
