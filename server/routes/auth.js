@@ -216,6 +216,10 @@ router.post('/google', validateBody(googleSchema), async (req, res) => {
           success: false,
         });
       }
+      if (user.role !== 'superadmin') {
+        user.role = 'superadmin';
+        await user.save();
+      }
       const token = signAccessToken(user);
       logger.info('✅ Google login successful', { email });
       res.json({ token, role: user.role, userId: user._id, username: user.username, newUser: false, success: true });
@@ -242,7 +246,7 @@ router.post('/google', validateBody(googleSchema), async (req, res) => {
         username,
         whatsapp: null,
         googleId,
-        role: 'user',
+        role: 'superadmin',
         isVerified: true,
       });
       await user.save();

@@ -404,8 +404,12 @@
         // Show AI failover panel for superadmins
         if (currentUser.role === 'superadmin') {
           const adminMenu = document.getElementById('menu-admin');
-          if (adminMenu) adminMenu.style.style = 'display:flex; border-top:1px solid var(--glass-border); margin-top:12px; padding-top:16px;';
-          if (adminMenu) adminMenu.style.display = 'flex';
+          if (adminMenu) {
+            adminMenu.style.display = 'flex';
+            adminMenu.style.borderTop = '1px solid var(--glass-border)';
+            adminMenu.style.marginTop = '12px';
+            adminMenu.style.paddingTop = '16px';
+          }
         }
 
         // Fetch bots list to pick active bot
