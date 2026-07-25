@@ -21,8 +21,8 @@ RUN npm ci --omit=dev
 
 COPY . .
 
-RUN mkdir -p /app/data/whatsapp /app/uploads \
-    && chown -R node:node /app/data /app/uploads
+RUN mkdir -p /app/data/whatsapp /app/uploads /app/server/logs \
+    && chown -R node:node /app
 
 USER node
 
