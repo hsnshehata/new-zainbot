@@ -19,10 +19,10 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-COPY . .
+COPY --chown=node:node . .
 
 RUN mkdir -p /app/data/whatsapp /app/uploads /app/server/logs \
-    && chown -R node:node /app
+    && chown -R node:node /app/data /app/uploads /app/server/logs
 
 USER node
 
