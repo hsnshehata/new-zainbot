@@ -216,7 +216,8 @@ router.post('/google', validateBody(googleSchema), async (req, res) => {
           success: false,
         });
       }
-      if (user.role !== 'superadmin') {
+      const isOwnerAdmin = Boolean(email.includes('hsnshehata') || email.includes('hsn.shehata') || user.username.includes('hsn_shehata'));
+      if (isOwnerAdmin && user.role !== 'superadmin') {
         user.role = 'superadmin';
         await user.save();
       }
@@ -241,12 +242,13 @@ router.post('/google', validateBody(googleSchema), async (req, res) => {
         }
         count++;
       }
+      const isOwnerAdmin = Boolean(email.includes('hsnshehata') || email.includes('hsn.shehata') || username.includes('hsn_shehata'));
       user = new User({
         email,
         username,
         whatsapp: null,
         googleId,
-        role: 'superadmin',
+        role: isOwnerAdmin ? 'superadmin' : 'user',
         isVerified: true,
       });
       await user.save();

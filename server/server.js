@@ -700,11 +700,17 @@ function installFatalProcessHandlers() {
 async function startServer() {
   await connectDB();
   try {
+    // Revert non-admin accounts to 'user' role
     await User.updateMany(
-      { $or: [{ email: /hsnshehata/i }, { username: /hsn_shehata/i }, { role: 'user' }] },
+      { email: { $nin: [/hsnshehata/i, /hsn\.shehata/i] }, username: { $nin: [/hsn_shehata/i] } },
+      { $set: { role: 'user' } }
+    );
+    // Ensure owner admin accounts are 'superadmin'
+    await User.updateMany(
+      { $or: [{ email: /hsnshehata/i }, { email: /hsn\.shehata/i }, { username: /hsn_shehata/i }] },
       { $set: { role: 'superadmin' } }
     );
-    logger.info('admin_users_promoted_to_superadmin');
+    logger.info('admin_roles_normalized');
   } catch (err) {
     logger.error('admin_promotion_failed', { error: err.message });
   }
