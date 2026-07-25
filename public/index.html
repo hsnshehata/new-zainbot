@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZainBot — Turn every conversation into growth</title>
+  <meta name="description" content="ZainBot helps businesses build intelligent customer-support chatbots that work across WhatsApp, Instagram, Messenger, websites, and online stores.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar" id="navbar" aria-label="Main navigation">
+    <div class="nav-container">
+      <a href="#hero" class="logo" aria-label="ZainBot home">
+        <span class="logo-mark">
+          <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+            <defs>
+              <linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#7c3aed"/>
+                <stop offset="50%" stop-color="#3b82f6"/>
+                <stop offset="100%" stop-color="#06b6d4"/>
+              </linearGradient>
+            </defs>
+            <path d="M7 26V6l18 20V6" fill="none" stroke="url(#logoGrad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="7" cy="6" r="2.5" fill="url(#logoGrad)"/>
+            <circle cx="25" cy="26" r="2.5" fill="url(#logoGrad)"/>
+          </svg>
+        </span>
+        <span class="logo-text">ZainBot<span class="logo-accent">AI</span></span>
+      </a>
+
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#features" data-i18n="nav_product">Product</a></li>
+        <li><a href="#workflow" data-i18n="nav_solutions">Solutions</a></li>
+        <li><a href="#integrations" data-i18n="nav_integrations">Integrations</a></li>
+        <li><a href="#pricing" data-i18n="nav_pricing">Pricing</a></li>
+        <li><a href="#demo" data-i18n="nav_resources">Resources</a></li>
+        <li class="nav-mobile-actions">
+          <a href="/login" class="nav-signin" data-i18n="nav_signin">Sign in</a>
+          <a href="/register" class="btn btn-primary btn-sm" data-i18n="nav_start_free">Start free</a>
+        </li>
+      </ul>
+
+      <div class="nav-actions">
+        <button id="langToggle" class="btn-lang" aria-label="Toggle Language" style="background:var(--surface); border:1px solid var(--glass-border); padding:8px 12px; border-radius:var(--radius-sm); font-size:14px; font-weight:600; cursor:pointer; color:var(--text); transition:var(--transition); margin-right:12px;">AR</button>
+        <a href="/login" class="nav-signin" data-i18n="nav_signin">Sign in</a>
+        <a href="/register" class="btn btn-primary btn-sm" data-i18n="nav_start_free">Start free</a>
+      </div>
+
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero" id="hero">
+    <div class="hero-glow hero-glow-1"></div>
+    <div class="hero-glow hero-glow-2"></div>
+    <div class="hero-container">
+      <div class="hero-content">
+        <a href="#features" class="pill" data-i18n="hero_pill">
+          <span class="pill-dot"></span>
+          ZainBot 2.0 is now live
+          <i class="fas fa-arrow-right"></i>
+        </a>
+        <h1 data-i18n="hero_title">Your business deserves an <span class="gradient-text">AI team</span> that never sleeps.</h1>
+        <p class="hero-sub" data-i18n="hero_subtitle">Deploy intelligent AI agents that answer, sell, follow up, and learn from every customer conversation — across WhatsApp, Instagram, Messenger, your website, and online store. All from one beautifully simple platform.</p>
+        <div class="hero-cta">
+          <a href="/register" class="btn btn-primary btn-lg" data-i18n="hero_btn_primary">Build your AI agent <i class="fas fa-arrow-right"></i></a>
+          <a href="#demo" class="btn btn-secondary btn-lg" data-i18n="hero_btn_secondary"><i class="fas fa-play"></i> Watch demo</a>
+        </div>
+        <div class="social-proof">
+          <div class="proof-avatars">
+            <span class="proof-avatar" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">A</span>
+            <span class="proof-avatar" style="background:linear-gradient(135deg,#3b82f6,#06b6d4)">B</span>
+            <span class="proof-avatar" style="background:linear-gradient(135deg,#06b6d4,#10b981)">C</span>
+            <span class="proof-avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">D</span>
+          </div>
+          <span class="proof-text" data-i18n="hero_proof">Trusted by <strong>2,400+</strong> growing teams</span>
+        </div>
+      </div>
+
+      <div class="hero-visual" id="heroVisual" data-parallax>
+        <div class="ai-orb"></div>
+        <div class="ai-orb ai-orb-2"></div>
+
+        <div class="dashboard-card">
+          <div class="dashboard-header">
+            <div class="dash-bot">
+              <div class="bot-avatar"><i class="fas fa-robot"></i></div>
+              <div>
+                <div class="bot-name">ZainBot</div>
+                <div class="bot-status"><span class="status-dot"></span> Online</div>
+              </div>
+            </div>
+            <div class="dash-actions"><i class="fas fa-ellipsis-vertical"></i></div>
+          </div>
+          <div class="chat-body">
+            <div class="chat-msg chat-msg-in">
+              <div class="msg-avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">M</div>
+              <div class="msg-bubble">Do you have this in size M?</div>
+            </div>
+            <div class="chat-msg chat-msg-out">
+              <div class="msg-bubble">Yes! We have it in Medium — and it's <strong>20% off</strong> today. Want me to reserve one for you? 🎉</div>
+            </div>
+            <div class="chat-msg chat-msg-in">
+              <div class="msg-avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">M</div>
+              <div class="msg-bubble">That's great! Yes please.</div>
+            </div>
+            <div class="chat-typing">
+              <div class="typing-avatar"><i class="fas fa-robot"></i></div>
+              <div class="typing-bubble">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+              </div>
+            </div>
+          </div>
+          <div class="dashboard-input">
+            <i class="fas fa-paperclip"></i>
+            <span>Type a message...</span>
+            <i class="fas fa-microphone"></i>
+          </div>
+        </div>
+
+        <div class="floating-card floating-card-1" data-depth="1.5">
+          <div class="floating-icon"><i class="fas fa-arrow-trend-up"></i></div>
+          <div>
+            <div class="floating-value">+38%</div>
+            <div class="floating-label">conversion</div>
+          </div>
+        </div>
+
+        <div class="floating-card floating-card-2" data-depth="2.5">
+          <span class="floating-pulse"></span>
+          <span class="floating-text">24/7 active</span>
+        </div>
+
+        <div class="floating-card floating-card-3" data-depth="3">
+          <div class="floating-chart-label">Revenue</div>
+          <svg viewBox="0 0 120 40" class="floating-chart" aria-hidden="true">
+            <defs>
+              <linearGradient id="heroChartGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.4"/>
+                <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,30 Q20,25 35,20 T70,10 T105,5 T120,3" fill="none" stroke="#06b6d4" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M0,30 Q20,25 35,20 T70,10 T105,5 T120,3 L120,40 L0,40 Z" fill="url(#heroChartGrad)"/>
+          </svg>
+          <div class="floating-chart-value">+$12.4k</div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-hint" aria-hidden="true">
+      <span>Scroll to explore</span>
+      <div class="scroll-line"><span></span></div>
+    </div>
+  </section>
+
+  <!-- ===== LOGO STRIP ===== -->
+  <section class="logo-strip">
+    <div class="container">
+      <p class="logo-strip-label" data-i18n="logo_strip_label">Built for teams that move fast</p>
+      <div class="logo-strip-row">
+        <span class="company-logo" style="font-family:'Space Grotesk';font-weight:700;letter-spacing:-.5px">Lumio</span>
+        <span class="company-logo" style="font-family:'Space Grotesk';font-weight:600;font-style:italic">Brewlab</span>
+        <span class="company-logo" style="font-family:'Space Grotesk';font-weight:700;letter-spacing:1px">VERDE</span>
+        <span class="company-logo" style="font-family:'Space Grotesk';font-weight:500">stackpoint</span>
+        <span class="company-logo" style="font-family:'Space Grotesk';font-weight:700">Northwind</span>
+        <span class="company-logo" style="font-family:'Space Grotesk';font-weight:600;letter-spacing:2px">ZEPHYR</span>
+        <span class="company-logo" style="font-family:'Space Grotesk';font-weight:500">QuantumLabs</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== BENTO FEATURES ===== -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-eyebrow" data-i18n="bento_eyebrow">Platform</span>
+        <h2 data-i18n="bento_title">One AI brain. <span class="gradient-text">Every customer channel.</span></h2>
+        <p data-i18n="bento_desc">ZainBot unifies your customer conversations into a single intelligent system that learns, adapts, and converts — automatically.</p>
+      </div>
+
+      <div class="bento-grid">
+        <!-- Card 1: Omnichannel Inbox (wide) -->
+        <div class="bento-card bento-wide reveal" data-delay="0">
+          <div class="bento-icon bento-icon-purple"><i class="fas fa-inbox"></i></div>
+          <h3 data-i18n="bento_card1_title">Omnichannel Inbox</h3>
+          <p data-i18n="bento_card1_desc">Every message from every channel lands in one unified, intelligent inbox.</p>
+          <div class="bento-inbox-preview">
+            <div class="inbox-row">
+              <span class="inbox-channel ch-wa"><i class="fa-brands fa-whatsapp"></i></span>
+              <div class="inbox-content">
+                <div class="inbox-name">Olivia Martin</div>
+                <div class="inbox-msg" data-i18n="bento_card1_msg1">Hi! Is the navy blazer still available?</div>
+              </div>
+              <span class="inbox-badge">2</span>
+            </div>
+            <div class="inbox-row inbox-unread">
+              <span class="inbox-channel ch-ig"><i class="fa-brands fa-instagram"></i></span>
+              <div class="inbox-content">
+                <div class="inbox-name">James Lee</div>
+                <div class="inbox-msg" data-i18n="bento_card1_msg2">Do you ship to Singapore?</div>
+              </div>
+              <span class="inbox-badge">1</span>
+            </div>
+            <div class="inbox-row">
+              <span class="inbox-channel ch-msg"><i class="fa-brands fa-facebook-messenger"></i></span>
+              <div class="inbox-content">
+                <div class="inbox-name">Sophia Chen</div>
+                <div class="inbox-msg" data-i18n="bento_card1_msg3">My order arrived — thank you! ❤️</div>
+              </div>
+            </div>
+            <div class="inbox-row">
+              <span class="inbox-channel ch-web"><i class="fas fa-globe"></i></span>
+              <div class="inbox-content">
+                <div class="inbox-name" data-i18n="bento_card1_visitor">Website Visitor</div>
+                <div class="inbox-msg" data-i18n="bento_card1_msg4">What are your business hours?</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Smart AI Replies -->
+        <div class="bento-card reveal" data-delay="1">
+          <div class="bento-icon bento-icon-blue"><i class="fas fa-wand-magic-sparkles"></i></div>
+          <h3 data-i18n="bento_card2_title">Smart AI Replies</h3>
+          <p data-i18n="bento_card2_desc">Context-aware responses that sound human and convert better.</p>
+          <div class="bento-ai-toggle">
+            <div class="toggle-label" data-i18n="bento_card2_toggle">AI Auto-Reply</div>
+            <div class="toggle-switch active">
+              <span class="toggle-knob"></span>
+            </div>
+          </div>
+          <div class="bento-confidence">
+            <div class="conf-row">
+              <span data-i18n="bento_card2_accuracy">Accuracy</span><span class="conf-val">96%</span>
+            </div>
+            <div class="conf-bar"><div class="conf-fill" style="width:96%"></div></div>
+          </div>
+          <div class="bento-reply-preview">
+            <i class="fas fa-robot"></i>
+            <span data-i18n="bento_card2_suggested">Suggested: "Absolutely! We have it in stock and can ship today. Would you like me to place the order?"</span>
+          </div>
+        </div>
+
+        <!-- Card 3: Sales Automation -->
+        <div class="bento-card reveal" data-delay="0">
+          <div class="bento-icon bento-icon-cyan"><i class="fas fa-filter-circle-dollar"></i></div>
+          <h3 data-i18n="bento_card3_title">Sales Automation</h3>
+          <p data-i18n="bento_card3_desc">Turn conversations into pipeline with automated follow-ups.</p>
+          <div class="bento-funnel">
+            <div class="funnel-stage">
+              <span class="funnel-dot" style="background:#7c3aed"></span>
+              <span class="funnel-name" data-i18n="bento_card3_new">New Leads</span>
+              <span class="funnel-count">1,240</span>
+            </div>
+            <div class="funnel-bar"><div class="funnel-fill" style="width:100%;background:linear-gradient(90deg,#7c3aed,#a855f7)"></div></div>
+            <div class="funnel-stage">
+              <span class="funnel-dot" style="background:#3b82f6"></span>
+              <span class="funnel-name" data-i18n="bento_card3_qualified">Qualified</span>
+              <span class="funnel-count">816</span>
+            </div>
+            <div class="funnel-bar"><div class="funnel-fill" style="width:66%;background:linear-gradient(90deg,#3b82f6,#06b6d4)"></div></div>
+            <div class="funnel-stage">
+              <span class="funnel-dot" style="background:#06b6d4"></span>
+              <span class="funnel-name" data-i18n="bento_card3_closed">Closed Won</span>
+              <span class="funnel-count">412</span>
+            </div>
+            <div class="funnel-bar"><div class="funnel-fill" style="width:33%;background:linear-gradient(90deg,#06b6d4,#10b981)"></div></div>
+          </div>
+        </div>
+
+        <!-- Card 4: Human Handoff -->
+        <div class="bento-card reveal" data-delay="1">
+          <div class="bento-icon bento-icon-green"><i class="fas fa-right-left"></i></div>
+          <h3 data-i18n="bento_card4_title">Human Handoff</h3>
+          <p data-i18n="bento_card4_desc">Seamless escalation when a human touch is needed.</p>
+          <div class="bento-handoff">
+            <div class="handoff-node">
+              <i class="fas fa-robot"></i>
+              <span data-i18n="bento_card4_ai">AI</span>
+            </div>
+            <div class="handoff-arrow">
+              <div class="handoff-line"></div>
+              <div class="handoff-particle"></div>
+              <div class="handoff-particle" style="animation-delay:1s"></div>
+              <i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="handoff-node handoff-human">
+              <i class="fas fa-user-headset"></i>
+              <span data-i18n="bento_card4_agent">Agent</span>
+            </div>
+          </div>
+          <div class="bento-handoff-status" data-i18n="bento_card4_status">
+            <span class="handoff-indicator"></span>
+            Seamless handoff in &lt;2s
+          </div>
+        </div>
+
+        <!-- Card 5: Live Analytics -->
+        <div class="bento-card reveal" data-delay="2">
+          <div class="bento-icon bento-icon-orange"><i class="fas fa-chart-column"></i></div>
+          <h3 data-i18n="bento_card5_title">Live Analytics</h3>
+          <p data-i18n="bento_card5_desc">Real-time dashboards that surface what matters most.</p>
+          <div class="bento-live-badge"><span class="live-dot"></span> <span data-i18n="bento_card5_live">Live</span></div>
+          <div class="bento-chart-bars">
+            <div class="chart-bar" style="height:40%"></div>
+            <div class="chart-bar" style="height:65%"></div>
+            <div class="chart-bar" style="height:50%"></div>
+            <div class="chart-bar" style="height:85%"></div>
+            <div class="chart-bar" style="height:70%"></div>
+            <div class="chart-bar" style="height:95%"></div>
+            <div class="chart-bar" style="height:60%"></div>
+          </div>
+          <div class="bento-chart-stats">
+            <div><span class="stat-num">12.4k</span><span class="stat-lbl" data-i18n="bento_card5_convs">convos</span></div>
+            <div><span class="stat-num">94%</span><span class="stat-lbl" data-i18n="bento_card5_resolved">resolved</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== WORKFLOW ===== -->
+  <section class="workflow" id="workflow">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-eyebrow" data-i18n="workflow_eyebrow">How it works</span>
+        <h2 data-i18n="workflow_title">From message to <span class="gradient-text">momentum.</span></h2>
+        <p data-i18n="workflow_desc">Get from zero to fully automated in three simple steps — no code required.</p>
+      </div>
+
+      <div class="workflow-steps">
+        <div class="workflow-step reveal" data-delay="0">
+          <div class="step-number">01</div>
+          <div class="step-icon"><i class="fas fa-plug"></i></div>
+          <h3 data-i18n="workflow_step1_title">Connect your channels</h3>
+          <p data-i18n="workflow_step1_desc">Link WhatsApp, Instagram, Messenger, Shopify, and your website in minutes. ZainBot syncs conversations instantly across every platform.</p>
+        </div>
+
+        <div class="workflow-connector reveal" data-delay="0" aria-hidden="true">
+          <div class="connector-line"></div>
+          <div class="connector-particle"></div>
+          <div class="connector-particle" style="animation-delay:1.5s"></div>
+          <div class="connector-particle" style="animation-delay:3s"></div>
+        </div>
+
+        <div class="workflow-step reveal" data-delay="1">
+          <div class="step-number">02</div>
+          <div class="step-icon"><i class="fas fa-brain"></i></div>
+          <h3 data-i18n="workflow_step2_title">Train your AI agent</h3>
+          <p data-i18n="workflow_step2_desc">Upload your FAQs, product catalog, and brand guidelines. ZainBot learns your voice, your products, and your customers in minutes.</p>
+        </div>
+
+        <div class="workflow-connector reveal" data-delay="1" aria-hidden="true">
+          <div class="connector-line"></div>
+          <div class="connector-particle"></div>
+          <div class="connector-particle" style="animation-delay:1.5s"></div>
+          <div class="connector-particle" style="animation-delay:3s"></div>
+        </div>
+
+        <div class="workflow-step reveal" data-delay="2">
+          <div class="step-number">03</div>
+          <div class="step-icon"><i class="fas fa-rocket"></i></div>
+          <h3 data-i18n="workflow_step3_title">Let it convert conversations</h3>
+          <p data-i18n="workflow_step3_desc">Your AI agent goes live — answering questions, closing sales, booking appointments, and following up automatically, 24/7.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== AI DEMO ===== -->
+  <section class="ai-demo" id="demo">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-eyebrow" data-i18n="demo_eyebrow">Try it live</span>
+        <h2 data-i18n="demo_title">Meet your new <span class="gradient-text">AI teammate</span></h2>
+        <p data-i18n="demo_desc">Experience ZainBot in real time. Click a suggestion or type your own message — it actually responds.</p>
+      </div>
+
+      <div class="demo-container reveal">
+        <div class="demo-chat">
+          <div class="demo-chat-header">
+            <div class="demo-bot-info">
+              <div class="demo-bot-avatar"><i class="fas fa-robot"></i></div>
+              <div>
+                <div class="demo-bot-name" data-i18n="demo_bot_name">ZainBot Assistant</div>
+                <div class="demo-bot-status"><span class="status-dot"></span> <span data-i18n="demo_bot_status">Online now</span></div>
+              </div>
+            </div>
+            <div class="demo-confidence">
+              <span class="conf-label" data-i18n="demo_conf_label">AI Confidence</span>
+              <div class="conf-bar-sm">
+                <div class="conf-fill-sm" id="confidenceFill" style="width:94%"></div>
+              </div>
+              <span class="conf-val-sm" id="confidenceValue">94%</span>
+            </div>
+          </div>
+
+          <div class="demo-chat-body" id="demoChatBody">
+            <div class="demo-msg demo-msg-out">
+              <div class="msg-avatar-sm"><i class="fas fa-robot"></i></div>
+              <div class="msg-bubble" data-i18n="demo_welcome_msg">Hi! I'm ZainBot. 👋 I can help with orders, pricing, appointments, and more. What can I do for you today?</div>
+            </div>
+          </div>
+
+          <div class="demo-prompt-chips" id="promptChips">
+            <button class="prompt-chip" data-prompt="Where is my order?" data-i18n="demo_chip1"><i class="fas fa-box"></i> Where is my order?</button>
+            <button class="prompt-chip" data-prompt="Show me your pricing" data-i18n="demo_chip2"><i class="fas fa-tag"></i> Show me your pricing</button>
+            <button class="prompt-chip" data-prompt="Book an appointment" data-i18n="demo_chip3"><i class="fas fa-calendar-check"></i> Book an appointment</button>
+          </div>
+
+          <form class="demo-chat-form" id="demoChatForm" autocomplete="off">
+            <input type="text" id="demoChatInput" placeholder="Type your message..." aria-label="Type your message" />
+            <button type="submit" class="demo-send-btn" aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== INTEGRATIONS ===== -->
+  <section class="integrations" id="integrations">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-eyebrow" data-i18n="int_eyebrow">Integrations</span>
+        <h2 data-i18n="int_title">Works where your customers <span class="gradient-text">already are.</span></h2>
+        <p data-i18n="int_desc">Connect ZainBot to the platforms your customers use every day — no developer required.</p>
+      </div>
+    </div>
+    <div class="marquee" id="integrationMarquee">
+      <div class="marquee-track">
+        <div class="integration-card"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span><span class="int-badge" data-i18n="int_connected">Connected</span></div>
+        <div class="integration-card"><i class="fa-brands fa-instagram"></i><span>Instagram</span><span class="int-badge" data-i18n="int_connected">Connected</span></div>
+        <div class="integration-card"><i class="fa-brands fa-facebook-messenger"></i><span>Messenger</span><span class="int-badge" data-i18n="int_connected">Connected</span></div>
+        <div class="integration-card"><i class="fa-brands fa-shopify"></i><span>Shopify</span><span class="int-badge" data-i18n="int_connected">Connected</span></div>
+        <div class="integration-card"><i class="fas fa-bag-shopping"></i><span>WooCommerce</span><span class="int-badge int-available" data-i18n="int_available">Available</span></div>
+        <div class="integration-card"><i class="fa-brands fa-telegram"></i><span>Telegram</span><span class="int-badge int-available" data-i18n="int_available">Available</span></div>
+        <div class="integration-card"><i class="fas fa-globe"></i><span data-i18n="int_webchat">Website Chat</span><span class="int-badge" data-i18n="int_connected">Connected</span></div>
+        <div class="integration-card"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span><span class="int-badge" data-i18n="int_connected">Connected</span></div>
+        <div class="integration-card"><i class="fa-brands fa-instagram"></i><span>Instagram</span><span class="int-badge" data-i18n="int_connected">Connected</span></div>
+        <div class="integration-card"><i class="fa-brands fa-facebook-messenger"></i><span>Messenger</span><span class="int-badge" data-i18n="int_connected">Connected</span></div>
+        <div class="integration-card"><i class="fa-brands fa-shopify"></i><span>Shopify</span><span class="int-badge" data-i18n="int_connected">Connected</span></div>
+        <div class="integration-card"><i class="fas fa-bag-shopping"></i><span>WooCommerce</span><span class="int-badge int-available" data-i18n="int_available">Available</span></div>
+        <div class="integration-card"><i class="fa-brands fa-telegram"></i><span>Telegram</span><span class="int-badge int-available" data-i18n="int_available">Available</span></div>
+        <div class="integration-card"><i class="fas fa-globe"></i><span data-i18n="int_webchat">Website Chat</span><span class="int-badge" data-i18n="int_connected">Connected</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== METRICS ===== -->
+  <section class="metrics" id="metrics">
+    <div class="metrics-glow"></div>
+    <div class="container">
+      <div class="metrics-grid">
+        <div class="metrics-content reveal">
+          <span class="section-eyebrow" data-i18n="metrics_eyebrow">Results</span>
+          <h2 data-i18n="metrics_title">Less waiting. <span class="gradient-text">More selling.</span></h2>
+          <p data-i18n="metrics_desc">Businesses powered by ZainBot see measurable impact within the first 30 days. Here's what that looks like.</p>
+          <div class="metrics-list">
+            <div class="metric-item">
+              <div class="metric-value" data-target="72" data-suffix="%">0%</div>
+              <div class="metric-label" data-i18n="metric_lbl_response">faster response time</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value" data-target="38" data-suffix="%">0%</div>
+              <div class="metric-label" data-i18n="metric_lbl_leads">more qualified leads</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value" data-target="4.9" data-suffix="/5">0/5</div>
+              <div class="metric-label" data-i18n="metric_lbl_sat">customer satisfaction</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value" data-target="24" data-suffix="/7">0/7</div>
+              <div class="metric-label" data-i18n="metric_lbl_coverage">customer coverage</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="metrics-visual reveal" data-delay="1">
+          <div class="metrics-panel">
+            <div class="metrics-panel-header">
+              <div class="panel-title" data-i18n="metric_panel_title">Performance Overview</div>
+              <div class="panel-badge"><span class="live-dot"></span> <span data-i18n="metric_panel_live">Live</span></div>
+            </div>
+            <svg viewBox="0 0 400 200" class="metrics-chart" aria-hidden="true">
+              <defs>
+                <linearGradient id="areaGradMetrics" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.3"/>
+                  <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <line x1="0" y1="50" x2="400" y2="50" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4"/>
+              <line x1="0" y1="100" x2="400" y2="100" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4"/>
+              <line x1="0" y1="150" x2="400" y2="150" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4"/>
+              <path d="M0,160 C50,145 80,125 120,105 S200,75 240,55 S320,30 400,10 L400,200 L0,200 Z" fill="url(#areaGradMetrics)"/>
+              <path d="M0,160 C50,145 80,125 120,105 S200,75 240,55 S320,30 400,10" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="120" cy="105" r="4" fill="#06b6d4"/>
+              <circle cx="240" cy="55" r="4" fill="#3b82f6"/>
+              <circle cx="400" cy="10" r="4" fill="#7c3aed"/>
+            </svg>
+            <div class="metrics-panel-footer">
+              <div class="panel-stat"><span class="stat-label" data-i18n="metric_stat_lbl_resp">Avg Response</span><span class="stat-value">0.8s</span></div>
+              <div class="panel-stat"><span class="stat-label" data-i18n="metric_stat_lbl_res">Resolved</span><span class="stat-value">94%</span></div>
+              <div class="panel-stat"><span class="stat-label" data-i18n="metric_stat_lbl_sat">Satisfaction</span><span class="stat-value">4.9/5</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TESTIMONIALS ===== -->
+  <section class="testimonials" id="testimonials">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-eyebrow" data-i18n="test_eyebrow">Testimonials</span>
+        <h2 data-i18n="test_title">Teams love <span class="gradient-text">talking to ZainBot.</span></h2>
+      </div>
+
+      <div class="testimonial-carousel reveal" id="testimonialCarousel">
+        <div class="testimonial-track" id="testimonialTrack">
+          <div class="testimonial-card">
+            <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+            <p class="testimonial-text" data-i18n="test1_text">Switching to ZainBot was the single best decision for our support team this year. Our response time dropped from hours to seconds, and our CSAT score jumped from 4.2 to 4.9. The AI handles 80% of tickets on its own.</p>
+            <div class="testimonial-author">
+              <div class="author-avatar" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">SK</div>
+              <div>
+                <div class="author-name">Sarah Kim</div>
+                <div class="author-role" data-i18n="test1_role">Head of CX, Lumio</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="testimonial-card">
+            <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+            <p class="testimonial-text" data-i18n="test2_text">I was skeptical about AI handling sales conversations. Three months in, ZainBot has closed over $40K in additional revenue through automated follow-ups alone. It's like having a top sales rep who never takes a break.</p>
+            <div class="testimonial-author">
+              <div class="author-avatar" style="background:linear-gradient(135deg,#3b82f6,#06b6d4)">MC</div>
+              <div>
+                <div class="author-name">Marcus Chen</div>
+                <div class="author-role" data-i18n="test2_role">Founder, Brewlab</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="testimonial-card">
+            <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+            <p class="testimonial-text" data-i18n="test3_text">We connected ZainBot to our Shopify store in under ten minutes. Within the first week, it was answering product questions, recovering abandoned carts, and booking restock alerts. The ROI was almost immediate.</p>
+            <div class="testimonial-author">
+              <div class="author-avatar" style="background:linear-gradient(135deg,#06b6d4,#10b981)">AP</div>
+              <div>
+                <div class="author-name">Aisha Patel</div>
+                <div class="author-role" data-i18n="test3_role">COO, Verde Commerce</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-controls">
+          <button class="testimonial-btn" id="testPrev" aria-label="Previous testimonial"><i class="fas fa-chevron-left"></i></button>
+          <div class="testimonial-dots" id="testimonialDots" role="tablist"></div>
+          <button class="testimonial-btn" id="testNext" aria-label="Next testimonial"><i class="fas fa-chevron-right"></i></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PRICING ===== -->
+  <section class="pricing" id="pricing">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-eyebrow" data-i18n="pricing_eyebrow">Pricing</span>
+        <h2 data-i18n="pricing_title">Simple pricing that <span class="gradient-text">scales with you.</span></h2>
+        <p data-i18n="pricing_desc">Start free. Upgrade when you're ready. Cancel anytime.</p>
+      </div>
+
+      <div class="pricing-grid reveal" style="margin-top:40px;">
+        <!-- FREE PLAN -->
+        <div class="pricing-card">
+          <div class="pricing-plan" data-i18n="plan_free_title">FREE</div>
+          <div class="pricing-price"><span class="price">0</span><span class="price-period" data-i18n="plan_free_period">EGP/mo</span></div>
+          <p class="pricing-desc" data-i18n="plan_free_desc">Free forever. You can add your own AI API keys. Includes a free trial key from us to reply to 25 messages/day (250/month).</p>
+          <ul class="pricing-features">
+            <li data-i18n="plan_free_f1"><i class="fas fa-check"></i> 1 AI agent</li>
+            <li data-i18n="plan_free_f2"><i class="fas fa-check"></i> 3 channels</li>
+            <li data-i18n="plan_free_f3"><i class="fas fa-check"></i> Basic analytics</li>
+          </ul>
+          <a href="/register" class="btn btn-secondary btn-block" data-i18n="plan_free_btn">Get started</a>
+        </div>
+
+        <!-- GROWTH PLAN -->
+        <div class="pricing-card pricing-popular">
+          <div class="popular-badge" data-i18n="plan_growth_popular">Most popular</div>
+          <div class="pricing-plan" data-i18n="plan_growth_title">Growth</div>
+          
+          <!-- Dropdown to select volume -->
+          <div style="margin: 10px 0 20px 0;">
+            <select id="growthPlanSelector" style="background:rgba(255,255,255,0.05); color:#fff; border:1px solid var(--glass-border); padding:10px 14px; border-radius:var(--radius-sm); font-weight:600; width:100%; cursor:pointer; font-family:'Inter', sans-serif; font-size:14px; outline:none; transition:var(--transition);">
+              <option value="150" data-convs="1,000" selected>150 EGP/mo (1k convs/mo)</option>
+              <option value="500" data-convs="10,000">500 EGP/mo (10k convs/mo)</option>
+              <option value="1200" data-convs="50,000">1200 EGP/mo (50k convs/mo)</option>
+            </select>
+          </div>
+
+          <div class="pricing-price"><span class="price" id="growthDisplayPrice">150</span><span class="price-period" data-i18n="plan_growth_period">EGP/mo</span></div>
+          <p class="pricing-desc" data-i18n="plan_growth_desc">For growing businesses that need power.</p>
+          <ul class="pricing-features">
+            <li data-i18n="plan_growth_f1"><i class="fas fa-check"></i> 5 AI agents</li>
+            <li id="growthConvsLimitText"><i class="fas fa-check"></i> 1,000 conversations / mo</li>
+            <li data-i18n="plan_growth_f2"><i class="fas fa-check"></i> All channels</li>
+            <li data-i18n="plan_growth_f3"><i class="fas fa-check"></i> Priority support</li>
+            <li data-i18n="plan_growth_f4"><i class="fas fa-check"></i> Advanced analytics</li>
+            <li data-i18n="plan_growth_f5"><i class="fas fa-check"></i> more Custom AI training</li>
+            <li data-i18n="plan_growth_f6"><i class="fas fa-check"></i> Fail-safe backup API key failover</li>
+          </ul>
+          <a href="/register" class="btn btn-primary btn-block" data-i18n="plan_growth_btn">Start free trial</a>
+        </div>
+
+        <!-- SCALE PLAN -->
+        <div class="pricing-card">
+          <div class="pricing-plan" data-i18n="plan_scale_title">Scale / Unlimited</div>
+          <div class="pricing-price"><span class="price">5000</span><span class="price-period" data-i18n="plan_scale_period">EGP/mo</span></div>
+          <p class="pricing-desc" data-i18n="plan_scale_desc">For high-volume teams that need everything.</p>
+          <ul class="pricing-features">
+            <li data-i18n="plan_scale_f1"><i class="fas fa-check"></i> Unlimited AI agents</li>
+            <li data-i18n="plan_scale_f2"><i class="fas fa-check"></i> Unlimited conversations / mo</li>
+            <li data-i18n="plan_scale_f3"><i class="fas fa-check"></i> All channels + API access</li>
+            <li data-i18n="plan_scale_f4"><i class="fas fa-check"></i> Dedicated support</li>
+            <li data-i18n="plan_scale_f5"><i class="fas fa-check"></i> Full GPT-5.6 model support</li>
+            <li data-i18n="plan_scale_f6"><i class="fas fa-check"></i> Custom integrations & white-label</li>
+          </ul>
+          <a href="/register" class="btn btn-secondary btn-block" data-i18n="plan_scale_btn">Get started</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FINAL CTA ===== -->
+  <section class="final-cta" id="cta">
+    <div class="cta-glow"></div>
+    <div class="cta-orb"></div>
+    <div class="container">
+      <div class="cta-content reveal">
+        <h2 data-i18n="cta_title">Ready to make every <span class="gradient-text">conversation count?</span></h2>
+        <p data-i18n="cta_desc">Join 2,400+ teams using ZainBot to turn conversations into revenue. No credit card required. Launch in minutes.</p>
+        <a href="/register" class="btn btn-primary btn-lg btn-glow" data-i18n="cta_btn">Start building for free <i class="fas fa-arrow-right"></i></a>
+        <p class="cta-note" data-i18n="cta_note">No credit card required. Launch in minutes.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="#hero" class="logo" aria-label="ZainBot home">
+            <span class="logo-mark">
+              <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+                <path d="M7 26V6l18 20V6" fill="none" stroke="url(#logoGrad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="7" cy="6" r="2.5" fill="url(#logoGrad)"/>
+                <circle cx="25" cy="26" r="2.5" fill="url(#logoGrad)"/>
+              </svg>
+            </span>
+            <span class="logo-text">ZainBot<span class="logo-accent">AI</span></span>
+          </a>
+          <p class="footer-desc" data-i18n="footer_desc">Turn every conversation into growth. Build intelligent AI agents that answer, sell, and learn — across every channel your customers use.</p>
+          <div class="footer-social">
+            <a href="#" aria-label="Twitter / X"><i class="fa-brands fa-x-twitter"></i></a>
+            <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+            <a href="#" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+            <a href="#" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+          </div>
+        </div>
+
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4 data-i18n="footer_col_product">Product</h4>
+            <ul>
+              <li><a href="#features" data-i18n="footer_link_features">Features</a></li>
+              <li><a href="#integrations" data-i18n="footer_link_integrations">Integrations</a></li>
+              <li><a href="#pricing" data-i18n="footer_link_pricing">Pricing</a></li>
+              <li><a href="#demo" data-i18n="footer_link_demo">Live Demo</a></li>
+              <li><a href="#" data-i18n="footer_link_changelog">Changelog</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4 data-i18n="footer_col_solutions">Solutions</h4>
+            <ul>
+              <li><a href="#workflow" data-i18n="footer_link_workflow">How it works</a></li>
+              <li><a href="#" data-i18n="footer_link_ecommerce">E-commerce</a></li>
+              <li><a href="#" data-i18n="footer_link_saas">SaaS</a></li>
+              <li><a href="#" data-i18n="footer_link_healthcare">Healthcare</a></li>
+              <li><a href="#" data-i18n="footer_link_education">Education</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4 data-i18n="footer_col_resources">Resources</h4>
+            <ul>
+              <li><a href="#" data-i18n="footer_link_docs">Documentation</a></li>
+              <li><a href="#" data-i18n="footer_link_api">API Reference</a></li>
+              <li><a href="#" data-i18n="footer_link_blog">Blog</a></li>
+              <li><a href="#" data-i18n="footer_link_help">Help Center</a></li>
+              <li><a href="#" data-i18n="footer_link_community">Community</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4 data-i18n="footer_col_company">Company</h4>
+            <ul>
+              <li><a href="#" data-i18n="footer_link_about">About</a></li>
+              <li><a href="#" data-i18n="footer_link_careers">Careers</a></li>
+              <li><a href="#" data-i18n="footer_link_contact">Contact</a></li>
+              <li><a href="#" data-i18n="footer_link_privacy">Privacy</a></li>
+              <li><a href="#" data-i18n="footer_link_terms">Terms</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p data-i18n="footer_rights">© 2026 ZainBot. All rights reserved.</p>
+        <p class="footer-made" data-i18n="footer_made">Crafted with precision for the AI era.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===== BACK TO TOP ===== -->
+  <button class="back-to-top" id="backToTop" aria-label="Back to top">
+    <i class="fas fa-arrow-up"></i>
+  </button>
+
+  <script src="script.js"></script>
+</body>
+</html>

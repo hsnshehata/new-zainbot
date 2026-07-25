@@ -1,0 +1,31 @@
+node_modules/
+vendor/
+
+.env
+.env.*
+!.env.example
+
+logs/
+*.log
+coverage/
+dist/
+
+uploads/*
+!uploads/.gitkeep
+
+wazainbot/
+.wwebjs_auth/
+.wwebjs_cache/
+wa-sessions/
+sessions/
+data/
+
+.DS_Store
+Thumbs.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Legacy platform folder excluded from git
+المنصة القديمة مش هنعدل فيها حاجة هنقتبص منها/
+
