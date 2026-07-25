@@ -1,6 +1,6 @@
 // public/service-worker.js
 
-const CACHE_NAME = 'zain-ai-v0.0008'; // bump: تفريغ الكاش القديم + تطبيق سياسة عدم كاش للصور والروابط الخارجية
+const CACHE_NAME = 'zain-ai-v0.0009'; // bump: تفريغ الكاش القديم والتأكد من استجابات الخدمة الصحيحة
 const urlsToCache = [
   '/',
   '/index.html',
@@ -156,26 +156,30 @@ self.addEventListener('fetch', (event) => {
               return new Response('Resource not found', { status: 404 });
             });
         })
-        .catch(() => {
+        .catch(async () => {
           // If network fails (offline), fall back to cache
           console.log(`Service Worker: Network failed, falling back to cache for ${event.request.url}`);
-          return caches.match(event.request)
-            .then((cacheResponse) => {
-              if (cacheResponse) {
-                return cacheResponse;
-              }
-              console.error(`Service Worker: Offline and no cache for ${event.request.url}`);
-              return caches.match('/index.html'); // Fallback to index.html
-            });
+          const cacheResponse = await caches.match(event.request);
+          if (cacheResponse) {
+            return cacheResponse;
+          }
+          if (event.request.mode === 'navigate') {
+            const indexHtml = await caches.match('/index.html');
+            if (indexHtml) return indexHtml;
+          }
+          return new Response('Resource unavailable offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
         })
     );
   } else {
     // Network-first for API calls or non-cached resources
     event.respondWith(
       fetch(event.request)
-        .catch(() => {
-          console.log(`Service Worker: Network failed for non-cached resource ${pathname}, falling back to index.html`);
-          return caches.match('/index.html');
+        .catch(async () => {
+          if (event.request.mode === 'navigate') {
+            const indexHtml = await caches.match('/index.html');
+            if (indexHtml) return indexHtml;
+          }
+          return new Response('Network request failed', { status: 503, headers: { 'Content-Type': 'text/plain' } });
         })
     );
   }
