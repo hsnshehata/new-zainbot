@@ -313,6 +313,7 @@
     } else if (tabId === 'page-settings') {
       loadSettingsData();
     } else if (tabId === 'page-admin') {
+      loadAdminUsers();
       loadAdminKeys();
     }
   }
@@ -1055,8 +1056,127 @@
     });
   }
 
-  // 7. SUPER ADMIN KEYS FAILOVER PANEL
+  // 7. SUPER ADMIN CONTROL CENTER & USERS MANAGEMENT
+  let adminUsersList = [];
   let adminKeys = [];
+
+  async function loadAdminUsers() {
+    try {
+      const res = await apiFetch('/api/users?populate=bots');
+      adminUsersList = Array.isArray(res) ? res : (res && res.data ? res.data : []);
+      renderAdminUsers();
+    } catch (e) {
+      console.error('Error loading admin users:', e);
+    }
+  }
+
+  function renderAdminUsers() {
+    const tbody = document.getElementById('adminUsersTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (adminUsersList.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="padding:24px; text-align:center; color:var(--text-muted);">لا يوجد مستخدمين مسجلين حالياً.</td></tr>`;
+      return;
+    }
+
+    adminUsersList.forEach((u) => {
+      const tr = document.createElement('tr');
+      tr.style.borderBottom = '1px solid var(--glass-border)';
+
+      const roleBadge = u.role === 'superadmin'
+        ? `<span class="badge" style="background:var(--orange); color:#000; font-weight:700;">مدير عام (SuperAdmin)</span>`
+        : `<span class="badge" style="background:var(--blue); color:#fff;">تاجر / مستخدم</span>`;
+
+      const statusBadge = u.status === 'suspended'
+        ? `<span class="badge badge-danger">موقوف</span>`
+        : `<span class="badge badge-success">نشط</span>`;
+
+      const botsCount = Array.isArray(u.bots) ? u.bots.length : 0;
+
+      tr.innerHTML = `
+        <td style="padding:12px; font-weight:600;">${u.username}</td>
+        <td style="padding:12px; font-size:12px; color:var(--cyan);">${u.email}</td>
+        <td style="padding:12px;">${roleBadge}</td>
+        <td style="padding:12px; font-size:12px;">${u.subscriptionTier || 'free'}</td>
+        <td style="padding:12px;">${statusBadge}</td>
+        <td style="padding:12px; font-size:12px;">${botsCount} بوت</td>
+        <td style="padding:12px; text-align:center;">
+          <button class="btn btn-secondary btn-sm" onclick="toggleUserStatus('${u._id}', '${u.status === 'suspended' ? 'active' : 'suspended'}')" style="padding:4px 8px; font-size:11px; margin-left:4px;">
+            ${u.status === 'suspended' ? '<i class="fas fa-check"></i> تفعيل' : '<i class="fas fa-ban" style="color:var(--red);"></i> تعليق'}
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="impersonateUser('${u._id}')" style="padding:4px 8px; font-size:11px; border-color:var(--orange); color:var(--orange);">
+            <i class="fas fa-user-secret"></i> دخول كـ
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  window.toggleUserStatus = async function(userId, newStatus) {
+    if (!confirm(`هل أنت متأكد من تغيير حالة التاجر/المستخدم إلى ${newStatus === 'active' ? 'نشط' : 'موقوف'}؟`)) return;
+    try {
+      await apiFetch(`/api/users/${userId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: newStatus })
+      });
+      loadAdminUsers();
+    } catch (e) {
+      alert('فشل تحديث حالة المستخدم');
+    }
+  };
+
+  window.impersonateUser = async function(userId) {
+    if (!confirm('هل تريد الانتقال الفوري والدخول المباشر إلى حساب هذا التاجر لتصفح وإدارة بوتاته وقنواته؟')) return;
+    try {
+      const res = await apiFetch('/api/admin/impersonation/sessions', {
+        method: 'POST',
+        body: JSON.stringify({ subjectUserId: userId })
+      });
+      if (res && res.token) {
+        localStorage.setItem('token', res.token);
+        alert('تم دخول حساب التاجر بنجاح! جاري تحميل لوحته...');
+        window.location.reload();
+      } else {
+        alert(res?.message || 'فشل الانتحال المباشر');
+      }
+    } catch (e) {
+      alert('حدث خطأ أثناء المصادقة');
+    }
+  };
+
+  // Subtabs switching
+  const tabUsersBtn = document.getElementById('adminTabUsersBtn');
+  const tabKeysBtn = document.getElementById('adminTabKeysBtn');
+  const secUsers = document.getElementById('adminSectionUsers');
+  const secKeys = document.getElementById('adminSectionKeys');
+
+  if (tabUsersBtn && tabKeysBtn) {
+    tabUsersBtn.addEventListener('click', () => {
+      tabUsersBtn.style.background = 'var(--orange)';
+      tabUsersBtn.style.color = '#000';
+      tabUsersBtn.style.borderColor = 'var(--orange)';
+      tabKeysBtn.style.background = 'transparent';
+      tabKeysBtn.style.color = 'var(--text)';
+      tabKeysBtn.style.borderColor = 'var(--glass-border)';
+      if (secUsers) secUsers.style.display = 'block';
+      if (secKeys) secKeys.style.display = 'none';
+      loadAdminUsers();
+    });
+
+    tabKeysBtn.addEventListener('click', () => {
+      tabKeysBtn.style.background = 'var(--orange)';
+      tabKeysBtn.style.color = '#000';
+      tabKeysBtn.style.borderColor = 'var(--orange)';
+      tabUsersBtn.style.background = 'transparent';
+      tabUsersBtn.style.color = 'var(--text)';
+      tabUsersBtn.style.borderColor = 'var(--glass-border)';
+      if (secKeys) secKeys.style.display = 'block';
+      if (secUsers) secUsers.style.display = 'none';
+      loadAdminKeys();
+    });
+  }
 
   async function loadAdminKeys() {
     try {
