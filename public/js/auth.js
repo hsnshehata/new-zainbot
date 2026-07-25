@@ -27,14 +27,16 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const token = window.getAuthToken ? window.getAuthToken() : null;
-  if (token && window.location.pathname === '/login.html') {
-    window.location.href = '/dashboard_new.html';
+  const isLoginPage = window.location.pathname === '/login' || window.location.pathname === '/login.html' || window.location.pathname === '/';
+
+  if (token && isLoginPage) {
+    window.location.href = '/dashboard_new';
     return;
   }
 
-  if (!token && window.location.pathname !== '/login.html' && localStorage.getItem('token')) {
+  if (!token && !isLoginPage && localStorage.getItem('token')) {
     clearSession();
-    window.location.href = '/login.html';
+    window.location.href = '/login';
     return;
   }
 
@@ -52,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (data.success) {
         saveSession({ token: data.token, role: data.role, userId: data.userId, username: data.username });
-        window.location.href = '/dashboard_new.html';
+        window.location.href = '/dashboard_new';
       } else {
         errorDiv.style.display = 'block';
         errorDiv.textContent = data.message || 'فشل تسجيل الدخول بجوجل، حاول مرة أخرى';
@@ -88,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (data.success) {
           saveSession({ token: data.token, role: data.role, userId: data.userId, username: data.username });
-          window.location.href = '/dashboard_new.html';
+          window.location.href = '/dashboard_new';
         } else {
           errorDiv.style.display = 'block';
           errorDiv.textContent = data.message || 'فشل تسجيل الدخول، تأكد من اسم المستخدم وكلمة المرور';
