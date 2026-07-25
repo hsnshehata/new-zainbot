@@ -643,9 +643,9 @@ app.get('/robots.txt', (req, res) => {
   }
 });
 
-// Fix for Chrome DevTools 404 error
-app.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => {
-  res.status(200).json({});
+// Ignore Cloudflare cdn-cgi challenge platform scripts gracefully
+app.use('/cdn-cgi/*', (req, res) => {
+  res.status(204).end();
 });
 
 // مسار غير موجود
