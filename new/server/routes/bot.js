@@ -2,25 +2,25 @@ const express = require('express');
 const router = express.Router();
 const { getSettings, updateSettings, getWhatsAppSettings, updateWhatsAppSettings } = require('../controllers/botController');
 const authenticate = require('../middleware/authenticate');
-const Bot = require('../models/Bot');
 const Conversation = require('../models/Conversation');
 const botEngine = require('../botEngine');
 const NodeCache = require('node-cache');
 const logger = require('../logger');
+const { loadAccessibleBot } = require('../middleware/botAccess');
 
 // إعداد cache لتخزين الطلبات مؤقتاً (5 دقايق)
 const apiCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
 
 // Routes for settings with botId in the URL
-router.get('/:id/settings', authenticate, getSettings);
-router.patch('/:id/settings', authenticate, updateSettings);
+router.get('/:id/settings', authenticate, loadAccessibleBot, getSettings);
+router.patch('/:id/settings', authenticate, loadAccessibleBot, updateSettings);
 
 // Routes جديدة لإعدادات واتساب
-router.get('/:botId/whatsapp-settings', authenticate, getWhatsAppSettings);
-router.patch('/:botId/whatsapp-settings', authenticate, updateWhatsAppSettings);
+router.get('/:botId/whatsapp-settings', authenticate, loadAccessibleBot, getWhatsAppSettings);
+router.patch('/:botId/whatsapp-settings', authenticate, loadAccessibleBot, updateWhatsAppSettings);
 
 // معالجة رسايل الدردشة
-router.post('/', async (req, res) => {
+router.post('/', authenticate, loadAccessibleBot, async (req, res) => {
   try {
     const { botId, message, userId, isImage, isVoice, channel, mediaUrl } = req.body;
     logger.info('📥 Raw request body', { path: '/api/bot', bodyKeys: Object.keys(req.body || {}) });
@@ -38,11 +38,7 @@ router.post('/', async (req, res) => {
     }
 
     // التحقق من حالة البوت
-    const bot = await Bot.findById(botId);
-    if (!bot) {
-      logger.warn('البوت غير موجود أثناء معالجة /api/bot', { botId });
-      return res.status(404).json({ message: 'البوت غير موجود' });
-    }
+    const bot = req.bot;
     if (!bot.isActive) {
       logger.warn('البوت غير نشط، تخطي المعالجة', { botId, botName: bot.name });
       return res.status(400).json({ message: 'البوت متوقف حاليًا ولا يمكنه استقبال الرسائل' });

@@ -1,37 +1,26 @@
-const express = require('express');
 const Bot = require('../models/Bot');
 const User = require('../models/User');
 const Feedback = require('../models/Feedback');
-const Notification = require('../models/Notification');
 const axios = require('axios');
 const logger = require('../logger');
+const { serializeBot } = require('../utils/serializers');
 
 // جلب كل البوتات
 exports.getBots = async (req, res) => {
   try {
-    const bots = await Bot.find().populate('userId');
-    const currentDate = new Date();
-
-    // التحقق من autoStopDate لكل بوت وتحديث الحالة إذا لزم الأمر
-    for (const bot of bots) {
-      if (bot.autoStopDate && new Date(bot.autoStopDate) <= currentDate && bot.isActive) {
-        bot.isActive = false;
-        await bot.save();
-
-        // إنشاء إشعار للمستخدم
-        const notification = new Notification({
-          user: bot.userId,
-          title: `توقف البوت ${bot.name}`,
-          message: `البوت ${bot.name} توقف تلقائيًا بسبب انتهاء الاشتراك في ${new Date(bot.autoStopDate).toLocaleDateString('ar-EG')}`,
-          isRead: false
-        });
-        await notification.save();
-
-        logger.info('bot_auto_stopped', { botId: bot._id, botName: bot.name, userId: bot.userId, autoStopDate: bot.autoStopDate });
-      }
+    const isDirectSuperadmin = req.auth?.actorRole === 'superadmin'
+      && !req.auth?.isImpersonating;
+    const filter = isDirectSuperadmin
+      ? {}
+      : { userId: req.auth?.subjectUserId || req.user.userId };
+    if (!(isDirectSuperadmin && req.query.includeArchived === 'true')) {
+      filter.archivedAt = null;
     }
+    const bots = await Bot.find(filter)
+      .populate('userId', 'username email role status subscriptionTier')
+      .sort({ createdAt: -1 });
 
-    res.status(200).json(bots);
+    res.status(200).json(bots.map(serializeBot));
   } catch (err) {
     logger.error('bots_fetch_error', { err: err.message, stack: err.stack });
     res.status(500).json({ message: 'خطأ في السيرفر' });
@@ -120,7 +109,7 @@ exports.getFeedback = async (req, res) => {
 // جلب أكثر الردود السلبية
 exports.getTopNegativeReplies = async (req, res) => {
   try {
-    const { botId } = req.params;
+    const botId = req.params.id;
     const { startDate, endDate } = req.query;
 
     let query = { botId, type: 'dislike', isVisible: true };
@@ -164,7 +153,7 @@ exports.hideFeedback = async (req, res) => {
     const feedbackId = req.params.feedbackId;
 
     const feedback = await Feedback.findById(feedbackId);
-    if (!feedback) {
+    if (!feedback || String(feedback.botId) !== String(req.bot._id)) {
       return res.status(404).json({ message: 'التقييم غير موجود' });
     }
 
@@ -208,8 +197,8 @@ exports.clearFeedbackByType = async (req, res) => {
 exports.createBot = async (req, res) => {
   const { name, userId, facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, subscriptionType, welcomeMessage } = req.body;
 
-  if (!name || !userId) {
-    return res.status(400).json({ message: 'اسم البوت ومعرف المستخدم مطلوبان' });
+  if (!name) {
+    return res.status(400).json({ message: 'اسم البوت مطلوب' });
   }
 
   if (facebookApiKey && !facebookPageId) {
@@ -225,21 +214,31 @@ exports.createBot = async (req, res) => {
   }
 
   try {
-    const bot = new Bot({ 
-      name, 
-      userId, 
-      facebookApiKey, 
+    const isDirectSuperadmin = req.auth?.actorRole === 'superadmin'
+      && !req.auth?.isImpersonating;
+    const ownerUserId = isDirectSuperadmin && userId
+      ? userId
+      : (req.auth?.subjectUserId || req.user.userId);
+    const owner = await User.findOne({ _id: ownerUserId, status: { $ne: 'deleted' } });
+    if (!owner) {
+      return res.status(400).json({ message: 'المستخدم غير موجود' });
+    }
+
+    const bot = new Bot({
+      name,
+      userId: ownerUserId,
+      facebookApiKey,
       facebookPageId,
       instagramApiKey,
       instagramPageId,
-      subscriptionType: subscriptionType || 'free',
-      welcomeMessage 
+      subscriptionType: isDirectSuperadmin ? (subscriptionType || 'free') : 'free',
+      welcomeMessage
     });
     await bot.save();
 
-    await User.findByIdAndUpdate(userId, { $push: { bots: bot._id } });
+    await User.findByIdAndUpdate(ownerUserId, { $addToSet: { bots: bot._id } });
 
-    res.status(201).json(bot);
+    res.status(201).json(serializeBot(bot));
   } catch (err) {
     logger.error('bot_create_error', { err: err.message, stack: err.stack });
     res.status(500).json({ message: 'خطأ في السيرفر' });
@@ -253,74 +252,65 @@ exports.updateBot = async (req, res) => {
   try {
     logger.info('bot_update_attempt', { botId: req.params.id, userId: req.user.userId, payloadKeys: Object.keys(req.body || {}) });
 
-    const bot = await Bot.findById(req.params.id);
-    if (!bot) {
-      logger.warn('bot_update_not_found', { botId: req.params.id });
-      return res.status(404).json({ message: 'البوت غير موجود' });
+    const bot = req.bot;
+    const isDirectSuperadmin = req.auth?.actorRole === 'superadmin'
+      && !req.auth?.isImpersonating;
+    const previousOwnerId = String(bot.userId);
+    const requestedOwnerId = userId ? String(userId) : previousOwnerId;
+
+    if (requestedOwnerId !== previousOwnerId && !isDirectSuperadmin) {
+      return res.status(403).json({ message: 'غير مصرح لك بنقل ملكية البوت' });
     }
 
-    // التحقق من الصلاحيات: السوبر أدمن يقدر يعدل أي بوت، غير كده لازم يكون صاحب البوت
-    if (req.user.role !== 'superadmin' && bot.userId.toString() !== req.user.userId.toString()) {
-      logger.warn('bot_update_unauthorized', { botId: bot._id, ownerId: bot.userId, requester: req.user.userId });
-      return res.status(403).json({ message: 'غير مصرح لك بتعديل هذا البوت' });
+    if (requestedOwnerId !== previousOwnerId) {
+      const newOwner = await User.findOne({
+        _id: requestedOwnerId,
+        status: { $ne: 'deleted' },
+      });
+      if (!newOwner) {
+        return res.status(400).json({ message: 'المستخدم الجديد غير موجود' });
+      }
     }
 
-    // تحديث الحقول
-    bot.name = name || bot.name;
-    bot.userId = userId || bot.userId;
+    if (facebookApiKey && !(facebookPageId || bot.facebookPageId)) {
+      logger.warn('bot_update_missing_facebook_page', { botId: bot._id });
+      return res.status(400).json({ message: 'معرف صفحة الفيسبوك مطلوب عند إدخال رقم API' });
+    }
+
+    if (instagramApiKey && !(instagramPageId || bot.instagramPageId)) {
+      logger.warn('bot_update_missing_instagram_page', { botId: bot._id });
+      return res.status(400).json({ message: 'معرف صفحة الإنستجرام مطلوب عند إدخال رقم API' });
+    }
+
+    bot.name = name ?? bot.name;
     bot.facebookApiKey = facebookApiKey !== undefined ? facebookApiKey : bot.facebookApiKey;
     bot.facebookPageId = facebookPageId !== undefined ? facebookPageId : bot.facebookPageId;
     bot.instagramApiKey = instagramApiKey !== undefined ? instagramApiKey : bot.instagramApiKey;
     bot.instagramPageId = instagramPageId !== undefined ? instagramPageId : bot.instagramPageId;
     bot.isActive = isActive !== undefined ? isActive : bot.isActive;
     bot.autoStopDate = autoStopDate !== undefined ? autoStopDate : bot.autoStopDate;
-    bot.subscriptionType = subscriptionType || bot.subscriptionType;
     bot.welcomeMessage = welcomeMessage !== undefined ? welcomeMessage : bot.welcomeMessage;
-
-    if (facebookApiKey && !facebookPageId) {
-      logger.warn('bot_update_missing_facebook_page', { botId: bot._id });
-      return res.status(400).json({ message: 'معرف صفحة الفيسبوك مطلوب عند إدخال رقم API' });
+    if (isDirectSuperadmin && subscriptionType) {
+      bot.subscriptionType = subscriptionType;
     }
 
-    if (instagramApiKey && !instagramPageId) {
-      logger.warn('bot_update_missing_instagram_page', { botId: bot._id });
-      return res.status(400).json({ message: 'معرف صفحة الإنستجرام مطلوب عند إدخال رقم API' });
-    }
-
-    if (subscriptionType && !['free', 'monthly', 'yearly'].includes(subscriptionType)) {
-      logger.warn('bot_update_invalid_subscription', { botId: bot._id, subscriptionType });
-      return res.status(400).json({ message: 'نوع الاشتراك غير صالح' });
-    }
-
-    // إذا كان هناك مستخدم جديد، تحديث قائمة البوتات في المستخدمين
-    if (userId && userId !== bot.userId.toString()) {
-      logger.info('bot_update_change_owner', { botId: bot._id, oldUserId: bot.userId, newUserId: userId });
-      try {
-        const oldUser = await User.findById(bot.userId);
-        if (oldUser) {
-          await User.findByIdAndUpdate(bot.userId, { $pull: { bots: bot._id } });
-        } else {
-          logger.warn('bot_update_old_user_missing', { botId: bot._id, oldUserId: bot.userId });
-        }
-
-        const newUser = await User.findById(userId);
-        if (newUser) {
-          await User.findByIdAndUpdate(userId, { $push: { bots: bot._id } });
-        } else {
-          logger.error('bot_update_new_user_missing', { botId: bot._id, newUserId: userId });
-          return res.status(400).json({ message: 'المستخدم الجديد غير موجود' });
-        }
-      } catch (err) {
-        logger.error('bot_update_user_list_error', { botId: bot._id, err: err.message, stack: err.stack });
-        throw err;
-      }
+    if (requestedOwnerId !== previousOwnerId) {
+      await User.findByIdAndUpdate(previousOwnerId, { $pull: { bots: bot._id } });
+      await User.findByIdAndUpdate(requestedOwnerId, { $addToSet: { bots: bot._id } });
+      bot.userId = requestedOwnerId;
+      logger.info('bot_owner_changed', {
+        botId: bot._id,
+        previousOwnerId,
+        requestedOwnerId,
+        actorUserId: req.auth.actorUserId,
+      });
     }
 
     logger.info('bot_save_attempt', { botId: bot._id });
     await bot.save();
     logger.info('bot_save_success', { botId: bot._id });
 
-    res.status(200).json(bot);
+    res.status(200).json(serializeBot(bot));
   } catch (err) {
     logger.error('bot_update_error', { botId: req.params.id, err: err.message, stack: err.stack });
     res.status(500).json({ message: 'خطأ في السيرفر', error: err.message });
@@ -330,23 +320,18 @@ exports.updateBot = async (req, res) => {
 // حذف بوت
 exports.deleteBot = async (req, res) => {
   try {
-    const bot = await Bot.findById(req.params.id);
-    if (!bot) {
-      logger.warn('bot_delete_not_found', { botId: req.params.id });
-      return res.status(404).json({ message: 'البوت غير موجود' });
-    }
-
-    // التحقق من الصلاحيات: السوبر أدمن يقدر يحذف أي بوت، غير كده لازم يكون صاحب البوت
-    if (req.user.role !== 'superadmin' && bot.userId.toString() !== req.user.userId.toString()) {
-      logger.warn('bot_delete_unauthorized', { botId: bot._id, ownerId: bot.userId, requester: req.user.userId });
-      return res.status(403).json({ message: 'غير مصرح لك بحذف هذا البوت' });
-    }
-
-    await User.findByIdAndUpdate(bot.userId, { $pull: { bots: bot._id } });
-
-    await Bot.deleteOne({ _id: req.params.id });
-    logger.info('bot_deleted', { botId: req.params.id });
-    res.status(200).json({ message: 'تم حذف البوت بنجاح' });
+    const bot = req.bot;
+    bot.isActive = false;
+    bot.archivedAt = new Date();
+    await bot.save();
+    logger.info('bot_archived', {
+      botId: req.params.id,
+      actorUserId: req.auth.actorUserId,
+    });
+    res.status(200).json({
+      message: 'تمت أرشفة البوت مع الاحتفاظ بالمحادثات والقنوات',
+      data: serializeBot(bot),
+    });
   } catch (err) {
     logger.error('bot_delete_error', { botId: req.params.id, err: err.message, stack: err.stack });
     res.status(500).json({ message: 'خطأ في السيرفر' });

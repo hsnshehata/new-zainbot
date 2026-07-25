@@ -6,6 +6,7 @@ const authenticate = require("../middleware/authenticate");
 const axios = require("axios");
 const messagesController = require("../controllers/messagesController");
 const logger = require("../logger");
+const { getBotAccessFilter, loadAccessibleBot } = require("../middleware/botAccess");
 
 // دالة لجلب اسم المستخدم من فيسبوك، إنستجرام، أو واتساب
 async function getSocialUsername(userId, bot, platform) {
@@ -29,10 +30,10 @@ async function getSocialUsername(userId, bot, platform) {
         ? "إنستجرام"
         : "واتساب";
 
-    logger.info("📋 جلب التوكن", {
+    logger.info("social_username_lookup_started", {
       attempt,
       botId: bot._id,
-      tokenPreview: accessToken ? `${accessToken.slice(0, 10)}...` : "غير موجود",
+      credentialAvailable: Boolean(accessToken),
     });
 
     if (!accessToken) {
@@ -143,17 +144,12 @@ async function getSocialUsername(userId, bot, platform) {
 }
 
 // Get conversations by query param (expected by dashboard_new.js)
-router.get("/conversations", authenticate, async (req, res) => {
+router.get("/conversations", authenticate, loadAccessibleBot, async (req, res) => {
   try {
     const botId = req.query.botId;
     if (!botId) {
       return res.status(400).json({ success: false, message: "botId parameter is required" });
     }
-    const bot = await Bot.findById(botId);
-    if (!bot) {
-      return res.status(404).json({ success: false, message: "Bot not found" });
-    }
-    
     // Find conversations
     const conversations = await Conversation.find({ botId }).lean();
     res.status(200).json({
@@ -167,74 +163,60 @@ router.get("/conversations", authenticate, async (req, res) => {
 });
 
 // Get conversations for a bot (using messagesController.getMessages)
-router.get("/:botId", authenticate, async (req, res) => {
+router.get("/:botId", authenticate, loadAccessibleBot, async (req, res) => {
   try {
     const { botId } = req.params;
     const { type, startDate, endDate, page, limit } = req.query;
-
-    // جلب البوت من قاعدة البيانات
-    const bot = await Bot.findById(botId);
-    if (!bot) {
-      throw new Error("البوت غير موجود");
-    }
-
-    // استدعاء getMessages من messagesController
-    req.params.botId = botId;
-    req.query.type = type;
-    req.query.startDate = startDate;
-    req.query.endDate = endDate;
-    req.query.page = page;
-    req.query.limit = limit;
-
-    const result = await messagesController.getMessages(req, res);
+    const bot = req.bot;
+    const result = await messagesController.fetchMessages({
+      botId,
+      channelType: type,
+      startDate,
+      endDate,
+      page,
+      limit,
+    });
 
     // إذا كان هناك استجابة من getMessages، نعدل الـ conversations لإضافة الـ username
-    if (result && result.conversations) {
-      const conversationsWithUsernames = await Promise.all(
-        result.conversations.map(async (conv) => {
-          // نجرب نستخدم الـ username الموجود في المحادثة أولاً
-          let username = conv.username || conv.userId;
-          // لو الـ username مش موجود أو قيمته مش كويسة، نجيب الاسم من الـ API
-          if (!conv.username || conv.username === "مستخدم فيسبوك" || conv.username === "مستخدم إنستجرام") {
-            if (type === "facebook" && bot.facebookApiKey) {
-              logger.info("📋 محاولة جلب اسم المستخدم من فيسبوك", { userId: conv.userId });
-              username = await getSocialUsername(conv.userId, bot, "facebook");
-            } else if (type === "instagram" && bot.instagramApiKey) {
-              logger.info("📋 محاولة جلب اسم المستخدم من إنستجرام", { userId: conv.userId });
-              username = await getSocialUsername(conv.userId, bot, "instagram");
-            } else if (type === "whatsapp" && bot.whatsappApiKey) {
-              logger.info("📋 محاولة جلب اسم المستخدم من واتساب", { userId: conv.userId });
-              username = await getSocialUsername(conv.userId, bot, "whatsapp");
-            }
-            // تحديث الـ username في المحادثة لو اتغير
-            if (username !== conv.username) {
-              conv.username = username;
-              await Conversation.findByIdAndUpdate(conv._id, { username });
-            }
+    const conversationsWithUsernames = await Promise.all(
+      result.conversations.map(async (conv) => {
+        let username = conv.username || conv.userId;
+        if (!conv.username || conv.username === "مستخدم فيسبوك" || conv.username === "مستخدم إنستجرام") {
+          if (type === "facebook" && bot.facebookApiKey) {
+            username = await getSocialUsername(conv.userId, bot, "facebook");
+          } else if (type === "instagram" && bot.instagramApiKey) {
+            username = await getSocialUsername(conv.userId, bot, "instagram");
+          } else if (type === "whatsapp" && bot.whatsappApiKey) {
+            username = await getSocialUsername(conv.userId, bot, "whatsapp");
           }
-          return { ...conv, username };
-        })
-      );
+          if (username !== conv.username) {
+            conv.username = username;
+            await Conversation.findByIdAndUpdate(conv._id, { username });
+          }
+        }
+        return { ...conv, username };
+      })
+    );
 
-      // نعدل الاستجابة لتشمل الـ conversations المعدلة مع بيانات الـ Pagination
-      res.status(200).json({
-        conversations: conversationsWithUsernames,
-        totalConversations: result.totalConversations,
-        currentPage: result.currentPage,
-        totalPages: result.totalPages,
-      });
-    }
+    return res.status(200).json({
+      conversations: conversationsWithUsernames,
+      totalConversations: result.totalConversations,
+      currentPage: result.currentPage,
+      totalPages: result.totalPages,
+    });
   } catch (err) {
-    logger.error("Error fetching conversations", { err });
-    res.status(500).json({ message: "خطأ في السيرفر" });
+    logger.error("Error fetching conversations", { err: err.message });
+    return res
+      .status(err.statusCode || 500)
+      .json({ message: err.statusCode === 400 ? err.message : "خطأ في السيرفر" });
   }
 });
 
 // Get daily messages for a bot
-router.get("/daily/:botId", authenticate, messagesController.getDailyMessages);
+router.get("/daily/:botId", authenticate, loadAccessibleBot, messagesController.getDailyMessages);
 
 // Get social user name
-router.get("/social-user/:userId", authenticate, async (req, res) => {
+router.get("/social-user/:userId", authenticate, loadAccessibleBot, async (req, res) => {
   try {
     const { userId } = req.params;
     const { botId, platform } = req.query;
@@ -247,10 +229,7 @@ router.get("/social-user/:userId", authenticate, async (req, res) => {
       throw new Error("المنصة يجب أن تكون facebook، instagram، أو whatsapp");
     }
 
-    const bot = await Bot.findById(botId);
-    if (!bot) {
-      throw new Error("البوت غير موجود");
-    }
+    const bot = req.bot;
 
     const username = await getSocialUsername(userId, bot, platform);
     res.status(200).json({ name: username });
@@ -264,21 +243,14 @@ router.get("/social-user/:userId", authenticate, async (req, res) => {
 router.delete(
   "/delete-message/:botId/:userId/:messageId",
   authenticate,
+  loadAccessibleBot,
   async (req, res) => {
     try {
       const { botId, userId, messageId } = req.params;
       const { type } = req.query;
 
-      let query = { botId, userId };
-      if (type === "facebook") {
-        query.userId = { $regex: "^(facebook_|facebook_comment_)" };
-      } else if (type === "web") {
-        query.userId = { $in: ["anonymous", /^web_/] };
-      } else if (type === "instagram") {
-        query.userId = { $regex: "^(instagram_|instagram_comment_)" };
-      } else if (type === "whatsapp") {
-        query.userId = { $regex: "^whatsapp_" };
-      }
+      const query = { botId, userId };
+      if (type) query.channel = type;
 
       const conversation = await Conversation.findOne(query);
       if (!conversation) {
@@ -302,6 +274,7 @@ router.delete(
 router.delete(
   "/delete-conversation/:botId/:conversationId",
   authenticate,
+  loadAccessibleBot,
   async (req, res) => {
     try {
       const { botId, conversationId } = req.params;
@@ -320,27 +293,19 @@ router.delete(
 );
 
 // Delete a user's conversations
-router.delete("/delete-user/:botId/:userId", authenticate, messagesController.deleteUserMessages);
+router.delete("/delete-user/:botId/:userId", authenticate, loadAccessibleBot, messagesController.deleteUserMessages);
 
 // Delete all conversations for a bot
-router.delete("/delete-all/:botId", authenticate, messagesController.deleteAllMessages);
+router.delete("/delete-all/:botId", authenticate, loadAccessibleBot, messagesController.deleteAllMessages);
 
 // Download all messages
-router.get("/download/:botId", authenticate, async (req, res) => {
+router.get("/download/:botId", authenticate, loadAccessibleBot, async (req, res) => {
   try {
     const { botId } = req.params;
     const { type } = req.query;
 
-    let query = { botId };
-    if (type === "facebook") {
-      query.userId = { $regex: "^(facebook_|facebook_comment_)" };
-    } else if (type === "web") {
-      query.userId = { $in: ["anonymous", /^web_/] };
-    } else if (type === "instagram") {
-      query.userId = { $regex: "^(instagram_|instagram_comment_)" };
-    } else if (type === "whatsapp") {
-      query.userId = { $regex: "^whatsapp_" };
-    }
+    const query = { botId };
+    if (type) query.channel = type;
 
     const conversations = await Conversation.find(query);
     let textContent = "";
@@ -369,6 +334,10 @@ router.patch("/conversations/:id/handoff", authenticate, async (req, res) => {
     const { isHumanHandling } = req.body;
     const conversation = await Conversation.findById(req.params.id);
     if (!conversation) {
+      return res.status(404).json({ success: false, message: "المحادثة غير موجودة" });
+    }
+    const accessibleBot = await Bot.exists(getBotAccessFilter(req, conversation.botId));
+    if (!accessibleBot) {
       return res.status(404).json({ success: false, message: "المحادثة غير موجودة" });
     }
     conversation.isHumanHandling = Boolean(isHumanHandling);

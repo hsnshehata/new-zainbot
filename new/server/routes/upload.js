@@ -3,11 +3,12 @@ const router = express.Router();
 const multer = require('multer');
 const { uploadToImgbb } = require('../controllers/uploadController');
 const logger = require('../logger');
+const authenticate = require('../middleware/authenticate');
 
 // إعداد Multer لاستقبال الصور في الذاكرة (مش هنخزّنها محليًا)
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 32 * 1024 * 1024 }, // 32MB max (imgbb limit)
+  limits: { fileSize: 8 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['image/png', 'image/jpeg', 'image/gif'];
     if (!allowedTypes.includes(file.mimetype)) {
@@ -18,7 +19,7 @@ const upload = multer({
 });
 
 // Endpoint لرفع الصورة
-router.post('/', upload.single('image'), async (req, res) => {
+router.post('/', authenticate, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'لم يتم رفع أي صورة' });
@@ -30,8 +31,8 @@ router.post('/', upload.single('image'), async (req, res) => {
       thumbUrl: uploadResult.thumbUrl,
     });
   } catch (err) {
-    logger.error('خطأ في رفع الصورة:', { err });
-    res.status(500).json({ message: `فشل في رفع الصورة: ${err.message}` });
+    logger.error('image_upload_failed', { requestId: req.requestId, error: err.message });
+    res.status(500).json({ message: 'فشل في رفع الصورة' });
   }
 });
 

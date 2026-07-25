@@ -8,6 +8,8 @@ const Bot = require('../models/Bot');
 const axios = require('axios');
 const { validateBody, Joi } = require('../middleware/validate');
 const logger = require('../logger');
+const { loadAccessibleBot } = require('../middleware/botAccess');
+const { serializeBot } = require('../utils/serializers');
 
 // Log عشان نتأكد إن الـ router شغال
 logger.info('✅ Initializing bots routes');
@@ -15,7 +17,7 @@ logger.info('✅ Initializing bots routes');
 // مخططات التحقق
 const createBotSchema = Joi.object({
   name: Joi.string().min(2).max(80).required(),
-  userId: Joi.string().length(24).required(),
+  userId: Joi.string().length(24).optional(),
   facebookApiKey: Joi.string().allow('', null),
   facebookPageId: Joi.string().allow('', null),
   instagramApiKey: Joi.string().allow('', null),
@@ -66,19 +68,41 @@ const linkSocialSchema = Joi.object({
 
 // دالة لتحويل توكن قصير المدى لتوكن طويل المدى
 const convertToLongLivedToken = async (shortLivedToken) => {
-  const appId = '499020366015281';
-  const appSecret = process.env.FACEBOOK_APP_SECRET;
-  const url = `https://graph.facebook.com/v20.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${shortLivedToken}`;
+  const appId = process.env.FACEBOOK_APP_ID?.trim();
+  const appSecret = process.env.FACEBOOK_APP_SECRET?.trim();
+  const configuredVersion = process.env.META_GRAPH_API_VERSION?.trim() || 'v24.0';
+  const graphVersion = /^v\d+\.\d+$/.test(configuredVersion)
+    ? configuredVersion
+    : 'v24.0';
+  if (!appId || !appSecret) {
+    const error = new Error('Facebook application credentials are not configured');
+    error.code = 'FACEBOOK_APP_NOT_CONFIGURED';
+    throw error;
+  }
 
   try {
-    const response = await axios.get(url);
+    const response = await axios.get(
+      `https://graph.facebook.com/${graphVersion}/oauth/access_token`,
+      {
+        params: {
+          grant_type: 'fb_exchange_token',
+          client_id: appId,
+          client_secret: appSecret,
+          fb_exchange_token: shortLivedToken,
+        },
+        timeout: 10_000,
+      }
+    );
     if (response.data.access_token) {
-      logger.info('✅ Successfully converted short-lived token to long-lived token', { tokenPreview: `${response.data.access_token.slice(0, 10)}...` });
+      logger.info('facebook_token_exchange_succeeded');
       return response.data.access_token;
     }
     throw new Error('Failed to convert token: No access_token in response');
   } catch (err) {
-    logger.error('❌ Error converting to long-lived token', { error: err.response?.data || err.message });
+    logger.error('facebook_token_exchange_failed', {
+      status: err.response?.status,
+      code: err.code,
+    });
     throw err;
   }
 };
@@ -86,17 +110,14 @@ const convertToLongLivedToken = async (shortLivedToken) => {
 // جلب كل البوتات
 router.get('/', authenticate, botsController.getBots);
 
+router.use('/:id', authenticate, loadAccessibleBot);
+
 // جلب بوت معين بناءً على الـ ID
 router.get('/:id', authenticate, async (req, res) => {
   try {
     logger.info('جاري جلب البوت', { path: `/api/bots/${req.params.id}`, botId: req.params.id, userId: req.user.userId });
-    const bot = await Bot.findById(req.params.id);
-    if (!bot) {
-      logger.warn('البوت غير موجود', { botId: req.params.id });
-      return res.status(404).json({ message: 'البوت غير موجود' });
-    }
     logger.info('تم جلب البوت بنجاح', { botId: req.params.id });
-    res.status(200).json(bot);
+    res.status(200).json(serializeBot(req.bot));
   } catch (err) {
     logger.error('❌ خطأ في جلب البوت', { botId: req.params.id, err });
     res.status(500).json({ message: 'خطأ في السيرفر' });
@@ -133,24 +154,12 @@ router.post('/:id/link-social', authenticate, validateBody(linkSocialSchema), as
   const { facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, whatsappApiKey, whatsappBusinessAccountId, convertToLongLived } = req.body;
 
   try {
-    // Log the user role and userId for debugging
-    logger.info('Request to link social', { path: `/api/bots/${botId}/link-social`, role: req.user.role, userId: req.user.userId });
-
-    // البحث عن البوت بناءً على الـ ID
-    let bot;
-    if (req.user.role === 'superadmin') {
-      bot = await Bot.findById(botId);
-    } else {
-      bot = await Bot.findOne({ _id: botId, userId: req.user.userId });
-    }
-
-    if (!bot) {
-      logger.warn('البوت غير موجود أو لا يخص المستخدم', { botId, botUserId: bot ? bot.userId : 'Not Found', requestUserId: req.user.userId });
-      return res.status(404).json({ success: false, message: 'البوت غير موجود أو لا يخصك' });
-    }
-
-    // Log the bot's userId for debugging
-    logger.info('Bot owner fetched', { botId, botUserId: bot.userId });
+    const bot = req.bot;
+    logger.info('social_link_requested', {
+      requestId: req.requestId,
+      botId,
+      actorUserId: req.auth.actorUserId,
+    });
 
     // التحقق من البيانات بناءً على نوع الربط
     let updateData = {};
@@ -162,7 +171,11 @@ router.post('/:id/link-social', authenticate, validateBody(linkSocialSchema), as
         try {
           finalFacebookApiKey = await convertToLongLivedToken(facebookApiKey);
         } catch (err) {
-          return res.status(500).json({ success: false, message: 'فشل في تحويل التوكن إلى طويل المدى: ' + err.message });
+          return res.status(err.code === 'FACEBOOK_APP_NOT_CONFIGURED' ? 503 : 502).json({
+            success: false,
+            error: err.code || 'FACEBOOK_TOKEN_EXCHANGE_FAILED',
+            message: 'فشل التحقق من مفتاح فيسبوك أو تحويله',
+          });
         }
       }
       updateData.facebookApiKey = finalFacebookApiKey;
@@ -190,7 +203,7 @@ router.post('/:id/link-social', authenticate, validateBody(linkSocialSchema), as
     }
 
     // لوج قبل التحديث
-    logger.info('Updating bot social links', { botId, updateData });
+    logger.info('social_link_update_started', { botId, fields: Object.keys(updateData) });
 
     // تحديث البوت
     const updatedBot = await Bot.findByIdAndUpdate(
@@ -205,14 +218,13 @@ router.post('/:id/link-social', authenticate, validateBody(linkSocialSchema), as
     }
 
     // لوج بعد التحديث
-    logger.info('Bot updated successfully after link-social', {
-      botId,
-      facebookApiKey: updatedBot.facebookApiKey?.slice(0, 10) + '...',
-      facebookPageId: updatedBot.facebookPageId,
-      lastFacebookTokenRefresh: updatedBot.lastFacebookTokenRefresh
-    });
+    logger.info('social_link_update_succeeded', { botId, fields: Object.keys(updateData) });
 
-    res.status(200).json({ success: true, message: 'تم ربط الحساب بنجاح', data: updatedBot });
+    res.status(200).json({
+      success: true,
+      message: 'تم ربط الحساب بنجاح',
+      data: serializeBot(updatedBot),
+    });
   } catch (error) {
     logger.error('Error linking social account', { botId, err: error });
     res.status(500).json({ success: false, message: 'خطأ في السيرفر: ' + error.message });

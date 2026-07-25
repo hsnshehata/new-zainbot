@@ -10,8 +10,15 @@ const userSchema = new mongoose.Schema({
     trim: true,
     match: /^[a-z0-9_-]+$/ // شرط الـ username
   },
-  password: { type: String, required: false },
+  password: { type: String, required: false, select: false },
   role: { type: String, enum: ['user', 'superadmin'], default: 'user' },
+  status: {
+    type: String,
+    enum: ['active', 'suspended', 'deleted'],
+    default: 'active',
+    index: true
+  },
+  sessionVersion: { type: Number, default: 0, min: 0, select: false },
   bots: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Bot' }],
   createdAt: { type: Date, default: Date.now },
   email: { type: String, unique: true, required: true },
@@ -36,6 +43,24 @@ const userSchema = new mongoose.Schema({
     dailySummary: { type: Boolean, default: false },
   },
   telegramLanguage: { type: String, enum: ['ar', 'en'], default: 'ar' }
+}, {
+  strict: true,
+  toJSON: {
+    transform: (_document, result) => {
+      delete result.password;
+      delete result.sessionVersion;
+      delete result.telegramLinkCode;
+      return result;
+    }
+  },
+  toObject: {
+    transform: (_document, result) => {
+      delete result.password;
+      delete result.sessionVersion;
+      delete result.telegramLinkCode;
+      return result;
+    }
+  }
 });
 
 module.exports = mongoose.model('User', userSchema);

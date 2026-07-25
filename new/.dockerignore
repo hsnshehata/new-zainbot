@@ -1,0 +1,19 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+node_modules
+vendor
+coverage
+dist
+data
+.wwebjs_auth
+.wwebjs_cache
+sessions
+uploads/*
+!uploads/.gitkeep
+tests
+*.log
+npm-debug.log*
+المنصة القديمة مش هنعدل فيها حاجة هنقتبص منها

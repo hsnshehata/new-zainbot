@@ -3,12 +3,17 @@ const router = express.Router();
 const User = require('../models/User');
 const Bot = require('../models/Bot');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const nodemailer = require('nodemailer');
 const { validateBody, Joi } = require('../middleware/validate');
+const authenticate = require('../middleware/authenticate');
 const logger = require('../logger');
 const { validatePasswordStrength } = require('../utils/passwordPolicy');
+const {
+  signAccessToken,
+  signEmailVerificationToken,
+  verifyEmailVerificationToken,
+} = require('../utils/authTokens');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -74,11 +79,7 @@ router.post('/register', validateBody(registerSchema), async (req, res) => {
     await user.save();
 
     // إنشاء توكن تفعيل
-    const token = jwt.sign(
-      { userId: user._id, botName },
-      process.env.JWT_SECRET || 'your_jwt_secret',
-      { expiresIn: '1h' }
-    );
+    const token = signEmailVerificationToken(user._id, botName);
 
     // إرسال ايميل تفعيل
     const verificationUrl = `${process.env.BASE_URL}/api/auth/verify/${token}`;
@@ -99,7 +100,7 @@ router.post('/register', validateBody(registerSchema), async (req, res) => {
     logger.info('verification_email_sent', { email });
     res.status(201).json({ message: 'تم إرسال رابط تفعيل إلى بريدك الإلكتروني', success: true });
   } catch (err) {
-    logger.error('❌ خطأ في التسجيل', { error: err.message, stack: err.stack, requestBody: req.body });
+    logger.error('registration_failed', { error: err.message, stack: err.stack });
     res.status(500).json({ message: 'خطأ في السيرفر، حاول مرة أخرى', success: false });
   }
 });
@@ -108,7 +109,7 @@ router.post('/register', validateBody(registerSchema), async (req, res) => {
 router.get('/verify/:token', async (req, res) => {
   const { token } = req.params;
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
+    const decoded = verifyEmailVerificationToken(token);
     const user = await User.findById(decoded.userId);
     if (!user) {
       logger.warn('❌ Verification failed: user not found', { userId: decoded.userId });
@@ -133,17 +134,13 @@ router.get('/verify/:token', async (req, res) => {
     await user.save();
 
     // إنشاء توكن تسجيل دخول
-    const authToken = jwt.sign(
-      { userId: user._id, role: user.role, username: user.username },
-      process.env.JWT_SECRET || 'your_jwt_secret',
-      { expiresIn: '30d' }
-    );
+    const authToken = signAccessToken(user);
 
     logger.info('account_verified', { userId: user._id, botId: bot._id });
-    res.redirect(`/dashboard_new.html?token=${authToken}`);
+    res.redirect(`/dashboard?token=${encodeURIComponent(authToken)}`);
   } catch (err) {
-    logger.error('❌ خطأ في تفعيل الحساب', { error: err.message, stack: err.stack, token });
-    res.status(500).json({ message: 'خطأ في السيرفر أو رابط تفعيل غير صالح', success: false });
+    logger.warn('account_verification_failed', { error: err.name });
+    res.status(400).json({ message: 'رابط التفعيل غير صالح أو منتهي', success: false });
   }
 });
 
@@ -152,7 +149,8 @@ router.post('/login', validateBody(loginSchema), async (req, res) => {
   const { username, password } = req.body;
   try {
     const normalizedUsername = username.toLowerCase();
-    const user = await User.findOne({ username: normalizedUsername });
+    const user = await User.findOne({ username: normalizedUsername })
+      .select('+password +sessionVersion');
     if (!user) {
       logger.warn('❌ Login failed: username not found', { username: normalizedUsername });
       return res.status(400).json({ message: 'اسم المستخدم أو كلمة المرور غير صحيحة', success: false });
@@ -161,33 +159,40 @@ router.post('/login', validateBody(loginSchema), async (req, res) => {
       logger.warn('❌ Login failed: account not verified', { username: normalizedUsername });
       return res.status(400).json({ message: 'الحساب غير مفعل، تحقق من بريدك الإلكتروني', success: false });
     }
+    if (user.status && user.status !== 'active') {
+      logger.warn('login_blocked_account', { userId: user._id, status: user.status });
+      return res.status(403).json({
+        message: 'This account is suspended. Please contact support.',
+        success: false,
+      });
+    }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       logger.warn('❌ Login failed: incorrect password', { username: normalizedUsername });
       return res.status(400).json({ message: 'اسم المستخدم أو كلمة المرور غير صحيحة', success: false });
     }
-    const token = jwt.sign(
-      { userId: user._id, role: user.role, username: user.username },
-      process.env.JWT_SECRET || 'your_jwt_secret',
-      { expiresIn: '30d' }
-    );
+    const token = signAccessToken(user);
     logger.info('✅ Login successful', { username: normalizedUsername });
     res.status(200).json({ token, role: user.role, userId: user._id, username: user.username, success: true });
   } catch (err) {
-    logger.error('❌ خطأ في تسجيل الدخول', { error: err.message, stack: err.stack, requestBody: req.body });
+    logger.error('login_failed_unexpectedly', { error: err.message, stack: err.stack });
     res.status(500).json({ message: 'خطأ في السيرفر، حاول مرة أخرى', success: false });
   }
 });
 
 // مسار تسجيل الخروج
-router.post('/logout', (req, res) => {
-  const { username } = req.body;
-  if (!username) {
-    logger.warn('❌ Logout failed: username is required');
-    return res.status(400).json({ message: 'اسم المستخدم مطلوب', success: false });
+router.post('/logout', authenticate, async (req, res) => {
+  try {
+    await User.updateOne(
+      { _id: req.user.userId },
+      { $inc: { sessionVersion: 1 } }
+    );
+    logger.info('user_sessions_revoked', { userId: req.user.userId });
+    return res.status(200).json({ message: 'تم تسجيل الخروج بنجاح', success: true });
+  } catch (error) {
+    logger.error('logout_failed', { userId: req.user.userId, error: error.message });
+    return res.status(500).json({ message: 'تعذر تسجيل الخروج', success: false });
   }
-  logger.info('✅ User logged out successfully', { username });
-  res.status(200).json({ message: 'تم تسجيل الخروج بنجاح', success: true });
 });
 
 // مسار تسجيل الدخول عبر جوجل
@@ -203,13 +208,15 @@ router.post('/google', validateBody(googleSchema), async (req, res) => {
     const payload = ticket.getPayload();
     const googleId = payload['sub'];
     const email = payload['email'];
-    let user = await User.findOne({ googleId });
+    let user = await User.findOne({ googleId }).select('+sessionVersion');
     if (user) {
-      const token = jwt.sign(
-        { userId: user._id, role: user.role, username: user.username },
-        process.env.JWT_SECRET || 'your_jwt_secret',
-        { expiresIn: '30d' }
-      );
+      if (user.status && user.status !== 'active') {
+        return res.status(403).json({
+          message: 'الحساب موقوف، يرجى التواصل مع الدعم',
+          success: false,
+        });
+      }
+      const token = signAccessToken(user);
       logger.info('✅ Google login successful', { email });
       res.json({ token, role: user.role, userId: user._id, username: user.username, newUser: false, success: true });
     } else {
@@ -250,16 +257,12 @@ router.post('/google', validateBody(googleSchema), async (req, res) => {
       user.bots.push(bot._id);
       await user.save();
 
-      const token = jwt.sign(
-        { userId: user._id, role: user.role, username: user.username },
-        process.env.JWT_SECRET || 'your_jwt_secret',
-        { expiresIn: '30d' }
-      );
+      const token = signAccessToken(user);
       logger.info('✅ Google registration successful', { email, username });
       res.json({ token, role: user.role, userId: user._id, username: user.username, newUser: true, success: true });
     }
   } catch (error) {
-    logger.error('❌ خطأ في تسجيل الدخول بجوجل', { error: error.message, stack: error.stack, requestBody: req.body });
+    logger.error('google_login_failed', { error: error.message, stack: error.stack });
     res.status(401).json({ message: 'فشل في التحقق من بيانات جوجل، حاول مرة أخرى', success: false });
   }
 });

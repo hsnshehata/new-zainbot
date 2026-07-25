@@ -1,20 +1,7 @@
-const Module = require('module');
-const originalResolve = Module._resolveFilename;
-Module._resolveFilename = function(request, parent, isMain, options) {
-  try {
-    return originalResolve.apply(this, arguments);
-  } catch (err) {
-    if (err.code === 'MODULE_NOT_FOUND') {
-      try {
-        return originalResolve.call(this, require('path').join('C:/Users/hsnsh/.gemini/antigravity/brain/4a9b6574-a8ef-41ab-a46f-e942739b75a2/scratch/zainbot_modules/node_modules', request), parent, isMain, options);
-      } catch (e) {}
-    }
-    throw err;
-  }
-};
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 // server/server.js
 const express = require('express');
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 const path = require('path');
 const cors = require('cors');
@@ -38,6 +25,15 @@ const storesRoutes = require('./routes/stores');
 const productsRoutes = require('./routes/products');
 const integrationsRoutes = require('./routes/integrations');
 const adminKeysRoutes = require('./routes/adminKeys');
+const {
+  createAdminImpersonationRouter,
+} = require('./routes/adminImpersonation');
+const {
+  signImpersonationToken,
+} = require('./services/impersonationTokenService');
+const {
+  createAiControlPlaneRouter,
+} = require('./routes/AiControlPlane');
 const categoriesRoutes = require('./routes/categories'); // إضافة routes الأقسام
 const customersRoutes = require('./routes/customers');
 const suppliersRoutes = require('./routes/suppliers');
@@ -47,6 +43,7 @@ const expensesRoutes = require('./routes/expenses');
 const chatOrdersRoutes = require('./routes/chatOrders');
 const chatCustomersRoutes = require('./routes/chatCustomers');
 const telegramRoutes = require('./routes/telegram');
+const whatsappRoutes = require('./routes/whatsapp');
 const AppError = require('./utils/appError');
 const errorHandler = require('./middleware/errorHandler');
 // removed waRoutes (local WA app)
@@ -57,16 +54,21 @@ const User = require('./models/User');
 const Feedback = require('./models/Feedback');
 const Store = require('./models/Store');
 const Category = require('./models/Category'); // إضافة موديل Category
-const NodeCache = require('node-cache');
-const bcrypt = require('bcryptjs');
-const axios = require('axios');
 const logger = require('./logger');
 const promClient = require('prom-client');
 const { checkAutoStopBots, refreshInstagramTokens, cleanupOldLogs } = require('./cronJobs');
 const authenticate = require('./middleware/authenticate');
+const { loadAccessibleBot } = require('./middleware/botAccess');
+const auditMutation = require('./middleware/auditMutation');
+const {
+  getWhatsAppSessionManager,
+} = require('./services/whatsappSessionManager');
+
+const whatsappSessionManager = getWhatsAppSessionManager();
+let activeHttpServer = null;
+let shutdownStarted = false;
 
 // إعداد cache لتخزين طلبات الـ API مؤقتاً (5 دقايق)
-const apiCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
 
 // إعداد Rate Limiting (100 طلب كل 15 دقيقة لكل IP)
 const limiter = rateLimit({
@@ -82,7 +84,8 @@ const limiter = rateLimit({
 // معدل تشديد لمسارات المصادقة الحساسة
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 1000,
+  max: 10,
+  skipSuccessfulRequests: true,
   message: {
     message: 'تم تجاوز عدد محاولات الدخول، حاول لاحقاً',
     error: 'AuthRateLimit',
@@ -163,17 +166,21 @@ app.use(helmet({
       ],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],
-      frameAncestors: ["'self'", "*"],
+      frameAncestors: ["'self'"],
     },
   },
 }));
 
 // إضافة معرّف بسيط لكل طلب لتتبعه في اللوجز
 app.use((req, res, next) => {
-  req.requestId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  req.requestId = crypto.randomUUID();
+  res.setHeader('X-Request-Id', req.requestId);
   const end = httpRequestDuration.startTimer();
   res.on('finish', () => {
-    end({ method: req.method, route: req.route?.path || req.originalUrl || 'unknown', status: res.statusCode });
+    const routeLabel = req.route?.path
+      ? `${req.baseUrl || ''}${req.route.path}`
+      : req.path || 'unknown';
+    end({ method: req.method, route: routeLabel, status: res.statusCode });
   });
   next();
 });
@@ -208,16 +215,46 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  logger.info('request', { method: req.method, url: req.url, ip: req.ip, ua: req.headers['user-agent'] });
+  logger.info('request', { requestId: req.requestId, method: req.method, path: req.path, ip: req.ip });
   next();
 });
 
 // Middleware
-app.use(cors());
+function normalizeOrigin(origin) {
+  return origin.trim().replace(/\/+$/, '');
+}
 
-// زيادة الحد الأقصى لحجم الـ JSON Payload لـ 10MB
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+const configuredOrigins = (process.env.CORS_ORIGINS || process.env.BASE_URL || '')
+  .split(',')
+  .map(normalizeOrigin)
+  .filter(Boolean);
+if (process.env.NODE_ENV !== 'production') {
+  configuredOrigins.push('http://localhost:5000', 'http://127.0.0.1:5000');
+}
+const allowedOrigins = new Set(configuredOrigins);
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(normalizeOrigin(origin))) {
+      return callback(null, true);
+    }
+    return callback(new AppError('Origin is not allowed', 403, 'CorsDenied'));
+  },
+  credentials: true,
+}));
+
+app.use(express.json({
+  limit: '2mb',
+  verify(req, _res, buffer) {
+    if (
+      req.originalUrl.startsWith('/api/webhook')
+      || req.originalUrl.startsWith('/api/telegram/webhook')
+    ) {
+      req.rawBody = Buffer.from(buffer);
+    }
+  },
+}));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(auditMutation);
 
 app.use(express.static(path.join(__dirname, '../public')));
 
@@ -262,7 +299,8 @@ const authenticatedPaths = [
   '/api/chat-orders',
   '/api/chat-customers',
   '/api/integrations',
-  '/api/admin/keys',
+  '/api/admin',
+  '/api/upload',
 ];
 app.use(authenticatedPaths, authenticate, accountLimiter);
 
@@ -310,15 +348,32 @@ app.use('/api/expenses', expensesRoutes);
 app.use('/api/chat-orders', chatOrdersRoutes);
 app.use('/api/chat-customers', chatCustomersRoutes);
 app.use('/api/telegram', telegramRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/integrations', integrationsRoutes);
 app.use('/api/admin/keys', adminKeysRoutes);
+app.use(
+  '/api/admin/impersonation',
+  createAdminImpersonationRouter({
+    issueToken: signImpersonationToken,
+  })
+);
+app.use('/api/admin/ai', createAiControlPlaneRouter());
 app.use('/', indexRoutes);
 
 // مسار المتركات (حماية اختيارية عبر METRICS_TOKEN)
 app.get('/metrics', async (req, res, next) => {
   try {
     const token = process.env.METRICS_TOKEN;
-    if (token && req.header('x-metrics-key') !== token) {
+    if (!token) {
+      return res.status(503).send('metrics are not configured');
+    }
+    const provided = req.header('x-metrics-key') || '';
+    const expectedBuffer = Buffer.from(token);
+    const providedBuffer = Buffer.from(provided);
+    if (
+      expectedBuffer.length !== providedBuffer.length
+      || !crypto.timingSafeEqual(expectedBuffer, providedBuffer)
+    ) {
       return res.status(401).send('unauthorized');
     }
     res.set('Content-Type', register.contentType);
@@ -327,6 +382,23 @@ app.get('/metrics', async (req, res, next) => {
   } catch (err) {
     return next(err);
   }
+});
+
+app.get('/health', (_req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: 'zainbot',
+  });
+});
+
+app.get('/health/readiness', (_req, res) => {
+  const databaseReady = mongoose.connection.readyState === 1;
+  res.status(databaseReady ? 200 : 503).json({
+    status: databaseReady ? 'ready' : 'not_ready',
+    checks: {
+      database: databaseReady ? 'up' : 'down',
+    },
+  });
 });
 
 // Route لصفحة المتجر
@@ -377,22 +449,21 @@ app.get('/store/:storeLink/landing', async (req, res) => {
 
 // نقطة النهاية للتحقق من التوكن
 app.get('/api/auth/check', authenticate, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
-    }
-    res.json({
-      success: true,
-      token: req.header('Authorization')?.replace('Bearer ', ''),
-      role: user.role,
-      userId: user._id,
-      username: user.username,
-    });
-  } catch (err) {
-    logger.error('auth_check_error', { err: err.message, stack: err.stack });
-    res.status(500).json({ success: false, message: 'خطأ في السيرفر', error: err.message });
-  }
+  res.json({
+    success: true,
+    role: req.user.role,
+    userId: req.user.userId,
+    username: req.user.username,
+    auth: {
+      actorUserId: req.auth.actorUserId,
+      subjectUserId: req.auth.subjectUserId,
+      actorRole: req.auth.actorRole,
+      subjectRole: req.auth.subjectRole,
+      isImpersonating: req.auth.isImpersonating,
+      impersonationSessionId: req.auth.impersonationSessionId,
+      scopes: req.auth.scopes,
+    },
+  });
 });
 
 // Route لإدارة التقييمات
@@ -420,7 +491,7 @@ app.post('/api/feedback', async (req, res) => {
   }
 });
 
-app.get('/api/feedback/:botId', authenticate, async (req, res) => {
+app.get('/api/feedback/:botId', authenticate, loadAccessibleBot, async (req, res) => {
   try {
     const { botId } = req.params;
     const feedback = await Feedback.find({ botId, isVisible: true }).sort({ timestamp: -1 });
@@ -439,7 +510,7 @@ app.get('/api/feedback/:botId', authenticate, async (req, res) => {
 });
 
 // Route لجلب المحادثات بتاعت المستخدم مع البوت
-app.get('/api/conversations/:botId/:userId', async (req, res) => {
+app.get('/api/conversations/:botId/:userId', authenticate, loadAccessibleBot, async (req, res) => {
   try {
     const { botId, userId } = req.params;
     const conversations = await Conversation.find({ botId, userId }).sort({ 'messages.timestamp': -1 });
@@ -447,81 +518,6 @@ app.get('/api/conversations/:botId/:userId', async (req, res) => {
   } catch (err) {
     logger.error('conversations_fetch_error', { botId: req.params.botId, userId: req.params.userId, err: err.message, stack: err.stack });
     res.status(500).json({ message: 'Failed to fetch conversations' });
-  }
-});
-
-// Route لاختبار النظام
-app.get('/api/test', async (req, res) => {
-  try {
-    const testResults = {};
-
-    const testUser = new User({
-      username: 'test_user_' + Date.now(),
-      email: 'test' + Date.now() + '@example.com',
-      whatsapp: '1234567890',
-      password: await bcrypt.hash('test123', 10),
-      role: 'user',
-      subscriptionType: 'monthly',
-      subscriptionEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      isVerified: true
-    });
-    await testUser.save();
-
-    const testBot = new Bot({
-      name: 'Test Bot',
-      userId: testUser._id,
-      isActive: false,
-      subscriptionType: 'free',
-      autoStopDate: new Date(Date.now() + 24 * 60 * 60 * 1000)
-    });
-    await testBot.save();
-
-    testResults.createUserAndBot = 'تم إنشاء مستخدم وبوت متوقف بنجاح';
-
-    let messageResponse;
-    try {
-      const res = await axios.post('http://localhost:5000/api/bot', { botId: testBot._id, message: 'Test message' });
-      messageResponse = { status: res.status, body: res.data };
-    } catch (err) {
-      messageResponse = { status: err.response?.status || 500, body: err.response?.data || { message: err.message } };
-    }
-
-    if (messageResponse.status === 400 && messageResponse.body.message.includes('متوقف')) {
-      testResults.inactiveBotMessage = 'تم منع معالجة الرسالة للبوت المتوقف بنجاح';
-    } else {
-      testResults.inactiveBotMessage = 'فشل في منع معالجة الرسالة للبوت المتوقف';
-    }
-
-    const userData = await User.findById(testUser._id);
-    if (userData.subscriptionType === 'monthly' && userData.subscriptionEndDate) {
-      testResults.userData = 'تم استرجاع بيانات المستخدم (نوع الاشتراك وتاريخ الانتهاء) بنجاح';
-    } else {
-      testResults.userData = 'فشل في استرجاع بيانات المستخدم بشكل صحيح';
-    }
-
-    const testNotification = new Notification({
-      user: testUser._id,
-      title: 'اختبار إشعار',
-      message: 'هذه رسالة اختبار للإشعار',
-      isRead: false
-    });
-    await testNotification.save();
-
-    const notifications = await Notification.find({ user: testUser._id });
-    if (notifications.length === 1 && notifications[0].title === 'اختبار إشعار') {
-      testResults.notification = 'تم إنشاء إشعار مع عنوان بنجاح';
-    } else {
-      testResults.notification = 'فشل في إنشاء إشعار مع عنوان';
-    }
-
-    await Notification.deleteOne({ _id: testNotification._id });
-    await Bot.deleteOne({ _id: testBot._id });
-    await User.deleteOne({ _id: testUser._id });
-
-    res.status(200).json({ message: 'اختبارات النظام اكتملت', results: testResults });
-  } catch (err) {
-    logger.error('system_test_error', { err: err.message, stack: err.stack });
-    res.status(500).json({ message: 'خطأ في اختبار النظام', error: err.message });
   }
 });
 
@@ -660,30 +656,73 @@ app.use((req, res, next) => {
 // معالج أخطاء مركزي
 app.use(errorHandler);
 
-process.on('uncaughtException', (err) => {
-  logger.error('uncaught_exception', { err: err.message, stack: err.stack });
-});
+function installFatalProcessHandlers() {
+  process.once('uncaughtException', (err) => {
+    logger.error('uncaught_exception', {
+      err: err.message,
+      stack: err.stack,
+    });
+    process.exit(1);
+  });
 
-process.on('unhandledRejection', (reason, promise) => {
-  logger.error('unhandled_rejection', { reason, promise });
-});
+  process.once('unhandledRejection', (reason) => {
+    logger.error('unhandled_rejection', {
+      error: reason instanceof Error ? reason.message : String(reason),
+    });
+    process.exit(1);
+  });
 
-// Connect to MongoDB
-connectDB()
-  .catch((err) => logger.error('mongo_connect_failed', { err: err.message, stack: err.stack }));
+  const gracefulShutdown = async (signal) => {
+    if (shutdownStarted) return;
+    shutdownStarted = true;
+    logger.info('server_shutdown_started', { signal });
 
-// تشغيل وظايف التحقق الدورية (تخطيها في الاختبارات لتقليل المقابض المفتوحة)
-if (process.env.NODE_ENV !== 'test') {
+    if (activeHttpServer) {
+      activeHttpServer.close();
+    }
+    await whatsappSessionManager.shutdown().catch((error) => {
+      logger.error('whatsapp_shutdown_failed', { error: error.message });
+    });
+    await mongoose.disconnect().catch((error) => {
+      logger.error('mongodb_shutdown_failed', { error: error.message });
+    });
+    process.exit(0);
+  };
+
+  process.once('SIGTERM', () => {
+    gracefulShutdown('SIGTERM');
+  });
+  process.once('SIGINT', () => {
+    gracefulShutdown('SIGINT');
+  });
+}
+
+async function startServer() {
+  await connectDB();
+  const restoreResults = await whatsappSessionManager.restorePersistedSessions();
+  logger.info('whatsapp_sessions_restore_started', {
+    total: restoreResults.length,
+    restored: restoreResults.filter((result) => result.restored).length,
+  });
   checkAutoStopBots();
   refreshInstagramTokens();
   cleanupOldLogs();
+
+  const port = process.env.PORT || 5000;
+  activeHttpServer = app.listen(port, '0.0.0.0', () => {
+    logger.info('server_started', { port });
+  });
+  return activeHttpServer;
 }
 
-const PORT = process.env.PORT || 5000;
-if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, '0.0.0.0', () => {
-    logger.info('server_started', { port: PORT });
+if (require.main === module && process.env.NODE_ENV !== 'test') {
+  installFatalProcessHandlers();
+  startServer().catch((error) => {
+    logger.error('server_start_failed', { error: error.message, stack: error.stack });
+    process.exit(1);
   });
 }
 
 module.exports = app;
+module.exports.startServer = startServer;
+module.exports.normalizeOrigin = normalizeOrigin;

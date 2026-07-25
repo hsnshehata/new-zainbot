@@ -1,13 +1,17 @@
 const express = require('express');
 const authenticate = require('../middleware/authenticate');
 const telegramController = require('../controllers/telegramController');
+const { loadAccessibleBot } = require('../middleware/botAccess');
+const {
+  verifyTelegramWebhookSecret,
+} = require('../middleware/verifyWebhookSignature');
 
 const router = express.Router();
 
-router.post('/webhook', telegramController.handleWebhook);
-router.get('/status', authenticate, telegramController.getStatus); // يتطلب botId كـ query
-router.post('/link-code', authenticate, telegramController.generateLinkCode); // botId في body
-router.post('/preferences', authenticate, telegramController.updatePreferences); // botId في body
-router.post('/unlink', authenticate, telegramController.unlink); // botId في body
+router.post('/webhook', verifyTelegramWebhookSecret, telegramController.handleWebhook);
+router.get('/status', authenticate, loadAccessibleBot, telegramController.getStatus);
+router.post('/link-code', authenticate, loadAccessibleBot, telegramController.generateLinkCode);
+router.post('/preferences', authenticate, loadAccessibleBot, telegramController.updatePreferences);
+router.post('/unlink', authenticate, loadAccessibleBot, telegramController.unlink);
 
 module.exports = router;

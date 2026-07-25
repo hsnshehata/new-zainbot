@@ -43,54 +43,97 @@ exports.getDailyMessages = async (req, res) => {
   }
 };
 
+function parsePositiveInteger(value, fallback, maximum) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return fallback;
+  }
+  return Math.min(parsed, maximum);
+}
+
+function parseOptionalDate(value, fieldName) {
+  if (!value) {
+    return null;
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    const error = new Error(`${fieldName} is invalid`);
+    error.statusCode = 400;
+    throw error;
+  }
+  return parsed;
+}
+
+async function fetchMessages({
+  botId,
+  channelType,
+  startDate,
+  endDate,
+  page,
+  limit,
+}) {
+  if (!botId || !channelType) {
+    const error = new Error('معرف البوت أو القناة غير محدد.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const normalizedPage = parsePositiveInteger(page, 1, 1_000_000);
+  const normalizedLimit = parsePositiveInteger(limit, 20, 100);
+  const parsedStartDate = parseOptionalDate(startDate, 'startDate');
+  const parsedEndDate = parseOptionalDate(endDate, 'endDate');
+  const query = { botId, channel: channelType };
+
+  if (parsedStartDate || parsedEndDate) {
+    query['messages.timestamp'] = {};
+    if (parsedStartDate) query['messages.timestamp'].$gte = parsedStartDate;
+    if (parsedEndDate) query['messages.timestamp'].$lte = parsedEndDate;
+  }
+
+  const skip = (normalizedPage - 1) * normalizedLimit;
+  const [conversations, totalConversations] = await Promise.all([
+    Conversation.find(query)
+      .select('userId username messages')
+      .sort({ 'messages.timestamp': -1 })
+      .skip(skip)
+      .limit(normalizedLimit)
+      .lean(),
+    Conversation.countDocuments(query),
+  ]);
+
+  return {
+    conversations,
+    totalConversations,
+    currentPage: normalizedPage,
+    totalPages: Math.ceil(totalConversations / normalizedLimit),
+  };
+}
+
 // Get conversations for a bot
 exports.getMessages = async (req, res) => {
   try {
-    const botId = req.params.botId;
-    const channelType = req.query.type;
-    const startDate = req.query.startDate ? new Date(req.query.startDate) : null;
-    const endDate = req.query.endDate ? new Date(req.query.endDate) : null;
-    const page = parseInt(req.query.page) || 1; // رقم الصفحة
-    const limit = parseInt(req.query.limit) || 20; // عدد العناصر في الصفحة
-
-    if (!botId || !channelType) {
-      return res.status(400).json({ message: "معرف البوت أو القناة غير محدد." });
-    }
-
-    const query = { botId, channel: channelType };
-
-    if (startDate && endDate) {
-      query["messages.timestamp"] = { $gte: startDate, $lte: endDate };
-    } else if (startDate) {
-      query["messages.timestamp"] = { $gte: startDate };
-    } else if (endDate) {
-      query["messages.timestamp"] = { $lte: endDate };
-    }
-
-    const skip = (page - 1) * limit;
-
-    // جلب المحادثات مع Pagination و Sorting و Projection
-    const conversations = await Conversation.find(query)
-      .select("userId username messages") // جلب الحقول اللي محتاجينها بس
-      .sort({ "messages.timestamp": -1 }) // Sort على مستوى الداتابيز
-      .skip(skip)
-      .limit(limit)
-      .lean();
-
-    // جلب العدد الكلي للمحادثات عشان نعمل Pagination صح
-    const totalConversations = await Conversation.countDocuments(query);
-
-    res.status(200).json({
-      conversations,
-      totalConversations,
-      currentPage: page,
-      totalPages: Math.ceil(totalConversations / limit),
+    const result = await fetchMessages({
+      botId: req.params.botId,
+      channelType: req.query.type,
+      startDate: req.query.startDate,
+      endDate: req.query.endDate,
+      page: req.query.page,
+      limit: req.query.limit,
     });
+    return res.status(200).json(result);
   } catch (err) {
-    logger.error('messages_fetch_error', { botId, channelType, err: err.message, stack: err.stack });
-    res.status(500).json({ message: "خطأ في جلب المحادثات." });
+    logger.error('messages_fetch_error', {
+      botId: req.params.botId,
+      channelType: req.query.type,
+      err: err.message,
+    });
+    return res
+      .status(err.statusCode || 500)
+      .json({ message: err.statusCode === 400 ? err.message : 'خطأ في جلب المحادثات.' });
   }
 };
+
+exports.fetchMessages = fetchMessages;
 
 // Delete a user's conversations
 exports.deleteUserMessages = async (req, res) => {
@@ -106,7 +149,11 @@ exports.deleteUserMessages = async (req, res) => {
     await Conversation.deleteMany({ botId, userId, channel: channelType });
     res.status(200).json({ message: "تم حذف محادثات المستخدم بنجاح." });
   } catch (error) {
-    logger.error('messages_delete_user_error', { botId, userId, channelType, err: error.message, stack: error.stack });
+    logger.error('messages_delete_user_error', {
+      botId: req.params.botId,
+      channelType: req.query.type,
+      err: error.message,
+    });
     res.status(500).json({ message: "خطأ في حذف المحادثات." });
   }
 };
@@ -124,7 +171,11 @@ exports.deleteAllMessages = async (req, res) => {
     await Conversation.deleteMany({ botId, channel: channelType });
     res.status(200).json({ message: "تم حذف جميع المحادثات بنجاح." });
   } catch (error) {
-    logger.error('messages_delete_all_error', { botId, channelType, err: error.message, stack: error.stack });
+    logger.error('messages_delete_all_error', {
+      botId: req.params.botId,
+      channelType: req.query.type,
+      err: error.message,
+    });
     res.status(500).json({ message: "خطأ في السيرفر" });
   }
 };

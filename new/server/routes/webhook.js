@@ -1,62 +1,85 @@
-// server/routes/webhook.js
 const express = require('express');
-const router = express.Router();
 const { handleMessage: handleFacebookMessage } = require('../controllers/facebookController');
-const { handleMessage: handleInstagramMessage, verifyWebhook: verifyInstagramWebhook } = require('../controllers/instagramController');
-const { processWebhook: handleWhatsAppMessage, verifyWebhook: verifyWhatsAppWebhook } = require('../controllers/whatsappController');
-// Webhook لفيسبوك
-router.get('/facebook', (req, res) => {
-  const VERIFY_TOKEN = 'hassanshehata';
+const { handleMessage: handleInstagramMessage } = require('../controllers/instagramController');
+const { processWebhook: handleWhatsAppMessage } = require('../controllers/whatsappController');
+const logger = require('../logger');
+const {
+  timingSafeStringEqual,
+  verifyMetaSignature,
+} = require('../middleware/verifyWebhookSignature');
 
-  const mode = req.query['hub.mode'];
-  const token = req.query['hub.verify_token'];
-  const challenge = req.query['hub.challenge'];
+const router = express.Router();
 
-  const logger = require('../logger');
-  if (mode && token) {
-    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-      logger.info('facebook_webhook_verified');
-      res.status(200).send(challenge);
-    } else {
-      logger.warn('facebook_webhook_verify_failed');
-      res.sendStatus(403);
+function verifySubscription(channel, specificEnvName) {
+  return (req, res) => {
+    const expected = process.env[specificEnvName]?.trim()
+      || (channel === 'whatsapp' ? process.env.WHATSAPP_VERIFY_TOKEN?.trim() : '')
+      || process.env.META_WEBHOOK_VERIFY_TOKEN?.trim()
+      || process.env.WEBHOOK_VERIFY_TOKEN?.trim();
+    if (!expected) {
+      logger.error('webhook_verify_token_missing', {
+        requestId: req.requestId,
+        channel,
+        specificEnvName,
+      });
+      return res.status(503).json({
+        success: false,
+        error: 'WEBHOOK_NOT_CONFIGURED',
+      });
     }
-  } else {
-    logger.warn('facebook_webhook_missing_params');
-    res.sendStatus(403);
-  }
-});
 
-router.post('/facebook', handleFacebookMessage);
-
-// Webhook لإنستجرام
-router.get('/instagram', verifyInstagramWebhook);
-
-router.post('/instagram', handleInstagramMessage);
-
-// Webhook لواتساب
-router.get('/whatsapp', (req, res) => {
-  const VERIFY_TOKEN = 'hassanshehata';
-
-  const mode = req.query['hub.mode'];
-  const token = req.query['hub.verify_token'];
-  const challenge = req.query['hub.challenge'];
-
-  const logger = require('../logger');
-  if (mode && token) {
-    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-      logger.info('whatsapp_webhook_verified');
-      res.status(200).send(challenge);
-    } else {
-      logger.warn('whatsapp_webhook_verify_failed');
-      res.sendStatus(403);
+    const mode = req.query['hub.mode'];
+    const received = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
+    if (
+      mode !== 'subscribe'
+      || !received
+      || !timingSafeStringEqual(received, expected)
+    ) {
+      logger.warn('webhook_verification_rejected', {
+        requestId: req.requestId,
+        channel,
+      });
+      return res.sendStatus(403);
     }
-  } else {
-    logger.warn('whatsapp_webhook_missing_params');
-    res.sendStatus(403);
-  }
-});
 
-router.post('/whatsapp', handleWhatsAppMessage);
+    logger.info('webhook_verified', {
+      requestId: req.requestId,
+      channel,
+    });
+    return res.status(200).send(challenge);
+  };
+}
+
+router.get(
+  '/facebook',
+  verifySubscription('facebook', 'FACEBOOK_WEBHOOK_VERIFY_TOKEN')
+);
+router.post(
+  '/facebook',
+  verifyMetaSignature('FACEBOOK_APP_SECRET'),
+  handleFacebookMessage
+);
+
+router.get(
+  '/instagram',
+  verifySubscription('instagram', 'INSTAGRAM_WEBHOOK_VERIFY_TOKEN')
+);
+router.post(
+  '/instagram',
+  verifyMetaSignature('INSTAGRAM_APP_SECRET'),
+  handleInstagramMessage
+);
+
+router.get(
+  '/whatsapp',
+  verifySubscription('whatsapp', 'WHATSAPP_WEBHOOK_VERIFY_TOKEN')
+);
+router.post(
+  '/whatsapp',
+  verifyMetaSignature('WHATSAPP_APP_SECRET'),
+  handleWhatsAppMessage
+);
 
 module.exports = router;
+module.exports.verifySubscription = verifySubscription;

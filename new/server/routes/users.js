@@ -2,11 +2,15 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
-const Bot = require('../models/Bot');
 const authenticate = require('../middleware/authenticate');
 const bcrypt = require('bcryptjs');
 const { validateBody, Joi } = require('../middleware/validate');
+const {
+  requireDirectActorRole,
+  isDirectActor,
+} = require('../middleware/authorize');
 const logger = require('../logger');
+const { serializeUser } = require('../utils/serializers');
 
 const usernameRule = Joi.string().pattern(/^[a-z0-9_-]+$/).min(3).max(20);
 
@@ -20,6 +24,8 @@ const createUserSchema = Joi.object({
   email: Joi.string().email({ tlds: { allow: false } }).required(),
   whatsapp: Joi.string().allow('', null),
   subscriptionType: Joi.string().valid('free', 'monthly', 'yearly').optional(),
+  subscriptionTier: Joi.string().valid('free', 'growth_1k', 'growth_10k', 'growth_50k', 'unlimited').optional(),
+  status: Joi.string().valid('active', 'suspended').optional(),
   subscriptionEndDate: Joi.date().allow(null, '').optional()
 });
 
@@ -32,6 +38,8 @@ const updateUserSchema = Joi.object({
   email: Joi.string().email({ tlds: { allow: false } }).optional(),
   whatsapp: Joi.string().allow('', null).optional(),
   subscriptionType: Joi.string().valid('free', 'monthly', 'yearly').optional(),
+  subscriptionTier: Joi.string().valid('free', 'growth_1k', 'growth_10k', 'growth_50k', 'unlimited').optional(),
+  status: Joi.string().valid('active', 'suspended').optional(),
   subscriptionEndDate: Joi.date().allow(null, '').optional()
 }).custom((obj, helpers) => {
   if (obj.password && !obj.confirmPassword) {
@@ -75,7 +83,7 @@ router.get('/profile', authenticate, async (req, res) => {
     logger.info('✅ User profile fetched', { userId: req.user.userId });
     res.status(200).json({
       success: true,
-      data: user
+      data: serializeUser(user, { includeBots: true })
     });
   } catch (err) {
     logger.error('❌ Error fetching profile', { err });
@@ -84,14 +92,15 @@ router.get('/profile', authenticate, async (req, res) => {
 });
 
 // Get all users (Superadmin only)
-router.get('/', authenticate, async (req, res) => {
-  if (req.user.role !== 'superadmin') {
-    return res.status(403).json({ message: 'غير مصرح لك' });
-  }
+router.get('/', authenticate, requireDirectActorRole('superadmin'), async (req, res) => {
   try {
     const populateBots = req.query.populate === 'bots';
-    const users = await (populateBots ? User.find().populate('bots') : User.find());
-    res.status(200).json(users);
+    const users = await (populateBots
+      ? User.find().populate('bots')
+      : User.find());
+    res.status(200).json(
+      users.map((user) => serializeUser(user, { includeBots: populateBots }))
+    );
   } catch (err) {
     logger.error('Error fetching users', { err });
     res.status(500).json({ message: 'خطأ في السيرفر' });
@@ -99,11 +108,18 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // Create a new user (Superadmin only)
-router.post('/', authenticate, validateBody(createUserSchema), async (req, res) => {
-  if (req.user.role !== 'superadmin') {
-    return res.status(403).json({ message: 'غير مصرح لك' });
-  }
-  const { username, password, role, email, whatsapp, subscriptionType, subscriptionEndDate } = req.body;
+router.post('/', authenticate, requireDirectActorRole('superadmin'), validateBody(createUserSchema), async (req, res) => {
+  const {
+    username,
+    password,
+    role,
+    email,
+    whatsapp,
+    subscriptionType,
+    subscriptionTier,
+    status,
+    subscriptionEndDate,
+  } = req.body;
   try {
     const normalizedUsername = username.toLowerCase(); // تحويل الـ username للحروف الصغيرة
     const existingUser = await User.findOne({ $or: [{ username: normalizedUsername }, { email }] });
@@ -118,10 +134,16 @@ router.post('/', authenticate, validateBody(createUserSchema), async (req, res) 
       email,
       whatsapp,
       subscriptionType: subscriptionType || 'free',
+      subscriptionTier: subscriptionTier || 'free',
+      status: status || 'active',
+      isVerified: true,
       subscriptionEndDate: subscriptionEndDate || null
     });
     await user.save();
-    res.status(201).json({ message: 'تم إنشاء المستخدم بنجاح' });
+    res.status(201).json({
+      message: 'تم إنشاء المستخدم بنجاح',
+      data: serializeUser(user),
+    });
   } catch (err) {
     logger.error('Error creating user', { err });
     res.status(500).json({ message: 'خطأ في السيرفر' });
@@ -131,14 +153,26 @@ router.post('/', authenticate, validateBody(createUserSchema), async (req, res) 
 // Update a user (Superadmin can update any user, regular user can update themselves)
 router.put('/:id', authenticate, validateBody(updateUserSchema), async (req, res) => {
   const { id } = req.params;
-  const { username, password, confirmPassword, role, email, whatsapp, subscriptionType, subscriptionEndDate } = req.body;
+  const {
+    username,
+    password,
+    confirmPassword,
+    role,
+    email,
+    whatsapp,
+    subscriptionType,
+    subscriptionTier,
+    status,
+    subscriptionEndDate,
+  } = req.body;
 
-  if (req.user.role !== 'superadmin' && id !== req.user.userId) {
+  const directSuperadmin = isDirectActor(req) && req.auth.actorRole === 'superadmin';
+  if (!directSuperadmin && id !== req.user.userId) {
     return res.status(403).json({ message: 'غير مصرح لك' });
   }
 
   try {
-    const user = await User.findById(id);
+    const user = await User.findById(id).select('+sessionVersion');
     if (!user) {
       return res.status(404).json({ message: 'المستخدم غير موجود' });
     }
@@ -172,26 +206,52 @@ router.put('/:id', authenticate, validateBody(updateUserSchema), async (req, res
     }
 
     // تحديث كلمة المرور فقط إذا تم إرسالها والتحقق من تطابقها
+    let revokeSessions = false;
     if (password) {
       if (password !== confirmPassword) {
         return res.status(400).json({ message: 'كلمات المرور غير متطابقة' });
       }
       user.password = await bcrypt.hash(password, 10);
+      revokeSessions = true;
     }
 
     // السماح لمدير عام فقط بتعديل الدور والاشتراك
-    if (req.user.role === 'superadmin') {
-      if (role) user.role = role;
+    if (directSuperadmin) {
+      if (user.role === 'superadmin' && role && role !== 'superadmin') {
+        return res.status(409).json({
+          message: 'لا يمكن خفض صلاحية حساب مدير عام من هذه الواجهة',
+        });
+      }
+      if (user.role === 'superadmin' && status && status !== 'active') {
+        return res.status(409).json({
+          message: 'لا يمكن تعليق حساب مدير عام',
+        });
+      }
+      if (role && role !== user.role) {
+        user.role = role;
+        revokeSessions = true;
+      }
       if (subscriptionType) user.subscriptionType = subscriptionType;
+      if (subscriptionTier) user.subscriptionTier = subscriptionTier;
+      if (status && status !== user.status) {
+        user.status = status;
+        revokeSessions = true;
+      }
       // تحديث تاريخ الانتهاء، وإذا تم إرسال null يُمسح، وإلا يُحدّث.
       if (subscriptionEndDate !== undefined) {
         user.subscriptionEndDate = subscriptionEndDate || null;
       }
     }
 
+    if (revokeSessions) {
+      user.sessionVersion = Number(user.sessionVersion || 0) + 1;
+    }
     await user.save();
     logger.info('user_updated_successfully', { userId: id, updatedFields: { username, email, whatsapp, password: password ? 'yes' : 'no' } });
-    res.status(200).json({ message: 'تم تحديث المستخدم بنجاح' });
+    res.status(200).json({
+      message: 'تم تحديث المستخدم بنجاح',
+      data: serializeUser(user),
+    });
   } catch (err) {
     logger.error('error_updating_user', { userId: id, err: err.message, stack: err.stack });
     res.status(500).json({ message: 'خطأ في السيرفر' });
@@ -199,22 +259,23 @@ router.put('/:id', authenticate, validateBody(updateUserSchema), async (req, res
 });
 
 // Delete a user (Superadmin only)
-router.delete('/:id', authenticate, async (req, res) => {
-  if (req.user.role !== 'superadmin') {
-    return res.status(403).json({ message: 'غير مصرح لك' });
-  }
+router.delete('/:id', authenticate, requireDirectActorRole('superadmin'), async (req, res) => {
   const { id } = req.params;
   try {
-    const user = await User.findById(id);
+    const user = await User.findById(id).select('+sessionVersion');
     if (!user) {
       return res.status(404).json({ message: 'المستخدم غير موجود' });
     }
     if (user.role === 'superadmin') {
       return res.status(403).json({ message: 'لا يمكن حذف حساب مدير عام' });
     }
-    await Bot.deleteMany({ userId: id });
-    await user.deleteOne();
-    res.status(200).json({ message: 'تم حذف المستخدم بنجاح' });
+    user.status = 'deleted';
+    user.sessionVersion = Number(user.sessionVersion || 0) + 1;
+    await user.save();
+    res.status(200).json({
+      message: 'تم تعطيل المستخدم مع الاحتفاظ ببياناته وقنواته',
+      data: serializeUser(user),
+    });
   } catch (err) {
     logger.error('Error deleting user', { err });
     res.status(500).json({ message: 'خطأ في السيرفر' });

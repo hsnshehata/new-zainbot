@@ -8,7 +8,7 @@ const providerKeySchema = new mongoose.Schema({
     enum: ['openai', 'gemini', 'anthropic', 'openrouter', 'custom'], 
     required: true 
   },
-  apiKey: { type: String, required: true, trim: true },
+  apiKey: { type: String, required: true, trim: true, select: false },
   baseUrl: { type: String, trim: true },
   defaultModel: { type: String, required: true, trim: true },
   priority: { type: Number, default: 1 },
@@ -21,6 +21,19 @@ const providerKeySchema = new mongoose.Schema({
   lastTested: { type: Date, default: Date.now },
   errorMessage: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now }
+}, {
+  toJSON: {
+    transform: (_document, result) => {
+      delete result.apiKey;
+      return result;
+    }
+  },
+  toObject: {
+    transform: (_document, result) => {
+      delete result.apiKey;
+      return result;
+    }
+  }
 });
 
 module.exports = mongoose.model('ProviderKey', providerKeySchema);

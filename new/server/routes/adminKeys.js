@@ -3,12 +3,13 @@ const express = require('express');
 const router = express.Router();
 const adminKeysController = require('../controllers/adminKeysController');
 const authenticate = require('../middleware/authenticate');
+const { requireDirectActorRole } = require('../middleware/authorize');
 
-// All keys endpoints are restricted to superadmins inside the controller
-router.post('/', authenticate, adminKeysController.addKey);
-router.get('/', authenticate, adminKeysController.listKeys);
-router.put('/:id', authenticate, adminKeysController.updateKey);
-router.delete('/:id', authenticate, adminKeysController.deleteKey);
-router.post('/reset', authenticate, adminKeysController.resetAllFailedKeys);
+router.use(authenticate, requireDirectActorRole('superadmin'));
+router.post('/', adminKeysController.addKey);
+router.get('/', adminKeysController.listKeys);
+router.put('/:id', adminKeysController.updateKey);
+router.delete('/:id', adminKeysController.deleteKey);
+router.post('/reset', adminKeysController.resetAllFailedKeys);
 
 module.exports = router;

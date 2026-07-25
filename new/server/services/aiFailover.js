@@ -117,12 +117,16 @@ async function getAiCompletion(options, bot = null, useBackup = false) {
   }
 
   // Scenario 2: Using Global Admin Keys with Priority & Failover
-  let activeKeys = await ProviderKey.find({ isActive: true, status: 'working' }).sort({ priority: 1 });
+  let activeKeys = await ProviderKey.find({ isActive: true, status: 'working' })
+    .select('+apiKey')
+    .sort({ priority: 1 });
 
   if (activeKeys.length === 0) {
     logger.warn('⚠️ No active working keys found. Attempting to reset failed keys back to working.');
     await ProviderKey.updateMany({ isActive: true }, { status: 'working' });
-    activeKeys = await ProviderKey.find({ isActive: true }).sort({ priority: 1 });
+    activeKeys = await ProviderKey.find({ isActive: true })
+      .select('+apiKey')
+      .sort({ priority: 1 });
   }
 
   if (activeKeys.length === 0) {

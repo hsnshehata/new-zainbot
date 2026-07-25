@@ -80,6 +80,7 @@ const botSchema = new mongoose.Schema({
   backupProvider: { type: String, enum: ['openai', 'gemini', 'anthropic', 'openrouter', 'custom'], default: 'openai' },
   backupModel: { type: String, trim: true },
   backupBaseUrl: { type: String, trim: true },
+  archivedAt: { type: Date, default: null, index: true },
   createdAt: { type: Date, default: Date.now },
 });
 

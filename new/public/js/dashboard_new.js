@@ -14,6 +14,8 @@
   // Cache/DOM selectors
   const sidebar = document.getElementById('sidebar');
   const menuMobileToggle = document.getElementById('menuMobileToggle');
+  const sidebarScrim = document.getElementById('sidebarScrim');
+  const mobileSidebarMedia = window.matchMedia('(max-width: 991px)');
   const langToggleBtn = document.getElementById('dashboardLangToggle');
   const headerUsername = document.getElementById('headerUsername');
   const headerUserAvatar = document.getElementById('headerUserAvatar');
@@ -323,23 +325,63 @@
     });
   }
 
+  function setMobileMenuOpen(open, restoreToggleFocus = false) {
+    if (!sidebar || !menuMobileToggle) return;
+
+    const shouldOpen = Boolean(open) && mobileSidebarMedia.matches;
+    sidebar.classList.toggle('mobile-open', shouldOpen);
+    document.body.classList.toggle('sidebar-open', shouldOpen);
+    menuMobileToggle.setAttribute('aria-expanded', String(shouldOpen));
+
+    if (mobileSidebarMedia.matches) {
+      sidebar.setAttribute('aria-hidden', String(!shouldOpen));
+    } else {
+      sidebar.removeAttribute('aria-hidden');
+    }
+
+    if (sidebarScrim) {
+      sidebarScrim.classList.toggle('active', shouldOpen);
+      sidebarScrim.setAttribute('aria-hidden', String(!shouldOpen));
+    }
+
+    if (restoreToggleFocus) menuMobileToggle.focus();
+  }
+
   // Sidebar navigation click
   document.querySelectorAll('.menu-item').forEach(item => {
     item.addEventListener('click', () => {
       const target = item.getAttribute('data-target');
       switchTab(target);
-      if (sidebar.classList.contains('mobile-open')) {
-        sidebar.classList.remove('mobile-open');
-      }
+      setMobileMenuOpen(false);
     });
   });
 
   // Mobile menu toggle
-  if (menuMobileToggle) {
+  if (menuMobileToggle && sidebar) {
     menuMobileToggle.addEventListener('click', () => {
-      sidebar.classList.toggle('mobile-open');
+      setMobileMenuOpen(!sidebar.classList.contains('mobile-open'));
     });
   }
+
+  if (sidebarScrim) {
+    sidebarScrim.addEventListener('click', () => {
+      setMobileMenuOpen(false, true);
+    });
+  }
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && sidebar?.classList.contains('mobile-open')) {
+      setMobileMenuOpen(false, true);
+    }
+  });
+
+  const handleSidebarBreakpointChange = () => setMobileMenuOpen(false);
+  if (typeof mobileSidebarMedia.addEventListener === 'function') {
+    mobileSidebarMedia.addEventListener('change', handleSidebarBreakpointChange);
+  } else {
+    mobileSidebarMedia.addListener(handleSidebarBreakpointChange);
+  }
+  setMobileMenuOpen(false);
 
   // User Auth and Load Details
   async function checkAuthAndLoad() {

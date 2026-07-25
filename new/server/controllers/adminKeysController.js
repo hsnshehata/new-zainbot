@@ -4,8 +4,17 @@ const logger = require('../logger');
 
 // Check if user is superadmin
 const checkSuperadmin = (req) => {
-  return req.user && req.user.role === 'superadmin';
+  return req.auth?.actorRole === 'superadmin' && !req.auth?.isImpersonating;
 };
+
+function serializeProviderKey(key) {
+  const rawKey = key.apiKey || '';
+  const value = typeof key.toObject === 'function' ? key.toObject() : { ...key };
+  value.configured = Boolean(rawKey);
+  value.last4 = rawKey ? rawKey.slice(-4) : '';
+  delete value.apiKey;
+  return value;
+}
 
 // Add Provider Key
 exports.addKey = async (req, res) => {
@@ -28,9 +37,9 @@ exports.addKey = async (req, res) => {
       priority: priority !== undefined ? Number(priority) : 1
     });
 
-    res.status(201).json({ success: true, data: newKey });
+    res.status(201).json({ success: true, data: serializeProviderKey(newKey) });
   } catch (err) {
-    logger.error('❌ Error adding provider key:', { err });
+    logger.error('provider_key_add_failed', { error: err.message });
     res.status(500).json({ success: false, message: 'فشل في إضافة المفتاح الجديد.' });
   }
 };
@@ -42,10 +51,15 @@ exports.listKeys = async (req, res) => {
       return res.status(403).json({ success: false, message: 'غير مصرح للوصول إلى هذه البيانات.' });
     }
 
-    const keys = await ProviderKey.find({}).sort({ priority: 1 });
-    res.status(200).json({ success: true, data: keys });
+    const keys = await ProviderKey.find({})
+      .select('+apiKey')
+      .sort({ priority: 1 });
+    res.status(200).json({
+      success: true,
+      data: keys.map(serializeProviderKey),
+    });
   } catch (err) {
-    logger.error('❌ Error listing provider keys:', { err });
+    logger.error('provider_key_list_failed', { error: err.message });
     res.status(500).json({ success: false, message: 'فشل في تحميل مفاتيح السيرفر.' });
   }
 };
@@ -60,7 +74,7 @@ exports.updateKey = async (req, res) => {
     const { id } = req.params;
     const { name, provider, apiKey, baseUrl, defaultModel, priority, isActive, status } = req.body;
 
-    const key = await ProviderKey.findById(id);
+    const key = await ProviderKey.findById(id).select('+apiKey');
     if (!key) {
       return res.status(404).json({ success: false, message: 'المفتاح المطلوب غير موجود.' });
     }
@@ -80,9 +94,9 @@ exports.updateKey = async (req, res) => {
     }
 
     await key.save();
-    res.status(200).json({ success: true, data: key });
+    res.status(200).json({ success: true, data: serializeProviderKey(key) });
   } catch (err) {
-    logger.error('❌ Error updating provider key:', { err });
+    logger.error('provider_key_update_failed', { error: err.message });
     res.status(500).json({ success: false, message: 'فشل في تحديث إعدادات المفتاح.' });
   }
 };
@@ -97,7 +111,7 @@ exports.resetAllFailedKeys = async (req, res) => {
     await ProviderKey.updateMany({ isActive: true }, { status: 'working', errorMessage: '' });
     res.status(200).json({ success: true, message: 'تم إعادة تفعيل وفحص كافة مفاتيح السيرفر بنجاح.' });
   } catch (err) {
-    logger.error('❌ Error resetting failed keys:', { err });
+    logger.error('provider_key_reset_failed', { error: err.message });
     res.status(500).json({ success: false, message: 'فشل في إعادة تفعيل المفاتيح.' });
   }
 };
@@ -117,7 +131,7 @@ exports.deleteKey = async (req, res) => {
 
     res.status(200).json({ success: true, message: 'تم حذف المفتاح بنجاح.' });
   } catch (err) {
-    logger.error('❌ Error deleting provider key:', { err });
+    logger.error('provider_key_delete_failed', { error: err.message });
     res.status(500).json({ success: false, message: 'فشل في حذف مفتاح السيرفر.' });
   }
 };

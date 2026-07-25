@@ -203,6 +203,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   transition: color var(--transition);
 }
 .nav-signin:hover { color: var(--text); }
+.nav-mobile-actions { display: none; }
 .hamburger {
   display: none;
   flex-direction: column;
@@ -1738,6 +1739,20 @@ html[dir="rtl"] .testimonial-card::before {
     to { opacity: 1; transform: translateY(0); }
   }
   .nav-links.mobile-open a { font-size: 16px; }
+  .nav-links.mobile-open .nav-mobile-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .nav-links.mobile-open .nav-mobile-actions .nav-signin {
+    display: inline-flex;
+    min-height: 40px;
+    align-items: center;
+    justify-content: center;
+  }
 
   .hero { padding-top: calc(var(--nav-height) + 40px); }
   .hero h1 { font-size: 2.2rem; }
@@ -1764,6 +1779,7 @@ html[dir="rtl"] .testimonial-card::before {
 
 @media (max-width: 480px) {
   .container, .nav-container, .hero-container { padding: 0 16px; }
+  .nav-links.mobile-open .nav-mobile-actions { grid-template-columns: 1fr; }
   .hero h1 { font-size: 1.9rem; }
   .hero-sub { font-size: 15px; }
   .section-header h2 { font-size: 1.6rem; }
