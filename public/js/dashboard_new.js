@@ -7,7 +7,7 @@
   let currentUser = null;
   let currentBot = null;
   let activeTab = 'page-overview';
-  let currentLanguage = localStorage.getItem('zainbot_lang') || 'en';
+  let currentLanguage = localStorage.getItem('zainbot_lang') || 'ar';
   let conversations = [];
   let selectedConversationId = null;
 
@@ -30,7 +30,7 @@
       menu_channels: 'Connections',
       menu_orders: 'Orders & Bookings',
       menu_settings: 'Settings & Billing',
-      menu_admin: 'AI Failover Panel',
+      menu_admin: 'Super Admin Control',
       logout: 'Logout',
       stat_active_chats: 'Active Chats',
       stat_response_speed: 'Avg Response Speed',
@@ -132,7 +132,7 @@
       menu_channels: 'ربط القنوات',
       menu_orders: 'الطلبات والحجوزات',
       menu_settings: 'الإعدادات والاشتراك',
-      menu_admin: 'لوحة حماية السقوط',
+      menu_admin: 'لوحة تحكم الأدمن',
       logout: 'تسجيل الخروج',
       stat_active_chats: 'المحادثات النشطة',
       stat_response_speed: 'سرعة الاستجابة',
@@ -386,6 +386,7 @@
 
   // User Auth and Load Details
   async function checkAuthAndLoad() {
+    applyLanguage(currentLanguage);
     const token = getToken();
     if (!token) {
       window.location.href = '/login';
