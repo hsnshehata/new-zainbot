@@ -106,8 +106,21 @@
       btn_save: 'Save Rule',
       label_faq_question: 'Question / Keywords',
       label_faq_answer: 'Expected Answer',
-      admin_title: 'ZainBot Global AI Failover & Keys',
-      admin_desc: 'Super Admin panel. Add global API keys, assign priority ranks, and manage auto-switch sequences to prevent system-wide model failures.',
+      admin_title: 'Super Admin Control Center',
+      admin_desc: 'Full system management: users, merchants, roles, direct impersonation, and global AI failover provider keys.',
+      admin_subtab_users: 'Users & Merchants Control',
+      admin_subtab_keys: 'AI Failover Servers & Keys',
+      admin_users_title: 'Registered Users & Merchants',
+      admin_users_desc: 'Manage roles, subscriptions, suspend accounts, and impersonate users.',
+      admin_btn_add_user: 'Add New User / Merchant',
+      th_user_username: 'Username',
+      th_user_email: 'Email',
+      th_user_role: 'Role',
+      th_user_tier: 'Plan Tier',
+      th_user_status: 'Status',
+      th_user_bots: 'Bots',
+      th_user_actions: 'Quick Actions',
+      admin_loading_users: 'Loading users list...',
       admin_active_keys: 'Active Global API Keys & Priority Order',
       admin_btn_reset: 'Reset Failed Keys',
       admin_register_key: 'Register Global Provider Key',
@@ -207,8 +220,21 @@
       btn_cancel: 'إلغاء',
       label_faq_question: 'السؤال / الكلمات المفتاحية',
       label_faq_answer: 'الإجابة المتوقعة',
-      admin_title: 'إدارة حماية السقوط ومفاتيح النظام العامة',
-      admin_desc: 'لوحة التحكم للمدير العام. إضافة مفاتيح API الخاصة بالنظام، تحديد مستويات الأولوية، وإدارة التسلسل التلقائي للتحول لمنع تعطل البوتات.',
+      admin_title: 'لوحة تحكم مدير النظام الشاملة',
+      admin_desc: 'التحكم الكامل في المستخدمين، التجار، الصلاحيات، الانتحال المباشر (Impersonation)، وإدارة مفاتيح الذكاء الاصطناعي الـ Failover.',
+      admin_subtab_users: 'إدارة المستخدمين والتجار',
+      admin_subtab_keys: 'سيرفرات AI & Failover',
+      admin_users_title: 'قائمة المستخدمين والتجار المسجلين',
+      admin_users_desc: 'إدارة الأدوار، الاشتراكات، تعليق الحسابات، والدخول المباشر كـ مستخدم.',
+      admin_btn_add_user: 'إضافة مستخدم / تاجر جديد',
+      th_user_username: 'اسم المستخدم',
+      th_user_email: 'البريد الإلكتروني',
+      th_user_role: 'الدور (Role)',
+      th_user_tier: 'باقة الاشتراك',
+      th_user_status: 'الحالة',
+      th_user_bots: 'البوتات',
+      th_user_actions: 'الإجراءات السريعة',
+      admin_loading_users: 'جاري تحميل قائمة المستخدمين...',
       admin_active_keys: 'مفاتيح الوصول العامة النشطة وترتيب الأولوية',
       admin_btn_reset: 'إعادة تهيئة المفاتيح المعطلة',
       admin_register_key: 'تسجيل مفتاح نظام عام جديد',
@@ -1076,8 +1102,10 @@
     if (!tbody) return;
     tbody.innerHTML = '';
 
+    const isAr = currentLanguage === 'ar';
+
     if (adminUsersList.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" style="padding:24px; text-align:center; color:var(--text-muted);">لا يوجد مستخدمين مسجلين حالياً.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" style="padding:24px; text-align:center; color:var(--text-muted);">${isAr ? 'لا يوجد مستخدمين مسجلين حالياً.' : 'No users registered yet.'}</td></tr>`;
       return;
     }
 
@@ -1086,14 +1114,21 @@
       tr.style.borderBottom = '1px solid var(--glass-border)';
 
       const roleBadge = u.role === 'superadmin'
-        ? `<span class="badge" style="background:var(--orange); color:#000; font-weight:700;">مدير عام (SuperAdmin)</span>`
-        : `<span class="badge" style="background:var(--blue); color:#fff;">تاجر / مستخدم</span>`;
+        ? `<span class="badge" style="background:var(--orange); color:#000; font-weight:700;">${isAr ? 'مدير عام (SuperAdmin)' : 'Super Admin'}</span>`
+        : `<span class="badge" style="background:var(--blue); color:#fff;">${isAr ? 'تاجر / مستخدم' : 'Merchant / User'}</span>`;
 
       const statusBadge = u.status === 'suspended'
-        ? `<span class="badge badge-danger">موقوف</span>`
-        : `<span class="badge badge-success">نشط</span>`;
+        ? `<span class="badge badge-danger">${isAr ? 'موقوف' : 'Suspended'}</span>`
+        : `<span class="badge badge-success">${isAr ? 'نشط' : 'Active'}</span>`;
 
       const botsCount = Array.isArray(u.bots) ? u.bots.length : 0;
+      const botUnitText = isAr ? 'بوت' : 'Bot(s)';
+
+      const suspendText = u.status === 'suspended' 
+        ? (isAr ? '<i class="fas fa-check"></i> تفعيل' : '<i class="fas fa-check"></i> Activate')
+        : (isAr ? '<i class="fas fa-ban" style="color:var(--red);"></i> تعليق' : '<i class="fas fa-ban" style="color:var(--red);"></i> Suspend');
+
+      const impersonateText = isAr ? '<i class="fas fa-user-secret"></i> دخول كـ' : '<i class="fas fa-user-secret"></i> Login As';
 
       tr.innerHTML = `
         <td style="padding:12px; font-weight:600;">${u.username}</td>
@@ -1101,13 +1136,13 @@
         <td style="padding:12px;">${roleBadge}</td>
         <td style="padding:12px; font-size:12px;">${u.subscriptionTier || 'free'}</td>
         <td style="padding:12px;">${statusBadge}</td>
-        <td style="padding:12px; font-size:12px;">${botsCount} بوت</td>
+        <td style="padding:12px; font-size:12px;">${botsCount} ${botUnitText}</td>
         <td style="padding:12px; text-align:center;">
           <button class="btn btn-secondary btn-sm" onclick="toggleUserStatus('${u._id}', '${u.status === 'suspended' ? 'active' : 'suspended'}')" style="padding:4px 8px; font-size:11px; margin-left:4px;">
-            ${u.status === 'suspended' ? '<i class="fas fa-check"></i> تفعيل' : '<i class="fas fa-ban" style="color:var(--red);"></i> تعليق'}
+            ${suspendText}
           </button>
           <button class="btn btn-secondary btn-sm" onclick="impersonateUser('${u._id}')" style="padding:4px 8px; font-size:11px; border-color:var(--orange); color:var(--orange);">
-            <i class="fas fa-user-secret"></i> دخول كـ
+            ${impersonateText}
           </button>
         </td>
       `;

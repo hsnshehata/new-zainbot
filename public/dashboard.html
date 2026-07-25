@@ -1180,13 +1180,13 @@
 
         <!-- ==================== 7. SUPER ADMIN CONTROL CENTER ==================== -->
         <section id="page-admin" class="db-page">
-          <h2 style="color:var(--orange); margin-bottom:8px;"><i class="fas fa-user-shield"></i> <span data-i18n="admin_title">لوحة تحكم مدير النظام الشاملة (Super Admin Control Center)</span></h2>
-          <p style="color:var(--text-muted); font-size:14px; margin-bottom:20px;" data-i18n="admin_desc">التحكم الكامل في المستخدمين، التجار، الصلاحيات، الانتحال المباشر (Impersonation)، وإدارة مفاتيح الذكاء الاصطناعي الـ Failover.</p>
+          <h2 style="color:var(--orange); margin-bottom:8px;"><i class="fas fa-user-shield"></i> <span data-i18n="admin_title">Super Admin Control Center</span></h2>
+          <p style="color:var(--text-muted); font-size:14px; margin-bottom:20px;" data-i18n="admin_desc">Full system management: users, merchants, roles, direct impersonation, and global AI failover provider keys.</p>
 
           <!-- Admin Sub-Navigation Tabs -->
           <div style="display:flex; gap:12px; margin-bottom:24px; border-bottom:1px solid var(--glass-border); padding-bottom:12px;">
-            <button id="adminTabUsersBtn" class="btn btn-secondary btn-sm admin-subtab-btn active" style="background:var(--orange); color:#000; border-color:var(--orange); font-weight:600;"><i class="fas fa-users-cog"></i> إدارة المستخدمين والتجار</button>
-            <button id="adminTabKeysBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-key"></i> سيرفرات AI & Failover</button>
+            <button id="adminTabUsersBtn" class="btn btn-secondary btn-sm admin-subtab-btn active" style="background:var(--orange); color:#000; border-color:var(--orange); font-weight:600;"><i class="fas fa-users-cog"></i> <span data-i18n="admin_subtab_users">Users & Merchants Control</span></button>
+            <button id="adminTabKeysBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-key"></i> <span data-i18n="admin_subtab_keys">AI Failover Servers & Keys</span></button>
           </div>
 
           <!-- Section 1: Users & Agents Management -->
@@ -1194,28 +1194,28 @@
             <div class="glass-card" style="margin-bottom:24px;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
                 <div>
-                  <h3 style="font-size:18px; font-weight:700;"><i class="fas fa-users" style="color:var(--cyan);"></i> قائمة المستخدمين والتجار المسجلين</h3>
-                  <span style="font-size:12px; color:var(--text-muted);">إدارة الأدوار، الاشتراكات، تعليق الحسابات، والدخول المباشر كـ مستخدم.</span>
+                  <h3 style="font-size:18px; font-weight:700;"><i class="fas fa-users" style="color:var(--cyan);"></i> <span data-i18n="admin_users_title">Registered Users & Merchants</span></h3>
+                  <span style="font-size:12px; color:var(--text-muted);" data-i18n="admin_users_desc">Manage roles, subscriptions, suspend accounts, and impersonate users.</span>
                 </div>
-                <button id="adminAddUserBtn" class="btn btn-primary btn-sm" style="background:var(--cyan); border-color:var(--cyan); color:#000; font-weight:600;"><i class="fas fa-user-plus"></i> إضافة مستخدم / تاجر جديد</button>
+                <button id="adminAddUserBtn" class="btn btn-primary btn-sm" style="background:var(--cyan); border-color:var(--cyan); color:#000; font-weight:600;"><i class="fas fa-user-plus"></i> <span data-i18n="admin_btn_add_user">Add New User / Merchant</span></button>
               </div>
 
               <div style="overflow-x:auto;">
                 <table class="db-table" style="width:100%; border-collapse:collapse; text-align:right;">
                   <thead>
                     <tr style="border-bottom:2px solid var(--glass-border); font-size:13px; color:var(--text-muted);">
-                      <th style="padding:12px;">اسم المستخدم</th>
-                      <th style="padding:12px;">البريد الإلكتروني</th>
-                      <th style="padding:12px;">الدور (Role)</th>
-                      <th style="padding:12px;">باقة الاشتراك</th>
-                      <th style="padding:12px;">الحالة</th>
-                      <th style="padding:12px;">البوتات</th>
-                      <th style="padding:12px; text-align:center;">الإجراءات السريعة</th>
+                      <th style="padding:12px;" data-i18n="th_user_username">Username</th>
+                      <th style="padding:12px;" data-i18n="th_user_email">Email</th>
+                      <th style="padding:12px;" data-i18n="th_user_role">Role</th>
+                      <th style="padding:12px;" data-i18n="th_user_tier">Plan Tier</th>
+                      <th style="padding:12px;" data-i18n="th_user_status">Status</th>
+                      <th style="padding:12px;" data-i18n="th_user_bots">Bots</th>
+                      <th style="padding:12px; text-align:center;" data-i18n="th_user_actions">Quick Actions</th>
                     </tr>
                   </thead>
                   <tbody id="adminUsersTableBody">
                     <!-- Loaded dynamically via dashboard_new.js -->
-                    <tr><td colspan="7" style="padding:24px; text-align:center; color:var(--text-muted);">جاري تحميل قائمة المستخدمين...</td></tr>
+                    <tr><td colspan="7" style="padding:24px; text-align:center; color:var(--text-muted);" data-i18n="admin_loading_users">Loading users list...</td></tr>
                   </tbody>
                 </table>
               </div>
