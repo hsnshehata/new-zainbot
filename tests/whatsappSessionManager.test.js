@@ -130,9 +130,10 @@ test('manager exposes real QR and ready states and preserves sessions on shutdow
     60_000
   );
 
-  client.emit('qr', 'real-whatsapp-qr-payload');
+  const qrWait = manager.waitForQrOrReady(BOT_ID, 1_000);
   await flush();
-  const qrStatus = await manager.getStatus(BOT_ID);
+  client.emit('qr', 'real-whatsapp-qr-payload');
+  const qrStatus = await qrWait;
   assert.equal(qrStatus.status, 'qr_required');
   assert.equal(
     qrStatus.qrCode,

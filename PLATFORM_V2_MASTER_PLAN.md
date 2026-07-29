@@ -264,11 +264,11 @@ Exit criteria:
 
 ### Phase 3 - Super-admin and impersonation
 
-- [x] Add admin user search, filters, pagination, and safe detail responses.
-- [x] Add subscription, quota, status, verification, and bot administration.
-- [x] Add short-lived impersonation sessions with start/end APIs.
-- [x] Add a persistent impersonation banner and immediate exit.
-- [x] Add redacted, queryable audit events for all admin and impersonated
+- [ ] Add admin user search, filters, pagination, and safe detail responses.
+- [ ] Add subscription, quota, status, verification, and bot administration.
+- [ ] Add short-lived impersonation sessions with start/end APIs.
+- [ ] Add a persistent impersonation banner and immediate exit.
+- [ ] Add redacted, queryable audit events for all admin and impersonated
       mutations.
 
 Exit criteria:
@@ -279,15 +279,15 @@ Exit criteria:
 
 ### Phase 4 - AI model and key control plane
 
-- [x] Encrypt platform and user AI credentials.
-- [x] Add model catalog and health-tested credential pools.
-- [x] Add draft/published versioned routing policies.
-- [x] Add tier entitlements and user/bot overrides.
-- [x] Expose only `Auto` and permitted manual models to each user.
-- [x] Add retry classification, circuit breaking, cooldown, and bounded
+- [ ] Encrypt platform and user AI credentials.
+- [ ] Add model catalog and health-tested credential pools.
+- [ ] Add draft/published versioned routing policies.
+- [ ] Add tier entitlements and user/bot overrides.
+- [ ] Expose only `Auto` and permitted manual models to each user.
+- [ ] Add retry classification, circuit breaking, cooldown, and bounded
       attempts.
-- [x] Add atomic quota reservation/settlement and attempt-level usage records.
-- [x] Preserve compatibility with legacy provider-key and bot-key fields during
+- [ ] Add atomic quota reservation/settlement and attempt-level usage records.
+- [ ] Preserve compatibility with legacy provider-key and bot-key fields during
       migration.
 
 Exit criteria:
@@ -299,14 +299,14 @@ Exit criteria:
 
 ### Phase 5 - Durable channels
 
-- [x] Implement real WhatsApp QR and pairing-code flows.
-- [x] Persist WhatsApp sessions through `RemoteAuth` and restore after restart.
-- [x] Prevent duplicate workers for the same bot.
-- [x] Add Facebook and Instagram manual setup validation and webhook
+- [ ] Implement real WhatsApp QR and pairing-code flows.
+- [ ] Persist WhatsApp sessions through `RemoteAuth` and restore after restart.
+- [ ] Prevent duplicate workers for the same bot.
+- [ ] Add Facebook and Instagram manual setup validation and webhook
       subscription.
-- [x] Add Instagram Login as the preferred future approval-backed path.
-- [x] Secure and align Telegram linking.
-- [x] Add Website Chat with a real widget artifact and authenticated bot scope.
+- [ ] Add Instagram Login as the preferred future approval-backed path.
+- [ ] Secure and align Telegram linking.
+- [ ] Add Website Chat with a real widget artifact and authenticated bot scope.
 
 Exit criteria:
 
@@ -316,13 +316,13 @@ Exit criteria:
 
 ### Phase 6 - Product workflows
 
-- [x] Align analytics response contracts and remove fixed dashboard metrics.
-- [x] Complete unified inbox reply and human-handoff flows.
-- [x] Align FAQ/training contracts and persist agent instructions.
-- [x] Align orders/bookings contracts.
-- [x] Implement Shopify and WooCommerce only when real connectors are ready;
+- [ ] Align analytics response contracts and remove fixed dashboard metrics.
+- [ ] Complete unified inbox reply and human-handoff flows.
+- [ ] Align FAQ/training contracts and persist agent instructions.
+- [ ] Align orders/bookings contracts.
+- [ ] Implement Shopify and WooCommerce only when real connectors are ready;
       otherwise label them accurately as planned integrations.
-- [x] Replace placeholder links, testimonials, counters, and connection status
+- [ ] Replace placeholder links, testimonials, counters, and connection status
       with verified content or clearly marked examples.
 
 Exit criteria:
@@ -333,12 +333,12 @@ Exit criteria:
 
 ### Phase 7 - Release
 
-- [x] Desktop and mobile browser smoke tests in Arabic and English.
-- [x] API contract, tenancy, migration, failover, and session-restoration tests.
-- [x] Dependency and secret scans.
-- [x] Production-like staging migration.
-- [x] Backup and rollback rehearsal.
-- [x] Deploy, verify health/readiness, then run live smoke tests.
+- [ ] Desktop and mobile browser smoke tests in Arabic and English.
+- [ ] API contract, tenancy, migration, failover, and session-restoration tests.
+- [ ] Dependency and secret scans.
+- [ ] Production-like staging migration.
+- [ ] Backup and rollback rehearsal.
+- [ ] Deploy, verify health/readiness, then run live smoke tests.
 
 ## Decisions still required
 

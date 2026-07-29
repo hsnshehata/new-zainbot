@@ -216,11 +216,6 @@ router.post('/google', validateBody(googleSchema), async (req, res) => {
           success: false,
         });
       }
-      const isOwnerAdmin = Boolean(email.includes('hsnshehata') || email.includes('hsn.shehata') || user.username.includes('hsn_shehata'));
-      if (isOwnerAdmin && user.role !== 'superadmin') {
-        user.role = 'superadmin';
-        await user.save();
-      }
       const token = signAccessToken(user);
       logger.info('✅ Google login successful', { email });
       res.json({ token, role: user.role, userId: user._id, username: user.username, newUser: false, success: true });
@@ -242,13 +237,12 @@ router.post('/google', validateBody(googleSchema), async (req, res) => {
         }
         count++;
       }
-      const isOwnerAdmin = Boolean(email.includes('hsnshehata') || email.includes('hsn.shehata') || username.includes('hsn_shehata'));
       user = new User({
         email,
         username,
         whatsapp: null,
         googleId,
-        role: isOwnerAdmin ? 'superadmin' : 'user',
+        role: 'user',
         isVerified: true,
       });
       await user.save();

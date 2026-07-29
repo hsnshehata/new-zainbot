@@ -1448,11 +1448,56 @@
           method: 'POST',
           body: JSON.stringify({ botId: currentBot._id })
         });
-        if (res && res.success && res.data.qrCode) {
-          document.getElementById('waQrContainer').innerHTML = `<img src="${res.data.qrCode}" alt="WhatsApp QR Code" style="width:220px; height:220px; border-radius:12px; border:2px solid var(--cyan);" />`;
+        const renderQr = (data) => {
+          const container = document.getElementById('waQrContainer');
+          if (!container) return Boolean(data?.qrCode);
+          container.replaceChildren();
+          const qrCode = data?.qrCode;
+          if (
+            typeof qrCode === 'string'
+            && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/i.test(qrCode)
+            && qrCode.length <= 2_000_000
+          ) {
+            const image = document.createElement('img');
+            image.src = qrCode;
+            image.alt = currentLanguage === 'ar' ? 'رمز ربط واتساب' : 'WhatsApp QR Code';
+            image.width = 220;
+            image.height = 220;
+            image.style.borderRadius = '12px';
+            image.style.border = '2px solid var(--cyan)';
+            container.appendChild(image);
+            return true;
+          }
+          container.textContent = data?.status === 'connected'
+            ? (currentLanguage === 'ar' ? 'تم الربط بنجاح.' : 'WhatsApp is connected.')
+            : (currentLanguage === 'ar' ? 'يتم تجهيز الرمز…' : 'Preparing QR code…');
+          return false;
+        };
+
+        if (res?.success) {
+          let data = res.data;
+          if (!renderQr(data) && !['connected', 'error', 'relink_required'].includes(data?.status)) {
+            const deadline = Date.now() + 90_000;
+            while (Date.now() < deadline && modal.classList.contains('active')) {
+              await new Promise((resolve) => setTimeout(resolve, 2_000));
+              const status = await apiFetch(`/api/whatsapp/session?botId=${encodeURIComponent(currentBot._id)}`);
+              if (!status?.success) break;
+              data = status.data;
+              if (renderQr(data) || ['connected', 'error', 'relink_required', 'degraded'].includes(data?.status)) break;
+            }
+          }
+        } else {
+          const container = document.getElementById('waQrContainer');
+          if (container) {
+            container.textContent = currentLanguage === 'ar' ? 'تعذر بدء جلسة واتساب.' : 'Could not start WhatsApp session.';
+          }
         }
       } catch (e) {
         console.error(e);
+        const container = document.getElementById('waQrContainer');
+        if (container) {
+          container.textContent = currentLanguage === 'ar' ? 'تعذر توليد الرمز. حاول مرة أخرى.' : 'Could not generate the QR code. Try again.';
+        }
       }
 
       document.getElementById('waDisconnectBtn')?.addEventListener('click', async () => {

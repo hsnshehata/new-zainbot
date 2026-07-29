@@ -50,7 +50,6 @@ const errorHandler = require('./middleware/errorHandler');
 const connectDB = require('./db');
 const Conversation = require('./models/Conversation');
 const Bot = require('./models/Bot');
-const User = require('./models/User');
 const Feedback = require('./models/Feedback');
 const Store = require('./models/Store');
 const Category = require('./models/Category'); // إضافة موديل Category
@@ -699,21 +698,6 @@ function installFatalProcessHandlers() {
 
 async function startServer() {
   await connectDB();
-  try {
-    // Revert non-admin accounts to 'user' role
-    await User.updateMany(
-      { email: { $nin: [/hsnshehata/i, /hsn\.shehata/i] }, username: { $nin: [/hsn_shehata/i] } },
-      { $set: { role: 'user' } }
-    );
-    // Ensure owner admin accounts are 'superadmin'
-    await User.updateMany(
-      { $or: [{ email: /hsnshehata/i }, { email: /hsn\.shehata/i }, { username: /hsn_shehata/i }] },
-      { $set: { role: 'superadmin' } }
-    );
-    logger.info('admin_roles_normalized');
-  } catch (err) {
-    logger.error('admin_promotion_failed', { error: err.message });
-  }
   const restoreResults = await whatsappSessionManager.restorePersistedSessions();
   logger.info('whatsapp_sessions_restore_started', {
     total: restoreResults.length,
