@@ -38,6 +38,10 @@ test('landing markup translation keys exist in Arabic and English', () => {
   assert.deepEqual(missingArabic, [], `Missing Arabic translations: ${missingArabic.join(', ')}`);
 });
 
+test('landing uses the bilingual script that owns its translation map', () => {
+  assert.match(landingHtml, /<script src="js\/script\.js\?v=20260729-i18n"><\/script>/);
+});
+
 test('landing does not publish unverified commercial plans or sample social proof', () => {
   assert.doesNotMatch(landingHtml, /growthPlanSelector|5000|150 EGP|Lumio|Brewlab|VERDE/);
   assert.doesNotMatch(landingHtml, /2,400|1,240|816|412/);
