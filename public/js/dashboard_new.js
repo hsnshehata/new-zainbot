@@ -21,6 +21,8 @@
   const headerUsername = document.getElementById('headerUsername');
   const headerUserAvatar = document.getElementById('headerUserAvatar');
   const sidebarLogout = document.getElementById('sidebarLogout');
+  const accountMenuToggle = document.getElementById('accountMenuToggle');
+  const accountMenu = document.getElementById('accountMenu');
   
   // Translation Table
   const translations = {
@@ -91,6 +93,20 @@
       impersonation_reason: 'Reason',
       impersonation_continue: 'Continue',
       logout: 'Logout',
+      account_quota_remaining: 'Messages remaining',
+      account_settings: 'Account settings',
+      stat_conversations: 'Conversations',
+      stat_messages: 'Messages handled',
+      stat_connected_channels: 'Connected channels',
+      stat_training_rules: 'Training rules',
+      workspace_status_title: 'Workspace status',
+      workspace_status_desc: 'A live summary of the bot currently selected for this workspace.',
+      workspace_active_bot: 'Active bot',
+      workspace_auto_reply: 'AI auto-reply',
+      workspace_orders: 'Orders from chats',
+      status_enabled: 'Enabled',
+      status_disabled: 'Disabled',
+      quota_unlimited: 'Unlimited',
       stat_active_chats: 'Active Chats',
       stat_response_speed: 'Avg Response Speed',
       stat_satisfaction: 'Customer Satisfaction',
@@ -274,6 +290,20 @@
       impersonation_reason: 'سبب الدخول',
       impersonation_continue: 'متابعة',
       logout: 'تسجيل الخروج',
+      account_quota_remaining: 'الرسائل المتبقية',
+      account_settings: 'إعدادات الحساب',
+      stat_conversations: 'المحادثات',
+      stat_messages: 'الرسائل التي تمت معالجتها',
+      stat_connected_channels: 'القنوات المرتبطة',
+      stat_training_rules: 'قواعد التدريب',
+      workspace_status_title: 'حالة مساحة العمل',
+      workspace_status_desc: 'ملخص مباشر للبوت المحدد حاليًا في مساحة العمل.',
+      workspace_active_bot: 'البوت النشط',
+      workspace_auto_reply: 'الرد التلقائي بالذكاء الاصطناعي',
+      workspace_orders: 'طلبات من المحادثات',
+      status_enabled: 'مفعّل',
+      status_disabled: 'متوقف',
+      quota_unlimited: 'غير محدود',
       stat_active_chats: 'المحادثات النشطة',
       stat_response_speed: 'سرعة الاستجابة',
       stat_satisfaction: 'رضا العملاء',
@@ -456,6 +486,7 @@
     renderApiKeys();
     renderWebhookLogs();
     renderAdminKeys();
+    renderAccountMenu();
   }
 
   // Tab switching handler
@@ -577,6 +608,7 @@
         // Show username
         headerUsername.textContent = currentUser.username;
         headerUserAvatar.textContent = currentUser.username.slice(0, 1).toUpperCase();
+        renderAccountMenu();
         renderImpersonationBanner();
 
         // Show AI failover panel for superadmins
@@ -635,37 +667,33 @@
       const res = await apiFetch(`/api/analytics/summary?botId=${currentBot._id}`);
       if (res && res.success) {
         const stats = res.data;
-        document.getElementById('statActiveChats').textContent = stats.activeChats || 0;
-        document.getElementById('statOrdersCount').textContent = stats.completedOrders || 0;
-        document.getElementById('statResponseSpeed').textContent = stats.avgResponseTime ? `${stats.avgResponseTime}s` : '0.8s';
-        
-        // Sales funnel mapping
-        document.getElementById('funnelLeads').textContent = stats.funnel?.leads || 0;
-        document.getElementById('funnelQualified').textContent = stats.funnel?.qualified || 0;
-        document.getElementById('funnelClosed').textContent = stats.funnel?.closed || 0;
-
-        const leads = stats.funnel?.leads || 1;
-        const qualPct = Math.min(100, Math.round(((stats.funnel?.qualified || 0) / leads) * 100));
-        const closedPct = Math.min(100, Math.round(((stats.funnel?.closed || 0) / leads) * 100));
-
-        document.getElementById('funnelQualifiedFill').style.width = qualPct + '%';
-        document.getElementById('funnelClosedFill').style.width = closedPct + '%';
+        document.getElementById('statConversations').textContent = stats.conversationsCount || 0;
+        document.getElementById('statMessages').textContent = stats.messagesCount || 0;
+        document.getElementById('statTrainingRules').textContent = stats.activeRules || 0;
+        document.getElementById('overviewOrders').textContent = stats.chatOrdersCount || 0;
       }
+
+      const connectedChannels = [
+        currentBot.whatsappApiKey,
+        currentBot.facebookApiKey,
+        currentBot.instagramApiKey,
+        currentBot.telegramUserId,
+      ].filter(Boolean).length;
+      document.getElementById('statConnectedChannels').textContent = connectedChannels;
+      document.getElementById('overviewActiveBot').textContent = currentBot.name || '—';
+      document.getElementById('overviewAutoReply').textContent = (translations[currentLanguage] || translations.en)[currentBot.autoReplyEnabled === false ? 'status_disabled' : 'status_enabled'];
 
       // Load billing data
       document.getElementById('overviewPlanName').textContent = currentUser.subscriptionTier ? currentUser.subscriptionTier.toUpperCase() : 'FREE';
       
-      let quotaMax = 250;
-      if (currentUser.subscriptionTier === 'growth_1k') quotaMax = 1000;
-      if (currentUser.subscriptionTier === 'growth_10k') quotaMax = 10000;
-      if (currentUser.subscriptionTier === 'growth_50k') quotaMax = 50000;
-      if (currentUser.subscriptionTier === 'unlimited') quotaMax = 999999; // infinite
+      const quotaMax = quotaLimitForTier(currentUser.subscriptionTier);
 
       const used = currentUser.monthlyMessagesUsed || 0;
       const pct = Math.min(100, Math.round((used / quotaMax) * 100));
 
-      document.getElementById('billingQuotaText').textContent = currentUser.subscriptionTier === 'unlimited' ? `${used} / Unlimited` : `${used} / ${quotaMax}`;
+      document.getElementById('billingQuotaText').textContent = currentUser.subscriptionTier === 'unlimited' ? `${used} / ${(translations[currentLanguage] || translations.en).quota_unlimited}` : `${used} / ${quotaMax}`;
       document.getElementById('billingQuotaFill').style.width = pct + '%';
+      renderAccountMenu();
     } catch (e) {
       console.error(e);
     }
@@ -1349,6 +1377,21 @@
     cell.style.cssText = `padding:12px;${style}`;
     cell.textContent = value || '—';
     row.appendChild(cell);
+  }
+
+  function quotaLimitForTier(tier) {
+    return ({ growth_1k: 1000, growth_10k: 10000, growth_50k: 50000, unlimited: 999999 })[tier] || 250;
+  }
+
+  function renderAccountMenu() {
+    if (!currentUser) return;
+    const text = translations[currentLanguage] || translations.en;
+    const used = Number(currentUser.monthlyMessagesUsed) || 0;
+    const unlimited = currentUser.subscriptionTier === 'unlimited';
+    const remaining = unlimited ? text.quota_unlimited : Math.max(0, quotaLimitForTier(currentUser.subscriptionTier) - used);
+    document.getElementById('accountMenuName').textContent = currentUser.username || '—';
+    document.getElementById('accountMenuEmail').textContent = currentUser.email || '—';
+    document.getElementById('accountMenuQuota').textContent = unlimited ? remaining : `${remaining} / ${quotaLimitForTier(currentUser.subscriptionTier)}`;
   }
 
   function clientAgentLimit(tier) {
@@ -2098,13 +2141,32 @@
     });
   };
 
-  // Logout Event click
-  if (sidebarLogout) {
-    sidebarLogout.addEventListener('click', () => {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
-    });
+  function logout() {
+    localStorage.removeItem('token');
+    window.location.href = '/login';
   }
+
+  if (accountMenuToggle && accountMenu) {
+    accountMenuToggle.addEventListener('click', () => {
+      const isOpen = accountMenu.hidden;
+      accountMenu.hidden = !isOpen;
+      accountMenuToggle.setAttribute('aria-expanded', String(isOpen));
+    });
+    document.addEventListener('click', (event) => {
+      if (!accountMenu.hidden && !accountMenu.contains(event.target) && !accountMenuToggle.contains(event.target)) {
+        accountMenu.hidden = true;
+        accountMenuToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.getElementById('accountSettingsBtn').addEventListener('click', () => {
+      accountMenu.hidden = true;
+      accountMenuToggle.setAttribute('aria-expanded', 'false');
+      switchTab('page-settings');
+    });
+    document.getElementById('accountLogoutBtn').addEventListener('click', logout);
+  }
+
+  if (sidebarLogout) sidebarLogout.addEventListener('click', logout);
 
   // Initialize and Boot System
   checkAuthAndLoad();

@@ -266,6 +266,9 @@
   };
 
   function getAIResponse(message) {
+    if (currentLang === 'ar') {
+      return { response: 'شكرًا لرسالتك. في المنصة الفعلية يستخدم الوكيل تعليماتك وبياناتك المتاحة لمساعدة العميل.', confidence: 0 };
+    }
     const msg = message.toLowerCase().trim();
     for (const item of aiResponses) {
       if (item.triggers.some(trigger => msg.includes(trigger))) {
@@ -326,6 +329,7 @@
   }
 
   function updateConfidence(value) {
+    if (!confidenceFill || !confidenceValue) return;
     confidenceFill.style.width = value + '%';
     confidenceValue.textContent = value + '%';
   }
@@ -407,7 +411,47 @@
       hero_subtitle: 'Deploy intelligent AI agents that answer, sell, follow up, and learn from every customer conversation — across WhatsApp, Instagram, Messenger, your website, and online store. All from one beautifully simple platform.',
       hero_btn_primary: 'Build your AI agent <i class="fas fa-arrow-right"></i>',
       hero_btn_secondary: '<i class="fas fa-play"></i> Watch demo',
-      hero_proof: 'Trusted by <strong>2,400+</strong> growing teams'
+      hero_proof: 'Start with a workspace built around your team.',
+      hero_chat_status: 'Workspace preview',
+      hero_chat_customer_one: 'Do you have this in size M?',
+      hero_chat_bot: 'Yes, it is available in medium. Would you like me to help you place an order?',
+      hero_chat_customer_two: 'That is great. Yes, please.',
+      hero_chat_input: 'Type a message...',
+      hero_floating_one: 'Follow-up',
+      hero_floating_one_label: 'ready to automate',
+      hero_floating_two: 'Always ready',
+      hero_floating_three: 'Workspace view',
+      hero_floating_three_value: 'Your live data',
+      bento_card2_ready: 'Ready',
+      metric_value_conversations: 'Conversations',
+      metric_value_channels: 'Channels',
+      metric_value_orders: 'Orders',
+      metric_value_quota: 'Quota',
+      metric_stat_value_live: 'Live',
+      metric_stat_value_ready: 'Ready',
+      metric_stat_value_account: 'Account',
+      bento_card2_accuracy: 'Based on your training',
+      bento_card5_convs: 'Conversations',
+      bento_card5_resolved: 'Useful signals',
+      metric_lbl_response: 'See every customer conversation',
+      metric_lbl_leads: 'Check connection status',
+      metric_lbl_sat: 'Track orders and bookings',
+      metric_lbl_coverage: 'Know what is available',
+      metric_stat_lbl_resp: 'Conversations',
+      metric_stat_lbl_res: 'Connections',
+      metric_stat_lbl_sat: 'Usage',
+      cta_desc: 'Build your workspace, connect the channels you use, and start with the free plan. No credit card required.',
+      demo_eyebrow: 'Try it live',
+      demo_title: 'Meet your new <span class="gradient-text">AI teammate</span>',
+      demo_desc: 'Try a short example conversation. This preview does not use customer data.',
+      demo_bot_name: 'ZainBot Assistant',
+      demo_bot_status: 'Preview mode',
+      demo_conf_label: 'Reply context',
+      demo_welcome_msg: 'Welcome. This is a safe preview of how an agent can guide a customer conversation.',
+      demo_chip1: '<i class="fas fa-box"></i> Ask about an order',
+      demo_chip2: '<i class="fas fa-tag"></i> Ask about pricing',
+      demo_chip3: '<i class="fas fa-calendar-check"></i> Book an appointment',
+      demo_input_placeholder: 'Type your message...'
     },
     ar: {
       nav_product: 'المنتج',
@@ -422,7 +466,47 @@
       hero_subtitle: 'قم بنشر عملاء أذكياء يجيبون، يبيعون، يتابعون، ويتعلمون من كل محادثة مع العميل — عبر واتساب، إنستجرام، مسنجر، موقعك الإلكتروني، ومتجرك الإلكتروني. كل ذلك من منصة واحدة بسيطة وجميلة.',
       hero_btn_primary: 'ابنِ عميلك الذكي <i class="fas fa-arrow-left"></i>',
       hero_btn_secondary: '<i class="fas fa-play"></i> شاهد العرض',
-      hero_proof: 'موضع ثقة أكثر من <strong>2,400</strong> فريق عمل متنامي'
+      hero_proof: 'ابدأ بمساحة عمل مصممة حول احتياجات فريقك.',
+      hero_chat_status: 'نموذج لمساحة العمل',
+      hero_chat_customer_one: 'هل يتوفر هذا المنتج بالمقاس المتوسط؟',
+      hero_chat_bot: 'نعم، المقاس المتوسط متاح. هل ترغب أن أساعدك في إتمام الطلب؟',
+      hero_chat_customer_two: 'ممتاز، نعم من فضلك.',
+      hero_chat_input: 'اكتب رسالة...',
+      hero_floating_one: 'متابعة',
+      hero_floating_one_label: 'جاهزة للأتمتة',
+      hero_floating_two: 'جاهز دائمًا',
+      hero_floating_three: 'عرض مساحة العمل',
+      hero_floating_three_value: 'بياناتك المباشرة',
+      bento_card2_ready: 'جاهز',
+      metric_value_conversations: 'المحادثات',
+      metric_value_channels: 'القنوات',
+      metric_value_orders: 'الطلبات',
+      metric_value_quota: 'الاستهلاك',
+      metric_stat_value_live: 'مباشر',
+      metric_stat_value_ready: 'جاهز',
+      metric_stat_value_account: 'الحساب',
+      bento_card2_accuracy: 'بناءً على تدريبك',
+      bento_card5_convs: 'المحادثات',
+      bento_card5_resolved: 'مؤشرات مفيدة',
+      metric_lbl_response: 'اطّلع على كل محادثات العملاء',
+      metric_lbl_leads: 'تحقق من حالة القنوات',
+      metric_lbl_sat: 'تابع الطلبات والحجوزات',
+      metric_lbl_coverage: 'اعرف المتاح في حسابك',
+      metric_stat_lbl_resp: 'المحادثات',
+      metric_stat_lbl_res: 'القنوات',
+      metric_stat_lbl_sat: 'الاستهلاك',
+      cta_desc: 'أنشئ مساحة عملك واربط القنوات التي تستخدمها وابدأ بالخطة المجانية دون بطاقة دفع.',
+      demo_eyebrow: 'جرّب المثال',
+      demo_title: 'تعرّف على <span class="gradient-text">زميلك الذكي</span>',
+      demo_desc: 'جرّب محادثة قصيرة. هذا العرض لا يستخدم بيانات العملاء.',
+      demo_bot_name: 'مساعد زين بوت',
+      demo_bot_status: 'وضع المعاينة',
+      demo_conf_label: 'سياق الرد',
+      demo_welcome_msg: 'مرحبًا. هذه معاينة آمنة لكيفية إرشاد الوكيل الذكي لمحادثة العميل.',
+      demo_chip1: '<i class="fas fa-box"></i> اسأل عن طلب',
+      demo_chip2: '<i class="fas fa-tag"></i> اسأل عن الأسعار',
+      demo_chip3: '<i class="fas fa-calendar-check"></i> احجز موعدًا',
+      demo_input_placeholder: 'اكتب رسالتك...'
     }
   };
 
@@ -449,6 +533,10 @@
       if (langTranslations[lang] && langTranslations[lang][key]) {
         el.innerHTML = langTranslations[lang][key];
       }
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (langTranslations[lang] && langTranslations[lang][key]) el.placeholder = langTranslations[lang][key];
     });
   }
 

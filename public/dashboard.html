@@ -173,6 +173,25 @@
       font-size: 14px;
     }
 
+    .user-menu-toggle { color: var(--text); cursor: pointer; font: inherit; }
+    .user-menu-toggle:hover, .user-menu-toggle:focus-visible { border-color: var(--cyan); outline: none; }
+    .user-menu-chevron { color: var(--text-muted); font-size: 10px; transition: transform .2s ease; }
+    .user-menu-toggle[aria-expanded="true"] .user-menu-chevron { transform: rotate(180deg); }
+    .account-menu { position: absolute; top: 58px; inset-inline-end: 0; width: min(300px, calc(100vw - 32px)); padding: 10px; border: 1px solid var(--glass-border); border-radius: 16px; background: #111425; box-shadow: 0 20px 48px rgba(0,0,0,.42); z-index: 120; }
+    .account-menu[hidden] { display: none; }
+    .account-menu-head { display: grid; gap: 3px; padding: 10px 12px 14px; border-bottom: 1px solid var(--glass-border); }
+    .account-menu-head span { color: var(--text-muted); font-size: 12px; overflow-wrap: anywhere; }
+    .account-menu-quota { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 4px; padding: 10px; border-radius: 10px; color: var(--text-muted); background: rgba(59,130,246,.08); font-size: 12px; }
+    .account-menu-quota strong { color: var(--text); font-size: 13px; }
+    .account-menu button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 11px 12px; border: 0; border-radius: 10px; color: var(--text); background: transparent; font: inherit; font-size: 13px; cursor: pointer; text-align: start; }
+    .account-menu button:hover { background: rgba(255,255,255,.06); }
+    .account-menu .account-logout { color: var(--red); }
+    .overview-workspace-card p { margin: 8px 0 20px; color: var(--text-muted); font-size: 14px; }
+    .overview-status-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .overview-status-grid div { display: grid; gap: 7px; padding: 14px; border: 1px solid var(--glass-border); border-radius: 12px; background: rgba(255,255,255,.025); }
+    .overview-status-grid span { color: var(--text-muted); font-size: 12px; }
+    .overview-status-grid strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
     .user-avatar {
       width: 24px;
       height: 24px;
@@ -676,6 +695,7 @@
       .glass-card {
         padding: 18px;
       }
+      .overview-status-grid { grid-template-columns: 1fr; }
       .chat-area {
         min-height: 480px;
       }
@@ -770,9 +790,19 @@
           <!-- i18n Language toggle -->
           <button id="dashboardLangToggle" class="btn btn-secondary btn-sm" style="background:var(--surface); border:1px solid var(--glass-border); padding:6px 12px; font-weight:600;">AR</button>
           
-          <div class="user-badge">
+          <button id="accountMenuToggle" class="user-badge user-menu-toggle" type="button" aria-haspopup="menu" aria-expanded="false">
             <span class="user-avatar" id="headerUserAvatar">U</span>
             <span id="headerUsername">Loading...</span>
+            <i class="fas fa-chevron-down user-menu-chevron" aria-hidden="true"></i>
+          </button>
+          <div id="accountMenu" class="account-menu" role="menu" hidden>
+            <div class="account-menu-head">
+              <strong id="accountMenuName">—</strong>
+              <span id="accountMenuEmail">—</span>
+            </div>
+            <div class="account-menu-quota"><span data-i18n="account_quota_remaining">Messages remaining</span><strong id="accountMenuQuota">—</strong></div>
+            <button id="accountSettingsBtn" type="button" role="menuitem"><i class="fas fa-gear"></i><span data-i18n="account_settings">Account settings</span></button>
+            <button id="accountLogoutBtn" type="button" role="menuitem" class="account-logout"><i class="fas fa-sign-out-alt"></i><span data-i18n="logout">Logout</span></button>
           </div>
         </div>
       </header>
@@ -785,32 +815,32 @@
           <div class="stats-grid">
             <div class="glass-card stat-card">
               <div class="stat-info">
-                <h4 data-i18n="stat_active_chats">Active Chats</h4>
-                <p id="statActiveChats">0</p>
+                <h4 data-i18n="stat_conversations">Conversations</h4>
+                <p id="statConversations">—</p>
               </div>
               <div class="stat-icon bg-purple-gradient"><i class="fas fa-comments"></i></div>
             </div>
             
             <div class="glass-card stat-card">
               <div class="stat-info">
-                <h4 data-i18n="stat_response_speed">Avg Response Speed</h4>
-                <p id="statResponseSpeed">0.8s</p>
+                <h4 data-i18n="stat_messages">Messages handled</h4>
+                <p id="statMessages">—</p>
               </div>
               <div class="stat-icon bg-cyan-gradient"><i class="fas fa-bolt"></i></div>
             </div>
             
             <div class="glass-card stat-card">
               <div class="stat-info">
-                <h4 data-i18n="stat_satisfaction">Customer Satisfaction</h4>
-                <p id="statSatisfaction">4.9/5</p>
+                <h4 data-i18n="stat_connected_channels">Connected channels</h4>
+                <p id="statConnectedChannels">—</p>
               </div>
               <div class="stat-icon bg-green-gradient"><i class="fas fa-star"></i></div>
             </div>
 
             <div class="glass-card stat-card">
               <div class="stat-info">
-                <h4 data-i18n="stat_orders_count">Completed Orders</h4>
-                <p id="statOrdersCount">0</p>
+                <h4 data-i18n="stat_training_rules">Training rules</h4>
+                <p id="statTrainingRules">—</p>
               </div>
               <div class="stat-icon bg-blue-gradient"><i class="fas fa-shopping-cart"></i></div>
             </div>
@@ -832,39 +862,13 @@
           </div>
 
           <div class="db-responsive-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
-            <!-- Performance Chart -->
-            <div class="glass-card">
-              <h3 data-i18n="performance_chart_title" style="margin-bottom:20px;">Conversation Volume Trend</h3>
-              <div style="height:280px; display:flex; align-items:flex-end; justify-content:space-between; padding-top:20px;">
-                <!-- Simulated CSS bar chart -->
-                <div style="display:flex; flex-direction:column; align-items:center; width:12%; height:100%; justify-content:flex-end;">
-                  <div style="background:var(--gradient); width:100%; height:40%; border-radius:4px 4px 0 0; opacity:0.8;"></div>
-                  <span style="font-size:11px; margin-top:8px; color:var(--text-muted);">Mon</span>
-                </div>
-                <div style="display:flex; flex-direction:column; align-items:center; width:12%; height:100%; justify-content:flex-end;">
-                  <div style="background:var(--gradient); width:100%; height:65%; border-radius:4px 4px 0 0; opacity:0.8;"></div>
-                  <span style="font-size:11px; margin-top:8px; color:var(--text-muted);">Tue</span>
-                </div>
-                <div style="display:flex; flex-direction:column; align-items:center; width:12%; height:100%; justify-content:flex-end;">
-                  <div style="background:var(--gradient); width:100%; height:50%; border-radius:4px 4px 0 0; opacity:0.8;"></div>
-                  <span style="font-size:11px; margin-top:8px; color:var(--text-muted);">Wed</span>
-                </div>
-                <div style="display:flex; flex-direction:column; align-items:center; width:12%; height:100%; justify-content:flex-end;">
-                  <div style="background:var(--gradient); width:100%; height:85%; border-radius:4px 4px 0 0; opacity:0.8;"></div>
-                  <span style="font-size:11px; margin-top:8px; color:var(--text-muted);">Thu</span>
-                </div>
-                <div style="display:flex; flex-direction:column; align-items:center; width:12%; height:100%; justify-content:flex-end;">
-                  <div style="background:var(--gradient); width:100%; height:70%; border-radius:4px 4px 0 0; opacity:0.8;"></div>
-                  <span style="font-size:11px; margin-top:8px; color:var(--text-muted);">Fri</span>
-                </div>
-                <div style="display:flex; flex-direction:column; align-items:center; width:12%; height:100%; justify-content:flex-end;">
-                  <div style="background:var(--gradient); width:100%; height:95%; border-radius:4px 4px 0 0; opacity:0.8;"></div>
-                  <span style="font-size:11px; margin-top:8px; color:var(--text-muted);">Sat</span>
-                </div>
-                <div style="display:flex; flex-direction:column; align-items:center; width:12%; height:100%; justify-content:flex-end;">
-                  <div style="background:var(--gradient); width:100%; height:60%; border-radius:4px 4px 0 0; opacity:0.8;"></div>
-                  <span style="font-size:11px; margin-top:8px; color:var(--text-muted);">Sun</span>
-                </div>
+            <div class="glass-card overview-workspace-card">
+              <h3 data-i18n="workspace_status_title">Workspace status</h3>
+              <p data-i18n="workspace_status_desc">A live summary of the bot currently selected for this workspace.</p>
+              <div class="overview-status-grid">
+                <div><span data-i18n="workspace_active_bot">Active bot</span><strong id="overviewActiveBot">—</strong></div>
+                <div><span data-i18n="workspace_auto_reply">AI auto-reply</span><strong id="overviewAutoReply">—</strong></div>
+                <div><span data-i18n="workspace_orders">Orders from chats</span><strong id="overviewOrders">—</strong></div>
               </div>
             </div>
 
