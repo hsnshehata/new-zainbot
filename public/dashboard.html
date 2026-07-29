@@ -954,7 +954,7 @@
 
               <!-- Reply box -->
               <div class="chat-area-footer">
-                <input type="text" id="chatReplyInput" class="form-control" placeholder="Type a message to take over..." disabled />
+                <input type="text" id="chatReplyInput" class="form-control" data-i18n-placeholder="chat_reply_placeholder" placeholder="Type a message to take over..." disabled />
                 <button id="chatSendBtn" class="btn btn-primary" style="padding:12px 20px;" disabled><i class="fas fa-paper-plane"></i></button>
               </div>
             </div>
@@ -972,11 +972,11 @@
               <form id="promptTrainingForm">
                 <div class="form-group">
                   <label data-i18n="label_welcome_message">Welcome Message</label>
-                  <textarea id="botWelcomeMessage" class="form-control" rows="3" placeholder="Enter standard greeting message..."></textarea>
+                  <textarea id="botWelcomeMessage" class="form-control" rows="3" data-i18n-placeholder="training_welcome_placeholder" placeholder="Enter a standard greeting message..."></textarea>
                 </div>
                 <div class="form-group">
                   <label data-i18n="label_custom_instructions">Custom Persona Instructions</label>
-                  <textarea id="botCustomPrompt" class="form-control" rows="8" placeholder="E.g., You are a friendly customer agent at Brewlab. Speak in a professional tone, offer tea suggestions, and ask for their email address to qualify leads."></textarea>
+                  <textarea id="botCustomPrompt" class="form-control" rows="8" data-i18n-placeholder="training_persona_placeholder" placeholder="For example, describe the bot's tone, responsibilities, and escalation rules."></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary btn-sm" data-i18n="save_guidelines_btn">Save Settings</button>
               </form>
@@ -1353,11 +1353,11 @@
           <input type="hidden" id="faqIdInput" />
           <div class="form-group">
             <label data-i18n="label_faq_question">Question / Keywords</label>
-            <input type="text" id="faqQuestionInput" class="form-control" placeholder="E.g., Delivery times" required />
+            <input type="text" id="faqQuestionInput" class="form-control" data-i18n-placeholder="faq_question_placeholder" placeholder="For example, delivery times" required />
           </div>
           <div class="form-group">
             <label data-i18n="label_faq_answer">Expected Answer</label>
-            <textarea id="faqAnswerInput" class="form-control" rows="4" placeholder="E.g., We deliver within 3 business days across Cairo." required></textarea>
+            <textarea id="faqAnswerInput" class="form-control" rows="4" data-i18n-placeholder="faq_answer_placeholder" placeholder="For example, we deliver within three business days across Cairo." required></textarea>
           </div>
         </form>
       </div>

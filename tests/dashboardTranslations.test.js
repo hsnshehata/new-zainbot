@@ -37,3 +37,9 @@ test('dashboard markup translation keys exist in Arabic and English', () => {
   assert.deepEqual(missingEnglish, [], `Missing English translations: ${missingEnglish.join(', ')}`);
   assert.deepEqual(missingArabic, [], `Missing Arabic translations: ${missingArabic.join(', ')}`);
 });
+
+test('dashboard training copy is routed through translation keys', () => {
+  assert.match(dashboardHtml, /id="botWelcomeMessage"[^>]*data-i18n-placeholder="training_welcome_placeholder"/);
+  assert.match(dashboardHtml, /id="botCustomPrompt"[^>]*data-i18n-placeholder="training_persona_placeholder"/);
+  assert.doesNotMatch(dashboardScript, /No QA rules trained\. Click Add FAQ\./);
+});

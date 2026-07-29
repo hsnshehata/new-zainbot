@@ -4,6 +4,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const logoutButtons = document.querySelectorAll('.logout-btn');
   const errorDiv = document.querySelector('#error');
   const successDiv = document.querySelector('#success');
+  const loginCopy = {
+    ar: {
+      google_failed: 'فشل تسجيل الدخول بجوجل. حاول مرة أخرى.',
+      google_error: 'حدث خطأ أثناء تسجيل الدخول بجوجل.',
+      credentials_required: 'أدخل اسم المستخدم وكلمة المرور.',
+      login_failed: 'فشل تسجيل الدخول. تأكد من اسم المستخدم وكلمة المرور.',
+      login_error: 'حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى.'
+    },
+    en: {
+      google_failed: 'Google sign-in failed. Please try again.',
+      google_error: 'An error occurred during Google sign-in.',
+      credentials_required: 'Enter your username and password.',
+      login_failed: 'Sign-in failed. Check your username and password.',
+      login_error: 'An error occurred during sign-in. Please try again.'
+    }
+  };
+  const loginText = (key) => loginCopy[localStorage.getItem('zainbot_lang') === 'en' ? 'en' : 'ar'][key];
 
   const saveSession = (payload) => {
     const expiryMs = getTokenExpiryFromJwt(payload.token) || undefined;
@@ -50,18 +67,18 @@ document.addEventListener('DOMContentLoaded', () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ idToken }),
-      }, errorDiv, 'فشل تسجيل الدخول بجوجل');
+      }, errorDiv, loginText('google_failed'));
 
       if (data.success) {
         saveSession({ token: data.token, role: data.role, userId: data.userId, username: data.username });
         window.location.href = '/dashboard_new';
       } else {
         errorDiv.style.display = 'block';
-        errorDiv.textContent = data.message || 'فشل تسجيل الدخول بجوجل، حاول مرة أخرى';
+        errorDiv.textContent = data.message || loginText('google_failed');
       }
     } catch (err) {
       errorDiv.style.display = 'block';
-      errorDiv.textContent = err.message || 'حدث خطأ أثناء تسجيل الدخول بجوجل';
+      errorDiv.textContent = err.message || loginText('google_error');
     }
   };
 
@@ -75,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!username || !password) {
         errorDiv.style.display = 'block';
-        errorDiv.textContent = 'من فضلك أدخل اسم المستخدم وكلمة المرور';
+        errorDiv.textContent = loginText('credentials_required');
         return;
       }
 
@@ -86,18 +103,18 @@ document.addEventListener('DOMContentLoaded', () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ username, password }),
-        }, errorDiv, 'فشل تسجيل الدخول');
+        }, errorDiv, loginText('login_failed'));
 
         if (data.success) {
           saveSession({ token: data.token, role: data.role, userId: data.userId, username: data.username });
           window.location.href = '/dashboard_new';
         } else {
           errorDiv.style.display = 'block';
-          errorDiv.textContent = data.message || 'فشل تسجيل الدخول، تأكد من اسم المستخدم وكلمة المرور';
+          errorDiv.textContent = data.message || loginText('login_failed');
         }
       } catch (err) {
         errorDiv.style.display = 'block';
-        errorDiv.textContent = err.message || 'حدث خطأ أثناء تسجيل الدخول، حاول مرة أخرى أو سجل مستخدم جديد';
+        errorDiv.textContent = err.message || loginText('login_error');
       }
     });
   }

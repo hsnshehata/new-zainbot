@@ -107,10 +107,14 @@
       inbox_empty: 'No conversations found.',
       auto_reply_toggle_label: 'AI Auto-Reply',
       select_chat_instructions: 'Select a conversation from the feed to view history and chat.',
+      chat_reply_placeholder: 'Type a message to take over...',
       training_title: 'AI Training Center',
       training_brand_guidelines_title: 'Brand Guidelines & Prompt',
       label_welcome_message: 'Welcome Message',
       label_custom_instructions: 'Custom Persona Instructions',
+      training_welcome_placeholder: 'Enter a standard greeting message...',
+      training_persona_placeholder: "For example, describe the bot's tone, responsibilities, and escalation rules.",
+      training_empty_faqs: 'No FAQ rules yet. Add your first question and answer.',
       save_guidelines_btn: 'Save Settings',
       training_faqs_title: 'FAQs Rules List',
       btn_add_faq: 'Add FAQ',
@@ -165,6 +169,12 @@
       btn_save: 'Save Rule',
       label_faq_question: 'Question / Keywords',
       label_faq_answer: 'Expected Answer',
+      faq_question_placeholder: 'For example, delivery times',
+      faq_answer_placeholder: 'For example, we deliver within three business days across Cairo.',
+      orders_empty: 'No orders generated yet.',
+      bookings_empty: 'No appointments booked yet.',
+      api_keys_empty: 'No API keys generated.',
+      webhook_history_empty: 'No webhook history.',
       admin_title: 'Super Admin Control Center',
       admin_desc: 'Full system management: users, merchants, roles, direct impersonation, and global AI failover provider keys.',
       admin_subtab_users: 'Users & Merchants Control',
@@ -280,10 +290,14 @@
       inbox_empty: 'لا توجد محادثات نشطة.',
       auto_reply_toggle_label: 'الرد التلقائي للبوت',
       select_chat_instructions: 'اختر محادثة من القائمة الجانبية لعرض السجل والتفاعل البشري المباشر.',
+      chat_reply_placeholder: 'اكتب رسالة للتدخل في المحادثة...',
       training_title: 'مركز تدريب البوت',
       training_brand_guidelines_title: 'إرشادات الهوية والتوجيه',
       label_welcome_message: 'رسالة الترحيب',
       label_custom_instructions: 'تعليمات شخصية البوت',
+      training_welcome_placeholder: 'اكتب رسالة الترحيب التي يراها العميل...',
+      training_persona_placeholder: 'مثال: اشرح نبرة البوت ومسؤولياته وقواعد تحويل المحادثة لموظف.',
+      training_empty_faqs: 'لا توجد أسئلة شائعة بعد. أضف أول سؤال وجواب.',
       save_guidelines_btn: 'حفظ الإعدادات',
       training_faqs_title: 'قائمة الأسئلة الشائعة والأجوبة',
       btn_add_faq: 'إضافة سؤال وجواب',
@@ -338,6 +352,12 @@
       btn_save: 'حفظ القاعدة',
       label_faq_question: 'السؤال / الكلمات المفتاحية',
       label_faq_answer: 'الإجابة المتوقعة',
+      faq_question_placeholder: 'مثال: مواعيد التوصيل',
+      faq_answer_placeholder: 'مثال: نوصل خلال ثلاثة أيام عمل داخل القاهرة.',
+      orders_empty: 'لا توجد طلبات أنشأها البوت بعد.',
+      bookings_empty: 'لا توجد مواعيد محجوزة بعد.',
+      api_keys_empty: 'لا توجد مفاتيح وصول منشأة بعد.',
+      webhook_history_empty: 'لا يوجد سجل لتسليمات الربط البرمجي بعد.',
       admin_title: 'لوحة تحكم مدير النظام الشاملة',
       admin_desc: 'التحكم الكامل في المستخدمين، التجار، الصلاحيات، الانتحال المباشر (Impersonation)، وإدارة مفاتيح الذكاء الاصطناعي الـ Failover.',
       admin_subtab_users: 'إدارة المستخدمين والتجار',
@@ -434,6 +454,7 @@
     renderOrders();
     renderBookings();
     renderApiKeys();
+    renderWebhookLogs();
     renderAdminKeys();
   }
 
@@ -830,7 +851,10 @@
     faqListContainer.innerHTML = '';
 
     if (faqs.length === 0) {
-      faqListContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">No QA rules trained. Click Add FAQ.</div>`;
+      const emptyState = document.createElement('div');
+      emptyState.style.cssText = 'text-align:center; padding:20px; color:var(--text-muted);';
+      emptyState.textContent = (translations[currentLanguage] || translations.en).training_empty_faqs;
+      faqListContainer.appendChild(emptyState);
       return;
     }
 
@@ -976,7 +1000,7 @@
     ordersTableBody.innerHTML = '';
 
     if (ordersList.length === 0) {
-      ordersTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">No orders generated yet.</td></tr>`;
+      ordersTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">${(translations[currentLanguage] || translations.en).orders_empty}</td></tr>`;
       return;
     }
 
@@ -1006,7 +1030,7 @@
     bookingsTableBody.innerHTML = '';
 
     if (bookingsList.length === 0) {
-      bookingsTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No appointments booked yet.</td></tr>`;
+      bookingsTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">${(translations[currentLanguage] || translations.en).bookings_empty}</td></tr>`;
       return;
     }
 
@@ -1080,7 +1104,7 @@
     apiKeysContainer.innerHTML = '';
 
     if (devApiKeys.length === 0) {
-      apiKeysContainer.innerHTML = `<div style="text-align:center; padding:16px; color:var(--text-muted);">No API keys generated.</div>`;
+      apiKeysContainer.innerHTML = `<div style="text-align:center; padding:16px; color:var(--text-muted);">${(translations[currentLanguage] || translations.en).api_keys_empty}</div>`;
       return;
     }
 
@@ -1110,7 +1134,7 @@
     tableBody.innerHTML = '';
 
     if (webhookLogs.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No webhook history.</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">${(translations[currentLanguage] || translations.en).webhook_history_empty}</td></tr>`;
       return;
     }
 

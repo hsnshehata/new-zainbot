@@ -1,154 +1,138 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description"
-    content="دخول آمن إلى لوحة تحكم Zain AI. أدر بوتاتك الذكية وراقب الأداء وحسّن خدمة العملاء على مدار الساعة.">
-  <meta name="keywords" content="Zain AI, تسجيل الدخول, لوحة التحكم, بوتات ذكية, إدارة البوتات, خدمة عملاء">
-  <meta name="author" content="Zain AI">
+  <meta name="description" content="Secure access to the ZainBot AI workspace.">
   <meta name="robots" content="noindex, follow">
-  <meta name="theme-color" content="#00C4B4">
-  <link rel="canonical" href="https://zaináitro.com/login">
-  <title>تسجيل الدخول | Zain AI - لوحة التحكم</title>
-  <link rel="stylesheet" href="/css/common.css">
-  <link rel="stylesheet" href="/css/login.css">
-  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#070915">
+  <title>تسجيل الدخول | ZainBot AI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/login.css">
+  <link rel="manifest" href="/manifest.json">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
+<body class="login-page">
+  <main class="login-shell">
+    <div class="login-orb login-orb-one" aria-hidden="true"></div>
+    <div class="login-orb login-orb-two" aria-hidden="true"></div>
 
-<body class="dark-mode">
-  <div class="login-container">
-    <h1>تسجيل الدخول</h1>
-    <form id="loginForm">
-      <div class="form-group">
-        <input type="text" id="username" required placeholder=" " aria-label="اسم المستخدم">
-        <label for="username">اسم المستخدم</label>
-      </div>
-      <div class="form-group">
-        <input type="password" id="password" required placeholder=" " aria-label="كلمة المرور">
-        <label for="password">كلمة المرور</label>
-      </div>
-      <button type="submit" aria-label="تسجيل الدخول">تسجيل الدخول</button>
-    </form>
-    <div class="google-signin-container">
-      <div id="googleSignInButton" class="custom-google-btn"></div>
-    </div>
-    <p id="error" role="alert"></p>
-    <button class="register-btn" onclick="window.location.href='/register.html'">مستخدم جديد</button>
-  </div>
+    <header class="login-header">
+      <a class="login-brand" href="/" aria-label="ZainBot AI">
+        <span class="brand-mark"><i class="fas fa-sparkles"></i></span>
+        <span>ZainBot <b>AI</b></span>
+      </a>
+      <button class="language-toggle" id="loginLanguageToggle" type="button" aria-label="Change language">EN</button>
+    </header>
+
+    <section class="login-layout" aria-labelledby="loginTitle">
+      <aside class="login-intro">
+        <span class="intro-kicker" data-login-i18n="intro_kicker">منصة خدمة العملاء الذكية</span>
+        <h1 data-login-i18n="intro_title">كل محادثات عملائك في مكان واحد.</h1>
+        <p data-login-i18n="intro_description">أدر فريقك ووكلاءك الذكيين وقنوات التواصل من لوحة واحدة مصممة للعمل السريع.</p>
+        <div class="intro-points">
+          <div><i class="fas fa-check"></i><span data-login-i18n="intro_point_one">وكلاء ذكاء اصطناعي قابلون للتخصيص</span></div>
+          <div><i class="fas fa-check"></i><span data-login-i18n="intro_point_two">صندوق وارد موحد لكل القنوات</span></div>
+          <div><i class="fas fa-check"></i><span data-login-i18n="intro_point_three">تحكم آمن في فريقك وبياناتك</span></div>
+        </div>
+      </aside>
+
+      <section class="login-card" aria-labelledby="loginTitle">
+        <div class="login-card-icon"><i class="fas fa-arrow-right-to-bracket"></i></div>
+        <span class="login-card-eyebrow" data-login-i18n="card_eyebrow">مرحبًا بعودتك</span>
+        <h2 id="loginTitle" data-login-i18n="card_title">سجّل الدخول إلى مساحة عملك</h2>
+        <p class="login-card-description" data-login-i18n="card_description">أدخل بياناتك للوصول إلى لوحة التحكم.</p>
+
+        <form id="loginForm" novalidate>
+          <div class="login-field">
+            <label for="username" data-login-i18n="username_label">اسم المستخدم</label>
+            <div class="input-wrap">
+              <i class="fas fa-user" aria-hidden="true"></i>
+              <input type="text" id="username" autocomplete="username" required data-login-placeholder="username_placeholder" placeholder="اكتب اسم المستخدم" data-login-aria="username_label" aria-label="اسم المستخدم">
+            </div>
+          </div>
+          <div class="login-field">
+            <label for="password" data-login-i18n="password_label">كلمة المرور</label>
+            <div class="input-wrap">
+              <i class="fas fa-lock" aria-hidden="true"></i>
+              <input type="password" id="password" autocomplete="current-password" required data-login-placeholder="password_placeholder" placeholder="اكتب كلمة المرور" data-login-aria="password_label" aria-label="كلمة المرور">
+            </div>
+          </div>
+          <button class="login-submit" type="submit"><span data-login-i18n="submit_label">تسجيل الدخول</span><i class="fas fa-arrow-left" aria-hidden="true"></i></button>
+        </form>
+
+        <p id="error" class="login-error" role="alert" aria-live="polite"></p>
+
+        <div class="login-divider"><span data-login-i18n="or_continue">أو تابع باستخدام</span></div>
+        <div class="google-signin-container"><div id="googleSignInButton"></div></div>
+
+        <p class="register-prompt"><span data-login-i18n="new_user">مستخدم جديد؟</span> <a href="/register.html" data-login-i18n="create_account">أنشئ حسابك</a></p>
+      </section>
+    </section>
+  </main>
 
   <script>
-    // Apply theme from localStorage
-    const currentTheme = localStorage.getItem("theme") || "dark";
-    document.body.classList.add(currentTheme === "light" ? "light-mode" : "dark-mode");
-    if (currentTheme === "light") {
-      document.body.classList.remove("dark-mode");
-    }
-
-    // Service Worker registration
-    if ("serviceWorker" in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register("/service-worker.js")
-          .then(() => console.log("Service Worker Registered"))
-          .catch((err) => console.error("Service Worker Error:", err));
-      });
-    }
-
-    // Handle login form submission
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
-      const errorDiv = document.getElementById('error');
-      if (!username || !password) {
-        errorDiv.style.display = 'block';
-        errorDiv.textContent = 'من فضلك أدخل اسم المستخدم وكلمة المرور';
-        return;
-      }
-      try {
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
-        });
-        const data = await response.json();
-        if (response.ok) {
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('role', data.role);
-          localStorage.setItem('userId', data.userId);
-          localStorage.setItem('username', data.username);
-          window.location.href = '/dashboard.html';
-        } else {
-          errorDiv.style.display = 'block';
-          errorDiv.textContent = data.message || 'فشل في تسجيل الدخول، تأكد من اسم المستخدم وكلمة المرور';
+    (() => {
+      const copy = {
+        ar: {
+          document_title: 'تسجيل الدخول | ZainBot AI', intro_kicker: 'منصة خدمة العملاء الذكية', intro_title: 'كل محادثات عملائك في مكان واحد.', intro_description: 'أدر فريقك ووكلاءك الذكيين وقنوات التواصل من لوحة واحدة مصممة للعمل السريع.', intro_point_one: 'وكلاء ذكاء اصطناعي قابلون للتخصيص', intro_point_two: 'صندوق وارد موحد لكل القنوات', intro_point_three: 'تحكم آمن في فريقك وبياناتك', card_eyebrow: 'مرحبًا بعودتك', card_title: 'سجّل الدخول إلى مساحة عملك', card_description: 'أدخل بياناتك للوصول إلى لوحة التحكم.', username_label: 'اسم المستخدم', username_placeholder: 'اكتب اسم المستخدم', password_label: 'كلمة المرور', password_placeholder: 'اكتب كلمة المرور', submit_label: 'تسجيل الدخول', or_continue: 'أو تابع باستخدام', new_user: 'مستخدم جديد؟', create_account: 'أنشئ حسابك', change_language: 'تغيير اللغة'
+        },
+        en: {
+          document_title: 'Sign in | ZainBot AI', intro_kicker: 'AI customer operations platform', intro_title: 'Every customer conversation, in one place.', intro_description: 'Manage your team, AI agents, and communication channels from one workspace built for fast work.', intro_point_one: 'Customizable AI agents', intro_point_two: 'One inbox for every channel', intro_point_three: 'Secure control of your team and data', card_eyebrow: 'Welcome back', card_title: 'Sign in to your workspace', card_description: 'Enter your details to access the dashboard.', username_label: 'Username', username_placeholder: 'Enter your username', password_label: 'Password', password_placeholder: 'Enter your password', submit_label: 'Sign in', or_continue: 'or continue with', new_user: 'New here?', create_account: 'Create an account', change_language: 'Change language'
         }
-      } catch (err) {
-        errorDiv.style.display = 'block';
-        errorDiv.textContent = err.message || 'حدث خطأ أثناء تسجيل الدخول، حاول مرة أخرى أو سجل مستخدم جديد';
-      }
-    });
+      };
+      const toggle = document.getElementById('loginLanguageToggle');
+      const language = () => localStorage.getItem('zainbot_lang') === 'en' ? 'en' : 'ar';
 
-    // Google Sign-In handling
-    function onGoogleSignIn(response) {
-      const id_token = response.credential;
-      fetch('/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken: id_token })
-      }).then(response => response.json()).then(data => {
-        if (data.token) {
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('role', data.role);
-          localStorage.setItem('userId', data.userId);
-          localStorage.setItem('username', data.username);
-          window.location.href = '/dashboard.html';
-        } else {
-          document.getElementById('error').style.display = 'block';
-          document.getElementById('error').textContent = data.message || 'فشل في تسجيل الدخول بجوجل';
+      function applyLoginLanguage(nextLanguage) {
+        const strings = copy[nextLanguage];
+        document.documentElement.lang = nextLanguage;
+        document.documentElement.dir = nextLanguage === 'ar' ? 'rtl' : 'ltr';
+        document.title = strings.document_title;
+        document.querySelectorAll('[data-login-i18n]').forEach((element) => {
+          element.textContent = strings[element.dataset.loginI18n];
+        });
+        document.querySelectorAll('[data-login-placeholder]').forEach((element) => {
+          element.placeholder = strings[element.dataset.loginPlaceholder];
+        });
+        document.querySelectorAll('[data-login-aria]').forEach((element) => {
+          element.setAttribute('aria-label', strings[element.dataset.loginAria]);
+        });
+        toggle.textContent = nextLanguage === 'ar' ? 'EN' : 'AR';
+        toggle.setAttribute('aria-label', strings.change_language);
+        document.dispatchEvent(new CustomEvent('zainbot:languagechange', { detail: { language: nextLanguage } }));
+      }
+
+      toggle.addEventListener('click', () => {
+        const nextLanguage = language() === 'ar' ? 'en' : 'ar';
+        localStorage.setItem('zainbot_lang', nextLanguage);
+        applyLoginLanguage(nextLanguage);
+      });
+      applyLoginLanguage(language());
+
+      window.addEventListener('load', async () => {
+        try {
+          const response = await fetch('/api/config');
+          const config = await response.json();
+          if (!config.googleClientId || !window.google?.accounts?.id) return;
+          google.accounts.id.initialize({
+            client_id: config.googleClientId,
+            callback: (credential) => window.handleGoogleSignIn?.(credential)
+          });
+          google.accounts.id.renderButton(document.getElementById('googleSignInButton'), {
+            type: 'standard', theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill', width: 400,
+            locale: language() === 'ar' ? 'ar' : 'en'
+          });
+        } catch (_) {
+          // The password sign-in remains available when Google is not configured.
         }
       });
-    }
-
-    window.onload = async function () {
-      try {
-        const response = await fetch('/api/config');
-        const config = await response.json();
-        const clientId = config.googleClientId;
-
-        if (!clientId) {
-          document.getElementById('error').style.display = 'block';
-          document.getElementById('error').textContent = 'خطأ: لم يتم العثور على Client ID';
-          return;
-        }
-
-        google.accounts.id.initialize({
-          client_id: clientId,
-          callback: onGoogleSignIn
-        });
-        google.accounts.id.renderButton(
-          document.getElementById("googleSignInButton"),
-          {
-            type: "standard", // Use standard button type
-            theme: "filled_blue", // Base color for consistency
-            size: "large",
-            text: "signin_with",
-            shape: "rectangular"
-          }
-        );
-      } catch (error) {
-        document.getElementById('error').style.display = 'block';
-        document.getElementById('error').textContent = 'خطأ في جلب إعدادات التطبيق';
-      }
-    };
+    })();
   </script>
   <script defer src="/js/utils.js"></script>
   <script defer src="/js/auth.js"></script>
-  <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'93b61bb9cf61b01c',t:'MTc0NjUwOTY2NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
 </body>
-
 </html>

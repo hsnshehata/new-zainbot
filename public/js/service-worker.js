@@ -1,6 +1,6 @@
 // public/service-worker.js
 
-const CACHE_NAME = 'zain-ai-v0.0008'; // bump: تفريغ الكاش القديم + تطبيق سياسة عدم كاش للصور والروابط الخارجية
+const CACHE_NAME = 'zain-ai-v0.0009'; // bump: تفريغ الكاش القديم + تطبيق سياسة عدم كاش للصور والروابط الخارجية
 const urlsToCache = [
   '/',
   '/index.html',
