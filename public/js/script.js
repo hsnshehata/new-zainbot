@@ -137,32 +137,6 @@
 
   if (counters.length) counterObserver.observe(counters[0].closest('.metrics'));
 
-  /* ===== PRICING TOGGLE ===== */
-  const pricingToggle = document.getElementById('pricingToggle');
-  const monthlyLabel = document.getElementById('monthlyLabel');
-  const yearlyLabel = document.getElementById('yearlyLabel');
-  const prices = {
-    starter: { monthly: 29, yearly: 23 },
-    growth: { monthly: 79, yearly: 63 },
-    scale: { monthly: 199, yearly: 159 }
-  };
-
-  pricingToggle.addEventListener('change', () => {
-    const isYearly = pricingToggle.checked;
-    monthlyLabel.classList.toggle('active', !isYearly);
-    yearlyLabel.classList.toggle('active', isYearly);
-
-    document.querySelectorAll('.price').forEach(el => {
-      const plan = el.dataset.plan;
-      const newPrice = prices[plan][isYearly ? 'yearly' : 'monthly'];
-      el.style.opacity = '0';
-      setTimeout(() => {
-        el.textContent = newPrice;
-        el.style.opacity = '1';
-      }, 150);
-    });
-  });
-
   /* ===== TESTIMONIAL CAROUSEL ===== */
   const track = document.getElementById('testimonialTrack');
   const slides = track ? track.children : [];
@@ -451,7 +425,99 @@
       demo_chip1: '<i class="fas fa-box"></i> Ask about an order',
       demo_chip2: '<i class="fas fa-tag"></i> Ask about pricing',
       demo_chip3: '<i class="fas fa-calendar-check"></i> Book an appointment',
-      demo_input_placeholder: 'Type your message...'
+      demo_input_placeholder: 'Type your message...',
+      aria_main_navigation: 'Main navigation',
+      aria_toggle_language: 'Change language',
+      aria_toggle_menu: 'Toggle menu',
+      aria_demo_input: 'Type your message',
+      aria_send_message: 'Send message',
+      aria_back_to_top: 'Back to top',
+      bento_eyebrow: 'Platform',
+      bento_title: 'One AI brain. <span class="gradient-text">Every customer channel.</span>',
+      bento_desc: 'Bring customer conversations into one workspace where your team can reply, automate, and follow up.',
+      bento_card1_title: 'Unified inbox',
+      bento_card1_desc: 'Keep incoming messages from your connected channels in one clear place.',
+      bento_card1_msg1: 'Hi! Is the navy blazer still available?',
+      bento_card1_msg2: 'Do you ship to Singapore?',
+      bento_card1_msg3: 'My order arrived — thank you!',
+      bento_card1_visitor: 'Website visitor',
+      bento_card1_msg4: 'What are your business hours?',
+      bento_card2_title: 'Smart AI replies',
+      bento_card2_desc: 'Configure replies with the information and rules that matter to your business.',
+      bento_card2_toggle: 'AI auto-reply',
+      bento_card2_suggested: 'Suggested: “We have it in stock. Would you like help completing your order?”',
+      bento_card3_title: 'Follow-up workflow',
+      bento_card3_desc: 'Organize conversations so your team knows the next useful action.',
+      bento_card3_new: 'New conversations',
+      bento_card3_qualified: 'Needs follow-up',
+      bento_card3_closed: 'Completed',
+      bento_card4_title: 'Human handoff',
+      bento_card4_desc: 'Pass a conversation to your team whenever a human response is needed.',
+      bento_card4_ai: 'AI',
+      bento_card4_agent: 'Team member',
+      bento_card4_status: '<span class="handoff-indicator"></span>Handoff when your team is needed',
+      bento_card5_title: 'Workspace insights',
+      bento_card5_desc: 'Review the conversation and workspace signals that matter to your team.',
+      bento_card5_live: 'Preview',
+      workflow_eyebrow: 'How it works',
+      workflow_title: 'From message to <span class="gradient-text">momentum.</span>',
+      workflow_desc: 'Set up your workspace in clear steps and keep the control in your hands.',
+      workflow_step1_title: 'Connect your channels',
+      workflow_step1_desc: 'Link the channels you use and review their connection status from one place.',
+      workflow_step2_title: 'Train your AI agent',
+      workflow_step2_desc: 'Add your FAQs, product information, and guidance so the agent follows your business context.',
+      workflow_step3_title: 'Review and improve',
+      workflow_step3_desc: 'Test replies, monitor conversations, and hand off to your team when needed.',
+      int_eyebrow: 'Channels',
+      int_title: 'Meet customers where they <span class="gradient-text">already are.</span>',
+      int_desc: 'Choose the channels that suit your business, then connect and monitor each one from your workspace.',
+      int_connected: 'Ready to connect',
+      int_available: 'Available',
+      int_webchat: 'Website chat',
+      metrics_eyebrow: 'Workspace',
+      metrics_title: 'Less waiting. <span class="gradient-text">More clarity.</span>',
+      metrics_desc: 'Keep the conversations, channels, orders, and usage that matter to your team in one clear workspace.',
+      metric_panel_title: 'Workspace overview',
+      metric_panel_live: 'Preview',
+      pricing_eyebrow: 'Current plan',
+      pricing_title: 'Start with the <span class="gradient-text">free plan.</span>',
+      pricing_desc: 'All accounts are currently on the free plan. Your available usage is always shown inside your workspace.',
+      plan_free_title: 'FREE PLAN',
+      plan_free_desc: 'Create your workspace, connect your channels, and manage your available usage from the dashboard.',
+      plan_free_f1: '<i class="fas fa-check"></i> Build and configure your AI agents',
+      plan_free_f2: '<i class="fas fa-check"></i> Connect the channels you use',
+      plan_free_f3: '<i class="fas fa-check"></i> See conversations, orders, and workspace usage',
+      plan_free_btn: 'Get started',
+      cta_title: 'Ready to make every <span class="gradient-text">conversation count?</span>',
+      cta_btn: 'Start building for free <i class="fas fa-arrow-right"></i>',
+      cta_note: 'No credit card required. Start from your workspace.',
+      footer_desc: 'Bring customer conversations into one workspace and give your team a clearer way to respond and follow up.',
+      footer_col_product: 'Product',
+      footer_link_features: 'Features',
+      footer_link_integrations: 'Channels',
+      footer_link_pricing: 'Plan',
+      footer_link_demo: 'Preview',
+      footer_link_changelog: 'Updates',
+      footer_col_solutions: 'Workspace',
+      footer_link_workflow: 'How it works',
+      footer_link_ecommerce: 'E-commerce',
+      footer_link_saas: 'Service teams',
+      footer_link_healthcare: 'Appointments',
+      footer_link_education: 'Education',
+      footer_col_resources: 'Resources',
+      footer_link_docs: 'Guides',
+      footer_link_api: 'Developer tools',
+      footer_link_blog: 'Product notes',
+      footer_link_help: 'Help',
+      footer_link_community: 'Community',
+      footer_col_company: 'ZainBot',
+      footer_link_about: 'About',
+      footer_link_careers: 'Careers',
+      footer_link_contact: 'Contact',
+      footer_link_privacy: 'Privacy',
+      footer_link_terms: 'Terms',
+      footer_rights: '© 2026 ZainBot. All rights reserved.',
+      footer_made: 'Built for teams that value clear customer conversations.'
     },
     ar: {
       nav_product: 'المنتج',
@@ -506,7 +572,99 @@
       demo_chip1: '<i class="fas fa-box"></i> اسأل عن طلب',
       demo_chip2: '<i class="fas fa-tag"></i> اسأل عن الأسعار',
       demo_chip3: '<i class="fas fa-calendar-check"></i> احجز موعدًا',
-      demo_input_placeholder: 'اكتب رسالتك...'
+      demo_input_placeholder: 'اكتب رسالتك...',
+      aria_main_navigation: 'التنقل الرئيسي',
+      aria_toggle_language: 'تغيير اللغة',
+      aria_toggle_menu: 'فتح أو إغلاق القائمة',
+      aria_demo_input: 'اكتب رسالتك',
+      aria_send_message: 'إرسال الرسالة',
+      aria_back_to_top: 'العودة إلى أعلى الصفحة',
+      bento_eyebrow: 'المنصة',
+      bento_title: 'عقل واحد للذكاء الاصطناعي. <span class="gradient-text">لكل قنوات عملائك.</span>',
+      bento_desc: 'اجمع محادثات العملاء في مساحة عمل واحدة ليتمكن فريقك من الرد والأتمتة والمتابعة.',
+      bento_card1_title: 'صندوق وارد موحد',
+      bento_card1_desc: 'تابع الرسائل الواردة من قنواتك المرتبطة في مكان واضح واحد.',
+      bento_card1_msg1: 'مرحبًا، هل الجاكيت الكحلي متاح؟',
+      bento_card1_msg2: 'هل توفرون الشحن إلى سنغافورة؟',
+      bento_card1_msg3: 'وصل طلبي، شكرًا لكم!',
+      bento_card1_visitor: 'زائر الموقع',
+      bento_card1_msg4: 'ما مواعيد العمل لديكم؟',
+      bento_card2_title: 'ردود ذكية',
+      bento_card2_desc: 'اضبط الردود بالمعلومات والقواعد التي تهم نشاطك التجاري.',
+      bento_card2_toggle: 'الرد الآلي بالذكاء الاصطناعي',
+      bento_card2_suggested: 'رد مقترح: «المنتج متاح. هل ترغب في المساعدة لإتمام الطلب؟»',
+      bento_card3_title: 'مسار المتابعة',
+      bento_card3_desc: 'نظّم المحادثات ليعرف فريقك الخطوة المفيدة التالية.',
+      bento_card3_new: 'محادثات جديدة',
+      bento_card3_qualified: 'تحتاج متابعة',
+      bento_card3_closed: 'مكتملة',
+      bento_card4_title: 'تحويل إلى فريقك',
+      bento_card4_desc: 'حوّل المحادثة إلى فريقك متى احتاج العميل إلى رد بشري.',
+      bento_card4_ai: 'الذكاء الاصطناعي',
+      bento_card4_agent: 'عضو الفريق',
+      bento_card4_status: '<span class="handoff-indicator"></span>تحويل المحادثة عند حاجة العميل إلى فريقك',
+      bento_card5_title: 'رؤى مساحة العمل',
+      bento_card5_desc: 'راجع إشارات المحادثات ومساحة العمل التي تهم فريقك.',
+      bento_card5_live: 'معاينة',
+      workflow_eyebrow: 'طريقة العمل',
+      workflow_title: 'من الرسالة إلى <span class="gradient-text">خطوة واضحة.</span>',
+      workflow_desc: 'جهّز مساحة عملك بخطوات واضحة واحتفظ بالتحكم بين يديك.',
+      workflow_step1_title: 'اربط قنواتك',
+      workflow_step1_desc: 'اربط القنوات التي تستخدمها وراجع حالة كل اتصال من مكان واحد.',
+      workflow_step2_title: 'درّب وكيلك الذكي',
+      workflow_step2_desc: 'أضف الأسئلة الشائعة ومعلومات المنتجات والتوجيهات ليعمل الوكيل ضمن سياق نشاطك.',
+      workflow_step3_title: 'راجع وطوّر',
+      workflow_step3_desc: 'اختبر الردود وتابع المحادثات وحوّلها إلى فريقك عند الحاجة.',
+      int_eyebrow: 'القنوات',
+      int_title: 'قابل عملاءك حيث <span class="gradient-text">يتواجدون.</span>',
+      int_desc: 'اختر القنوات المناسبة لنشاطك ثم اربطها وتابع حالة كل قناة من مساحة عملك.',
+      int_connected: 'جاهز للربط',
+      int_available: 'متاح',
+      int_webchat: 'دردشة الموقع',
+      metrics_eyebrow: 'مساحة العمل',
+      metrics_title: 'انتظار أقل. <span class="gradient-text">وضوح أكبر.</span>',
+      metrics_desc: 'تابع المحادثات والقنوات والطلبات والاستخدام المهم لفريقك في مساحة عمل واحدة واضحة.',
+      metric_panel_title: 'نظرة على مساحة العمل',
+      metric_panel_live: 'معاينة',
+      pricing_eyebrow: 'الخطة الحالية',
+      pricing_title: 'ابدأ بـ <span class="gradient-text">الخطة المجانية.</span>',
+      pricing_desc: 'كل الحسابات حاليًا على الخطة المجانية. يظهر الاستخدام المتاح دائمًا داخل مساحة عملك.',
+      plan_free_title: 'الخطة المجانية',
+      plan_free_desc: 'أنشئ مساحة عملك واربط قنواتك وأدر استخدامك المتاح من لوحة التحكم.',
+      plan_free_f1: '<i class="fas fa-check"></i> أنشئ وكلاءك الذكيين واضبطهم',
+      plan_free_f2: '<i class="fas fa-check"></i> اربط القنوات التي تستخدمها',
+      plan_free_f3: '<i class="fas fa-check"></i> تابع المحادثات والطلبات واستخدام مساحة العمل',
+      plan_free_btn: 'ابدأ الآن',
+      cta_title: 'هل أنت جاهز لجعل كل <span class="gradient-text">محادثة مهمة؟</span>',
+      cta_btn: 'ابدأ مجانًا <i class="fas fa-arrow-left"></i>',
+      cta_note: 'لا تحتاج إلى بطاقة دفع. ابدأ من مساحة عملك.',
+      footer_desc: 'اجمع محادثات العملاء في مساحة عمل واحدة وامنح فريقك طريقة أوضح للرد والمتابعة.',
+      footer_col_product: 'المنتج',
+      footer_link_features: 'المزايا',
+      footer_link_integrations: 'القنوات',
+      footer_link_pricing: 'الخطة',
+      footer_link_demo: 'المعاينة',
+      footer_link_changelog: 'التحديثات',
+      footer_col_solutions: 'مساحة العمل',
+      footer_link_workflow: 'طريقة العمل',
+      footer_link_ecommerce: 'التجارة الإلكترونية',
+      footer_link_saas: 'فرق الخدمات',
+      footer_link_healthcare: 'المواعيد',
+      footer_link_education: 'التعليم',
+      footer_col_resources: 'المصادر',
+      footer_link_docs: 'الأدلة',
+      footer_link_api: 'أدوات المطورين',
+      footer_link_blog: 'ملاحظات المنتج',
+      footer_link_help: 'المساعدة',
+      footer_link_community: 'المجتمع',
+      footer_col_company: 'زين بوت',
+      footer_link_about: 'عن زين بوت',
+      footer_link_careers: 'الوظائف',
+      footer_link_contact: 'تواصل معنا',
+      footer_link_privacy: 'الخصوصية',
+      footer_link_terms: 'الشروط',
+      footer_rights: '© 2026 زين بوت. جميع الحقوق محفوظة.',
+      footer_made: 'صُممت لفرق تهتم بمحادثات عملاء أوضح.'
     }
   };
 
@@ -537,6 +695,10 @@
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
       const key = el.getAttribute('data-i18n-placeholder');
       if (langTranslations[lang] && langTranslations[lang][key]) el.placeholder = langTranslations[lang][key];
+    });
+    document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+      const key = el.getAttribute('data-i18n-aria');
+      if (langTranslations[lang] && langTranslations[lang][key]) el.setAttribute('aria-label', langTranslations[lang][key]);
     });
   }
 

@@ -1,6 +1,6 @@
 // public/service-worker.js
 
-const CACHE_NAME = 'zain-ai-v0.0010'; // bump: تفريغ الكاش القديم + تطبيق سياسة عدم كاش للصور والروابط الخارجية
+const CACHE_NAME = 'zain-ai-v0.0011'; // refresh the landing assets after the bilingual release
 const urlsToCache = [
   '/',
   '/index.html',
@@ -44,7 +44,7 @@ const urlsToCache = [
 self.addEventListener('install', (event) => {
   console.log('Service Worker: Installing...');
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    self.skipWaiting().then(() => caches.open(CACHE_NAME))
       .then((cache) => {
         console.log('Service Worker: Caching app shell');
         return cache.addAll(urlsToCache)
@@ -69,7 +69,7 @@ self.addEventListener('activate', (event) => {
             return caches.delete(cacheName);
           }
         })
-      );
+      ).then(() => self.clients.claim());
     })
   );
   return self.clients.claim();
