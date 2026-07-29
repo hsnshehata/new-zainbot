@@ -703,6 +703,10 @@
           <i class="fas fa-chart-pie"></i>
           <span data-i18n="menu_overview">Overview</span>
         </div>
+        <div class="menu-item" data-target="page-agents">
+          <i class="fas fa-robot"></i>
+          <span>AI Agents</span>
+        </div>
         <div class="menu-item" data-target="page-inbox">
           <i class="fas fa-inbox"></i>
           <span data-i18n="menu_inbox">Omnichannel Inbox</span>
@@ -883,6 +887,15 @@
               </div>
             </div>
           </div>
+        </section>
+
+        <section id="page-agents" class="db-page">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:24px;">
+            <div><h2 style="margin-bottom:8px;"><i class="fas fa-robot" style="color:var(--cyan);"></i> AI Agents</h2><p style="color:var(--text-muted);">Build distinct agents for support, sales, and lead qualification. Choose one active agent for the workspace.</p></div>
+            <button id="createAgentBtn" class="btn btn-primary" type="button"><i class="fas fa-plus"></i> Create agent</button>
+          </div>
+          <div id="agentsEntitlement" class="glass-card" style="margin-bottom:20px; padding:14px 18px; color:var(--text-muted);"></div>
+          <div id="agentsList" class="db-responsive-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:18px;"></div>
         </section>
 
         <!-- ==================== 2. OMNICHANNEL INBOX ==================== -->
@@ -1200,6 +1213,30 @@
                 <button id="adminAddUserBtn" class="btn btn-primary btn-sm" style="background:var(--cyan); border-color:var(--cyan); color:#000; font-weight:600;"><i class="fas fa-user-plus"></i> <span data-i18n="admin_btn_add_user">Add New User / Merchant</span></button>
               </div>
 
+              <form id="adminUserFilters" style="display:grid; grid-template-columns:minmax(180px, 2fr) repeat(3, minmax(120px, 1fr)) auto; gap:10px; margin-bottom:16px;">
+                <input id="adminUserSearch" class="form-control" type="search" placeholder="Search username, email, or WhatsApp" aria-label="Search users" />
+                <select id="adminUserRoleFilter" class="form-control" aria-label="Filter by role">
+                  <option value="">All roles</option>
+                  <option value="user">User</option>
+                  <option value="superadmin">Super admin</option>
+                </select>
+                <select id="adminUserStatusFilter" class="form-control" aria-label="Filter by status">
+                  <option value="">Active accounts</option>
+                  <option value="active">Active</option>
+                  <option value="suspended">Suspended</option>
+                  <option value="deleted">Deleted</option>
+                </select>
+                <select id="adminUserTierFilter" class="form-control" aria-label="Filter by plan tier">
+                  <option value="">All tiers</option>
+                  <option value="free">Free</option>
+                  <option value="growth_1k">Growth 1K</option>
+                  <option value="growth_10k">Growth 10K</option>
+                  <option value="growth_50k">Growth 50K</option>
+                  <option value="unlimited">Unlimited</option>
+                </select>
+                <button class="btn btn-secondary btn-sm" type="submit"><i class="fas fa-filter"></i> Apply</button>
+              </form>
+
               <div style="overflow-x:auto;">
                 <table class="db-table" style="width:100%; border-collapse:collapse; text-align:right;">
                   <thead>
@@ -1218,6 +1255,13 @@
                     <tr><td colspan="7" style="padding:24px; text-align:center; color:var(--text-muted);" data-i18n="admin_loading_users">Loading users list...</td></tr>
                   </tbody>
                 </table>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:14px;">
+                <span id="adminUsersPaginationInfo" style="font-size:12px; color:var(--text-muted);"></span>
+                <div style="display:flex; gap:8px;">
+                  <button id="adminUsersPrevBtn" class="btn btn-secondary btn-sm" type="button">Previous</button>
+                  <button id="adminUsersNextBtn" class="btn btn-secondary btn-sm" type="button">Next</button>
+                </div>
               </div>
             </div>
           </div>
@@ -1317,6 +1361,80 @@
         <!-- Dynamic content rendered by JS -->
       </div>
     </div>
+  </div>
+
+  <div class="db-modal" id="adminUserModal">
+    <div class="db-modal-content" style="max-width:720px;">
+      <div class="db-modal-header">
+        <h3 id="adminUserModalTitle">Manage user</h3>
+        <button class="btn btn-secondary btn-sm admin-user-modal-close" type="button" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="adminUserForm">
+        <div class="db-modal-body">
+          <input id="adminUserId" type="hidden" />
+          <input id="adminUserMode" type="hidden" value="edit" />
+          <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="form-group"><label>Username</label><input id="adminUserUsername" class="form-control" required minlength="3" maxlength="20" /></div>
+            <div class="form-group"><label>Email</label><input id="adminUserEmail" class="form-control" required type="email" /></div>
+            <div class="form-group"><label>WhatsApp</label><input id="adminUserWhatsapp" class="form-control" /></div>
+            <div class="form-group"><label>Role</label><select id="adminUserRole" class="form-control"><option value="user">User</option><option value="superadmin">Super admin</option></select></div>
+            <div class="form-group"><label>Subscription</label><select id="adminUserSubscriptionType" class="form-control"><option value="free">Free</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></div>
+            <div class="form-group"><label>Plan tier</label><select id="adminUserTier" class="form-control"><option value="free">Free</option><option value="growth_1k">Growth 1K</option><option value="growth_10k">Growth 10K</option><option value="growth_50k">Growth 50K</option><option value="unlimited">Unlimited</option></select></div>
+            <div class="form-group"><label>Status</label><select id="adminUserStatus" class="form-control"><option value="active">Active</option><option value="suspended">Suspended</option></select></div>
+            <div class="form-group"><label>Verification</label><select id="adminUserVerified" class="form-control"><option value="true">Verified</option><option value="false">Not verified</option></select></div>
+            <div class="form-group"><label>Daily messages used</label><input id="adminUserDailyUsage" class="form-control" type="number" min="0" value="0" /></div>
+            <div class="form-group"><label>Monthly messages used</label><input id="adminUserMonthlyUsage" class="form-control" type="number" min="0" value="0" /></div>
+            <div class="form-group" id="adminUserPasswordGroup"><label>Temporary password</label><input id="adminUserPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" /><small style="color:var(--text-muted);">Leave empty to keep the existing password.</small></div>
+            <div class="form-group" id="adminUserConfirmPasswordGroup"><label>Confirm password</label><input id="adminUserConfirmPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" /></div>
+          </div>
+        </div>
+        <div class="db-modal-footer">
+          <button class="btn btn-secondary btn-sm admin-user-modal-close" type="button">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm">Save user</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="db-modal" id="impersonationModal">
+    <div class="db-modal-content" style="max-width:520px;">
+      <div class="db-modal-header"><h3>Start audited access</h3><button class="btn btn-secondary btn-sm impersonation-modal-close" type="button"><i class="fas fa-times"></i></button></div>
+      <form id="impersonationForm">
+        <div class="db-modal-body">
+          <input id="impersonationSubjectId" type="hidden" />
+          <p style="color:var(--text-muted); font-size:13px;">This starts a temporary, audited session. Enter the reason for access.</p>
+          <div class="form-group"><label>Reason</label><textarea id="impersonationReason" class="form-control" rows="3" minlength="3" maxlength="500" required></textarea></div>
+        </div>
+        <div class="db-modal-footer"><button class="btn btn-secondary btn-sm impersonation-modal-close" type="button">Cancel</button><button type="submit" class="btn btn-primary btn-sm">Continue</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="db-modal" id="agentModal">
+    <div class="db-modal-content" style="max-width:720px; max-height:90vh; overflow:auto;">
+      <div class="db-modal-header"><h3 id="agentModalTitle">Create agent</h3><button class="btn btn-secondary btn-sm agent-modal-close" type="button"><i class="fas fa-times"></i></button></div>
+      <form id="agentForm">
+        <div class="db-modal-body">
+          <input id="agentId" type="hidden" />
+          <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="form-group"><label>Agent name</label><input id="agentName" class="form-control" required minlength="2" maxlength="80" /></div>
+            <div class="form-group"><label>Agent role</label><select id="agentType" class="form-control"><option value="customer_support">Customer support</option><option value="sales">Sales</option><option value="lead_qualification">Lead qualification</option><option value="custom">Custom</option></select></div>
+          </div>
+          <div class="form-group"><label>Description</label><input id="agentDescription" class="form-control" maxlength="500" placeholder="What this agent is responsible for" /></div>
+          <div class="form-group"><label>Welcome message</label><textarea id="agentWelcomeMessage" class="form-control" rows="2" maxlength="500"></textarea></div>
+          <div class="form-group"><label>Instructions</label><textarea id="agentInstructions" class="form-control" rows="7" maxlength="12000" placeholder="Tone, source of truth, do-not-do rules, and escalation behavior"></textarea></div>
+          <div class="form-group"><label>Objectives</label><textarea id="agentObjectives" class="form-control" rows="3" placeholder="One objective per line"></textarea></div>
+          <div class="form-group"><label>Human handoff keywords</label><input id="agentHandoffKeywords" class="form-control" placeholder="human, manager, complaint" /></div>
+          <label style="display:flex; align-items:center; gap:8px;"><input id="agentAutoReplyEnabled" type="checkbox" checked /> AI auto-reply enabled</label>
+        </div>
+        <div class="db-modal-footer"><button class="btn btn-secondary btn-sm agent-modal-close" type="button">Cancel</button><button class="btn btn-primary btn-sm" type="submit">Save agent</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="impersonationBanner" style="display:none; position:fixed; inset:0 0 auto; z-index:5000; background:#d97706; color:#111827; padding:10px 18px; font-weight:700; text-align:center; box-shadow:0 2px 12px rgba(0,0,0,.28);">
+    <span id="impersonationBannerText">You are viewing a user account in a temporary audited session.</span>
+    <button id="exitImpersonationBtn" class="btn btn-sm" type="button" style="margin-inline-start:12px; background:#111827; border-color:#111827; color:#fff;">Exit and return to admin</button>
   </div>
 
   <script src="js/utils.js"></script>

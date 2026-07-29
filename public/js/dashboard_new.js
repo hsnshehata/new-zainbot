@@ -6,6 +6,7 @@
   // State Management
   let currentUser = null;
   let currentBot = null;
+  let workspaceBots = [];
   let activeTab = 'page-overview';
   let currentLanguage = localStorage.getItem('zainbot_lang') || 'ar';
   let conversations = [];
@@ -328,6 +329,8 @@
     // Load data specific to this page
     if (tabId === 'page-overview') {
       loadOverviewData();
+    } else if (tabId === 'page-agents') {
+      loadAgents();
     } else if (tabId === 'page-inbox') {
       loadInboxData();
     } else if (tabId === 'page-training') {
@@ -428,6 +431,7 @@
         // Show username
         headerUsername.textContent = currentUser.username;
         headerUserAvatar.textContent = currentUser.username.slice(0, 1).toUpperCase();
+        renderImpersonationBanner();
 
         // Show AI failover panel for superadmins
         if (currentUser.role === 'superadmin') {
@@ -455,17 +459,19 @@
     try {
       const res = await apiFetch('/api/bots');
       const bots = (res && res.success) ? res.data : (Array.isArray(res) ? res : []);
-      if (bots.length > 0) {
-        currentBot = bots[0]; // pick first bot
-        
+      workspaceBots = bots;
+      const preferredBotId = localStorage.getItem('zainbot_active_bot_id');
+      currentBot = bots.find((bot) => String(bot._id) === preferredBotId) || bots[0] || null;
+      if (currentBot) {
         // Inject data-bot-id inside chat snippet
         const widgetSnippetCode = document.getElementById('widgetSnippetCode');
         if (widgetSnippetCode) {
-          widgetSnippetCode.textContent = `<script src="https://zainbot.com/widget.js" data-bot-id="${currentBot._id}"></script>`;
+          widgetSnippetCode.textContent = `<script src="${window.location.origin}/widget.js" data-bot-id="${currentBot._id}"></script>`;
         }
         
-        // Load default tab
-        switchTab('page-overview');
+        // Load the initial overview only. Refreshing the agent page must not
+        // switch the user away from the page they chose.
+        if (activeTab === 'page-overview') switchTab('page-overview');
       } else {
         console.warn('No bots found for this user.');
       }
@@ -1181,6 +1187,298 @@
       alert('حدث خطأ أثناء المصادقة');
     }
   };
+
+  // Real admin controls replace the legacy table renderer above. They use DOM
+  // nodes for user data so a username or email can never become HTML markup.
+  const adminUsersPageState = { page: 1, pages: 1, total: 0, limit: 25 };
+  const adminUserModal = document.getElementById('adminUserModal');
+  const impersonationModal = document.getElementById('impersonationModal');
+  const adminCopy = (arabic, english) => currentLanguage === 'ar' ? arabic : english;
+
+  function adminCell(row, value, style = '') {
+    const cell = document.createElement('td');
+    cell.style.cssText = `padding:12px;${style}`;
+    cell.textContent = value || '—';
+    row.appendChild(cell);
+  }
+
+  function clientAgentLimit(tier) {
+    return ({ free: 1, growth_1k: 5, growth_10k: 15, growth_50k: 50, unlimited: Infinity })[tier] || 1;
+  }
+
+  function refreshActiveBot(bot) {
+    currentBot = bot;
+    localStorage.setItem('zainbot_active_bot_id', String(bot._id));
+    const widgetSnippetCode = document.getElementById('widgetSnippetCode');
+    if (widgetSnippetCode) widgetSnippetCode.textContent = `<script src="${window.location.origin}/widget.js" data-bot-id="${bot._id}"></script>`;
+    loadAgents();
+  }
+
+  function renderAgents() {
+    const list = document.getElementById('agentsList');
+    const entitlement = document.getElementById('agentsEntitlement');
+    if (!list || !entitlement) return;
+    const tier = currentUser?.subscriptionTier || 'free';
+    const limit = clientAgentLimit(tier);
+    entitlement.textContent = `${workspaceBots.length} / ${limit === Infinity ? '∞' : limit} ${currentLanguage === 'ar' ? 'وكلاء مستخدمون في باقة' : 'agents used on'} ${tier}`;
+    list.replaceChildren();
+    workspaceBots.forEach((bot) => {
+      const card = document.createElement('article');
+      card.className = 'glass-card';
+      card.style.padding = '18px';
+      const title = document.createElement('h3');
+      title.textContent = bot.name;
+      title.style.marginBottom = '6px';
+      const meta = document.createElement('p');
+      meta.textContent = `${String(bot.agentType || 'customer_support').replaceAll('_', ' ')} · ${bot.autoReplyEnabled === false ? (currentLanguage === 'ar' ? 'الرد الآلي متوقف' : 'Auto-reply off') : (currentLanguage === 'ar' ? 'الرد الآلي يعمل' : 'Auto-reply on')}`;
+      meta.style.cssText = 'font-size:12px; color:var(--text-muted); margin-bottom:12px;';
+      const description = document.createElement('p');
+      description.textContent = bot.description || bot.welcomeMessage || (currentLanguage === 'ar' ? 'لا يوجد وصف بعد.' : 'No description yet.');
+      description.style.cssText = 'font-size:13px; color:var(--text-muted); min-height:40px;';
+      const actions = document.createElement('div');
+      actions.style.cssText = 'display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;';
+      const select = document.createElement('button');
+      select.type = 'button'; select.className = 'btn btn-secondary btn-sm'; select.textContent = String(currentBot?._id) === String(bot._id) ? (currentLanguage === 'ar' ? 'الوكيل الحالي' : 'Current agent') : (currentLanguage === 'ar' ? 'استخدام هذا الوكيل' : 'Use this agent');
+      select.disabled = String(currentBot?._id) === String(bot._id);
+      select.addEventListener('click', () => refreshActiveBot(bot));
+      const edit = document.createElement('button');
+      edit.type = 'button'; edit.className = 'btn btn-secondary btn-sm'; edit.textContent = currentLanguage === 'ar' ? 'تعديل' : 'Edit'; edit.addEventListener('click', () => openAgentModal(bot));
+      actions.append(select, edit); card.append(title, meta, description, actions); list.appendChild(card);
+    });
+    if (workspaceBots.length === 0) {
+      const empty = document.createElement('div'); empty.className = 'glass-card'; empty.textContent = currentLanguage === 'ar' ? 'أنشئ وكيلك الأول للبدء.' : 'Create your first agent to begin.'; list.appendChild(empty);
+    }
+  }
+
+  async function loadAgents() {
+    await loadBots();
+    renderAgents();
+  }
+
+  const agentModal = document.getElementById('agentModal');
+  function openAgentModal(bot = null) {
+    const form = document.getElementById('agentForm');
+    if (!agentModal || !form) return;
+    form.reset();
+    document.getElementById('agentId').value = bot?._id || '';
+    document.getElementById('agentModalTitle').textContent = bot ? (currentLanguage === 'ar' ? 'تعديل الوكيل' : 'Edit agent') : (currentLanguage === 'ar' ? 'إنشاء وكيل' : 'Create agent');
+    if (bot) {
+      document.getElementById('agentName').value = bot.name || '';
+      document.getElementById('agentType').value = bot.agentType || 'customer_support';
+      document.getElementById('agentDescription').value = bot.description || '';
+      document.getElementById('agentWelcomeMessage').value = bot.welcomeMessage || '';
+      document.getElementById('agentInstructions').value = bot.customInstructions || '';
+      document.getElementById('agentObjectives').value = Array.isArray(bot.objectives) ? bot.objectives.join('\n') : '';
+      document.getElementById('agentHandoffKeywords').value = Array.isArray(bot.handoffKeywords) ? bot.handoffKeywords.join(', ') : '';
+      document.getElementById('agentAutoReplyEnabled').checked = bot.autoReplyEnabled !== false;
+    }
+    agentModal.classList.add('active');
+  }
+
+  document.getElementById('createAgentBtn')?.addEventListener('click', () => openAgentModal());
+  document.querySelectorAll('.agent-modal-close').forEach((button) => button.addEventListener('click', () => agentModal?.classList.remove('active')));
+  document.getElementById('agentForm')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const id = document.getElementById('agentId').value;
+    const splitValues = (value, separator) => value.split(separator).map((item) => item.trim()).filter(Boolean);
+    const payload = {
+      name: document.getElementById('agentName').value.trim(), agentType: document.getElementById('agentType').value,
+      description: document.getElementById('agentDescription').value.trim(), welcomeMessage: document.getElementById('agentWelcomeMessage').value.trim(),
+      customInstructions: document.getElementById('agentInstructions').value.trim(), objectives: splitValues(document.getElementById('agentObjectives').value, '\n'),
+      handoffKeywords: splitValues(document.getElementById('agentHandoffKeywords').value, ','), autoReplyEnabled: document.getElementById('agentAutoReplyEnabled').checked,
+    };
+    const result = await apiFetch(id ? `/api/bots/${id}` : '/api/bots', { method: id ? 'PUT' : 'POST', body: JSON.stringify(payload) });
+    if (!result || result.error || result.message && !result._id && !result.success) return alert(result?.message || (currentLanguage === 'ar' ? 'فشل حفظ الوكيل.' : 'Could not save agent.'));
+    agentModal?.classList.remove('active');
+    await loadAgents();
+    if (!id && result._id) refreshActiveBot(result);
+  });
+
+  function adminAction(label, action, style = '') {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn btn-secondary btn-sm';
+    button.style.cssText = `padding:4px 8px; font-size:11px;${style}`;
+    button.textContent = label;
+    button.addEventListener('click', action);
+    return button;
+  }
+
+  function renderAdminPagination() {
+    const info = document.getElementById('adminUsersPaginationInfo');
+    const previous = document.getElementById('adminUsersPrevBtn');
+    const next = document.getElementById('adminUsersNextBtn');
+    if (info) info.textContent = `${adminUsersPageState.total} ${adminCopy('حساب — صفحة', 'accounts — page')} ${adminUsersPageState.page} / ${adminUsersPageState.pages}`;
+    if (previous) previous.disabled = adminUsersPageState.page <= 1;
+    if (next) next.disabled = adminUsersPageState.page >= adminUsersPageState.pages;
+  }
+
+  async function loadAdminUsers(page = adminUsersPageState.page) {
+    try {
+      const params = new URLSearchParams({ paginate: 'true', populate: 'bots', page: String(page), limit: '25' });
+      const search = document.getElementById('adminUserSearch')?.value.trim();
+      const role = document.getElementById('adminUserRoleFilter')?.value;
+      const status = document.getElementById('adminUserStatusFilter')?.value;
+      const tier = document.getElementById('adminUserTierFilter')?.value;
+      if (search) params.set('q', search);
+      if (role) params.set('role', role);
+      if (status) params.set('status', status);
+      if (tier) params.set('tier', tier);
+      const res = await apiFetch(`/api/users?${params.toString()}`);
+      adminUsersList = Array.isArray(res?.data) ? res.data : [];
+      Object.assign(adminUsersPageState, res?.pagination || { page: 1, pages: 1, total: adminUsersList.length, limit: 25 });
+      renderAdminUsers();
+    } catch (error) {
+      console.error('admin_users_load_failed', error);
+      alert(adminCopy('تعذر تحميل قائمة الحسابات.', 'Could not load accounts.'));
+    }
+  }
+
+  function renderAdminUsers() {
+    const tbody = document.getElementById('adminUsersTableBody');
+    if (!tbody) return;
+    tbody.replaceChildren();
+    if (adminUsersList.length === 0) {
+      const row = document.createElement('tr');
+      const cell = document.createElement('td');
+      cell.colSpan = 7;
+      cell.style.cssText = 'padding:24px; text-align:center; color:var(--text-muted);';
+      cell.textContent = adminCopy('لا توجد حسابات مطابقة.', 'No matching accounts.');
+      row.appendChild(cell);
+      tbody.appendChild(row);
+      renderAdminPagination();
+      return;
+    }
+    adminUsersList.forEach((user) => {
+      const row = document.createElement('tr');
+      row.style.borderBottom = '1px solid var(--glass-border)';
+      adminCell(row, user.username, 'font-weight:600;');
+      adminCell(row, user.email, 'font-size:12px; color:var(--cyan);');
+      adminCell(row, user.role === 'superadmin' ? adminCopy('مدير عام', 'Super admin') : adminCopy('مستخدم', 'User'));
+      adminCell(row, user.subscriptionTier || 'free', 'font-size:12px;');
+      adminCell(row, user.status === 'suspended' ? adminCopy('موقوف', 'Suspended') : (user.status === 'deleted' ? adminCopy('محذوف', 'Deleted') : adminCopy('نشط', 'Active')));
+      adminCell(row, `${Array.isArray(user.bots) ? user.bots.length : 0} ${adminCopy('وكيل', 'agent(s)')}`, 'font-size:12px;');
+      const actions = document.createElement('td');
+      actions.style.cssText = 'padding:12px; text-align:center; display:flex; justify-content:center; gap:5px; flex-wrap:wrap;';
+      actions.appendChild(adminAction(adminCopy('تعديل', 'Edit'), () => openAdminUserModal(user._id)));
+      if (user.status !== 'deleted' && String(user._id) !== String(currentUser?._id)) {
+        actions.appendChild(adminAction(adminCopy('دخول مؤقت', 'Temporary access'), () => openImpersonationModal(user._id), 'border-color:var(--orange); color:var(--orange);'));
+      }
+      if (user.status !== 'deleted' && user.role !== 'superadmin') {
+        actions.appendChild(adminAction(user.status === 'suspended' ? adminCopy('تفعيل', 'Activate') : adminCopy('إيقاف', 'Suspend'), () => updateAdminUserStatus(user._id, user.status === 'suspended' ? 'active' : 'suspended')));
+        actions.appendChild(adminAction(adminCopy('أرشفة', 'Archive'), () => archiveAdminUser(user._id), 'border-color:var(--red); color:var(--red);'));
+      }
+      row.appendChild(actions);
+      tbody.appendChild(row);
+    });
+    renderAdminPagination();
+  }
+
+  async function updateAdminUserStatus(userId, status) {
+    if (!confirm(adminCopy(`هل تريد تغيير حالة الحساب إلى ${status === 'active' ? 'نشط' : 'موقوف'}؟`, `Change account status to ${status}?`))) return;
+    const result = await apiFetch(`/api/users/${userId}`, { method: 'PUT', body: JSON.stringify({ status }) });
+    if (!result?.data) return alert(result?.message || adminCopy('فشل تحديث الحساب.', 'Could not update account.'));
+    loadAdminUsers();
+  }
+
+  async function archiveAdminUser(userId) {
+    if (!confirm(adminCopy('ستتوقف إمكانية الدخول مع الاحتفاظ بالمحادثات والقنوات. هل تريد المتابعة؟', 'Sign-in will stop while conversations and channels are preserved. Continue?'))) return;
+    const result = await apiFetch(`/api/users/${userId}`, { method: 'DELETE' });
+    if (!result?.data) return alert(result?.message || adminCopy('فشلت أرشفة الحساب.', 'Could not archive account.'));
+    loadAdminUsers();
+  }
+
+  async function openAdminUserModal(userId = '') {
+    const form = document.getElementById('adminUserForm');
+    if (!adminUserModal || !form) return;
+    form.reset();
+    document.getElementById('adminUserId').value = userId;
+    document.getElementById('adminUserMode').value = userId ? 'edit' : 'create';
+    document.getElementById('adminUserModalTitle').textContent = userId ? adminCopy('تعديل الحساب', 'Edit account') : adminCopy('إضافة حساب', 'Add account');
+    document.getElementById('adminUserPassword').required = !userId;
+    document.getElementById('adminUserConfirmPassword').required = !userId;
+    if (userId) {
+      const response = await apiFetch(`/api/users/${userId}`);
+      const user = response?.data;
+      if (!user) return alert(adminCopy('تعذر تحميل بيانات الحساب.', 'Could not load account.'));
+      document.getElementById('adminUserUsername').value = user.username || '';
+      document.getElementById('adminUserEmail').value = user.email || '';
+      document.getElementById('adminUserWhatsapp').value = user.whatsapp || '';
+      document.getElementById('adminUserRole').value = user.role || 'user';
+      document.getElementById('adminUserSubscriptionType').value = user.subscriptionType || 'free';
+      document.getElementById('adminUserTier').value = user.subscriptionTier || 'free';
+      document.getElementById('adminUserStatus').value = user.status === 'suspended' ? 'suspended' : 'active';
+      document.getElementById('adminUserVerified').value = user.isVerified === false ? 'false' : 'true';
+      document.getElementById('adminUserDailyUsage').value = user.dailyMessagesUsed || 0;
+      document.getElementById('adminUserMonthlyUsage').value = user.monthlyMessagesUsed || 0;
+    }
+    adminUserModal.classList.add('active');
+  }
+
+  function openImpersonationModal(userId) {
+    const form = document.getElementById('impersonationForm');
+    if (!impersonationModal || !form) return;
+    form.reset();
+    document.getElementById('impersonationSubjectId').value = userId;
+    impersonationModal.classList.add('active');
+  }
+
+  function renderImpersonationBanner() {
+    const sessionId = sessionStorage.getItem('zainbot_impersonation_session_id');
+    const banner = document.getElementById('impersonationBanner');
+    if (!sessionId || !banner) return;
+    document.getElementById('impersonationBannerText').textContent = adminCopy(`أنت داخل مؤقتاً إلى حساب ${currentUser?.username || ''}. كل النشاط مسجل.`, `You are temporarily viewing ${currentUser?.username || 'this account'}. Activity is audited.`);
+    banner.style.display = 'block';
+  }
+
+  document.getElementById('adminAddUserBtn')?.addEventListener('click', () => openAdminUserModal());
+  document.querySelectorAll('.admin-user-modal-close').forEach((button) => button.addEventListener('click', () => adminUserModal?.classList.remove('active')));
+  document.querySelectorAll('.impersonation-modal-close').forEach((button) => button.addEventListener('click', () => impersonationModal?.classList.remove('active')));
+  document.getElementById('adminUserFilters')?.addEventListener('submit', (event) => { event.preventDefault(); loadAdminUsers(1); });
+  document.getElementById('adminUsersPrevBtn')?.addEventListener('click', () => loadAdminUsers(Math.max(1, adminUsersPageState.page - 1)));
+  document.getElementById('adminUsersNextBtn')?.addEventListener('click', () => loadAdminUsers(Math.min(adminUsersPageState.pages, adminUsersPageState.page + 1)));
+  document.getElementById('adminUserForm')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const id = document.getElementById('adminUserId').value;
+    const password = document.getElementById('adminUserPassword').value;
+    const payload = {
+      username: document.getElementById('adminUserUsername').value.trim(), email: document.getElementById('adminUserEmail').value.trim(), whatsapp: document.getElementById('adminUserWhatsapp').value.trim(),
+      role: document.getElementById('adminUserRole').value, subscriptionType: document.getElementById('adminUserSubscriptionType').value, subscriptionTier: document.getElementById('adminUserTier').value,
+      status: document.getElementById('adminUserStatus').value, isVerified: document.getElementById('adminUserVerified').value === 'true',
+      dailyMessagesUsed: Number(document.getElementById('adminUserDailyUsage').value || 0), monthlyMessagesUsed: Number(document.getElementById('adminUserMonthlyUsage').value || 0),
+    };
+    if (password) { payload.password = password; payload.confirmPassword = document.getElementById('adminUserConfirmPassword').value; }
+    const result = await apiFetch(id ? `/api/users/${id}` : '/api/users', { method: id ? 'PUT' : 'POST', body: JSON.stringify(payload) });
+    if (!result?.data) return alert(result?.message || adminCopy('فشل حفظ الحساب.', 'Could not save account.'));
+    adminUserModal?.classList.remove('active');
+    loadAdminUsers(id ? adminUsersPageState.page : 1);
+  });
+  document.getElementById('impersonationForm')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const response = await apiFetch('/api/admin/impersonation/sessions', { method: 'POST', body: JSON.stringify({ subjectUserId: document.getElementById('impersonationSubjectId').value, reason: document.getElementById('impersonationReason').value.trim() }) });
+    const data = response?.data;
+    if (!data?.token || !data?.session?.id) return alert(response?.message || adminCopy('فشل بدء الجلسة المؤقتة.', 'Could not start temporary access.'));
+    sessionStorage.setItem('zainbot_admin_session', JSON.stringify({ token: localStorage.getItem('token'), tokenExpiry: localStorage.getItem('tokenExpiry'), role: localStorage.getItem('role'), userId: localStorage.getItem('userId'), username: localStorage.getItem('username') }));
+    sessionStorage.setItem('zainbot_impersonation_session_id', data.session.id);
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('role', data.subject?.role || 'user');
+    localStorage.setItem('userId', data.subject?.id || document.getElementById('impersonationSubjectId').value);
+    localStorage.setItem('username', data.subject?.username || '');
+    window.location.reload();
+  });
+  document.getElementById('exitImpersonationBtn')?.addEventListener('click', async () => {
+    let admin;
+    try { admin = JSON.parse(sessionStorage.getItem('zainbot_admin_session') || '{}'); } catch (_error) { admin = {}; }
+    const sessionId = sessionStorage.getItem('zainbot_impersonation_session_id');
+    if (!admin.token || !sessionId) return alert(adminCopy('انتهت جلسة المدير. سجل الدخول من جديد.', 'The admin session is unavailable. Please sign in again.'));
+    const response = await fetch(`/api/admin/impersonation/sessions/${encodeURIComponent(sessionId)}/end`, { method: 'POST', headers: { Authorization: `Bearer ${admin.token}` } });
+    const result = await response.json();
+    if (!response.ok || !result?.success) return alert(result?.message || adminCopy('تعذر إنهاء الجلسة المؤقتة بأمان.', 'Could not safely end the temporary session.'));
+    Object.entries(admin).forEach(([key, value]) => value === null || value === undefined ? localStorage.removeItem(key) : localStorage.setItem(key, value));
+    sessionStorage.removeItem('zainbot_admin_session');
+    sessionStorage.removeItem('zainbot_impersonation_session_id');
+    window.location.reload();
+  });
 
   // Subtabs switching
   const tabUsersBtn = document.getElementById('adminTabUsersBtn');

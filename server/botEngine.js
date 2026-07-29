@@ -683,6 +683,25 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
     const bot = await getBotWithCache(botId);
     let useBackup = false;
     if (bot && !isAssistantBotId) {
+      if (bot.autoReplyEnabled === false) {
+        logger.info('bot_auto_reply_disabled', { botId, conversationId: conversation._id });
+        return null;
+      }
+      const handoffRequested = typeof message === 'string'
+        && Array.isArray(bot.handoffKeywords)
+        && bot.handoffKeywords.some((keyword) => keyword && message.toLowerCase().includes(String(keyword).toLowerCase()));
+      if (handoffRequested) {
+        conversation.isHumanHandling = true;
+        await conversation.save();
+        logger.info('bot_handoff_keyword_matched', { botId, conversationId: conversation._id });
+        return null;
+      }
+      if (bot.agentType || bot.description || bot.customInstructions || bot.objectives?.length) {
+        systemPrompt += `\nAgent profile: ${bot.agentType || 'customer_support'}.\n`;
+        if (bot.description) systemPrompt += `Agent responsibility: ${bot.description}\n`;
+        if (Array.isArray(bot.objectives) && bot.objectives.length) systemPrompt += `Agent objectives:\n${bot.objectives.map((objective) => `- ${objective}`).join('\n')}\n`;
+        if (bot.customInstructions) systemPrompt += `Owner-configured agent instructions:\n${bot.customInstructions}\n`;
+      }
       const limitResult = await checkPlanLimitsAndIncrement(bot);
       if (!limitResult.allowed) {
         logger.warn('🚫 Subscription limits hit, blocking bot message', { botId, userId: finalUserId });
@@ -1016,4 +1035,8 @@ async function processFeedback(botId, userId, messageId, feedback) {
   }
 }
 
-module.exports = { processMessage, processFeedback };
+function invalidateBotCache(botId) {
+  botDataCache.del(`bot_${botId}`);
+}
+
+module.exports = { processMessage, processFeedback, invalidateBotCache };

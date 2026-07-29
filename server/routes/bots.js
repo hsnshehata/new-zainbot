@@ -23,7 +23,13 @@ const createBotSchema = Joi.object({
   instagramApiKey: Joi.string().allow('', null),
   instagramPageId: Joi.string().allow('', null),
   subscriptionType: Joi.string().valid('free', 'monthly', 'yearly').default('free'),
-  welcomeMessage: Joi.string().max(500).allow('', null)
+  welcomeMessage: Joi.string().max(500).allow('', null),
+  agentType: Joi.string().valid('customer_support', 'sales', 'lead_qualification', 'custom').default('customer_support'),
+  description: Joi.string().max(500).allow('', null),
+  customInstructions: Joi.string().max(12_000).allow('', null),
+  objectives: Joi.array().items(Joi.string().max(300)).max(20).default([]),
+  handoffKeywords: Joi.array().items(Joi.string().max(100)).max(50).default([]),
+  autoReplyEnabled: Joi.boolean().default(true)
 });
 
 const updateBotSchema = Joi.object({
@@ -35,6 +41,12 @@ const updateBotSchema = Joi.object({
   instagramPageId: Joi.string().allow('', null),
   subscriptionType: Joi.string().valid('free', 'monthly', 'yearly').optional(),
   welcomeMessage: Joi.string().max(500).allow('', null),
+  agentType: Joi.string().valid('customer_support', 'sales', 'lead_qualification', 'custom').optional(),
+  description: Joi.string().max(500).allow('', null),
+  customInstructions: Joi.string().max(12_000).allow('', null),
+  objectives: Joi.array().items(Joi.string().max(300)).max(20).optional(),
+  handoffKeywords: Joi.array().items(Joi.string().max(100)).max(50).optional(),
+  autoReplyEnabled: Joi.boolean().optional(),
   isActive: Joi.boolean().optional(),
   autoStopDate: Joi.date().optional()
 });

@@ -4,6 +4,8 @@ const Feedback = require('../models/Feedback');
 const axios = require('axios');
 const logger = require('../logger');
 const { serializeBot } = require('../utils/serializers');
+const { canCreateAgent } = require('../services/agentLimits');
+const { invalidateBotCache } = require('../botEngine');
 
 // جلب كل البوتات
 exports.getBots = async (req, res) => {
@@ -195,7 +197,7 @@ exports.clearFeedbackByType = async (req, res) => {
 
 // إنشاء بوت جديد
 exports.createBot = async (req, res) => {
-  const { name, userId, facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, subscriptionType, welcomeMessage } = req.body;
+  const { name, userId, facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, subscriptionType, welcomeMessage, agentType, description, customInstructions, objectives, handoffKeywords, autoReplyEnabled } = req.body;
 
   if (!name) {
     return res.status(400).json({ message: 'اسم البوت مطلوب' });
@@ -224,6 +226,17 @@ exports.createBot = async (req, res) => {
       return res.status(400).json({ message: 'المستخدم غير موجود' });
     }
 
+    const activeAgentCount = await Bot.countDocuments({ userId: ownerUserId, archivedAt: null });
+    const agentEntitlement = canCreateAgent(owner.subscriptionTier, activeAgentCount);
+    if (!agentEntitlement.allowed) {
+      return res.status(409).json({
+        success: false,
+        error: 'AGENT_LIMIT_REACHED',
+        message: 'Agent limit reached for this account tier',
+        data: agentEntitlement,
+      });
+    }
+
     const bot = new Bot({
       name,
       userId: ownerUserId,
@@ -232,9 +245,16 @@ exports.createBot = async (req, res) => {
       instagramApiKey,
       instagramPageId,
       subscriptionType: isDirectSuperadmin ? (subscriptionType || 'free') : 'free',
-      welcomeMessage
+      welcomeMessage,
+      agentType,
+      description,
+      customInstructions,
+      objectives,
+      handoffKeywords,
+      autoReplyEnabled,
     });
     await bot.save();
+    invalidateBotCache(bot._id);
 
     await User.findByIdAndUpdate(ownerUserId, { $addToSet: { bots: bot._id } });
 
@@ -247,7 +267,7 @@ exports.createBot = async (req, res) => {
 
 // تعديل بوت
 exports.updateBot = async (req, res) => {
-  const { name, userId, facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, isActive, autoStopDate, subscriptionType, welcomeMessage } = req.body;
+  const { name, userId, facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, isActive, autoStopDate, subscriptionType, welcomeMessage, agentType, description, customInstructions, objectives, handoffKeywords, autoReplyEnabled } = req.body;
 
   try {
     logger.info('bot_update_attempt', { botId: req.params.id, userId: req.user.userId, payloadKeys: Object.keys(req.body || {}) });
@@ -290,6 +310,12 @@ exports.updateBot = async (req, res) => {
     bot.isActive = isActive !== undefined ? isActive : bot.isActive;
     bot.autoStopDate = autoStopDate !== undefined ? autoStopDate : bot.autoStopDate;
     bot.welcomeMessage = welcomeMessage !== undefined ? welcomeMessage : bot.welcomeMessage;
+    bot.agentType = agentType !== undefined ? agentType : bot.agentType;
+    bot.description = description !== undefined ? description : bot.description;
+    bot.customInstructions = customInstructions !== undefined ? customInstructions : bot.customInstructions;
+    bot.objectives = objectives !== undefined ? objectives : bot.objectives;
+    bot.handoffKeywords = handoffKeywords !== undefined ? handoffKeywords : bot.handoffKeywords;
+    bot.autoReplyEnabled = autoReplyEnabled !== undefined ? autoReplyEnabled : bot.autoReplyEnabled;
     if (isDirectSuperadmin && subscriptionType) {
       bot.subscriptionType = subscriptionType;
     }
@@ -308,6 +334,7 @@ exports.updateBot = async (req, res) => {
 
     logger.info('bot_save_attempt', { botId: bot._id });
     await bot.save();
+    invalidateBotCache(bot._id);
     logger.info('bot_save_success', { botId: bot._id });
 
     res.status(200).json(serializeBot(bot));

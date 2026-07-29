@@ -16,6 +16,16 @@ const botSchema = new mongoose.Schema({
   autoStopDate: { type: Date },
   subscriptionType: { type: String, enum: ['free', 'monthly', 'yearly'], default: 'free' },
   welcomeMessage: { type: String, trim: true },
+  agentType: {
+    type: String,
+    enum: ['customer_support', 'sales', 'lead_qualification', 'custom'],
+    default: 'customer_support',
+  },
+  description: { type: String, trim: true, maxlength: 500, default: '' },
+  customInstructions: { type: String, trim: true, maxlength: 12_000, default: '' },
+  objectives: [{ type: String, trim: true, maxlength: 300 }],
+  handoffKeywords: [{ type: String, trim: true, maxlength: 100 }],
+  autoReplyEnabled: { type: Boolean, default: true },
   // إعدادات Webhook لفيسبوك
   messagingOptinsEnabled: { type: Boolean, default: true },
   messageReactionsEnabled: { type: Boolean, default: true },
