@@ -230,12 +230,12 @@
   const aiResponses = [
     {
       triggers: ['where is my order', 'track', 'order status', 'delivery', 'my order', 'shipped', 'package'],
-      response: 'Your order #NX-2847 is on its way! 📦 It left our warehouse this morning and is currently at the local distribution center. Expected delivery: Thursday by 3 PM. Would you like me to share live tracking?',
+      response: 'I can help with order updates. In a connected workspace, the agent checks the information you provide and guides the customer to the next step.',
       confidence: 97
     },
     {
       triggers: ['pricing', 'price', 'cost', 'plan', 'how much', 'subscription', 'billing'],
-      response: "Great question! Here's a quick overview:\n\n• Starter — $29/mo: Perfect for small teams\n• Growth — $79/mo: Most popular, includes all channels\n• Scale — $199/mo: Unlimited everything\n\nAll plans come with a 14-day free trial. Want me to help you pick the right one?",
+      response: 'The current workspace starts on the free plan. Your available quota and any enabled features are always visible from the account menu in the dashboard.',
       confidence: 95
     },
     {
