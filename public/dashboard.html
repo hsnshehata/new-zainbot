@@ -328,6 +328,23 @@
       border-color: var(--cyan);
       background: rgba(255,255,255,0.06);
     }
+    select.form-control {
+      appearance: none;
+      color-scheme: dark;
+      cursor: pointer;
+      padding-inline-end: 42px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='8' viewBox='0 0 14 8'%3E%3Cpath d='m1 1 6 6 6-6' fill='none' stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2'/%3E%3C/svg%3E");
+      background-position: right 16px center;
+      background-repeat: no-repeat;
+      background-size: 14px 8px;
+    }
+    html[dir="rtl"] select.form-control {
+      background-position: left 16px center;
+    }
+    select.form-control option {
+      background: #111425;
+      color: #f8fafc;
+    }
     .checkbox-group {
       display: flex;
       flex-wrap: wrap;
@@ -705,7 +722,7 @@
         </div>
         <div class="menu-item" data-target="page-agents">
           <i class="fas fa-robot"></i>
-          <span>AI Agents</span>
+          <span data-i18n="menu_agents">AI Agents</span>
         </div>
         <div class="menu-item" data-target="page-inbox">
           <i class="fas fa-inbox"></i>
@@ -891,8 +908,8 @@
 
         <section id="page-agents" class="db-page">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:24px;">
-            <div><h2 style="margin-bottom:8px;"><i class="fas fa-robot" style="color:var(--cyan);"></i> AI Agents</h2><p style="color:var(--text-muted);">Build distinct agents for support, sales, and lead qualification. Choose one active agent for the workspace.</p></div>
-            <button id="createAgentBtn" class="btn btn-primary" type="button"><i class="fas fa-plus"></i> Create agent</button>
+            <div><h2 style="margin-bottom:8px;"><i class="fas fa-robot" style="color:var(--cyan);"></i> <span data-i18n="agents_title">AI Agents</span></h2><p style="color:var(--text-muted);" data-i18n="agents_desc">Build distinct agents for support, sales, and lead qualification. Choose one active agent for the workspace.</p></div>
+            <button id="createAgentBtn" class="btn btn-primary" type="button"><i class="fas fa-plus"></i> <span data-i18n="agents_create">Create agent</span></button>
           </div>
           <div id="agentsEntitlement" class="glass-card" style="margin-bottom:20px; padding:14px 18px; color:var(--text-muted);"></div>
           <div id="agentsList" class="db-responsive-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:18px;"></div>
@@ -1214,27 +1231,27 @@
               </div>
 
               <form id="adminUserFilters" style="display:grid; grid-template-columns:minmax(180px, 2fr) repeat(3, minmax(120px, 1fr)) auto; gap:10px; margin-bottom:16px;">
-                <input id="adminUserSearch" class="form-control" type="search" placeholder="Search username, email, or WhatsApp" aria-label="Search users" />
-                <select id="adminUserRoleFilter" class="form-control" aria-label="Filter by role">
-                  <option value="">All roles</option>
-                  <option value="user">User</option>
-                  <option value="superadmin">Super admin</option>
+                <input id="adminUserSearch" class="form-control" type="search" placeholder="Search username, email, or WhatsApp" data-i18n-placeholder="admin_search_placeholder" aria-label="Search users" />
+                <select id="adminUserRoleFilter" class="form-control" aria-label="Filter by role" data-i18n-aria="admin_filter_role">
+                  <option value="" data-i18n="admin_all_roles">All roles</option>
+                  <option value="user" data-i18n="admin_user">User</option>
+                  <option value="superadmin" data-i18n="admin_superadmin">Super admin</option>
                 </select>
-                <select id="adminUserStatusFilter" class="form-control" aria-label="Filter by status">
-                  <option value="">Active accounts</option>
+                <select id="adminUserStatusFilter" class="form-control" aria-label="Filter by status" data-i18n-aria="admin_filter_status">
+                  <option value="" data-i18n="admin_visible_accounts">Visible accounts</option>
                   <option value="active">Active</option>
                   <option value="suspended">Suspended</option>
                   <option value="deleted">Deleted</option>
                 </select>
-                <select id="adminUserTierFilter" class="form-control" aria-label="Filter by plan tier">
-                  <option value="">All tiers</option>
+                <select id="adminUserTierFilter" class="form-control" aria-label="Filter by plan tier" data-i18n-aria="admin_filter_tier">
+                  <option value="" data-i18n="admin_all_tiers">All tiers</option>
                   <option value="free">Free</option>
                   <option value="growth_1k">Growth 1K</option>
                   <option value="growth_10k">Growth 10K</option>
                   <option value="growth_50k">Growth 50K</option>
                   <option value="unlimited">Unlimited</option>
                 </select>
-                <button class="btn btn-secondary btn-sm" type="submit"><i class="fas fa-filter"></i> Apply</button>
+                <button class="btn btn-secondary btn-sm" type="submit"><i class="fas fa-filter"></i> <span data-i18n="admin_apply">Apply</span></button>
               </form>
 
               <div style="overflow-x:auto;">
@@ -1259,8 +1276,8 @@
               <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:14px;">
                 <span id="adminUsersPaginationInfo" style="font-size:12px; color:var(--text-muted);"></span>
                 <div style="display:flex; gap:8px;">
-                  <button id="adminUsersPrevBtn" class="btn btn-secondary btn-sm" type="button">Previous</button>
-                  <button id="adminUsersNextBtn" class="btn btn-secondary btn-sm" type="button">Next</button>
+                  <button id="adminUsersPrevBtn" class="btn btn-secondary btn-sm" type="button" data-i18n="admin_previous">Previous</button>
+                  <button id="adminUsersNextBtn" class="btn btn-secondary btn-sm" type="button" data-i18n="admin_next">Next</button>
                 </div>
               </div>
             </div>
@@ -1366,7 +1383,7 @@
   <div class="db-modal" id="adminUserModal">
     <div class="db-modal-content" style="max-width:720px;">
       <div class="db-modal-header">
-        <h3 id="adminUserModalTitle">Manage user</h3>
+        <h3 id="adminUserModalTitle" data-i18n="admin_user_modal">Manage user</h3>
         <button class="btn btn-secondary btn-sm admin-user-modal-close" type="button" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
       </div>
       <form id="adminUserForm">
@@ -1374,23 +1391,23 @@
           <input id="adminUserId" type="hidden" />
           <input id="adminUserMode" type="hidden" value="edit" />
           <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-            <div class="form-group"><label>Username</label><input id="adminUserUsername" class="form-control" required minlength="3" maxlength="20" /></div>
-            <div class="form-group"><label>Email</label><input id="adminUserEmail" class="form-control" required type="email" /></div>
-            <div class="form-group"><label>WhatsApp</label><input id="adminUserWhatsapp" class="form-control" /></div>
-            <div class="form-group"><label>Role</label><select id="adminUserRole" class="form-control"><option value="user">User</option><option value="superadmin">Super admin</option></select></div>
-            <div class="form-group"><label>Subscription</label><select id="adminUserSubscriptionType" class="form-control"><option value="free">Free</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></div>
-            <div class="form-group"><label>Plan tier</label><select id="adminUserTier" class="form-control"><option value="free">Free</option><option value="growth_1k">Growth 1K</option><option value="growth_10k">Growth 10K</option><option value="growth_50k">Growth 50K</option><option value="unlimited">Unlimited</option></select></div>
-            <div class="form-group"><label>Status</label><select id="adminUserStatus" class="form-control"><option value="active">Active</option><option value="suspended">Suspended</option></select></div>
-            <div class="form-group"><label>Verification</label><select id="adminUserVerified" class="form-control"><option value="true">Verified</option><option value="false">Not verified</option></select></div>
-            <div class="form-group"><label>Daily messages used</label><input id="adminUserDailyUsage" class="form-control" type="number" min="0" value="0" /></div>
-            <div class="form-group"><label>Monthly messages used</label><input id="adminUserMonthlyUsage" class="form-control" type="number" min="0" value="0" /></div>
-            <div class="form-group" id="adminUserPasswordGroup"><label>Temporary password</label><input id="adminUserPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" /><small style="color:var(--text-muted);">Leave empty to keep the existing password.</small></div>
-            <div class="form-group" id="adminUserConfirmPasswordGroup"><label>Confirm password</label><input id="adminUserConfirmPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" /></div>
+            <div class="form-group"><label data-i18n="admin_username">Username</label><input id="adminUserUsername" class="form-control" required minlength="3" maxlength="20" /></div>
+            <div class="form-group"><label data-i18n="admin_email">Email</label><input id="adminUserEmail" class="form-control" required type="email" /></div>
+            <div class="form-group"><label data-i18n="admin_whatsapp">WhatsApp</label><input id="adminUserWhatsapp" class="form-control" /></div>
+            <div class="form-group"><label data-i18n="admin_role">Role</label><select id="adminUserRole" class="form-control"><option value="user" data-i18n="admin_user">User</option><option value="superadmin" data-i18n="admin_superadmin">Super admin</option></select></div>
+            <div class="form-group"><label data-i18n="admin_subscription">Subscription</label><select id="adminUserSubscriptionType" class="form-control"><option value="free" data-i18n="admin_free">Free</option><option value="monthly" data-i18n="admin_monthly">Monthly</option><option value="yearly" data-i18n="admin_yearly">Yearly</option></select></div>
+            <div class="form-group"><label data-i18n="admin_plan_tier">Plan tier</label><select id="adminUserTier" class="form-control"><option value="free" data-i18n="admin_free">Free</option><option value="growth_1k">Growth 1K</option><option value="growth_10k">Growth 10K</option><option value="growth_50k">Growth 50K</option><option value="unlimited">Unlimited</option></select></div>
+            <div class="form-group"><label data-i18n="th_user_status">Status</label><select id="adminUserStatus" class="form-control"><option value="active" data-i18n="admin_active">Active</option><option value="suspended" data-i18n="admin_suspended">Suspended</option></select></div>
+            <div class="form-group"><label data-i18n="admin_verification">Verification</label><select id="adminUserVerified" class="form-control"><option value="true" data-i18n="admin_verified">Verified</option><option value="false" data-i18n="admin_not_verified">Not verified</option></select></div>
+            <div class="form-group"><label data-i18n="admin_daily_usage">Daily messages used</label><input id="adminUserDailyUsage" class="form-control" type="number" min="0" value="0" /></div>
+            <div class="form-group"><label data-i18n="admin_monthly_usage">Monthly messages used</label><input id="adminUserMonthlyUsage" class="form-control" type="number" min="0" value="0" /></div>
+            <div class="form-group" id="adminUserPasswordGroup"><label data-i18n="admin_temporary_password">Temporary password</label><input id="adminUserPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" /><small style="color:var(--text-muted);" data-i18n="admin_password_help">Leave empty to keep the existing password.</small></div>
+            <div class="form-group" id="adminUserConfirmPasswordGroup"><label data-i18n="admin_confirm_password">Confirm password</label><input id="adminUserConfirmPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" /></div>
           </div>
         </div>
         <div class="db-modal-footer">
-          <button class="btn btn-secondary btn-sm admin-user-modal-close" type="button">Cancel</button>
-          <button type="submit" class="btn btn-primary btn-sm">Save user</button>
+          <button class="btn btn-secondary btn-sm admin-user-modal-close" type="button" data-i18n="btn_cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm" data-i18n="admin_save_user">Save user</button>
         </div>
       </form>
     </div>
@@ -1398,36 +1415,36 @@
 
   <div class="db-modal" id="impersonationModal">
     <div class="db-modal-content" style="max-width:520px;">
-      <div class="db-modal-header"><h3>Start audited access</h3><button class="btn btn-secondary btn-sm impersonation-modal-close" type="button"><i class="fas fa-times"></i></button></div>
+      <div class="db-modal-header"><h3 data-i18n="impersonation_title">Start audited access</h3><button class="btn btn-secondary btn-sm impersonation-modal-close" type="button"><i class="fas fa-times"></i></button></div>
       <form id="impersonationForm">
         <div class="db-modal-body">
           <input id="impersonationSubjectId" type="hidden" />
-          <p style="color:var(--text-muted); font-size:13px;">This starts a temporary, audited session. Enter the reason for access.</p>
-          <div class="form-group"><label>Reason</label><textarea id="impersonationReason" class="form-control" rows="3" minlength="3" maxlength="500" required></textarea></div>
+          <p style="color:var(--text-muted); font-size:13px;" data-i18n="impersonation_desc">This starts a temporary, audited session. Enter the reason for access.</p>
+          <div class="form-group"><label data-i18n="impersonation_reason">Reason</label><textarea id="impersonationReason" class="form-control" rows="3" minlength="3" maxlength="500" required></textarea></div>
         </div>
-        <div class="db-modal-footer"><button class="btn btn-secondary btn-sm impersonation-modal-close" type="button">Cancel</button><button type="submit" class="btn btn-primary btn-sm">Continue</button></div>
+        <div class="db-modal-footer"><button class="btn btn-secondary btn-sm impersonation-modal-close" type="button" data-i18n="btn_cancel">Cancel</button><button type="submit" class="btn btn-primary btn-sm" data-i18n="impersonation_continue">Continue</button></div>
       </form>
     </div>
   </div>
 
   <div class="db-modal" id="agentModal">
     <div class="db-modal-content" style="max-width:720px; max-height:90vh; overflow:auto;">
-      <div class="db-modal-header"><h3 id="agentModalTitle">Create agent</h3><button class="btn btn-secondary btn-sm agent-modal-close" type="button"><i class="fas fa-times"></i></button></div>
+      <div class="db-modal-header"><h3 id="agentModalTitle" data-i18n="agents_create">Create agent</h3><button class="btn btn-secondary btn-sm agent-modal-close" type="button"><i class="fas fa-times"></i></button></div>
       <form id="agentForm">
         <div class="db-modal-body">
           <input id="agentId" type="hidden" />
           <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-            <div class="form-group"><label>Agent name</label><input id="agentName" class="form-control" required minlength="2" maxlength="80" /></div>
-            <div class="form-group"><label>Agent role</label><select id="agentType" class="form-control"><option value="customer_support">Customer support</option><option value="sales">Sales</option><option value="lead_qualification">Lead qualification</option><option value="custom">Custom</option></select></div>
+            <div class="form-group"><label data-i18n="agent_name">Agent name</label><input id="agentName" class="form-control" required minlength="2" maxlength="80" /></div>
+            <div class="form-group"><label data-i18n="agent_role">Agent role</label><select id="agentType" class="form-control"><option value="customer_support" data-i18n="agent_role_support">Customer support</option><option value="sales" data-i18n="agent_role_sales">Sales</option><option value="lead_qualification" data-i18n="agent_role_leads">Lead qualification</option><option value="custom" data-i18n="agent_role_custom">Custom</option></select></div>
           </div>
-          <div class="form-group"><label>Description</label><input id="agentDescription" class="form-control" maxlength="500" placeholder="What this agent is responsible for" /></div>
-          <div class="form-group"><label>Welcome message</label><textarea id="agentWelcomeMessage" class="form-control" rows="2" maxlength="500"></textarea></div>
-          <div class="form-group"><label>Instructions</label><textarea id="agentInstructions" class="form-control" rows="7" maxlength="12000" placeholder="Tone, source of truth, do-not-do rules, and escalation behavior"></textarea></div>
-          <div class="form-group"><label>Objectives</label><textarea id="agentObjectives" class="form-control" rows="3" placeholder="One objective per line"></textarea></div>
-          <div class="form-group"><label>Human handoff keywords</label><input id="agentHandoffKeywords" class="form-control" placeholder="human, manager, complaint" /></div>
-          <label style="display:flex; align-items:center; gap:8px;"><input id="agentAutoReplyEnabled" type="checkbox" checked /> AI auto-reply enabled</label>
+          <div class="form-group"><label data-i18n="agent_description">Description</label><input id="agentDescription" class="form-control" maxlength="500" placeholder="What this agent is responsible for" data-i18n-placeholder="agent_description_placeholder" /></div>
+          <div class="form-group"><label data-i18n="agent_welcome_message">Welcome message</label><textarea id="agentWelcomeMessage" class="form-control" rows="2" maxlength="500"></textarea></div>
+          <div class="form-group"><label data-i18n="agent_instructions">Instructions</label><textarea id="agentInstructions" class="form-control" rows="7" maxlength="12000" placeholder="Tone, source of truth, do-not-do rules, and escalation behavior" data-i18n-placeholder="agent_instructions_placeholder"></textarea></div>
+          <div class="form-group"><label data-i18n="agent_objectives">Objectives</label><textarea id="agentObjectives" class="form-control" rows="3" placeholder="One objective per line" data-i18n-placeholder="agent_objectives_placeholder"></textarea></div>
+          <div class="form-group"><label data-i18n="agent_handoff_keywords">Human handoff keywords</label><input id="agentHandoffKeywords" class="form-control" placeholder="human, manager, complaint" data-i18n-placeholder="agent_handoff_placeholder" /></div>
+          <label style="display:flex; align-items:center; gap:8px;"><input id="agentAutoReplyEnabled" type="checkbox" checked /> <span data-i18n="agent_auto_reply">AI auto-reply enabled</span></label>
         </div>
-        <div class="db-modal-footer"><button class="btn btn-secondary btn-sm agent-modal-close" type="button">Cancel</button><button class="btn btn-primary btn-sm" type="submit">Save agent</button></div>
+        <div class="db-modal-footer"><button class="btn btn-secondary btn-sm agent-modal-close" type="button" data-i18n="btn_cancel">Cancel</button><button class="btn btn-primary btn-sm" type="submit" data-i18n="agent_save">Save agent</button></div>
       </form>
     </div>
   </div>
