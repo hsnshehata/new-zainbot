@@ -19,7 +19,7 @@ const { createOrUpdateFromExtraction } = require('./controllers/chatOrdersContro
 const { upsertChatCustomerProfile } = require('./controllers/chatCustomersController');
 const logger = require('./logger');
 const { getAiCompletion } = require('./services/aiFailover');
-const { checkPlanLimitsAndIncrement } = require('./services/billingLimits');
+const { checkPlanLimitsAndIncrement, settleMessageQuota } = require('./services/billingLimits');
 const { dispatchWebhook } = require('./services/webhookDispatcher');
 
 // معرف المساعد الداخلي لتخطي هوكات الطلبات
@@ -916,6 +916,9 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
           logger.info('🖼️ Image processed', { reply });
         } catch (err) {
           logger.error('❌ Error processing image with OpenAI', { err });
+          // Quota is reserved before generation (checkPlanLimitsAndIncrement above);
+          // refund the reservation once when the billable completion itself fails.
+          if (bot && !isAssistantBotId) await settleMessageQuota({ userId: bot.userId });
           return 'عذرًا، لم أتمكن من تحليل الصورة. حاول مرة أخرى أو أرسل صورة أخرى.';
         }
       } else {
@@ -938,6 +941,9 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
           logger.info('💬 Assistant reply', { reply });
         } catch (err) {
           logger.error('❌ Error calling OpenAI:', { err });
+          // Quota is reserved before generation (checkPlanLimitsAndIncrement above);
+          // refund the reservation once when the billable completion itself fails.
+          if (bot && !isAssistantBotId) await settleMessageQuota({ userId: bot.userId });
           return 'عذرًا، حدث خطأ أثناء معالجة طلبك. حاول مرة أخرى.';
         }
       }
