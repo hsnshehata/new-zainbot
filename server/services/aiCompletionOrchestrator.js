@@ -1,8 +1,11 @@
 // server/services/aiCompletionOrchestrator.js
 // Executes the policy-driven "Auto" completion route:
 //   resolveAiPolicy -> bounded attempts per candidate -> AiUsageEvent per try
-// Every dependency is injectable so the orchestration rules are unit testable
-// without a database or network access.
+// Candidates whose credential is cooling down in the circuit breaker are
+// skipped without a dispatch or usage event; availability failures recorded
+// by the classifier open the breaker so dead providers are not hammered on
+// every request. Every dependency is injectable so the orchestration rules
+// are unit testable without a database or network access.
 const crypto = require('crypto');
 
 const logger = require('../logger');
@@ -14,6 +17,10 @@ const {
   buildCredentialContext,
   decryptCredentialSecret,
 } = require('./AiCredentialCrypto');
+const {
+  AI_CIRCUIT_BREAKER_CATEGORIES,
+  createAiCircuitBreaker,
+} = require('./aiCircuitBreaker');
 
 class AiAutoRouteError extends Error {
   constructor(code, message) {
@@ -40,6 +47,10 @@ function createAiCompletionOrchestrator(deps = {}) {
   const environment = deps.environment || process.env;
   const userLoader = deps.userLoader || (async () => null);
   const log = deps.logger || logger;
+  // One breaker per orchestrator instance; aiFailover builds this module once,
+  // so cooldowns persist across requests within the process.
+  const breaker = deps.breaker
+    || createAiCircuitBreaker({ environment, logger: log });
 
   async function recordUsage(event) {
     if (!models.AiUsageEvent) return;
@@ -121,6 +132,7 @@ function createAiCompletionOrchestrator(deps = {}) {
 
     const requestId = crypto.randomUUID();
     let runningAttempt = 0;
+    let breakerSkips = 0;
 
     for (let index = 0; index < resolution.candidates.length; index += 1) {
       const candidate = resolution.candidates[index];
@@ -153,6 +165,20 @@ function createAiCompletionOrchestrator(deps = {}) {
         continue;
       }
 
+      if (breaker.isOpen({ credentialId: candidate.credentialId })) {
+        // Skip silently from the usage ledger: no dispatch happened, so there
+        // is nothing to bill or audit beyond this log line.
+        breakerSkips += 1;
+        log.warn('ai_auto_candidate_skipped_circuit_open', {
+          requestId,
+          credentialId: candidate.credentialId,
+          provider: candidate.provider,
+          modelId: candidate.modelId,
+          cooldownRemainingMs: breaker.cooldownRemainingMs({ credentialId: candidate.credentialId }),
+        });
+        continue;
+      }
+
       for (let attemptInCandidate = 1; attemptInCandidate <= candidate.maxAttempts; attemptInCandidate += 1) {
         runningAttempt += 1;
         const startedAt = Date.now();
@@ -164,6 +190,7 @@ function createAiCompletionOrchestrator(deps = {}) {
             modelId: candidate.modelId,
             options,
           });
+          breaker.recordSuccess({ credentialId: candidate.credentialId });
           const latencyMs = Date.now() - startedAt;
           const usage = tokenUsageFrom(response);
 
@@ -190,6 +217,18 @@ function createAiCompletionOrchestrator(deps = {}) {
         } catch (error) {
           const latencyMs = Date.now() - startedAt;
           const classification = classifyAiProviderError(error);
+
+          // Availability failures open the breaker so later requests skip
+          // this credential; config-style failures never cool it down.
+          if (
+            classification.canFallback
+            && AI_CIRCUIT_BREAKER_CATEGORIES.has(classification.category)
+          ) {
+            breaker.recordFailure({
+              credentialId: candidate.credentialId,
+              category: classification.category,
+            });
+          }
 
           await recordUsage({
             requestId,
@@ -222,6 +261,13 @@ function createAiCompletionOrchestrator(deps = {}) {
           });
         }
       }
+    }
+
+    if (breakerSkips > 0 && runningAttempt === 0) {
+      throw new AiAutoRouteError(
+        'AI_ROUTE_CIRCUIT_OPEN',
+        'Every routed AI credential is cooling down in the circuit breaker'
+      );
     }
 
     throw new AiAutoRouteError('AI_ROUTE_EXHAUSTED', 'Every routed AI candidate failed');
