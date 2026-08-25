@@ -1177,6 +1177,21 @@
           </div>
 
           <!-- User Keys & Backup Key (Especially for Growth Plan backup API key) -->
+          <div class="glass-card" id="aiModelSection" style="margin-top:24px;">
+            <h3 data-i18n="model_select_heading" style="margin-bottom:8px;"><i class="fas fa-microchip" style="color:var(--cyan);"></i> AI Model</h3>
+            <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;" data-i18n="model_select_desc">Choose Auto to let the platform pick the best available model for your plan, or select a specific model from the list enabled for your account.</p>
+            <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr auto; gap:16px; align-items:end;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="primaryModelSelect" data-i18n="model_select_label">Model</label>
+                <select id="primaryModelSelect" class="form-control">
+                  <option value="" data-i18n="model_select_auto">Auto (recommended)</option>
+                </select>
+              </div>
+              <button type="button" id="savePrimaryModelBtn" class="btn btn-primary btn-sm" style="background:var(--cyan); color:#000; border-color:var(--cyan); font-weight:600;" data-i18n="model_select_save">Save model</button>
+            </div>
+            <span id="modelSaveMsg" style="display:block; margin-top:10px; font-size:13px;"></span>
+          </div>
+
           <div class="glass-card" id="backupKeysSection" style="margin-top:24px;">
             <h3 data-i18n="backup_keys_heading" style="margin-bottom:16px;">Quota Fail-safe backup API key (Growth plan)</h3>
             <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;" data-i18n="backup_keys_desc">Input your own API key. If your monthly package quota is depleted, our engine will automatically switch to your key instead of shutting down the bot.</p>

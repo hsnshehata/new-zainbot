@@ -379,6 +379,7 @@ app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/integrations', integrationsRoutes);
 app.use('/api/admin/keys', adminKeysRoutes);
 app.use('/api/admin/system', require('./routes/adminSystem'));
+app.use('/api/ai', require('./routes/aiModels'));
 app.use(
   '/api/admin/impersonation',
   createAdminImpersonationRouter({

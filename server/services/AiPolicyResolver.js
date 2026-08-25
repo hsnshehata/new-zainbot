@@ -537,6 +537,7 @@ module.exports = {
   SCOPE_PRECEDENCE,
   DEFAULT_FREE_ENTITLEMENT,
   AiPolicyResolutionError,
+  buildModelAccess,
   resolveEntitlement,
   resolveAiPolicy,
   classifyAiProviderError,

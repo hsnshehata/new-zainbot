@@ -317,7 +317,7 @@ Exit criteria:
 - [ ] Add model catalog and health-tested credential pools.
 - [ ] Add draft/published versioned routing policies.
 - [ ] Add tier entitlements and user/bot overrides.
-- [ ] Expose only `Auto` and permitted manual models to each user.
+- [x] Expose only `Auto` and permitted manual models to each user.
 - [ ] Add retry classification, circuit breaking, cooldown, and bounded
       attempts.
 - [ ] Add atomic quota reservation/settlement and attempt-level usage records.

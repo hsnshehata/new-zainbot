@@ -6,6 +6,11 @@ const logger = require('../logger');
 const { serializeBot } = require('../utils/serializers');
 const { canCreateAgent } = require('../services/agentLimits');
 const { invalidateBotCache } = require('../botEngine');
+const {
+  createAiModelAccessService,
+} = require('../services/aiModelAccessService');
+
+const aiModelAccess = createAiModelAccessService({});
 
 // جلب كل البوتات
 exports.getBots = async (req, res) => {
@@ -300,6 +305,33 @@ exports.updateBot = async (req, res) => {
     if (instagramApiKey && !(instagramPageId || bot.instagramPageId)) {
       logger.warn('bot_update_missing_instagram_page', { botId: bot._id });
       return res.status(400).json({ message: 'معرف صفحة الإنستجرام مطلوب عند إدخال رقم API' });
+    }
+
+    // Manual model selection must respect the user's tier entitlement once the
+    // admin has curated the model catalog. Clearing userModel returns to Auto.
+    const nextUserModel = userModel !== undefined ? String(userModel || '').trim() : bot.userModel;
+    const nextUserProvider = userProvider !== undefined ? String(userProvider || '').trim() : bot.userProvider;
+    if (nextUserModel) {
+      const decision = await aiModelAccess.isModelAllowedForUser(
+        req.user,
+        nextUserProvider,
+        nextUserModel,
+        { bypass: isDirectSuperadmin }
+      );
+      if (!decision.allowed) {
+        logger.warn('bot_update_model_not_entitled', {
+          botId: bot._id,
+          actorUserId: req.auth?.actorUserId,
+          provider: nextUserProvider,
+          model: nextUserModel,
+          reason: decision.reason,
+        });
+        return res.status(403).json({
+          success: false,
+          error: 'AI_MODEL_NOT_ENTITLED',
+          message: 'هذا النموذج غير متاح في باقتك الحالية',
+        });
+      }
     }
 
     bot.name = name ?? bot.name;

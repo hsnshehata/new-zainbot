@@ -269,7 +269,15 @@
       notify_body_label: 'Message',
       notify_send_btn: 'Send notification',
       notify_sent_ok: 'Notification delivered successfully!',
-      notify_failed: 'Could not send the notification.'
+      notify_failed: 'Could not send the notification.',
+      model_select_heading: 'AI Model',
+      model_select_desc: 'Choose Auto to let the platform pick the best available model for your plan, or select a specific model from the list enabled for your account.',
+      model_select_label: 'Model',
+      model_select_auto: 'Auto (recommended)',
+      model_select_save: 'Save model',
+      model_saved_ok: 'Model selection saved successfully!',
+      model_save_failed: 'This model is not available on your current plan.',
+      model_loading_list: 'Loading available models...'
     },
     ar: {
       menu_overview: 'نظرة عامة',
@@ -514,7 +522,15 @@
       notify_body_label: 'نص الرسالة',
       notify_send_btn: 'إرسال الإشعار',
       notify_sent_ok: 'تم إرسال الإشعار بنجاح!',
-      notify_failed: 'تعذر إرسال الإشعار.'
+      notify_failed: 'تعذر إرسال الإشعار.',
+      model_select_heading: 'موديل الذكاء الاصطناعي',
+      model_select_desc: 'اختر "تلقائي" ليختار النظام أفضل موديل متاح لباقتك، أو حدد موديلاً معيناً من القائمة المفعّلة لحسابك.',
+      model_select_label: 'الموديل',
+      model_select_auto: 'تلقائي (مستحسن)',
+      model_select_save: 'حفظ الموديل',
+      model_saved_ok: 'تم حفظ اختيار الموديل بنجاح!',
+      model_save_failed: 'هذا الموديل غير متاح في باقتك الحالية.',
+      model_loading_list: 'جاري تحميل الموديلات المتاحة...'
     }
   };
 
@@ -1243,10 +1259,100 @@
       document.getElementById('backupApiKey').value = currentBot.backupApiKey || '';
       document.getElementById('backupModel').value = currentBot.backupModel || '';
       document.getElementById('backupBaseUrl').value = currentBot.backupBaseUrl || '';
+
+      // Load the model selector for this account's entitlements
+      await loadPrimaryModelSelect();
     } catch (e) {
       console.error(e);
     }
   }
+
+  function modelOptionValue(provider, modelId) {
+    return `${provider}::${modelId}`;
+  }
+
+  async function loadPrimaryModelSelect() {
+    const select = document.getElementById('primaryModelSelect');
+    if (!select || !currentBot) return;
+    const t = translations[currentLanguage] || translations.en;
+
+    try {
+      const res = await apiFetch('/api/ai/available-models');
+      if (!res || !res.success) return;
+      const { allowAuto, models } = res.data;
+
+      select.innerHTML = '';
+      if (allowAuto !== false) {
+        const autoOption = document.createElement('option');
+        autoOption.value = '';
+        autoOption.textContent = t.model_select_auto;
+        select.appendChild(autoOption);
+      }
+      (models || []).forEach((model) => {
+        const option = document.createElement('option');
+        option.value = modelOptionValue(model.provider, model.modelId);
+        option.textContent = `${model.displayName} (${model.provider})`;
+        select.appendChild(option);
+      });
+
+      // Preselect the bot's saved manual model when it is still offered.
+      const savedProvider = String(currentBot.userProvider || '').toLowerCase();
+      const savedModel = String(currentBot.userModel || '');
+      const savedValue = savedModel
+        ? modelOptionValue(savedProvider === 'gemini' ? 'google' : savedProvider, savedModel)
+        : '';
+      if (savedValue && [...select.options].some((opt) => opt.value === savedValue)) {
+        select.value = savedValue;
+      } else if (![...select.options].some((opt) => opt.value === '')) {
+        // Auto not allowed and saved model unavailable: default to first entry
+        if (select.options.length > 0) select.selectedIndex = 0;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  const savePrimaryModelBtn = document.getElementById('savePrimaryModelBtn');
+  savePrimaryModelBtn?.addEventListener('click', async () => {
+    if (!currentBot) return;
+    const t = translations[currentLanguage] || translations.en;
+    const select = document.getElementById('primaryModelSelect');
+    const msgEl = document.getElementById('modelSaveMsg');
+    const showMsg = (text, ok) => {
+      if (!msgEl) return;
+      msgEl.textContent = text;
+      msgEl.style.color = ok ? 'var(--green)' : 'var(--red)';
+    };
+
+    if (!select) return;
+    const [provider, modelId] = String(select.value).split('::');
+
+    try {
+      savePrimaryModelBtn.disabled = true;
+      const res = await apiFetch(`/api/bots/${currentBot._id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          userProvider: provider || 'openai',
+          userModel: modelId || ''
+        })
+      });
+      savePrimaryModelBtn.disabled = false;
+
+      if (res && res.success) {
+        currentBot.userProvider = provider || '';
+        currentBot.userModel = modelId || '';
+        showMsg(t.model_saved_ok, true);
+      } else if (res && res.error === 'AI_MODEL_NOT_ENTITLED') {
+        showMsg(t.model_save_failed, false);
+      } else {
+        showMsg(t.model_save_failed, false);
+      }
+    } catch (e) {
+      savePrimaryModelBtn.disabled = false;
+      console.error(e);
+      showMsg(t.model_save_failed, false);
+    }
+  });
 
   function renderApiKeys() {
     const apiKeysContainer = document.getElementById('apiKeysContainer');
