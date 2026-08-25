@@ -1781,6 +1781,7 @@
       const actions = document.createElement('td');
       actions.style.cssText = 'padding:12px; text-align:center; display:flex; justify-content:center; gap:5px; flex-wrap:wrap;';
       actions.appendChild(adminAction(adminCopy('تعديل', 'Edit'), () => openAdminUserModal(user._id)));
+      actions.appendChild(adminAction(adminCopy('الوكلاء', 'Agents'), () => openUserBotsModal(user._id)));
       if (user.status !== 'deleted' && String(user._id) !== String(currentUser?._id)) {
         actions.appendChild(adminAction(adminCopy('دخول مؤقت', 'Temporary access'), () => openImpersonationModal(user._id), 'border-color:var(--orange); color:var(--orange);'));
       }
@@ -1806,6 +1807,64 @@
     const result = await apiFetch(`/api/users/${userId}`, { method: 'DELETE' });
     if (!result?.data) return alert(result?.message || adminCopy('فشلت أرشفة الحساب.', 'Could not archive account.'));
     loadAdminUsers();
+  }
+
+  // Remote agent (bot) administration for a specific account
+  async function openUserBotsModal(userId) {
+    if (!modal) return;
+    const user = adminUsersList.find((entry) => String(entry._id) === String(userId));
+    if (!user || !Array.isArray(user.bots)) {
+      alert(adminCopy('لا توجد وكلاء محمّلون لهذا الحساب، أعد تحميل القائمة.', 'No loaded agents for this account. Reload the list.'));
+      return;
+    }
+    modalTitle.innerHTML = `<i class="fas fa-robot" style="color:var(--orange)"></i> ${adminCopy(`وكلاء ${user.username}`, `${user.username}'s agents`)}`;
+    modalBody.innerHTML = `<div id="adminBotsList" style="font-size:13px;">${adminCopy('جاري التحميل...', 'Loading...')}</div>`;
+    modal.classList.add('active');
+
+    const listEl = document.getElementById('adminBotsList');
+    const bots = user.bots;
+
+    const renderBots = () => {
+      listEl.innerHTML = bots.map((botItem) => {
+        const running = botItem.isActive !== false;
+        return `
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--glass-border);">
+          <div style="min-width:0;">
+            <div style="font-weight:600; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${botItem.name}</div>
+            <div style="font-size:11px; color:${running ? 'var(--green)' : 'var(--red)'};">${running ? adminCopy('يعمل', 'Running') : adminCopy('متوقف', 'Stopped')}</div>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" data-bot-toggle="${botItem._id}"
+            style="flex-shrink:0; ${running ? 'border-color:var(--red); color:var(--red);' : 'border-color:var(--green); color:var(--green);'}">
+            ${running ? adminCopy('إيقاف', 'Stop') : adminCopy('تشغيل', 'Start')}
+          </button>
+        </div>`;
+      }).join('');
+
+      listEl.querySelectorAll('[data-bot-toggle]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const target = bots.find((b) => String(b._id) === btn.getAttribute('data-bot-toggle'));
+          if (!target) return;
+          btn.disabled = true;
+          const res = await apiFetch(`/api/bots/${target._id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ isActive: target.isActive === false })
+          });
+          btn.disabled = false;
+          if (res && res.success && res.data) {
+            target.isActive = res.data.isActive;
+            renderBots();
+          } else {
+            alert(res?.message || adminCopy('فشل تحديث حالة الوكيل.', 'Could not update the agent.'));
+          }
+        });
+      });
+    };
+
+    if (bots.length === 0) {
+      listEl.textContent = adminCopy('لا يملك هذا الحساب وكلاء بعد.', 'This account has no agents yet.');
+      return;
+    }
+    renderBots();
   }
 
   async function openAdminUserModal(userId = '') {
