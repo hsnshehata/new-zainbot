@@ -1,8 +1,10 @@
 // server/services/aiFailover.js
 const OpenAI = require('openai');
 const axios = require('axios');
-const ProviderKey = require('../models/ProviderKey');
 const logger = require('../logger');
+const { createAiKeyResolver } = require('./aiKeyResolver');
+
+const keyResolver = createAiKeyResolver({});
 
 // Cache helper to store clients and save overhead
 const clientCache = {};
@@ -116,38 +118,20 @@ async function getAiCompletion(options, bot = null, useBackup = false) {
     }
   }
 
-  // Scenario 2: Using Global Admin Keys with Priority & Failover
-  let activeKeys = await ProviderKey.find({ isActive: true, status: 'working' })
-    .select('+apiKey')
-    .sort({ priority: 1 });
+  // Scenario 2: Global keys with priority & failover.
+  // Source order (see aiKeyResolver): encrypted AiCredential control plane
+  // first, then legacy plaintext ProviderKey documents, then the env key.
+  const globalKeys = await keyResolver.listGlobalAiKeys();
 
-  if (activeKeys.length === 0) {
-    logger.warn('⚠️ No active working keys found. Attempting to reset failed keys back to working.');
-    await ProviderKey.updateMany({ isActive: true }, { status: 'working' });
-    activeKeys = await ProviderKey.find({ isActive: true })
-      .select('+apiKey')
-      .sort({ priority: 1 });
-  }
-
-  if (activeKeys.length === 0) {
-    // If still no keys, fall back to environment key
-    logger.error('❌ No keys found in ProviderKey database. Falling back to process.env.OPENAI_API_KEY');
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('لا توجد مفاتيح تشغيل نشطة في النظام');
-    }
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    return await client.chat.completions.create({
-      model: options.model || 'gpt-4o-mini',
-      messages: options.messages,
-      max_tokens: options.max_tokens,
-      response_format: options.response_format
-    });
+  if (globalKeys.length === 0) {
+    logger.error('❌ No AI keys available from any source (control plane, legacy provider keys, or env).');
+    throw new Error('لا توجد مفاتيح تشغيل نشطة في النظام');
   }
 
   // Iterate over global admin keys and failover if they encounter errors
-  for (const keyDoc of activeKeys) {
+  for (const keyDoc of globalKeys) {
     try {
-      logger.info(`🤖 Attempting completion using global key: ${keyDoc.name} (${keyDoc.provider})`);
+      logger.info(`🤖 Attempting completion using ${keyDoc.source} key: ${keyDoc.name} (${keyDoc.provider})`);
       let response;
 
       if (keyDoc.provider === 'anthropic') {
@@ -168,25 +152,14 @@ async function getAiCompletion(options, bot = null, useBackup = false) {
         });
       }
 
-      // If successful, ensure status is marked working if it was failed before
-      if (keyDoc.status !== 'working') {
-        keyDoc.status = 'working';
-        keyDoc.errorMessage = '';
-        keyDoc.lastTested = new Date();
-        await keyDoc.save();
-      }
+      await keyDoc.markSuccess();
 
       return response;
     } catch (err) {
-      logger.error(`❌ Failed key: ${keyDoc.name}. Error: ${err.message}`);
-      
-      // Update key status to failed in database
-      keyDoc.status = 'failed';
-      keyDoc.errorMessage = err.message;
-      keyDoc.lastTested = new Date();
-      await keyDoc.save();
+      logger.error(`❌ Failed ${keyDoc.source} key: ${keyDoc.name}. Error: ${err.message}`);
 
-      // Proceed to the next key in the loop
+      // Record the failure and proceed to the next key in the loop
+      await keyDoc.markFailure(err.code || err.message);
     }
   }
 
