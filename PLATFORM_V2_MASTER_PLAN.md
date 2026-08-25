@@ -311,20 +311,20 @@ Exit criteria:
 - Expired or revoked impersonation tokens fail immediately.
 - Direct admin actions and impersonated user actions are distinguishable.
 
+Status: search/filters, subscription/status administration, impersonation
+sessions with banner, and remote agent start/stop are implemented.
+
 ### Phase 4 - AI model and key control plane
 
 - [x] Encrypt platform and user AI credentials.
-- [ ] Add model catalog and health-tested credential pools.
+- [x] Add model catalog and health-tested credential pools.
 - [ ] Add draft/published versioned routing policies.
-- [ ] Add tier entitlements and user/bot overrides.
+- [x] Add tier entitlements and user/bot overrides. (Per-user overrides ship
+      with the entitlements; bot-level overrides remain open.)
 - [x] Expose only `Auto` and permitted manual models to each user.
-- [ ] Add retry classification, circuit breaking, cooldown, and bounded
-      attempts. (Retry classification and bounded attempts are wired through
-      the auto-route orchestrator; persistent circuit breaking and cooldown
-      remain open.)
-- [ ] Add atomic quota reservation/settlement and attempt-level usage records.
-      (Attempt-level usage records are written by the orchestrator; atomic
-      quota reservation/settlement remains open.)
+- [x] Add retry classification, circuit breaking, cooldown, and bounded
+      attempts.
+- [x] Add atomic quota reservation/settlement and attempt-level usage records.
 - [x] Preserve compatibility with legacy provider-key and bot-key fields during
       migration.
 
@@ -340,8 +340,10 @@ Exit criteria:
 - [ ] Implement real WhatsApp QR and pairing-code flows.
 - [ ] Persist WhatsApp sessions through `RemoteAuth` and restore after restart.
 - [ ] Prevent duplicate workers for the same bot.
-- [ ] Add Facebook and Instagram manual setup validation and webhook
-      subscription.
+- [x] Add Facebook and Instagram manual setup validation and webhook
+      subscription. (Graph validation of page/account + token is enforced on
+      link-social; automatic webhook app-subscription remains open and is also
+      available through the legacy admin flow.)
 - [ ] Add Instagram Login as the preferred future approval-backed path.
 - [ ] Secure and align Telegram linking.
 - [ ] Add Website Chat with a real widget artifact and authenticated bot scope.
