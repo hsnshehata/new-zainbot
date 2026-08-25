@@ -1042,7 +1042,7 @@
             <div class="glass-card">
               <h3 data-i18n="website_widget_title" style="margin-bottom:12px;">Website Chat Widget</h3>
               <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;" data-i18n="website_widget_desc">Copy this script tag and insert it before the closing body tag of your HTML to display the chat icon.</p>
-              <pre style="background:rgba(0,0,0,0.2); padding:16px; border-radius:8px; overflow-x:auto; font-size:12px; color:var(--cyan); border: 1px solid var(--glass-border);"><code id="widgetSnippetCode">&lt;script src="https://zainbot.com/widget.js" data-bot-id="loading..."&gt;&lt;/script&gt;</code></pre>
+              <pre style="background:rgba(0,0,0,0.2); padding:16px; border-radius:8px; overflow-x:auto; font-size:12px; color:var(--cyan); border: 1px solid var(--glass-border);"><code id="widgetSnippetCode">&lt;script src="/widget.js" data-bot-id="loading..."&gt;&lt;/script&gt;</code></pre>
             </div>
 
             <!-- Shopify / WooCommerce integrations -->
@@ -1218,9 +1218,12 @@
           <p style="color:var(--text-muted); font-size:14px; margin-bottom:20px;" data-i18n="admin_desc">Full system management: users, merchants, roles, direct impersonation, and global AI failover provider keys.</p>
 
           <!-- Admin Sub-Navigation Tabs -->
-          <div style="display:flex; gap:12px; margin-bottom:24px; border-bottom:1px solid var(--glass-border); padding-bottom:12px;">
+          <div style="display:flex; gap:12px; margin-bottom:24px; border-bottom:1px solid var(--glass-border); padding-bottom:12px; flex-wrap:wrap;">
             <button id="adminTabUsersBtn" class="btn btn-secondary btn-sm admin-subtab-btn active" style="background:var(--orange); color:#000; border-color:var(--orange); font-weight:600;"><i class="fas fa-users-cog"></i> <span data-i18n="admin_subtab_users">Users & Merchants Control</span></button>
             <button id="adminTabKeysBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-key"></i> <span data-i18n="admin_subtab_keys">AI Failover Servers & Keys</span></button>
+            <button id="adminTabOverviewBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-chart-line"></i> <span data-i18n="admin_subtab_overview">System Overview</span></button>
+            <button id="adminTabAuditBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-clipboard-list"></i> <span data-i18n="admin_subtab_audit">Audit & Sessions</span></button>
+            <button id="adminTabNotifyBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-bullhorn"></i> <span data-i18n="admin_subtab_notify">Notifications</span></button>
           </div>
 
           <!-- Section 1: Users & Agents Management -->
@@ -1337,6 +1340,119 @@
                   <button type="submit" class="btn btn-primary btn-sm btn-block" style="background:var(--orange); color:#000; border-color:var(--orange)" data-i18n="admin_btn_register">Register Server Key</button>
                 </form>
               </div>
+            </div>
+          </div>
+
+          <!-- Section 3: System Overview KPIs -->
+          <div id="adminSectionOverview" class="admin-subtab-content" style="display:none;">
+            <div class="db-responsive-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:16px;" id="adminOverviewGrid">
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_users_total">Total users</div><div id="ovUsersTotal" style="font-size:26px; font-weight:700; color:var(--cyan);">—</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_users_active">Active users</div><div id="ovUsersActive" style="font-size:26px; font-weight:700; color:var(--green);">—</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_bots_total">Total agents</div><div id="ovBotsTotal" style="font-size:26px; font-weight:700; color:var(--purple-light);">—</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_bots_active">Active agents</div><div id="ovBotsActive" style="font-size:26px; font-weight:700; color:var(--green);">—</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_conversations">Conversations</div><div id="ovConversations" style="font-size:26px; font-weight:700; color:var(--blue);">—</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_messages">Messages</div><div id="ovMessages" style="font-size:26px; font-weight:700; color:var(--cyan);">—</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_chat_orders">Chat orders</div><div id="ovChatOrders" style="font-size:26px; font-weight:700; color:var(--orange);">—</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_active_sessions">Active impersonations</div><div id="ovActiveSessions" style="font-size:26px; font-weight:700; color:var(--red);">—</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_audit_events">Audit events</div><div id="ovAuditEvents" style="font-size:26px; font-weight:700; color:var(--text-muted);">—</div></div>
+            </div>
+          </div>
+
+          <!-- Section 4: Audit log & impersonation sessions -->
+          <div id="adminSectionAudit" class="admin-subtab-content" style="display:none;">
+            <div class="glass-card" style="margin-bottom:24px;">
+              <h3 style="font-size:18px; font-weight:700; margin-bottom:6px;"><i class="fas fa-user-secret" style="color:var(--orange);"></i> <span data-i18n="audit_sessions_title">Impersonation Sessions</span></h3>
+              <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;" data-i18n="audit_sessions_desc">Every admin impersonation session with its reason, status, and lifetime.</p>
+              <div style="overflow-x:auto;">
+                <table class="db-table" style="width:100%; border-collapse:collapse; text-align:right;">
+                  <thead>
+                    <tr style="border-bottom:2px solid var(--glass-border); font-size:13px; color:var(--text-muted);">
+                      <th style="padding:10px;" data-i18n="th_session_actor">Admin</th>
+                      <th style="padding:10px;" data-i18n="th_session_subject">Target user</th>
+                      <th style="padding:10px;" data-i18n="th_session_reason">Reason</th>
+                      <th style="padding:10px;" data-i18n="th_session_status">Status</th>
+                      <th style="padding:10px;" data-i18n="th_session_started">Started</th>
+                      <th style="padding:10px;" data-i18n="th_session_expires">Expires</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminSessionsTableBody">
+                    <tr><td colspan="6" style="padding:20px; text-align:center; color:var(--text-muted);" data-i18n="admin_loading_sessions">Loading sessions...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
+                <button id="adminSessionsPrevBtn" class="btn btn-secondary btn-sm" type="button" data-i18n="admin_previous">Previous</button>
+                <button id="adminSessionsNextBtn" class="btn btn-secondary btn-sm" type="button" data-i18n="admin_next">Next</button>
+              </div>
+            </div>
+
+            <div class="glass-card">
+              <h3 style="font-size:18px; font-weight:700; margin-bottom:6px;"><i class="fas fa-clipboard-list" style="color:var(--cyan);"></i> <span data-i18n="audit_events_title">Audit Log</span></h3>
+              <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;" data-i18n="audit_events_desc">Redacted record of every admin and impersonated mutation.</p>
+              <form id="adminAuditFilters" style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
+                <select id="adminAuditTypeFilter" class="form-control" style="max-width:260px;" aria-label="Filter by event type" data-i18n-aria="audit_filter_type">
+                  <option value="" data-i18n="audit_filter_all">All events</option>
+                  <option value="impersonation.started" data-i18n="audit_type_started">Impersonation started</option>
+                  <option value="impersonation.ended" data-i18n="audit_type_ended">Impersonation ended</option>
+                  <option value="impersonated.write" data-i18n="audit_type_imp_write">Impersonated write</option>
+                  <option value="admin.write" data-i18n="audit_type_admin_write">Admin write</option>
+                </select>
+                <button class="btn btn-secondary btn-sm" type="submit"><i class="fas fa-filter"></i> <span data-i18n="admin_apply">Apply</span></button>
+              </form>
+              <div style="overflow-x:auto;">
+                <table class="db-table" style="width:100%; border-collapse:collapse; text-align:right;">
+                  <thead>
+                    <tr style="border-bottom:2px solid var(--glass-border); font-size:13px; color:var(--text-muted);">
+                      <th style="padding:10px;" data-i18n="th_event_when">When</th>
+                      <th style="padding:10px;" data-i18n="th_event_type">Event</th>
+                      <th style="padding:10px;" data-i18n="th_event_actor">Actor → Target</th>
+                      <th style="padding:10px;" data-i18n="th_event_action">Action</th>
+                      <th style="padding:10px;" data-i18n="th_event_outcome">Outcome</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminAuditTableBody">
+                    <tr><td colspan="5" style="padding:20px; text-align:center; color:var(--text-muted);" data-i18n="admin_loading_events">Loading audit log...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:12px;">
+                <span id="adminAuditPaginationInfo" style="font-size:12px; color:var(--text-muted);"></span>
+                <div style="display:flex; gap:8px;">
+                  <button id="adminAuditPrevBtn" class="btn btn-secondary btn-sm" type="button" data-i18n="admin_previous">Previous</button>
+                  <button id="adminAuditNextBtn" class="btn btn-secondary btn-sm" type="button" data-i18n="admin_next">Next</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 5: Broadcast notifications -->
+          <div id="adminSectionNotify" class="admin-subtab-content" style="display:none;">
+            <div class="glass-card" style="max-width:720px;">
+              <h3 style="font-size:18px; font-weight:700; margin-bottom:6px;"><i class="fas fa-bullhorn" style="color:var(--orange);"></i> <span data-i18n="notify_title">Send Platform Notification</span></h3>
+              <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;" data-i18n="notify_desc">Deliver an in-app notification to every account or to one specific user.</p>
+              <form id="adminNotifyForm">
+                <div class="form-group">
+                  <label data-i18n="notify_target">Target</label>
+                  <select id="notifyTargetSelect" class="form-control">
+                    <option value="all" data-i18n="notify_target_all">All users</option>
+                    <option value="single" data-i18n="notify_target_single">Specific user (by username)</option>
+                  </select>
+                </div>
+                <div class="form-group" id="notifyUsernameGroup" style="display:none;">
+                  <label data-i18n="notify_username_label">Username</label>
+                  <input type="text" id="notifyUsernameInput" class="form-control" autocomplete="off" />
+                </div>
+                <div class="form-group">
+                  <label data-i18n="notify_title_label">Title</label>
+                  <input type="text" id="notifyTitleInput" class="form-control" maxlength="120" required />
+                </div>
+                <div class="form-group">
+                  <label data-i18n="notify_body_label">Message</label>
+                  <textarea id="notifyBodyInput" class="form-control" rows="4" maxlength="1000" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm" style="background:var(--orange); color:#000; border-color:var(--orange);" data-i18n="notify_send_btn">Send notification</button>
+                <span id="notifyResultMsg" style="margin-inline-start:12px; font-size:13px;"></span>
+              </form>
             </div>
           </div>
         </section>
@@ -1461,5 +1577,14 @@
   <script src="js/utils.js"></script>
   <!-- Loading script for i18n translations & UI logic -->
   <script src="js/dashboard_new.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js').catch((err) => {
+          console.warn('Service worker registration failed:', err);
+        });
+      });
+    }
+  </script>
 </body>
 </html>

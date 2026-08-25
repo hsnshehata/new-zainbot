@@ -221,7 +221,55 @@
       admin_status_failed: 'FAILED',
       admin_lbl_provider: 'Provider',
       admin_lbl_model: 'Model',
-      admin_lbl_priority: 'Priority'
+      admin_lbl_priority: 'Priority',
+      admin_subtab_overview: 'System Overview',
+      admin_subtab_audit: 'Audit & Sessions',
+      admin_subtab_notify: 'Notifications',
+      ov_users_total: 'Total users',
+      ov_users_active: 'Active users',
+      ov_bots_total: 'Total agents',
+      ov_bots_active: 'Active agents',
+      ov_conversations: 'Conversations',
+      ov_messages: 'Messages',
+      ov_chat_orders: 'Chat orders',
+      ov_active_sessions: 'Active impersonations',
+      ov_audit_events: 'Audit events',
+      audit_sessions_title: 'Impersonation Sessions',
+      audit_sessions_desc: 'Every admin impersonation session with its reason, status, and lifetime.',
+      th_session_actor: 'Admin',
+      th_session_subject: 'Target user',
+      th_session_reason: 'Reason',
+      th_session_status: 'Status',
+      th_session_started: 'Started',
+      th_session_expires: 'Expires',
+      admin_loading_sessions: 'Loading sessions...',
+      audit_events_title: 'Audit Log',
+      audit_events_desc: 'Redacted record of every admin and impersonated mutation.',
+      audit_filter_type: 'Filter by event type',
+      audit_filter_all: 'All events',
+      audit_type_started: 'Impersonation started',
+      audit_type_ended: 'Impersonation ended',
+      audit_type_imp_write: 'Impersonated write',
+      audit_type_admin_write: 'Admin write',
+      th_event_when: 'When',
+      th_event_type: 'Event',
+      th_event_actor: 'Actor → Target',
+      th_event_action: 'Action',
+      th_event_outcome: 'Outcome',
+      admin_loading_events: 'Loading audit log...',
+      admin_empty_sessions: 'No impersonation sessions recorded yet.',
+      admin_empty_events: 'No audit events match this filter yet.',
+      notify_title: 'Send Platform Notification',
+      notify_desc: 'Deliver an in-app notification to every account or to one specific user.',
+      notify_target: 'Target',
+      notify_target_all: 'All users',
+      notify_target_single: 'Specific user (by username)',
+      notify_username_label: 'Username',
+      notify_title_label: 'Title',
+      notify_body_label: 'Message',
+      notify_send_btn: 'Send notification',
+      notify_sent_ok: 'Notification delivered successfully!',
+      notify_failed: 'Could not send the notification.'
     },
     ar: {
       menu_overview: 'نظرة عامة',
@@ -418,7 +466,55 @@
       admin_status_failed: 'معطل',
       admin_lbl_provider: 'المزود',
       admin_lbl_model: 'النموذج',
-      admin_lbl_priority: 'الأولوية'
+      admin_lbl_priority: 'الأولوية',
+      admin_subtab_overview: 'نظرة عامة على النظام',
+      admin_subtab_audit: 'سجل التدقيق والجلسات',
+      admin_subtab_notify: 'الإشعارات',
+      ov_users_total: 'إجمالي المستخدمين',
+      ov_users_active: 'مستخدمون نشطون',
+      ov_bots_total: 'إجمالي الوكلاء',
+      ov_bots_active: 'وكلاء نشطون',
+      ov_conversations: 'المحادثات',
+      ov_messages: 'الرسائل',
+      ov_chat_orders: 'طلبات المحادثات',
+      ov_active_sessions: 'انتحالات نشطة',
+      ov_audit_events: 'أحداث التدقيق',
+      audit_sessions_title: 'جلسات الانتحال',
+      audit_sessions_desc: 'كل جلسة انتحال يقوم بها الأدمن مع سببها وحالتها ومدتها.',
+      th_session_actor: 'الأدمن',
+      th_session_subject: 'المستخدم المستهدف',
+      th_session_reason: 'السبب',
+      th_session_status: 'الحالة',
+      th_session_started: 'بدأت',
+      th_session_expires: 'تنتهي',
+      admin_loading_sessions: 'جاري تحميل الجلسات...',
+      audit_events_title: 'سجل التدقيق',
+      audit_events_desc: 'سجل مُخفى البيانات الحساسة لكل تعديل قام به أدمن أو أثناء انتحال الهوية.',
+      audit_filter_type: 'تصفية حسب نوع الحدث',
+      audit_filter_all: 'كل الأحداث',
+      audit_type_started: 'بدء انتحال هوية',
+      audit_type_ended: 'إنهاء انتحال هوية',
+      audit_type_imp_write: 'تعديل أثناء انتحال',
+      audit_type_admin_write: 'تعديل إداري مباشر',
+      th_event_when: 'الوقت',
+      th_event_type: 'الحدث',
+      th_event_actor: 'المنفذ ← الهدف',
+      th_event_action: 'الإجراء',
+      th_event_outcome: 'النتيجة',
+      admin_loading_events: 'جاري تحميل سجل التدقيق...',
+      admin_empty_sessions: 'لا توجد جلسات انتحال مسجلة بعد.',
+      admin_empty_events: 'لا توجد أحداث تدقيق مطابقة لهذا الفلتر بعد.',
+      notify_title: 'إرسال إشعار للمنصة',
+      notify_desc: 'أرسل إشعاراً داخل المنصة لكل الحسابات أو لمستخدم محدد.',
+      notify_target: 'الوجهة',
+      notify_target_all: 'كل المستخدمين',
+      notify_target_single: 'مستخدم محدد (باسم المستخدم)',
+      notify_username_label: 'اسم المستخدم',
+      notify_title_label: 'العنوان',
+      notify_body_label: 'نص الرسالة',
+      notify_send_btn: 'إرسال الإشعار',
+      notify_sent_ok: 'تم إرسال الإشعار بنجاح!',
+      notify_failed: 'تعذر إرسال الإشعار.'
     }
   };
 
@@ -813,7 +909,7 @@
 
       if (res && res.success) {
         chatReplyInput.value = '';
-        
+
         // Append manually
         const msgContainer = document.getElementById('chatMessagesContainer');
         const bubbleRow = document.createElement('div');
@@ -831,7 +927,17 @@
         bubble.textContent = text;
 
         bubbleRow.appendChild(bubble);
-        msgContainer.appendChild(bubbleRow);
+        if (res.delivered === false) {
+          const note = document.createElement('div');
+          note.style.cssText = 'font-size:11px; color:var(--text-muted); margin:-6px 0 12px 4px;';
+          note.textContent = currentLanguage === 'ar'
+            ? 'تم تسجيل الرد في المحادثة، ولم يتم إرساله عبر القناة بعد.'
+            : 'Reply saved to the conversation, not yet sent via the channel.';
+          msgContainer.appendChild(bubbleRow);
+          msgContainer.appendChild(note);
+        } else {
+          msgContainer.appendChild(bubbleRow);
+        }
         msgContainer.scrollTop = msgContainer.scrollHeight;
       }
     } catch (e) {
@@ -845,6 +951,22 @@
   if (chatReplyInput) {
     chatReplyInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') sendManualReply();
+    });
+  }
+
+  // Human handoff toggle: turning auto-reply off hands the chat to a human
+  const autoReplyToggleEl = document.getElementById('autoReplyToggle');
+  if (autoReplyToggleEl) {
+    autoReplyToggleEl.addEventListener('change', async () => {
+      if (!selectedConversationId) return;
+      try {
+        await apiFetch(`/api/messages/conversations/${selectedConversationId}/handoff`, {
+          method: 'PATCH',
+          body: JSON.stringify({ isHumanHandling: !autoReplyToggleEl.checked })
+        });
+      } catch (e) {
+        console.error(e);
+      }
     });
   }
 
@@ -1672,37 +1794,205 @@
     window.location.reload();
   });
 
-  // Subtabs switching
-  const tabUsersBtn = document.getElementById('adminTabUsersBtn');
-  const tabKeysBtn = document.getElementById('adminTabKeysBtn');
-  const secUsers = document.getElementById('adminSectionUsers');
-  const secKeys = document.getElementById('adminSectionKeys');
+  // Subtabs switching (registry-based so new admin tabs plug in cleanly)
+  const adminSubtabs = [
+    { id: 'adminTabUsersBtn', sectionId: 'adminSectionUsers', onLoad: loadAdminUsers },
+    { id: 'adminTabKeysBtn', sectionId: 'adminSectionKeys', onLoad: loadAdminKeys },
+    { id: 'adminTabOverviewBtn', sectionId: 'adminSectionOverview', onLoad: loadAdminOverview },
+    { id: 'adminTabAuditBtn', sectionId: 'adminSectionAudit', onLoad: () => { loadAdminSessions(); loadAdminAudit(); } },
+    { id: 'adminTabNotifyBtn', sectionId: 'adminSectionNotify', onLoad: null },
+  ].map((entry) => ({ ...entry, button: document.getElementById(entry.id), section: document.getElementById(entry.sectionId) }))
+    .filter((entry) => entry.button && entry.section);
 
-  if (tabUsersBtn && tabKeysBtn) {
-    tabUsersBtn.addEventListener('click', () => {
-      tabUsersBtn.style.background = 'var(--orange)';
-      tabUsersBtn.style.color = '#000';
-      tabUsersBtn.style.borderColor = 'var(--orange)';
-      tabKeysBtn.style.background = 'transparent';
-      tabKeysBtn.style.color = 'var(--text)';
-      tabKeysBtn.style.borderColor = 'var(--glass-border)';
-      if (secUsers) secUsers.style.display = 'block';
-      if (secKeys) secKeys.style.display = 'none';
-      loadAdminUsers();
+  function activateAdminSubtab(active) {
+    adminSubtabs.forEach((entry) => {
+      const isActive = entry === active;
+      entry.button.classList.toggle('active', isActive);
+      entry.button.style.background = isActive ? 'var(--orange)' : 'transparent';
+      entry.button.style.color = isActive ? '#000' : 'var(--text)';
+      entry.button.style.borderColor = isActive ? 'var(--orange)' : 'var(--glass-border)';
+      entry.section.style.display = isActive ? 'block' : 'none';
     });
-
-    tabKeysBtn.addEventListener('click', () => {
-      tabKeysBtn.style.background = 'var(--orange)';
-      tabKeysBtn.style.color = '#000';
-      tabKeysBtn.style.borderColor = 'var(--orange)';
-      tabUsersBtn.style.background = 'transparent';
-      tabUsersBtn.style.color = 'var(--text)';
-      tabUsersBtn.style.borderColor = 'var(--glass-border)';
-      if (secKeys) secKeys.style.display = 'block';
-      if (secUsers) secUsers.style.display = 'none';
-      loadAdminKeys();
-    });
+    if (typeof active.onLoad === 'function') active.onLoad();
   }
+
+  adminSubtabs.forEach((entry) => {
+    entry.button.addEventListener('click', () => activateAdminSubtab(entry));
+  });
+
+  // --- System Overview loader ---
+  async function loadAdminOverview() {
+    try {
+      const res = await apiFetch('/api/admin/system/overview');
+      if (!(res && res.success)) return;
+      const stats = res.data;
+      const set = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+      };
+      set('ovUsersTotal', stats.usersTotal ?? 0);
+      set('ovUsersActive', stats.usersActive ?? 0);
+      set('ovBotsTotal', stats.botsTotal ?? 0);
+      set('ovBotsActive', stats.botsActive ?? 0);
+      set('ovConversations', stats.conversations ?? 0);
+      set('ovMessages', stats.messages ?? 0);
+      set('ovChatOrders', stats.chatOrders ?? 0);
+      set('ovActiveSessions', stats.activeImpersonations ?? 0);
+      set('ovAuditEvents', stats.auditEvents ?? 0);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // --- Impersonation sessions list ---
+  let adminSessionsPage = 1;
+
+  async function loadAdminSessions(page = 1) {
+    const tbody = document.getElementById('adminSessionsTableBody');
+    if (!tbody) return;
+    try {
+      adminSessionsPage = page;
+      const res = await apiFetch(`/api/admin/impersonation/sessions?page=${page}&limit=10`);
+      if (!res || !res.success) return;
+      const rows = res.data || [];
+
+      if (rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="padding:20px; text-align:center; color:var(--text-muted);">${(translations[currentLanguage] || translations.en).admin_empty_sessions}</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map((s) => {
+        const statusColors = { active: 'var(--green)', ended: 'var(--text-muted)', revoked: 'var(--red)', expired: 'var(--orange)' };
+        const color = statusColors[s.status] || 'var(--text-muted)';
+        return `<tr style="border-bottom:1px solid var(--glass-border);">
+          <td style="padding:10px;">${s.actor?.username || '—'}</td>
+          <td style="padding:10px;">${s.subject?.username || '—'}</td>
+          <td style="padding:10px; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${(s.reason || '').replace(/"/g, '&quot;')}">${s.reason || '—'}</td>
+          <td style="padding:10px; color:${color}; font-weight:600;">${s.status}</td>
+          <td style="padding:10px;">${s.createdAt ? new Date(s.createdAt).toLocaleString() : '—'}</td>
+          <td style="padding:10px;">${s.expiresAt ? new Date(s.expiresAt).toLocaleString() : '—'}</td>
+        </tr>`;
+      }).join('');
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  document.getElementById('adminSessionsPrevBtn')?.addEventListener('click', () => {
+    if (adminSessionsPage > 1) loadAdminSessions(adminSessionsPage - 1);
+  });
+  document.getElementById('adminSessionsNextBtn')?.addEventListener('click', () => {
+    loadAdminSessions(adminSessionsPage + 1);
+  });
+
+  // --- Audit log viewer ---
+  let adminAuditPage = 1;
+
+  async function loadAdminAudit(page = 1) {
+    const tbody = document.getElementById('adminAuditTableBody');
+    if (!tbody) return;
+    try {
+      adminAuditPage = page;
+      const typeFilter = document.getElementById('adminAuditTypeFilter')?.value || '';
+      const res = await apiFetch(`/api/admin/system/audit?page=${page}&limit=15&eventType=${encodeURIComponent(typeFilter)}`);
+      if (!res || !res.success) return;
+      const rows = res.data || [];
+      const info = document.getElementById('adminAuditPaginationInfo');
+      if (info) info.textContent = `${res.total ?? 0} · ${res.page}/${res.totalPages}`;
+
+      if (rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:var(--text-muted);">${(translations[currentLanguage] || translations.en).admin_empty_events}</td></tr>`;
+        return;
+      }
+
+      const outcomeColors = { success: 'var(--green)', denied: 'var(--orange)', error: 'var(--red)' };
+      tbody.innerHTML = rows.map((ev) => {
+        const color = outcomeColors[ev.outcome] || 'var(--text-muted)';
+        const actionText = [ev.method, ev.path].filter(Boolean).join(' ') || ev.action || '—';
+        return `<tr style="border-bottom:1px solid var(--glass-border);">
+          <td style="padding:10px; white-space:nowrap;">${ev.createdAt ? new Date(ev.createdAt).toLocaleString() : '—'}</td>
+          <td style="padding:10px;">${ev.eventType}</td>
+          <td style="padding:10px;">${ev.actorUsername || '—'} → ${ev.subjectUsername || '—'}</td>
+          <td style="padding:10px; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${actionText.replace(/"/g, '&quot;')}">${actionText}</td>
+          <td style="padding:10px; color:${color}; font-weight:600;">${ev.outcome}${ev.statusCode ? ` (${ev.statusCode})` : ''}</td>
+        </tr>`;
+      }).join('');
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  document.getElementById('adminAuditFilters')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    loadAdminAudit(1);
+  });
+  document.getElementById('adminAuditPrevBtn')?.addEventListener('click', () => {
+    if (adminAuditPage > 1) loadAdminAudit(adminAuditPage - 1);
+  });
+  document.getElementById('adminAuditNextBtn')?.addEventListener('click', () => {
+    loadAdminAudit(adminAuditPage + 1);
+  });
+
+  // --- Broadcast notifications ---
+  const notifyTargetSelect = document.getElementById('notifyTargetSelect');
+  notifyTargetSelect?.addEventListener('change', () => {
+    const group = document.getElementById('notifyUsernameGroup');
+    if (group) group.style.display = notifyTargetSelect.value === 'single' ? 'block' : 'none';
+  });
+
+  document.getElementById('adminNotifyForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const resultEl = document.getElementById('notifyResultMsg');
+    const t = translations[currentLanguage] || translations.en;
+    const showResult = (msg, ok) => {
+      if (!resultEl) return;
+      resultEl.textContent = msg;
+      resultEl.style.color = ok ? 'var(--green)' : 'var(--red)';
+    };
+
+    const title = document.getElementById('notifyTitleInput')?.value.trim();
+    const message = document.getElementById('notifyBodyInput')?.value.trim();
+    if (!title || !message) return;
+
+    try {
+      let res;
+      if (notifyTargetSelect && notifyTargetSelect.value === 'single') {
+        const username = document.getElementById('notifyUsernameInput')?.value.trim().toLowerCase();
+        if (!username) return;
+        let match = adminUsersList.find((u) => u.username === username);
+        if (!match) {
+          const lookup = await apiFetch('/api/users');
+          const candidates = Array.isArray(lookup) ? lookup : (lookup && lookup.data ? lookup.data : []);
+          match = candidates.find((u) => u.username === username);
+        }
+        if (!match) {
+          showResult(t.notify_failed, false);
+          return;
+        }
+        res = await apiFetch('/api/notifications/single', {
+          method: 'POST',
+          body: JSON.stringify({ userId: match._id, title, message })
+        });
+      } else {
+        res = await apiFetch('/api/notifications/global', {
+          method: 'POST',
+          body: JSON.stringify({ title, message })
+        });
+      }
+
+      if (res && (res.message || res.success)) {
+        showResult(t.notify_sent_ok, true);
+        const form = document.getElementById('adminNotifyForm');
+        if (form) form.reset();
+        if (document.getElementById('notifyUsernameGroup')) document.getElementById('notifyUsernameGroup').style.display = 'none';
+      } else {
+        showResult(t.notify_failed, false);
+      }
+    } catch (err) {
+      console.error(err);
+      showResult(t.notify_failed, false);
+    }
+  });
 
   async function loadAdminKeys() {
     try {
@@ -2035,7 +2325,7 @@
         const facebookPageId = document.getElementById('fbPageIdInput').value.trim();
 
         const res = await apiFetch(`/api/bots/${currentBot._id}/link-social`, {
-          method: 'PATCH',
+          method: 'POST',
           body: JSON.stringify({ facebookApiKey, facebookPageId })
         });
         if (res && res.success) {
@@ -2083,7 +2373,7 @@
         const instagramPageId = document.getElementById('igPageIdInput').value.trim();
 
         const res = await apiFetch(`/api/bots/${currentBot._id}/link-social`, {
-          method: 'PATCH',
+          method: 'POST',
           body: JSON.stringify({ instagramApiKey, instagramPageId })
         });
         if (res && res.success) {
@@ -2094,42 +2384,58 @@
     }
 
     else if (type === 'telegram') {
-      modalTitle.innerHTML = `<i class="fab fa-telegram" style="color:var(--cyan)"></i> ${currentLanguage === 'ar' ? 'ربط بوت تيليجرام مباشرة' : 'Telegram Bot Direct Connect'}`;
+      modalTitle.innerHTML = `<i class="fab fa-telegram" style="color:var(--cyan)"></i> ${currentLanguage === 'ar' ? 'ربط تيليجرام' : 'Connect Telegram'}`;
       modalBody.innerHTML = `
-        <form id="tgDirectForm">
-          <div class="form-group">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <label>${currentLanguage === 'ar' ? 'توكن البوت (Telegram Bot Token)' : 'Telegram Bot Token'}</label>
-              <button type="button" class="btn btn-secondary btn-sm info-hint-toggle" style="padding:2px 8px; font-size:11px; color:var(--cyan); border-color:var(--cyan);"><i class="fas fa-info-circle"></i> ${currentLanguage === 'ar' ? 'كيف أحصل عليه؟' : 'How to get?'}</button>
-            </div>
-            <div class="info-hint-box" style="display:none; background:rgba(0,240,255,0.06); border:1px solid var(--cyan); padding:10px 14px; border-radius:8px; font-size:12px; color:var(--text); margin-bottom:10px;">
-              ${currentLanguage === 'ar' ? '1. افتح تطبيق تيليجرام وابحث عن الحساب الرسمي @BotFather.<br>2. أرسل الأمر /newbot واتبع التعليمات لإنشاء بوت جديد.<br>3. انسخ التوكن الناتج (مثل 123456:ABC-DEF...) وضعه أدناه.' : '1. Open Telegram and search for @BotFather.<br>2. Send /newbot and follow instructions to create a new bot.<br>3. Copy the token (e.g. 123456:ABC-DEF...) and paste it below.'}
-            </div>
-            <input type="text" id="tgTokenInput" class="form-control" placeholder="123456789:AA..." value="${currentBot.telegramUserId || ''}" required />
-          </div>
+        <div id="tgLinkFlow">
+          <p style="font-size:13px; color:var(--text); margin-bottom:10px;">${currentLanguage === 'ar'
+            ? 'اربط وكيلك بالبوت الرسمي للمنصة على تيليجرام لتصلك الإشعارات. ولّد كود الربط ثم أرسله للبوت الرسمي.'
+            : 'Link your agent to the official platform bot on Telegram to receive notifications. Generate a link code, then send it to the official bot.'}</p>
+          <ol style="font-size:13px; color:var(--text-muted); margin:0 0 14px; padding-inline-start:18px;">
+            <li>${currentLanguage === 'ar' ? 'اضغط زر "توليد كود الربط" بالأسفل.' : 'Click the "Generate link code" button below.'}</li>
+            <li>${currentLanguage === 'ar' ? 'افتح البوت الرسمي في تيليجرام واضغط Start.' : 'Open the official bot in Telegram and press Start.'}</li>
+            <li>${currentLanguage === 'ar' ? 'أرسل الكود كما هو في رسالة واحدة.' : 'Send the code as a single message.'}</li>
+          </ol>
+          <div id="tgStatusBox"></div>
           <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
-            <button type="button" class="btn btn-secondary btn-sm modal-close-btn">${currentLanguage === 'ar' ? 'إلغاء' : 'Cancel'}</button>
-            <button type="submit" class="btn btn-primary btn-sm">${currentLanguage === 'ar' ? 'حفظ الربط' : 'Save Connection'}</button>
+            <button type="button" class="btn btn-secondary btn-sm modal-close-btn">${currentLanguage === 'ar' ? 'إغلاق' : 'Close'}</button>
+            <button type="button" id="tgGenerateCodeBtn" class="btn btn-primary btn-sm">${currentLanguage === 'ar' ? 'توليد كود الربط' : 'Generate link code'}</button>
           </div>
-        </form>
+        </div>
       `;
 
-      document.querySelector('.info-hint-toggle')?.addEventListener('click', () => {
-        const box = document.querySelector('.info-hint-box');
-        box.style.display = box.style.display === 'none' ? 'block' : 'none';
-      });
+      const tgStatusBox = document.getElementById('tgStatusBox');
+      const renderTgStatus = async () => {
+        if (!tgStatusBox) return;
+        const st = await apiFetch(`/api/telegram/status?botId=${currentBot._id}`);
+        if (!st) { tgStatusBox.innerHTML = ''; return; }
+        if (st.linked) {
+          tgStatusBox.innerHTML = `<div style="background:rgba(16,185,129,0.08); border:1px solid var(--green); padding:10px 14px; border-radius:8px; font-size:13px;">✅ ${currentLanguage === 'ar' ? 'مربوط بحساب تيليجرام' : 'Linked to a Telegram account'}${st.username ? ` (${st.username})` : ''}</div>`;
+        } else if (st.linkCode && st.linkExpiresAt && new Date(st.linkExpiresAt) > new Date()) {
+          tgStatusBox.innerHTML = `<div style="background:rgba(59,130,246,0.08); border:1px solid var(--blue); padding:10px 14px; border-radius:8px; font-size:13px;">${currentLanguage === 'ar' ? 'كود نشط بالفعل:' : 'Active code already issued:'} <strong>${st.linkCode}</strong></div>`;
+        } else {
+          tgStatusBox.innerHTML = '';
+        }
+      };
+      renderTgStatus();
 
-      document.getElementById('tgDirectForm')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const telegramToken = document.getElementById('tgTokenInput').value.trim();
-
-        const res = await apiFetch(`/api/bots/${currentBot._id}/link-social`, {
-          method: 'PATCH',
-          body: JSON.stringify({ telegramUserId: telegramToken })
+      document.getElementById('tgGenerateCodeBtn')?.addEventListener('click', async () => {
+        const btn = document.getElementById('tgGenerateCodeBtn');
+        if (!btn) return;
+        btn.disabled = true;
+        const res = await apiFetch('/api/telegram/link-code', {
+          method: 'POST',
+          body: JSON.stringify({ botId: currentBot._id })
         });
-        if (res && res.success) {
-          modal.classList.remove('active');
-          loadChannelsData();
+        btn.disabled = false;
+        if (res && res.code && tgStatusBox) {
+          tgStatusBox.innerHTML = `
+            <div style="background:rgba(6,182,212,0.08); border:1px solid var(--cyan); padding:12px 14px; border-radius:8px;">
+              <div style="font-size:13px; color:var(--text-muted);">${currentLanguage === 'ar' ? 'كود الربط الخاص بك:' : 'Your link code:'}</div>
+              <div style="font-size:24px; font-weight:700; letter-spacing:3px; color:var(--cyan); margin:4px 0;">${res.code}</div>
+              <div style="font-size:12px; color:var(--text-muted);">${currentLanguage === 'ar'
+                ? `أرسله إلى <a href="https://t.me/${res.botUsername}" target="_blank" rel="noopener" style="color:var(--cyan);">@${res.botUsername}</a> قبل انتهاء الصلاحية.`
+                : `Send it to <a href="https://t.me/${res.botUsername}" target="_blank" rel="noopener" style="color:var(--cyan);">@${res.botUsername}</a> before it expires.`}</div>
+            </div>`;
         }
       });
     }

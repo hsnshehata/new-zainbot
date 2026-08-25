@@ -140,6 +140,40 @@ Fallback is allowed only for retryable failures such as timeouts, rate limits,
 network errors, and provider server errors. Invalid requests, entitlement
 failures, and safety refusals are not blindly retried across every provider.
 
+### Message triage and notification routing
+
+Every incoming message is classified before the agent replies. The platform
+owner defines, per agent, where each classified message type is delivered.
+
+Classification categories:
+
+```text
+complaint      (شكوى)
+sales_intent   (طلب / نية شراء)
+suggestion     (اقتراح)
+inquiry        (استفسار عادي - AI replies, no alert)
+spam           (سبام - silently ignored or muted)
+```
+
+Routing destinations per category:
+
+```text
+whatsapp       any phone number chosen by the owner (sent from the bot session)
+telegram       linked chat
+inbox          in-app notification (always recorded)
+```
+
+Rules:
+
+1. Classification starts deterministic (keyword and pattern rules), with an
+   optional cheap-model AI pass only for ambiguous messages.
+2. Destinations are a configurable list; one event may notify several numbers.
+3. WhatsApp sends are rate-limited (per-message delay and hourly cap) and
+   repeated events are coalesced into digest notifications to avoid bans.
+4. Telegram remains the primary trusted channel; WhatsApp alerts degrade
+   gracefully when the bot session is down.
+5. Quiet hours and per-category enable flags are enforced server-side.
+
 ### Channel control plane
 
 All channel state is represented by:
@@ -268,7 +302,7 @@ Exit criteria:
 - [ ] Add subscription, quota, status, verification, and bot administration.
 - [ ] Add short-lived impersonation sessions with start/end APIs.
 - [ ] Add a persistent impersonation banner and immediate exit.
-- [ ] Add redacted, queryable audit events for all admin and impersonated
+- [x] Add redacted, queryable audit events for all admin and impersonated
       mutations.
 
 Exit criteria:
@@ -279,7 +313,7 @@ Exit criteria:
 
 ### Phase 4 - AI model and key control plane
 
-- [ ] Encrypt platform and user AI credentials.
+- [x] Encrypt platform and user AI credentials.
 - [ ] Add model catalog and health-tested credential pools.
 - [ ] Add draft/published versioned routing policies.
 - [ ] Add tier entitlements and user/bot overrides.
@@ -287,7 +321,7 @@ Exit criteria:
 - [ ] Add retry classification, circuit breaking, cooldown, and bounded
       attempts.
 - [ ] Add atomic quota reservation/settlement and attempt-level usage records.
-- [ ] Preserve compatibility with legacy provider-key and bot-key fields during
+- [x] Preserve compatibility with legacy provider-key and bot-key fields during
       migration.
 
 Exit criteria:
@@ -330,6 +364,26 @@ Exit criteria:
 - Every visible control has a working success, empty, loading, and failure
   state.
 - The landing page makes no unverified production claims.
+
+### Phase 6b - Message triage and notification routing
+
+- [ ] Add deterministic message classification (complaint, sales_intent,
+      suggestion, inquiry, spam) in the bot engine pipeline.
+- [ ] Add optional AI-assisted classification for ambiguous messages using a
+      cheap routed model.
+- [ ] Add per-agent routing configuration: category -> destinations list
+      (whatsapp numbers, telegram chat, inbox).
+- [ ] Implement WhatsApp outbound owner alerts through the existing session
+      manager with per-message delay, hourly cap, and digest coalescing.
+- [ ] Enforce quiet hours, per-category toggles, and server-side rate limits.
+- [ ] Ship bilingual agent settings UI for filters and notification routes.
+
+Exit criteria:
+
+- A complaint-classified message reaches the configured WhatsApp number once,
+  not repeatedly, and is always visible in the inbox.
+- Spam never triggers outbound notifications.
+- Rate limits hold under burst traffic without WhatsApp session bans.
 
 ### Phase 7 - Release
 
