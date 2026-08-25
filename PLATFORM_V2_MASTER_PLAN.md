@@ -319,8 +319,12 @@ Exit criteria:
 - [ ] Add tier entitlements and user/bot overrides.
 - [x] Expose only `Auto` and permitted manual models to each user.
 - [ ] Add retry classification, circuit breaking, cooldown, and bounded
-      attempts.
+      attempts. (Retry classification and bounded attempts are wired through
+      the auto-route orchestrator; persistent circuit breaking and cooldown
+      remain open.)
 - [ ] Add atomic quota reservation/settlement and attempt-level usage records.
+      (Attempt-level usage records are written by the orchestrator; atomic
+      quota reservation/settlement remains open.)
 - [x] Preserve compatibility with legacy provider-key and bot-key fields during
       migration.
 

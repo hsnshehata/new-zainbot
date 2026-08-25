@@ -2,9 +2,49 @@
 const OpenAI = require('openai');
 const axios = require('axios');
 const logger = require('../logger');
+const User = require('../models/User');
+const AiRoutingPolicy = require('../models/AiRoutingPolicy');
+const AiTierEntitlement = require('../models/AiTierEntitlement');
+const AiUserOverride = require('../models/AiUserOverride');
+const AiModelCatalog = require('../models/AiModelCatalog');
+const AiCredential = require('../models/AiCredential');
+const AiUsageEvent = require('../models/AiUsageEvent');
 const { createAiKeyResolver } = require('./aiKeyResolver');
+const {
+  createAiCompletionOrchestrator,
+} = require('./aiCompletionOrchestrator');
 
 const keyResolver = createAiKeyResolver({});
+
+const autoOrchestrator = createAiCompletionOrchestrator({
+  models: {
+    AiRoutingPolicy,
+    AiTierEntitlement,
+    AiUserOverride,
+    AiModelCatalog,
+    AiCredential,
+    AiUsageEvent,
+  },
+  userLoader: (userId) => User.findById(userId).select('subscriptionTier').lean(),
+  sendCompletion: async ({ provider, apiKey, baseUrl, modelId, options }) => {
+    if (provider === 'anthropic') {
+      return callAnthropicDirect(
+        apiKey,
+        modelId,
+        options.messages,
+        options.max_tokens,
+        options.response_format
+      );
+    }
+    const client = getClient(provider, apiKey, baseUrl);
+    return client.chat.completions.create({
+      model: modelId,
+      messages: options.messages,
+      max_tokens: options.max_tokens,
+      response_format: options.response_format
+    });
+  },
+});
 
 // Cache helper to store clients and save overhead
 const clientCache = {};
@@ -114,6 +154,24 @@ async function getAiCompletion(options, bot = null, useBackup = false) {
       } catch (err) {
         logger.error(`❌ User private key failed: ${err.message}`);
         throw new Error(`تعذر استخدام مفتاحك الخاص: ${err.message}`);
+      }
+    }
+  }
+
+  // Scenario 1b: Policy-driven Auto routing through the encrypted control
+  // plane. Engages only for pure-Auto bots (no user key, no manual model).
+  // Any failure here degrades to the legacy paths below.
+  const wantsUserKey = Boolean(bot && (useBackup ? bot.backupApiKey : bot.userApiKey));
+  if (!wantsUserKey && !String(bot?.userModel || '').trim() && bot?.userId) {
+    try {
+      const auto = await autoOrchestrator.runAutoCompletion({ bot, options });
+      return auto.response;
+    } catch (err) {
+      if (err?.code !== 'AI_AUTO_NOT_CONFIGURED') {
+        logger.warn('ai_auto_path_failed_falling_back', {
+          code: err?.code,
+          message: err?.message,
+        });
       }
     }
   }
