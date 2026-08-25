@@ -10,6 +10,7 @@ const { validateBody, Joi } = require('../middleware/validate');
 const logger = require('../logger');
 const { loadAccessibleBot } = require('../middleware/botAccess');
 const { serializeBot } = require('../utils/serializers');
+const { createMetaLinkValidator } = require('../services/metaLinkValidator');
 
 // Log عشان نتأكد إن الـ router شغال
 logger.info('✅ Initializing bots routes');
@@ -87,6 +88,14 @@ const linkSocialSchema = Joi.object({
   }
   return value;
 }, 'Link social validation');
+
+// التحقق من بيانات Meta قبل الحفظ (فيسبوك/إنستجرام) — قابل للاستبدال في الاختبارات
+const defaultMetaLinkValidator = createMetaLinkValidator();
+let metaLinkValidator = defaultMetaLinkValidator;
+
+function _setMetaLinkValidatorForTests(validator) {
+  metaLinkValidator = validator || defaultMetaLinkValidator;
+}
 
 // دالة لتحويل توكن قصير المدى لتوكن طويل المدى
 const convertToLongLivedToken = async (shortLivedToken) => {
@@ -200,6 +209,20 @@ router.post('/:id/link-social', authenticate, validateBody(linkSocialSchema), as
           });
         }
       }
+      // التحقق من التوكن ومعرف الصفحة عبر Graph API قبل الحفظ
+      const facebookValidation = await metaLinkValidator.validateFacebook({
+        accessToken: finalFacebookApiKey,
+        pageId: facebookPageId,
+      });
+      if (!facebookValidation.ok) {
+        logger.warn('social_link_facebook_validation_failed', { botId, errorCode: facebookValidation.errorCode });
+        return res.status(400).json({
+          success: false,
+          error: facebookValidation.errorCode,
+          message: 'تعذر التحقق من بيانات فيسبوك المرسلة',
+        });
+      }
+
       updateData.facebookApiKey = finalFacebookApiKey;
       updateData.facebookPageId = facebookPageId;
       updateData.lastFacebookTokenRefresh = new Date();
@@ -207,6 +230,19 @@ router.post('/:id/link-social', authenticate, validateBody(linkSocialSchema), as
 
     // لو إنستجرام
     if (instagramApiKey && instagramPageId) {
+      const instagramValidation = await metaLinkValidator.validateInstagram({
+        accessToken: instagramApiKey,
+        accountId: instagramPageId,
+      });
+      if (!instagramValidation.ok) {
+        logger.warn('social_link_instagram_validation_failed', { botId, errorCode: instagramValidation.errorCode });
+        return res.status(400).json({
+          success: false,
+          error: instagramValidation.errorCode,
+          message: 'تعذر التحقق من بيانات إنستجرام المرسلة',
+        });
+      }
+
       updateData.instagramApiKey = instagramApiKey;
       updateData.instagramPageId = instagramPageId;
       updateData.lastInstagramTokenRefresh = new Date();
@@ -269,3 +305,4 @@ router.post('/:id/exchange-instagram-code', authenticate, (req, res) => {
 router.delete('/:id', authenticate, botsController.deleteBot);
 
 module.exports = router;
+module.exports._setMetaLinkValidatorForTests = _setMetaLinkValidatorForTests;
