@@ -267,7 +267,7 @@ exports.createBot = async (req, res) => {
 
 // تعديل بوت
 exports.updateBot = async (req, res) => {
-  const { name, userId, facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, isActive, autoStopDate, subscriptionType, welcomeMessage, agentType, description, customInstructions, objectives, handoffKeywords, autoReplyEnabled } = req.body;
+  const { name, userId, facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, isActive, autoStopDate, subscriptionType, welcomeMessage, agentType, description, customInstructions, objectives, handoffKeywords, autoReplyEnabled, userApiKey, userProvider, userModel, userBaseUrl, backupApiKey, backupProvider, backupModel, backupBaseUrl } = req.body;
 
   try {
     logger.info('bot_update_attempt', { botId: req.params.id, userId: req.user.userId, payloadKeys: Object.keys(req.body || {}) });
@@ -316,6 +316,14 @@ exports.updateBot = async (req, res) => {
     bot.objectives = objectives !== undefined ? objectives : bot.objectives;
     bot.handoffKeywords = handoffKeywords !== undefined ? handoffKeywords : bot.handoffKeywords;
     bot.autoReplyEnabled = autoReplyEnabled !== undefined ? autoReplyEnabled : bot.autoReplyEnabled;
+    bot.userApiKey = userApiKey !== undefined ? userApiKey : bot.userApiKey;
+    bot.userProvider = userProvider !== undefined ? userProvider : bot.userProvider;
+    bot.userModel = userModel !== undefined ? userModel : bot.userModel;
+    bot.userBaseUrl = userBaseUrl !== undefined ? userBaseUrl : bot.userBaseUrl;
+    bot.backupApiKey = backupApiKey !== undefined ? backupApiKey : bot.backupApiKey;
+    bot.backupProvider = backupProvider !== undefined ? backupProvider : bot.backupProvider;
+    bot.backupModel = backupModel !== undefined ? backupModel : bot.backupModel;
+    bot.backupBaseUrl = backupBaseUrl !== undefined ? backupBaseUrl : bot.backupBaseUrl;
     if (isDirectSuperadmin && subscriptionType) {
       bot.subscriptionType = subscriptionType;
     }
@@ -337,7 +345,7 @@ exports.updateBot = async (req, res) => {
     invalidateBotCache(bot._id);
     logger.info('bot_save_success', { botId: bot._id });
 
-    res.status(200).json(serializeBot(bot));
+    res.status(200).json({ success: true, data: serializeBot(bot) });
   } catch (err) {
     logger.error('bot_update_error', { botId: req.params.id, err: err.message, stack: err.stack });
     res.status(500).json({ message: 'خطأ في السيرفر', error: err.message });

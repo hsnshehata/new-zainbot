@@ -59,14 +59,14 @@ async function listOrders(req, res) {
       const bots = await Bot.find({ userId }).select('_id');
       const botIds = bots.map((b) => b._id);
       if (!botIds.length) {
-        return res.json({ orders: [], counts: { total: 0, pending: 0, byStatus: {} } });
+        return res.json({ success: true, data: [], orders: [], counts: { total: 0, pending: 0, byStatus: {} } });
       }
       botFilter.botId = { $in: botIds };
     } else if (req.query.botId) {
       botFilter.botId = req.query.botId;
     } else {
       // superadmin without explicit botId: لا نعيد أي بيانات لمنع رؤية كل الطلبات
-      return res.json({ orders: [], counts: { total: 0, pending: 0, byStatus: {} } });
+      return res.json({ success: true, data: [], orders: [], counts: { total: 0, pending: 0, byStatus: {} } });
     }
 
     const orders = await ChatOrder.find(botFilter).sort({ lastModifiedAt: -1, createdAt: -1 }).limit(200);
@@ -77,7 +77,7 @@ async function listOrders(req, res) {
       if (PENDING_SET.has(o.status)) counts.pending += 1;
     });
 
-    return res.json({ orders, counts });
+    return res.json({ success: true, data: orders, orders, counts });
   } catch (err) {
     logger.error('chat_orders_list_error', { userId: req.user.userId, err: err.message, stack: err.stack });
     return res.status(500).json({ message: 'خطأ في جلب طلبات المحادثة' });

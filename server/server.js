@@ -184,6 +184,31 @@ app.use((req, res, next) => {
   next();
 });
 
+// صفحة الشات العامة (/chat/:linkId) مصممة للتضمين في مواقع العملاء عبر
+// الويدجت، لذلك تسمح بأي frame ancestor مع الحفاظ على بقية تقييدات CSP.
+// أي مسار آخر يبقى محصوراً على نفس المصدر كما ضبطه helmet.
+app.use((req, res, next) => {
+  if (req.path.startsWith('/chat/')) {
+    res.removeHeader('X-Frame-Options');
+    res.setHeader(
+      'Content-Security-Policy',
+      [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+        "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com",
+        "font-src 'self' data: https://cdnjs.cloudflare.com https://fonts.gstatic.com",
+        "img-src 'self' data: blob: https:",
+        "connect-src 'self' https: wss:",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors *",
+      ].join('; ')
+    );
+  }
+  next();
+});
+
 // إضافة Cross-Origin-Opener-Policy Header
 app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
@@ -212,7 +237,10 @@ app.use((req, res, next) => {
   }
   // إضافة headers لتحسين الأداء والأمان
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  // صفحة الشات العامة مسموح بتضمينها من مواقع العملاء (frame-ancestors *)
+  if (!req.path.startsWith('/chat/')) {
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  }
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   logger.info('request', { requestId: req.requestId, method: req.method, path: req.path, ip: req.ip });
   next();
@@ -350,6 +378,7 @@ app.use('/api/telegram', telegramRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/integrations', integrationsRoutes);
 app.use('/api/admin/keys', adminKeysRoutes);
+app.use('/api/admin/system', require('./routes/adminSystem'));
 app.use(
   '/api/admin/impersonation',
   createAdminImpersonationRouter({

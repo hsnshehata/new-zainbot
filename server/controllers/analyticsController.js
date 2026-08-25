@@ -37,16 +37,17 @@ exports.getAnalytics = async (req, res) => {
     const qualifiedCount = await ChatOrder.countDocuments({ botId, status: { $ne: 'cancelled' } });
 
     res.status(200).json({
-      messagesCount,
-      conversationsCount,
-      chatOrdersCount,
-      activeRules,
-      responseSpeed: conversationsCount > 0 ? "1.4s" : "0.0s",
-      csat: conversationsCount > 0 ? "98.5%" : "100%",
-      funnel: {
-        leads: leadsCount,
-        qualified: qualifiedCount,
-        closed: confirmedOrders
+      success: true,
+      data: {
+        messagesCount,
+        conversationsCount,
+        chatOrdersCount,
+        activeRules,
+        funnel: {
+          leads: leadsCount,
+          qualified: qualifiedCount,
+          closed: confirmedOrders
+        }
       }
     });
   } catch (err) {

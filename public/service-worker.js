@@ -1,44 +1,28 @@
 // public/service-worker.js
+// Canonical service worker. It must live at the site root so its default
+// scope is "/" and it can control every page.
 
-const CACHE_NAME = 'zain-ai-v0.0011'; // refresh the landing assets after the bilingual release
+const CACHE_NAME = 'zain-ai-v0.0012'; // canonical asset consolidation release
+// Pre-cache only real, actively-loaded app shell assets. addAll() is atomic:
+// one missing URL aborts the whole precache, so every entry must exist.
 const urlsToCache = [
   '/',
   '/index.html',
   '/login.html',
-  '/dashboard_new.html',
+  '/register.html',
+  '/dashboard',
+  '/style.css',
   '/css/common.css',
-  '/css/landing-base.css',
-  '/css/index.css',
-  '/css/login.css',
-  '/css/bots.css',
-  '/css/rules.css',
-  '/css/analytics.css',
-  '/css/feedback.css',
-  '/css/facebook.css',
-  '/css/messages.css',
-  '/css/assistantBot.css',
   '/css/dashboard.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
+  '/css/login.css',
   '/js/utils.js',
-  '/js/store-landing.js',
-  '/js/store-router.js',
+  '/js/script.js',
   '/js/auth.js',
   '/js/dashboard_new.js',
-  '/js/bots.js',
-  '/js/rules.js',
-  '/js/chatPage.js',
-  '/js/analytics.js',
-  '/js/feedback.js',
-  '/js/facebook.js',
-  '/js/messages.js',
-  '/js/assistantBot.js',
-  '/js/instagram.js',
-  '/js/whatsapp.js',
   '/manifest.json',
   '/favicon.ico',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  // ملاحظـة: تم إزالة أي روابط خارجية من الـ pre-cache لتجنّب الكاش للموارد الخارجية
+  '/icon-192.png',
+  '/icon-512.png',
 ];
 
 self.addEventListener('install', (event) => {

@@ -32,6 +32,8 @@ const createBotSchema = Joi.object({
   autoReplyEnabled: Joi.boolean().default(true)
 });
 
+const botProviderEnum = ['openai', 'gemini', 'anthropic', 'openrouter', 'custom'];
+
 const updateBotSchema = Joi.object({
   name: Joi.string().min(2).max(80).optional(),
   userId: Joi.string().length(24).optional(),
@@ -48,7 +50,15 @@ const updateBotSchema = Joi.object({
   handoffKeywords: Joi.array().items(Joi.string().max(100)).max(50).optional(),
   autoReplyEnabled: Joi.boolean().optional(),
   isActive: Joi.boolean().optional(),
-  autoStopDate: Joi.date().optional()
+  autoStopDate: Joi.date().optional(),
+  userApiKey: Joi.string().max(500).allow('', null),
+  userProvider: Joi.string().valid(...botProviderEnum).optional(),
+  userModel: Joi.string().max(200).allow('', null),
+  userBaseUrl: Joi.string().uri({ allowRelative: false }).allow('', null),
+  backupApiKey: Joi.string().max(500).allow('', null),
+  backupProvider: Joi.string().valid(...botProviderEnum).optional(),
+  backupModel: Joi.string().max(200).allow('', null),
+  backupBaseUrl: Joi.string().uri({ allowRelative: false }).allow('', null)
 });
 
 const linkSocialSchema = Joi.object({
@@ -129,10 +139,10 @@ router.get('/:id', authenticate, async (req, res) => {
   try {
     logger.info('جاري جلب البوت', { path: `/api/bots/${req.params.id}`, botId: req.params.id, userId: req.user.userId });
     logger.info('تم جلب البوت بنجاح', { botId: req.params.id });
-    res.status(200).json(serializeBot(req.bot));
+    res.status(200).json({ success: true, data: serializeBot(req.bot) });
   } catch (err) {
     logger.error('❌ خطأ في جلب البوت', { botId: req.params.id, err });
-    res.status(500).json({ message: 'خطأ في السيرفر' });
+    res.status(500).json({ success: false, message: 'خطأ في السيرفر' });
   }
 });
 

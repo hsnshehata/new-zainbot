@@ -67,12 +67,13 @@
     // ممكن نشتق درجات بسيطة
   }
 
-  // خريطة القوالب
+  // خريطة القوالب — الملفات الفعلية تعيش تحت /css و /js
   const TEMPLATE_ASSETS = {
-    layout1: { css: '/templates/layout1.css', js: '/templates/layout1.js', label: 'القالب الأول' },
-    layout2: { css: '/templates/layout2.css', js: '/templates/layout2.js', label: 'القالب الثاني' },
-    layout3: { css: '/templates/layout3.css', js: '/templates/layout3.js', label: 'القالب الثالث' },
-    layout4: { css: '/templates/layout4.css', js: '/templates/layout4.js', label: 'القالب الرابع' }
+    layout1: { css: '/css/layout1.css', js: '/js/layout1.js', label: 'القالب الأول' },
+    layout2: { css: '/css/layout2.css', js: '/js/layout2.js', label: 'القالب الثاني' },
+    layout3: { css: '/css/layout3.css', js: '/js/layout3.js', label: 'القالب الثالث' },
+    // لا يوجد قالب رابع منشور؛ أي store محفوظ عليه layout4 يستخدم الأول
+    layout4: { css: '/css/layout1.css', js: '/js/layout1.js', label: 'القالب الأول' }
   };
 
   async function bootstrap(){
@@ -93,6 +94,8 @@
 
       const layoutId = store?.adminConfig?.landingLayout || 'layout1';
       const assets = TEMPLATE_ASSETS[layoutId] || TEMPLATE_ASSETS.layout1;
+      // المعرّف الفعلي للقالب المحمّل (مثل layout4 يعاد توجيهه لملفات layout1)
+      const templateId = TEMPLATE_ASSETS[layoutId] ? layoutId : 'layout1';
 
       // تحميل الـ CSS المشترك + CSS الخاص بالقالب + سكريبت القالب
       await loadCSS('/css/landing-base.css');
@@ -100,9 +103,9 @@
       await loadScript(assets.js);
 
       // انتظار جاهزية القالب
-      const api = window.StoreLandingTemplates?.[layoutId];
+      const api = window.StoreLandingTemplates?.[templateId];
       if (!api || typeof api.render !== 'function') {
-        throw new Error('قالب غير جاهز للعرض: '+layoutId);
+        throw new Error('قالب غير جاهز للعرض: '+templateId);
       }
 
   // القالب الكلاسيكي بيضيف زر سلة عائم بدل "زيارة المنتجات" — لذلك لا نحقن أي زر هنا

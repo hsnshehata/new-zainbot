@@ -1,6 +1,7 @@
 // server/controllers/chatPageController.js
 
 const { v4: uuidv4 } = require('uuid');
+const mongoose = require('mongoose');
 const ChatPage = require('../models/ChatPage');
 const Feedback = require('../models/Feedback');
 const axios = require('axios');
@@ -253,6 +254,26 @@ exports.getChatPageByBotId = async (req, res) => {
   } catch (err) {
     logger.error('chat_page_fetch_by_bot_error', { botId: req.params.botId, err: err.message, stack: err.stack });
     res.status(500).json({ message: 'خطأ في جلب إعدادات صفحة الدردشة' });
+  }
+};
+
+// Public endpoint for the website widget: resolve a bot's chat link id only.
+// Returns no configuration and no secrets - the same payload is already
+// public through /api/chat-page/:linkId.
+exports.getPublicLinkIdByBot = async (req, res) => {
+  try {
+    const { botId } = req.params;
+    if (!botId || !mongoose.Types.ObjectId.isValid(botId)) {
+      return res.status(400).json({ success: false, message: 'معرف البوت غير صالح' });
+    }
+    const chatPage = await ChatPage.findOne({ botId }).select('linkId').lean();
+    if (!chatPage) {
+      return res.status(404).json({ success: false, message: 'لا توجد صفحة دردشة لهذا البوت' });
+    }
+    res.status(200).json({ success: true, linkId: chatPage.linkId });
+  } catch (err) {
+    logger.error('chat_page_public_link_error', { botId: req.params?.botId, err: err.message, stack: err.stack });
+    res.status(500).json({ success: false, message: 'خطأ في جلب رابط الدردشة' });
   }
 };
 

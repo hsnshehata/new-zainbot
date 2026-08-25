@@ -12,6 +12,8 @@ const chatCustomerSchema = new mongoose.Schema({
   email: { type: String, trim: true, default: '' },
   lastOrderId: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatOrder', default: null },
   lastOrderAt: { type: Date, default: null },
+  bookingTime: { type: Date, default: null },
+  notes: { type: String, trim: true, default: '' },
   lastMessageId: { type: String, trim: true, default: '' },
   lastMessageAt: { type: Date, default: null },
   createdAt: { type: Date, default: Date.now },

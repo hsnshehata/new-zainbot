@@ -62,19 +62,24 @@ async function upsertChatCustomerProfile({
 async function listCustomers(req, res) {
   try {
     const { botId } = req.query;
-    if (!botId) return res.status(400).json({ message: 'botId مطلوب' });
+    if (!botId) return res.status(400).json({ success: false, message: 'botId مطلوب' });
 
     const allowed = await canAccessBot(botId, req.user.userId, req.user.role);
-    if (!allowed) return res.status(403).json({ message: 'غير مصرح بالوصول' });
+    if (!allowed) return res.status(403).json({ success: false, message: 'غير مصرح بالوصول' });
 
-    const customers = await ChatCustomer.find({ botId })
+    const query = { botId };
+    if (req.query.hasBooking === 'true') {
+      query.bookingTime = { $ne: null };
+    }
+
+    const customers = await ChatCustomer.find(query)
       .sort({ updatedAt: -1 })
       .limit(MAX_LIMIT);
 
-    return res.json({ customers });
+    return res.json({ success: true, data: customers, customers });
   } catch (err) {
     logger.error('chat_customers_list_error', { botId: req.query.botId, err: err.message, stack: err.stack });
-    return res.status(500).json({ message: 'خطأ في جلب بيانات العملاء' });
+    return res.status(500).json({ success: false, message: 'خطأ في جلب بيانات العملاء' });
   }
 }
 
