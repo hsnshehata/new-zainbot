@@ -1544,7 +1544,8 @@ html[dir="rtl"] .testimonial-card::before {
   gap: 10px;
   font-size: 14px;
 }
-.pricing-features i { color: var(--green); font-size: 13px; }
+.pricing-features i { color: var(--green); font-size: 13px; min-width: 16px; flex-shrink: 0; }
+.pricing-card .btn { margin-top: auto; }
 
 /* ===== FINAL CTA ===== */
 .final-cta {
