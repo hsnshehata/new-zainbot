@@ -93,7 +93,9 @@
   let countersAnimated = false;
 
   function animateCounter(el) {
+    if (!el.dataset.target) return;
     const target = parseFloat(el.dataset.target);
+    if (isNaN(target)) return;
     const suffix = el.dataset.suffix || '';
     const duration = 2000;
     const startTime = performance.now();

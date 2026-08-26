@@ -10,14 +10,30 @@ document.addEventListener('DOMContentLoaded', () => {
       google_error: 'حدث خطأ أثناء تسجيل الدخول بجوجل.',
       credentials_required: 'أدخل اسم المستخدم وكلمة المرور.',
       login_failed: 'فشل تسجيل الدخول. تأكد من اسم المستخدم وكلمة المرور.',
-      login_error: 'حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى.'
+      login_error: 'حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى.',
+      all_fields_required: 'جميع الحقول مطلوبة ما عدا رقم الواتساب.',
+      passwords_dont_match: 'كلمات المرور غير متطابقة.',
+      password_strength_error: 'كلمة المرور يجب أن تكون 8 أحرف على الأقل وتحتوي على حرف كبير وصغير ورقم ورمز وبدون مسافات.',
+      username_format_error: 'اسم المستخدم يجب أن يحتوي على حروف إنجليزية، أرقام، _ أو - فقط.',
+      gmail_google_hint: 'يرجى استخدام زر المتابعة بجوجل لبريد Gmail.',
+      register_failed: 'فشل التسجيل، حاول مرة أخرى.',
+      register_error: 'حدث خطأ أثناء التسجيل، حاول مرة أخرى.',
+      register_success: 'تم إنشاء الحساب بنجاح! يرجى مراجعة بريدك الإلكتروني لتفعيل الحساب.'
     },
     en: {
       google_failed: 'Google sign-in failed. Please try again.',
       google_error: 'An error occurred during Google sign-in.',
       credentials_required: 'Enter your username and password.',
       login_failed: 'Sign-in failed. Check your username and password.',
-      login_error: 'An error occurred during sign-in. Please try again.'
+      login_error: 'An error occurred during sign-in. Please try again.',
+      all_fields_required: 'All fields are required except WhatsApp number.',
+      passwords_dont_match: 'Passwords do not match.',
+      password_strength_error: 'Password must be at least 8 characters with uppercase, lowercase, number, symbol, and no spaces.',
+      username_format_error: 'Username can only contain English letters, numbers, _ or -.',
+      gmail_google_hint: 'Please use Google Sign-in for Gmail accounts.',
+      register_failed: 'Registration failed. Please try again.',
+      register_error: 'An error occurred during registration. Please try again.',
+      register_success: 'Account created successfully! Please check your email to activate your account.'
     }
   };
   const loginText = (key) => loginCopy[localStorage.getItem('zainbot_lang') === 'en' ? 'en' : 'ar'][key];
@@ -131,38 +147,54 @@ document.addEventListener('DOMContentLoaded', () => {
       const whatsapp = document.querySelector('#whatsapp').value.trim();
       const email = document.querySelector('#email').value.trim();
 
-      // Reset error message
-      errorDiv.style.display = 'none';
-      errorDiv.textContent = '';
+      // Reset error and success messages
+      if (errorDiv) {
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+      }
+      if (successDiv) {
+        successDiv.style.display = 'none';
+        successDiv.textContent = '';
+      }
 
       // Validate inputs
       if (!username || !password || !confirmPassword || !botName || !email) {
-        errorDiv.style.display = 'block';
-        errorDiv.textContent = 'جميع الحقول مطلوبة ما عدا رقم الواتساب';
+        if (errorDiv) {
+          errorDiv.style.display = 'block';
+          errorDiv.textContent = loginText('all_fields_required');
+        }
         return;
       }
 
       if (password !== confirmPassword) {
-        errorDiv.style.display = 'block';
-        errorDiv.textContent = 'كلمات المرور غير متطابقة';
+        if (errorDiv) {
+          errorDiv.style.display = 'block';
+          errorDiv.textContent = loginText('passwords_dont_match');
+        }
         return;
       }
 
       if (!isStrongPassword(password)) {
-        errorDiv.style.display = 'block';
-        errorDiv.textContent = 'كلمة المرور يجب أن تكون 8 أحرف على الأقل وتحتوي على حرف كبير وصغير ورقم ورمز وبدون مسافات';
+        if (errorDiv) {
+          errorDiv.style.display = 'block';
+          errorDiv.textContent = loginText('password_strength_error');
+        }
         return;
       }
 
       if (!/^[a-z0-9_-]+$/.test(username)) {
-        errorDiv.style.display = 'block';
-        errorDiv.textContent = 'اسم المستخدم يجب أن يحتوي على حروف إنجليزية، أرقام، _ أو - فقط';
+        if (errorDiv) {
+          errorDiv.style.display = 'block';
+          errorDiv.textContent = loginText('username_format_error');
+        }
         return;
       }
 
       if (email.endsWith('@gmail.com')) {
-        errorDiv.style.display = 'block';
-        errorDiv.textContent = 'يرجى استخدام زرار تسجيل الدخول بجوجل في صفحة تسجيل الدخول لبريد Gmail';
+        if (errorDiv) {
+          errorDiv.style.display = 'block';
+          errorDiv.textContent = loginText('gmail_google_hint');
+        }
         return;
       }
 
@@ -173,19 +205,28 @@ document.addEventListener('DOMContentLoaded', () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ username, password, botName, whatsapp, email }),
-        }, errorDiv, 'فشل التسجيل');
+        }, errorDiv, loginText('register_failed'));
 
         if (data.success) {
-          successDiv.style.display = 'block';
-          errorDiv.style.display = 'none';
+          if (successDiv) {
+            successDiv.style.display = 'block';
+            successDiv.textContent = data.message || loginText('register_success');
+          }
+          if (errorDiv) {
+            errorDiv.style.display = 'none';
+          }
           registerForm.reset();
         } else {
-          errorDiv.style.display = 'block';
-          errorDiv.textContent = data.message || 'فشل التسجيل، حاول مرة أخرى';
+          if (errorDiv) {
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = data.message || loginText('register_failed');
+          }
         }
       } catch (err) {
-        errorDiv.style.display = 'block';
-        errorDiv.textContent = err.message || 'حدث خطأ أثناء التسجيل، حاول مرة أخرى';
+        if (errorDiv) {
+          errorDiv.style.display = 'block';
+          errorDiv.textContent = err.message || loginText('register_error');
+        }
       }
     });
   }
