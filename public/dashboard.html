@@ -986,6 +986,19 @@
               </form>
             </div>
 
+
+            <!-- General agent instructions card (legacy "عامة" rules) -->
+            <div class="glass-card" style="display:flex; flex-direction:column;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h3 data-i18n="training_general_title">General Agent Instructions</h3>
+                <button id="addInstructionBtn" class="btn btn-primary btn-sm" style="padding:6px 12px;"><i class="fas fa-plus"></i> <span data-i18n="btn_add_instruction">Add Instruction</span></button>
+              </div>
+              <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;" data-i18n="training_general_desc">Standing directives that define your agent's identity and behavior. These carry over from the previous platform and are injected into every reply.</p>
+              <div style="flex:1; overflow-y:auto; max-height:340px; display:flex; flex-direction:column; gap:12px;" id="instructionListContainer">
+                <!-- General instructions inserted dynamically -->
+              </div>
+            </div>
+
             <!-- FAQs Rules training card -->
             <div class="glass-card" style="display:flex; flex-direction:column;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -1474,6 +1487,29 @@
 
       </div>
     </main>
+  </div>
+
+  <!-- General Instruction Modal Form -->
+  <div class="db-modal" id="instructionModal">
+    <div class="db-modal-content">
+      <div class="db-modal-header">
+        <h3 id="instructionModalTitle">Add General Instruction</h3>
+        <button class="btn btn-secondary btn-sm modal-close-btn" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="db-modal-body">
+        <form id="instructionForm">
+          <input type="hidden" id="instructionIdInput" />
+          <div class="form-group">
+            <label data-i18n="label_instruction_content">Instruction</label>
+            <textarea id="instructionContentInput" class="form-control" rows="5" data-i18n-placeholder="instruction_content_placeholder" placeholder="For example, always greet customers in Egyptian Arabic and never quote prices outside the catalog." required></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="db-modal-footer">
+        <button class="btn btn-secondary btn-sm modal-close-btn" data-i18n="btn_cancel">Cancel</button>
+        <button type="submit" form="instructionForm" class="btn btn-primary btn-sm" data-i18n="btn_save">Save Rule</button>
+      </div>
+    </div>
   </div>
 
   <!-- FAQ Modal Form -->

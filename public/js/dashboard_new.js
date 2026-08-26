@@ -225,6 +225,12 @@
       admin_subtab_overview: 'System Overview',
       admin_subtab_audit: 'Audit & Sessions',
       admin_subtab_notify: 'Notifications',
+      training_general_title: 'General Agent Instructions',
+      training_general_desc: 'Standing directives that define your agent\'s identity and behavior. These carry over from the previous platform and are injected into every reply.',
+      btn_add_instruction: 'Add Instruction',
+      label_instruction_content: 'Instruction',
+      instruction_content_placeholder: 'For example, always greet customers in Egyptian Arabic and never quote prices outside the catalog.',
+      training_empty_general: 'No general instructions yet. Add the directives that define your agent\'s identity.',
       ov_users_total: 'Total users',
       ov_users_active: 'Active users',
       ov_bots_total: 'Total agents',
@@ -478,6 +484,12 @@
       admin_subtab_overview: 'نظرة عامة على النظام',
       admin_subtab_audit: 'سجل التدقيق والجلسات',
       admin_subtab_notify: 'الإشعارات',
+      training_general_title: 'التعليمات العامة للوكيل',
+      training_general_desc: 'توجيهات ثابتة تحدد هوية وسلوك الوكيل. منقولة من المنصة السابقة وتُحقن في كل رد.',
+      btn_add_instruction: 'إضافة تعليمات',
+      label_instruction_content: 'التعليمات',
+      instruction_content_placeholder: 'مثال: رحب بالعميل دائماً بالعامية المصرية ولا تذكر أسعاراً خارج الكتالوج.',
+      training_empty_general: 'لا توجد تعليمات عامة بعد. أضف التوجيهات التي تحدد هوية الوكيل.',
       ov_users_total: 'إجمالي المستخدمين',
       ov_users_active: 'مستخدمون نشطون',
       ov_bots_total: 'إجمالي الوكلاء',
@@ -593,6 +605,7 @@
 
     // Re-render tabular contents or messages since they are translated dynamically
     renderFaqs();
+    if (typeof renderGeneralInstructions === 'function') renderGeneralInstructions();
     renderOrders();
     renderBookings();
     renderApiKeys();
@@ -988,6 +1001,7 @@
 
   // 3. AI TRAINING CENTER LOADER
   let faqs = [];
+  let generalInstructions = [];
 
   async function loadTrainingData() {
     if (!currentBot) return;
@@ -1000,11 +1014,28 @@
         document.getElementById('botCustomPrompt').value = res.data.customInstructions || '';
       }
 
-      // Get FAQs
-      const faqRes = await apiFetch(`/api/rules?botId=${currentBot._id}`);
+      // Get FAQs (type qa only)
+      const faqRes = await apiFetch(`/api/rules?botId=${currentBot._id}&type=qa`);
       if (faqRes && faqRes.success) {
         faqs = faqRes.data;
         renderFaqs();
+      } else if (faqRes && Array.isArray(faqRes.rules)) {
+        // fallback for bare {rules} shape
+        faqs = faqRes.rules;
+        renderFaqs();
+      }
+
+      // Get general agent instructions (legacy "عامة" rules — bot identity)
+      const instrRes = await apiFetch(`/api/rules?botId=${currentBot._id}&type=general`);
+      if (instrRes && instrRes.success) {
+        generalInstructions = instrRes.data;
+        renderGeneralInstructions();
+      } else if (instrRes && Array.isArray(instrRes.rules)) {
+        generalInstructions = instrRes.rules;
+        renderGeneralInstructions();
+      } else if (instrRes && Array.isArray(instrRes)) {
+        generalInstructions = instrRes;
+        renderGeneralInstructions();
       }
     } catch (e) {
       console.error(e);
@@ -1046,6 +1077,100 @@
       faqListContainer.appendChild(card);
     });
   }
+
+  function renderGeneralInstructions() {
+    const container = document.getElementById('instructionListContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (generalInstructions.length === 0) {
+      const emptyState = document.createElement('div');
+      emptyState.style.cssText = 'text-align:center; padding:20px; color:var(--text-muted);';
+      emptyState.textContent = (translations[currentLanguage] || translations.en).training_empty_general;
+      container.appendChild(emptyState);
+      return;
+    }
+
+    generalInstructions.forEach(rule => {
+      const card = document.createElement('div');
+      card.className = 'glass-card';
+      card.style.padding = '14px 18px';
+      card.style.display = 'flex';
+      card.style.justifyContent = 'space-between';
+      card.style.alignItems = 'center';
+      const raw = typeof rule.content === 'string' ? rule.content : (rule.content?.value || '');
+      const preview = raw.length > 120 ? raw.slice(0, 120) + '…' : raw;
+
+      card.innerHTML = `
+        <div style="flex:1; overflow:hidden;">
+          <p style="font-size:13px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${preview.replace(/</g,'&lt;')}</p>
+        </div>
+        <div style="display:flex; gap:10px; flex-shrink:0; margin-inline-start:12px;">
+          <button class="btn btn-secondary btn-sm" onclick="editInstruction('${rule._id}')" style="padding:6px 10px;"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-secondary btn-sm" onclick="deleteInstruction('${rule._id}')" style="padding:6px 10px; border-color:rgba(239, 68, 68, 0.3); color:var(--red);"><i class="fas fa-trash"></i></button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  // General instruction modal wiring
+  const instructionForm = document.getElementById('instructionForm');
+  const instructionModal = document.getElementById('instructionModal');
+
+  document.getElementById('addInstructionBtn')?.addEventListener('click', () => {
+    document.getElementById('instructionModalTitle').textContent = currentLanguage === 'ar' ? 'إضافة تعليمات عامة' : 'Add General Instruction';
+    document.getElementById('instructionIdInput').value = '';
+    document.getElementById('instructionContentInput').value = '';
+    instructionModal?.classList.add('active');
+  });
+
+  instructionModal?.querySelectorAll('.modal-close-btn').forEach(btn => {
+    btn.addEventListener('click', () => instructionModal.classList.remove('active'));
+  });
+
+  if (instructionForm) {
+    instructionForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const content = document.getElementById('instructionContentInput').value.trim();
+      if (!content) return;
+      const instrId = document.getElementById('instructionIdInput').value;
+      const url = instrId ? `/api/rules/${instrId}` : '/api/rules';
+      const method = instrId ? 'PUT' : 'POST';
+      try {
+        const payload = instrId ? { content } : { botId: currentBot._id, type: 'general', content };
+        const res = await apiFetch(url, { method, body: JSON.stringify(payload) });
+        if (res && res.success) {
+          instructionModal.classList.remove('active');
+          loadTrainingData();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    });
+  }
+
+  window.editInstruction = function(id) {
+    const rule = generalInstructions.find(r => r._id === id);
+    if (!rule) return;
+    const raw = typeof rule.content === 'string' ? rule.content : (rule.content?.value || '');
+    document.getElementById('instructionModalTitle').textContent = currentLanguage === 'ar' ? 'تعديل التعليمات العامة' : 'Edit General Instruction';
+    document.getElementById('instructionIdInput').value = rule._id;
+    document.getElementById('instructionContentInput').value = raw;
+    instructionModal?.classList.add('active');
+  };
+
+  window.deleteInstruction = async function(id) {
+    if (!confirm(currentLanguage === 'ar' ? 'هل أنت متأكد من حذف هذه التعليمات؟' : 'Are you sure you want to delete this instruction?')) return;
+    try {
+      const res = await apiFetch(`/api/rules/${id}`, { method: 'DELETE' });
+      if (res && res.success) {
+        loadTrainingData();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   // FAQ Forms submission
   const faqForm = document.getElementById('faqForm');
