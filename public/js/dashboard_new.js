@@ -276,6 +276,17 @@
       notify_send_btn: 'Send notification',
       notify_sent_ok: 'Notification delivered successfully!',
       notify_failed: 'Could not send the notification.',
+      admin_subtab_landing_demo: 'Landing Demo Bot',
+      landing_demo_title: 'Landing Page Demo Agent',
+      landing_demo_desc: 'Controls the real AI agent answering visitor questions inside the "Try it live" chat on the marketing landing page.',
+      landing_demo_enable_label: 'Live AI demo enabled',
+      landing_demo_instructions_label: 'Agent instructions',
+      landing_demo_instructions_placeholder: 'Extra tone, boundaries, offers, or knowledge the demo agent must follow.',
+      landing_demo_instructions_hint: 'These instructions are added on top of the built-in platform knowledge base.',
+      landing_demo_save_btn: 'Save settings',
+      landing_demo_saved_ok: 'Saved successfully!',
+      landing_demo_save_failed: 'Could not save the settings.',
+      landing_demo_updated_at: 'Last updated',
       model_select_heading: 'AI Model',
       model_select_desc: 'Choose Auto to let the platform pick the best available model for your plan, or select a specific model from the list enabled for your account.',
       model_select_label: 'Model',
@@ -535,6 +546,17 @@
       notify_send_btn: 'إرسال الإشعار',
       notify_sent_ok: 'تم إرسال الإشعار بنجاح!',
       notify_failed: 'تعذر إرسال الإشعار.',
+      admin_subtab_landing_demo: 'بوت تجربة الصفحة الرئيسية',
+      landing_demo_title: 'وكيل تجربة الصفحة الرئيسية',
+      landing_demo_desc: 'يتحكم في وكيل الذكاء الاصطناعي الحقيقي الذي يجيب على أسئلة الزوار داخل محادثة "جرّبها مباشرة" في الصفحة الرئيسية.',
+      landing_demo_enable_label: 'تفعيل التجربة الحية بالذكاء الاصطناعي',
+      landing_demo_instructions_label: 'تعليمات الوكيل',
+      landing_demo_instructions_placeholder: 'نبرة إضافية، حدود، عروض، أو معلومات يجب على الوكيل الالتزام بها أثناء التجربة.',
+      landing_demo_instructions_hint: 'تُضاف هذه التعليمات فوق قاعدة المعرفة المدمجة الخاصة بالمنصة.',
+      landing_demo_save_btn: 'حفظ الإعدادات',
+      landing_demo_saved_ok: 'تم الحفظ بنجاح!',
+      landing_demo_save_failed: 'تعذر حفظ الإعدادات.',
+      landing_demo_updated_at: 'آخر تحديث',
       model_select_heading: 'موديل الذكاء الاصطناعي',
       model_select_desc: 'اختر "تلقائي" ليختار النظام أفضل موديل متاح لباقتك، أو حدد موديلاً معيناً من القائمة المفعّلة لحسابك.',
       model_select_label: 'الموديل',
@@ -2091,6 +2113,7 @@
     { id: 'adminTabOverviewBtn', sectionId: 'adminSectionOverview', onLoad: loadAdminOverview },
     { id: 'adminTabAuditBtn', sectionId: 'adminSectionAudit', onLoad: () => { loadAdminSessions(); loadAdminAudit(); } },
     { id: 'adminTabNotifyBtn', sectionId: 'adminSectionNotify', onLoad: null },
+    { id: 'adminTabLandingDemoBtn', sectionId: 'adminSectionLandingDemo', onLoad: loadAdminLandingDemo },
   ].map((entry) => ({ ...entry, button: document.getElementById(entry.id), section: document.getElementById(entry.sectionId) }))
     .filter((entry) => entry.button && entry.section);
 
@@ -2388,6 +2411,69 @@
         }
       } catch (e) {
         console.error(e);
+      }
+    });
+  }
+
+  // --- Landing demo agent configuration ---
+  async function loadAdminLandingDemo() {
+    try {
+      const res = await apiFetch('/api/admin/landing-demo');
+      if (!(res && res.success)) return;
+      const cfg = res.data || {};
+      const enabledEl = document.getElementById('landingDemoEnabled');
+      const instructionsEl = document.getElementById('landingDemoInstructions');
+      if (enabledEl) enabledEl.checked = cfg.isEnabled !== false;
+      if (instructionsEl) instructionsEl.value = cfg.instructions || '';
+      const updatedEl = document.getElementById('landingDemoUpdatedAt');
+      if (updatedEl) {
+        const t = translations[currentLanguage] || translations.en;
+        updatedEl.textContent = cfg.updatedAt
+          ? `${t.landing_demo_updated_at}: ${new Date(cfg.updatedAt).toLocaleString()}`
+          : '';
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  const landingDemoSaveBtn = document.getElementById('landingDemoSaveBtn');
+  if (landingDemoSaveBtn) {
+    landingDemoSaveBtn.addEventListener('click', async () => {
+      const t = translations[currentLanguage] || translations.en;
+      const statusEl = document.getElementById('landingDemoStatusMsg');
+      const payload = {
+        isEnabled: document.getElementById('landingDemoEnabled')?.checked !== false,
+        instructions: document.getElementById('landingDemoInstructions')?.value || '',
+      };
+      try {
+        landingDemoSaveBtn.disabled = true;
+        if (statusEl) statusEl.textContent = '';
+        const res = await apiFetch('/api/admin/landing-demo', { method: 'PUT', body: JSON.stringify(payload) });
+        if (res && res.success) {
+          if (statusEl) {
+            statusEl.style.color = 'var(--green)';
+            statusEl.textContent = t.landing_demo_saved_ok;
+          }
+          const updatedEl = document.getElementById('landingDemoUpdatedAt');
+          if (updatedEl && res.data && res.data.updatedAt) {
+            updatedEl.textContent = `${t.landing_demo_updated_at}: ${new Date(res.data.updatedAt).toLocaleString()}`;
+          }
+        } else {
+          if (statusEl) {
+            statusEl.style.color = 'var(--red)';
+            statusEl.textContent = (res && res.message) || t.landing_demo_save_failed;
+          }
+        }
+      } catch (e) {
+        console.error(e);
+        if (statusEl) {
+          statusEl.style.color = 'var(--red)';
+          statusEl.textContent = t.landing_demo_save_failed;
+        }
+      } finally {
+        landingDemoSaveBtn.disabled = false;
+        setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 4000);
       }
     });
   }

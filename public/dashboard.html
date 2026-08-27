@@ -1252,6 +1252,7 @@
             <button id="adminTabOverviewBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-chart-line"></i> <span data-i18n="admin_subtab_overview">System Overview</span></button>
             <button id="adminTabAuditBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-clipboard-list"></i> <span data-i18n="admin_subtab_audit">Audit & Sessions</span></button>
             <button id="adminTabNotifyBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-bullhorn"></i> <span data-i18n="admin_subtab_notify">Notifications</span></button>
+            <button id="adminTabLandingDemoBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-robot"></i> <span data-i18n="admin_subtab_landing_demo">Landing Demo Bot</span></button>
           </div>
 
           <!-- Section 1: Users & Agents Management -->
@@ -1481,6 +1482,28 @@
                 <button type="submit" class="btn btn-primary btn-sm" style="background:var(--orange); color:#000; border-color:var(--orange);" data-i18n="notify_send_btn">Send notification</button>
                 <span id="notifyResultMsg" style="margin-inline-start:12px; font-size:13px;"></span>
               </form>
+            </div>
+          </div>
+
+          <!-- Section 6: Landing page demo agent instructions -->
+          <div id="adminSectionLandingDemo" class="admin-subtab-content" style="display:none;">
+            <div class="glass-card" style="max-width:760px;">
+              <h3 style="font-size:18px; font-weight:700; margin-bottom:6px;"><i class="fas fa-robot" style="color:var(--orange);"></i> <span data-i18n="landing_demo_title">Landing Page Demo Agent</span></h3>
+              <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;" data-i18n="landing_demo_desc">Controls the real AI agent answering visitor questions inside the "Try it live" chat on the marketing landing page.</p>
+              <label style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+                <input id="landingDemoEnabled" type="checkbox" checked />
+                <span data-i18n="landing_demo_enable_label">Live AI demo enabled</span>
+              </label>
+              <div class="form-group">
+                <label data-i18n="landing_demo_instructions_label">Agent instructions</label>
+                <textarea id="landingDemoInstructions" class="form-control" rows="12" maxlength="12000" data-i18n-placeholder="landing_demo_instructions_placeholder" placeholder="Extra tone, boundaries, offers, or knowledge the demo agent must follow."></textarea>
+                <small style="color:var(--text-muted);" data-i18n="landing_demo_instructions_hint">These instructions are added on top of the built-in platform knowledge base.</small>
+              </div>
+              <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                <button id="landingDemoSaveBtn" class="btn btn-primary btn-sm" style="background:var(--orange); color:#000; border-color:var(--orange);" data-i18n="landing_demo_save_btn">Save settings</button>
+                <span id="landingDemoUpdatedAt" style="font-size:12px; color:var(--text-muted);"></span>
+                <span id="landingDemoStatusMsg" style="font-size:13px;"></span>
+              </div>
             </div>
           </div>
         </section>

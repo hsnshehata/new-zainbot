@@ -241,6 +241,35 @@
     confidence: 88
   };
 
+  let demoHistory = [];
+
+  // Real AI answer from the platform. Falls back to canned samples when the
+  // live demo is disabled, rate-limited, or temporarily unavailable.
+  async function requestLiveDemoReply(message) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
+    try {
+      const res = await fetch('/api/landing-demo/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: message,
+          lang: currentLang,
+          history: demoHistory.slice(-8)
+        }),
+        signal: controller.signal
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!data || !data.success || !data.reply) return null;
+      return { reply: data.reply, confidence: data.confidence };
+    } catch (err) {
+      return null;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
   function getAIResponse(message) {
     if (currentLang === 'ar') {
       return { response: 'شكرًا لرسالتك. في المنصة الفعلية يستخدم الوكيل تعليماتك وبياناتك المتاحة لمساعدة العميل.', confidence: 0 };
@@ -312,23 +341,43 @@
 
   let isResponding = false;
 
-  function handleUserMessage(message) {
+  async function handleUserMessage(message) {
     if (isResponding || !message.trim()) return;
     isResponding = true;
 
     appendMessage(message, 'in');
-
-    const aiResult = getAIResponse(message);
-
     showTyping();
-    const delay = 1000 + Math.random() * 800;
 
-    setTimeout(() => {
-      removeTyping();
+    const startedAt = Date.now();
+    let liveResult = null;
+    try {
+      liveResult = await requestLiveDemoReply(message);
+    } catch (err) {
+      liveResult = null;
+    }
+
+    // Keep the typing indicator on screen briefly for a natural rhythm.
+    const minDelay = 900;
+    const elapsed = Date.now() - startedAt;
+    if (elapsed < minDelay) {
+      await new Promise(resolve => setTimeout(resolve, minDelay - elapsed));
+    }
+
+    removeTyping();
+
+    if (liveResult && liveResult.reply) {
+      appendMessage(liveResult.reply, 'out');
+      updateConfidence(liveResult.confidence || 96);
+      demoHistory.push({ role: 'user', content: message });
+      demoHistory.push({ role: 'assistant', content: liveResult.reply });
+      if (demoHistory.length > 12) demoHistory = demoHistory.slice(-12);
+    } else {
+      const aiResult = getAIResponse(message);
       appendMessage(aiResult.response, 'out');
       updateConfidence(aiResult.confidence);
-      isResponding = false;
-    }, delay);
+    }
+
+    isResponding = false;
   }
 
   // Prompt chips
@@ -419,9 +468,9 @@
       cta_desc: 'Build your workspace, connect the channels you use, and start with the free plan. No credit card required.',
       demo_eyebrow: 'Try it live',
       demo_title: 'Meet your new <span class="gradient-text">AI teammate</span>',
-      demo_desc: 'Try a short example conversation. This preview does not use customer data.',
+      demo_desc: 'Chat with a real AI agent that knows the platform inside out. This demo never uses customer data.',
       demo_bot_name: 'ZainBot Assistant',
-      demo_bot_status: 'Preview mode',
+      demo_bot_status: 'Live AI',
       demo_conf_label: 'Reply context',
       demo_welcome_msg: 'Welcome. This is a safe preview of how an agent can guide a customer conversation.',
       demo_chip1: '<i class="fas fa-box"></i> Ask about an order',
@@ -593,9 +642,9 @@
       cta_desc: 'أنشئ مساحة عملك واربط القنوات التي تستخدمها وابدأ بالخطة المجانية دون بطاقة دفع.',
       demo_eyebrow: 'جرّب المثال',
       demo_title: 'تعرّف على <span class="gradient-text">زميلك الذكي</span>',
-      demo_desc: 'جرّب محادثة قصيرة. هذا العرض لا يستخدم بيانات العملاء.',
+      demo_desc: 'تحدث مع وكيل ذكاء اصطناعي حقيقي يعرف كل تفاصيل المنصة. هذه التجربة لا تستخدم بيانات العملاء.',
       demo_bot_name: 'مساعد زين بوت',
-      demo_bot_status: 'وضع المعاينة',
+      demo_bot_status: 'ذكاء اصطناعي مباشر',
       demo_conf_label: 'سياق الرد',
       demo_welcome_msg: 'مرحبًا. هذه معاينة آمنة لكيفية إرشاد الوكيل الذكي لمحادثة العميل.',
       demo_chip1: '<i class="fas fa-box"></i> اسأل عن طلب',

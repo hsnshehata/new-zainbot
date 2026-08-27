@@ -25,6 +25,8 @@ const storesRoutes = require('./routes/stores');
 const productsRoutes = require('./routes/products');
 const integrationsRoutes = require('./routes/integrations');
 const adminKeysRoutes = require('./routes/adminKeys');
+const landingDemoRoutes = require('./routes/landingDemo');
+const adminLandingDemoRoutes = require('./routes/adminLandingDemo');
 const {
   createAdminImpersonationRouter,
 } = require('./routes/adminImpersonation');
@@ -379,6 +381,8 @@ app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/integrations', integrationsRoutes);
 app.use('/api/admin/keys', adminKeysRoutes);
 app.use('/api/admin/system', require('./routes/adminSystem'));
+app.use('/api/admin/landing-demo', adminLandingDemoRoutes);
+app.use('/api/landing-demo', landingDemoRoutes);
 app.use('/api/ai', require('./routes/aiModels'));
 app.use(
   '/api/admin/impersonation',
