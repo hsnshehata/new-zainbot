@@ -1,9 +1,16 @@
 const express = require('express');
 const authenticate = require('../middleware/authenticate');
 const logger = require('../logger');
+const AiTierEntitlement = require('../models/AiTierEntitlement');
+const AiUserOverride = require('../models/AiUserOverride');
+const AiModelCatalog = require('../models/AiModelCatalog');
 const { createAiModelAccessService } = require('../services/aiModelAccessService');
 
-const aiModelAccess = createAiModelAccessService({});
+const aiModelAccess = createAiModelAccessService({
+  AiTierEntitlement,
+  AiUserOverride,
+  AiModelCatalog,
+});
 
 const router = express.Router();
 

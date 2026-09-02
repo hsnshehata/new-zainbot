@@ -1346,7 +1346,7 @@
                 </div>
                 <div class="form-group">
                   <label data-i18n="label_backup_key">API Key</label>
-                  <input type="password" id="backupApiKey" class="form-control" placeholder="sk-..." />
+                  <input type="password" id="backupApiKey" class="form-control" placeholder="sk-..." autocomplete="off" />
                 </div>
               </div>
               <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
@@ -1476,7 +1476,7 @@
                   </div>
                   <div class="form-group">
                     <label data-i18n="admin_label_key">API Key</label>
-                    <input type="password" id="adminKeySecret" class="form-control" placeholder="sk-..." required />
+                    <input type="password" id="adminKeySecret" class="form-control" placeholder="sk-..." required autocomplete="off" />
                   </div>
                   <div class="form-group">
                     <label data-i18n="admin_label_model">Default Model</label>
@@ -1711,7 +1711,7 @@
           <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
             <div class="form-group"><label data-i18n="admin_username">Username</label><input id="adminUserUsername" class="form-control" required minlength="3" maxlength="20" /></div>
             <div class="form-group"><label data-i18n="admin_email">Email</label><input id="adminUserEmail" class="form-control" required type="email" /></div>
-            <div class="form-group"><label data-i18n="admin_whatsapp">WhatsApp</label><input id="adminUserWhatsapp" class="form-control" /></div>
+            <div class="form-group"><label data-i18n="admin_whatsapp">WhatsApp</label><input id="adminUserWhatsapp" class="form-control" autocomplete="tel" /></div>
             <div class="form-group"><label data-i18n="admin_role">Role</label><select id="adminUserRole" class="form-control"><option value="user" data-i18n="admin_user">User</option><option value="superadmin" data-i18n="admin_superadmin">Super admin</option></select></div>
             <div class="form-group"><label data-i18n="admin_subscription">Subscription</label><select id="adminUserSubscriptionType" class="form-control"><option value="free" data-i18n="admin_free">Free</option><option value="monthly" data-i18n="admin_monthly">Monthly</option><option value="yearly" data-i18n="admin_yearly">Yearly</option></select></div>
             <div class="form-group"><label data-i18n="admin_plan_tier">Plan tier</label><select id="adminUserTier" class="form-control"><option value="free" data-i18n="admin_free">Free</option><option value="growth_1k">Growth 1K</option><option value="growth_10k">Growth 10K</option><option value="growth_50k">Growth 50K</option><option value="unlimited">Unlimited</option></select></div>

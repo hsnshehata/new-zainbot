@@ -30,7 +30,15 @@ const createBotSchema = Joi.object({
   customInstructions: Joi.string().max(12_000).allow('', null),
   objectives: Joi.array().items(Joi.string().max(300)).max(20).default([]),
   handoffKeywords: Joi.array().items(Joi.string().max(100)).max(50).default([]),
-  autoReplyEnabled: Joi.boolean().default(true)
+  autoReplyEnabled: Joi.boolean().default(true),
+  agentTools: Joi.object().unknown(true).optional(),
+  agentSkills: Joi.array().items(Joi.alternatives().try(
+    Joi.string().max(100),
+    Joi.object({
+      skillKey: Joi.string().required(),
+      enabled: Joi.boolean().optional()
+    }).unknown(true)
+  )).optional()
 });
 
 const botProviderEnum = ['openai', 'gemini', 'anthropic', 'openrouter', 'custom'];
@@ -51,7 +59,13 @@ const updateBotSchema = Joi.object({
   handoffKeywords: Joi.array().items(Joi.string().max(100)).max(50).optional(),
   autoReplyEnabled: Joi.boolean().optional(),
   agentTools: Joi.object().unknown(true).optional(),
-  agentSkills: Joi.array().items(Joi.string().max(100)).optional(),
+  agentSkills: Joi.array().items(Joi.alternatives().try(
+    Joi.string().max(100),
+    Joi.object({
+      skillKey: Joi.string().required(),
+      enabled: Joi.boolean().optional()
+    }).unknown(true)
+  )).optional(),
   isActive: Joi.boolean().optional(),
   autoStopDate: Joi.date().optional(),
   userApiKey: Joi.string().max(500).allow('', null),

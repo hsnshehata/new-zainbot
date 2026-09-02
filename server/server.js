@@ -155,7 +155,8 @@ app.use(helmet({
         'data:',
         'https://cdnjs.cloudflare.com',
         'https://fonts.gstatic.com',
-        'https://r2cdn.perplexity.ai'
+        'https://r2cdn.perplexity.ai',
+        'https://frontend-cdn.perplexity.ai'
       ],
       imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
       connectSrc: ["'self'", 'https:', 'wss:'],
@@ -199,7 +200,7 @@ app.use((req, res, next) => {
         "default-src 'self'",
         "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
         "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com",
-        "font-src 'self' data: https://cdnjs.cloudflare.com https://fonts.gstatic.com",
+        "font-src 'self' data: https://cdnjs.cloudflare.com https://fonts.gstatic.com https://r2cdn.perplexity.ai https://frontend-cdn.perplexity.ai",
         "img-src 'self' data: blob: https:",
         "connect-src 'self' https: wss:",
         "object-src 'none'",

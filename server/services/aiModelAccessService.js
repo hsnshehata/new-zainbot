@@ -23,10 +23,14 @@ function isActiveOverride(override, now = new Date()) {
   );
 }
 
+const AiTierEntitlementModel = require('../models/AiTierEntitlement');
+const AiUserOverrideModel = require('../models/AiUserOverride');
+const AiModelCatalogModel = require('../models/AiModelCatalog');
+
 function createAiModelAccessService(deps = {}) {
-  const AiTierEntitlement = deps.AiTierEntitlement;
-  const AiUserOverride = deps.AiUserOverride;
-  const AiModelCatalog = deps.AiModelCatalog;
+  const AiTierEntitlement = deps.AiTierEntitlement || AiTierEntitlementModel;
+  const AiUserOverride = deps.AiUserOverride || AiUserOverrideModel;
+  const AiModelCatalog = deps.AiModelCatalog || AiModelCatalogModel;
 
   async function loadContext(user) {
     const tier = String(user?.subscriptionTier || 'free');
