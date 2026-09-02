@@ -67,9 +67,10 @@ try {
 
       const resolvedTitleColor = settings.titleColor || settings.colors?.titleColor || '#ffffff';
       const resolvedHeaderBg = settings?.colors?.header || '#0F172A';
-      const resolvedChatAreaBg = settings?.colors?.chatAreaBackground || '#0A0F1D';
-      const resolvedContainerBg = settings?.colors?.containerBackgroundColor || '#0F172A';
-      const resolvedOuterBg = settings?.colors?.outerBackgroundColor || '#0A0F1D';
+      const userCustomBg = settings?.colors?.outerBackgroundColor || settings?.colors?.chatAreaBackground || settings?.colors?.containerBackgroundColor || '#0A0F1D';
+      const resolvedChatAreaBg = settings?.colors?.chatAreaBackground || userCustomBg;
+      const resolvedContainerBg = settings?.colors?.containerBackgroundColor || userCustomBg;
+      const resolvedOuterBg = settings?.colors?.outerBackgroundColor || userCustomBg;
       const resolvedButtonBg = settings?.colors?.sendButtonColor || settings?.colors?.button || '#06B6D4';
       const resolvedUserBg = settings?.colors?.userMessageBackground || '#06B6D4';
       const resolvedUserText = settings?.colors?.userMessageTextColor || '#ffffff';
@@ -174,16 +175,19 @@ try {
 
     try {
       const cachePageKey = 'publicChatPage';
-      const cachedSettings = window.readPageCache ? window.readPageCache(cachePageKey, linkId, 5 * 60 * 1000) : null;
-      const fetchSettings = () => window.handleApiRequest(`/api/chat-page/${linkId}`);
+      const cachedSettings = window.readPageCache ? window.readPageCache(cachePageKey, linkId, 60 * 1000) : null;
+      const fetchSettings = () => window.handleApiRequest(`/api/chat-page/${linkId}?_t=${Date.now()}`);
 
       if (cachedSettings) {
         console.log('⚡ استخدام الكاش لإعدادات صفحة الدردشة');
         applySettings(cachedSettings);
         fetchSettings()
           .then((fresh) => {
-            if (fresh && window.writePageCache) {
-              window.writePageCache(cachePageKey, linkId, fresh);
+            if (fresh) {
+              applySettings(fresh);
+              if (window.writePageCache) {
+                window.writePageCache(cachePageKey, linkId, fresh);
+              }
             }
           })
           .catch((err) => {

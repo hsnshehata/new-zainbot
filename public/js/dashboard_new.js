@@ -2503,8 +2503,7 @@
         }
       }
 
-      const questionsText = document.getElementById('chatPageSuggestedQuestions').value;
-      const questionsList = questionsText.split('\n').map(s => s.trim()).filter(Boolean);
+      const chosenBg = document.getElementById('chatColorBg').value;
 
       const payload = {
         title: document.getElementById('chatPageTitleInput').value.trim(),
@@ -2513,9 +2512,9 @@
         logoUrl: finalLogoUrl,
         colors: {
           header: document.getElementById('chatColorHeader').value,
-          outerBackgroundColor: document.getElementById('chatColorBg').value,
-          containerBackgroundColor: document.getElementById('chatColorBg').value,
-          chatAreaBackground: '#0B1329',
+          outerBackgroundColor: chosenBg,
+          containerBackgroundColor: chosenBg,
+          chatAreaBackground: chosenBg,
           botMessageBackground: document.getElementById('chatColorBotBubble').value,
           botMessageTextColor: '#ffffff',
           userMessageBackground: document.getElementById('chatColorUserBubble').value,
@@ -2536,6 +2535,13 @@
         });
 
         if (res && res.success) {
+          // Invalidate client caches
+          try {
+            if (window.clearPageCache) window.clearPageCache('publicChatPage');
+            localStorage.removeItem('publicChatPage_' + payload.linkId);
+            localStorage.removeItem('publicChatPage_' + chatPageId);
+          } catch (cErr) {}
+
           alert(t.chat_page_saved_ok || 'Chat page settings saved successfully!');
           document.getElementById('chatPageModal')?.classList.remove('active');
           if (res.link) {
