@@ -436,7 +436,21 @@
       btn_save_chat_page: 'Save Settings',
       chat_page_saved_ok: 'Chat page settings saved successfully!',
       link_copied_ok: 'Link copied to clipboard!',
-      code_copied_ok: 'Widget code copied to clipboard!'
+      code_copied_ok: 'Widget code copied to clipboard!',
+      label_preset_themes: 'Choose Default Theme',
+      preset_cyber_dark: 'Cyber Dark',
+      preset_cyber_dark_desc: 'Neon Modern',
+      preset_emerald_clean: 'Emerald Clean',
+      preset_emerald_clean_desc: 'Luxury Light',
+      preset_royal_purple: 'Royal Violet',
+      preset_royal_purple_desc: 'Velvet Dark',
+      hint_customize_colors: 'Fully Customizable',
+      preview_live_title: 'Live Interactive Preview',
+      badge_realtime: 'Real-time',
+      preview_status_online: 'Online · AI Sales Ready',
+      preview_input_placeholder: 'Type your message here...',
+      free_plan_tools_limit_badge: '(Free Plan Limit: 2 tools max)',
+      free_plan_skills_limit_badge: '(Free Plan Limit: 2 skills max)'
     },
     ar: {
       menu_overview: 'نظرة عامة',
@@ -848,7 +862,21 @@
       btn_save_chat_page: 'حفظ إعدادات الدردشة',
       chat_page_saved_ok: 'تم حفظ إعدادات صفحة الدردشة بنجاح!',
       link_copied_ok: 'تم نسخ الرابط إلى الحافظة!',
-      code_copied_ok: 'تم نسخ كود التضمين إلى الحافظة!'
+      code_copied_ok: 'تم نسخ كود التضمين إلى الحافظة!',
+      label_preset_themes: 'اختر نموذجاً افتراضياً',
+      preset_cyber_dark: 'النيون الليلي الحديث',
+      preset_cyber_dark_desc: 'تصميم داكن نيون',
+      preset_emerald_clean: 'الأخضر الزمردي',
+      preset_emerald_clean_desc: 'فاتح عصري فاخر',
+      preset_royal_purple: 'الأرجواني الملكي',
+      preset_royal_purple_desc: 'تصميم داكن ملكي',
+      hint_customize_colors: 'قابل للتعديل بحرية',
+      preview_live_title: 'معاينة حية تفاعلية',
+      badge_realtime: 'مباشر',
+      preview_status_online: 'نشط · جاهز للرد والمبيعات',
+      preview_input_placeholder: 'اكتب رسالتك هنا...',
+      free_plan_tools_limit_badge: '(الحد الأقصى للباقة المجانية: أداتان فقط)',
+      free_plan_skills_limit_badge: '(الحد الأقصى للباقة المجانية: مهارتان فقط)'
     }
   };
 
@@ -2105,7 +2133,155 @@
     });
   }
 
-  // 5.5 DEDICATED WEB CHAT PAGE CUSTOMIZER
+  // 5.5 DEDICATED WEB CHAT PAGE CUSTOMIZER & LIVE PREVIEW
+  const THEME_PRESETS = {
+    cyber_dark: {
+      header: '#0F172A',
+      outerBackgroundColor: '#0A0F1D',
+      containerBackgroundColor: '#0F172A',
+      chatAreaBackground: '#0B1329',
+      botMessageBackground: '#1E293B',
+      botMessageTextColor: '#FFFFFF',
+      userMessageBackground: '#06B6D4',
+      userMessageTextColor: '#FFFFFF',
+      sendButtonColor: '#06B6D4',
+      button: '#06B6D4',
+      titleColor: '#FFFFFF',
+    },
+    emerald_clean: {
+      header: '#065F46',
+      outerBackgroundColor: '#F8FAFC',
+      containerBackgroundColor: '#FFFFFF',
+      chatAreaBackground: '#F1F5F9',
+      botMessageBackground: '#E2E8F0',
+      botMessageTextColor: '#0F172A',
+      userMessageBackground: '#059669',
+      userMessageTextColor: '#FFFFFF',
+      sendButtonColor: '#059669',
+      button: '#059669',
+      titleColor: '#FFFFFF',
+    },
+    royal_purple: {
+      header: '#1E1145',
+      outerBackgroundColor: '#0F0728',
+      containerBackgroundColor: '#180D38',
+      chatAreaBackground: '#130A2A',
+      botMessageBackground: '#2A1659',
+      botMessageTextColor: '#FFFFFF',
+      userMessageBackground: '#8B5CF6',
+      userMessageTextColor: '#FFFFFF',
+      sendButtonColor: '#8B5CF6',
+      button: '#8B5CF6',
+      titleColor: '#FFFFFF',
+    }
+  };
+
+  window.applyThemePreset = function(presetKey) {
+    const preset = THEME_PRESETS[presetKey];
+    if (!preset) return;
+
+    document.querySelectorAll('.theme-preset-card').forEach(card => {
+      const isActive = card.getAttribute('data-preset') === presetKey;
+      card.classList.toggle('active', isActive);
+      card.style.borderColor = isActive ? 'var(--cyan)' : 'var(--glass-border)';
+    });
+
+    document.getElementById('chatColorHeader').value = preset.header;
+    document.getElementById('chatColorBg').value = preset.outerBackgroundColor;
+    document.getElementById('chatColorBotBubble').value = preset.botMessageBackground;
+    document.getElementById('chatColorUserBubble').value = preset.userMessageBackground;
+    document.getElementById('chatColorButton').value = preset.sendButtonColor;
+    document.getElementById('chatColorTitle').value = preset.titleColor;
+
+    window.updateLivePreview();
+  };
+
+  window.updateLivePreview = function() {
+    const title = document.getElementById('chatPageTitleInput')?.value.trim() || 'ZainBot AI Sales Agent';
+    const headerColor = document.getElementById('chatColorHeader')?.value || '#0f172a';
+    const bgColor = document.getElementById('chatColorBg')?.value || '#0a0f1d';
+    const botBubbleColor = document.getElementById('chatColorBotBubble')?.value || '#1e293b';
+    const userBubbleColor = document.getElementById('chatColorUserBubble')?.value || '#06b6d4';
+    const buttonColor = document.getElementById('chatColorButton')?.value || '#06b6d4';
+    const titleColor = document.getElementById('chatColorTitle')?.value || '#ffffff';
+    const questionsText = document.getElementById('chatPageSuggestedQuestions')?.value || '';
+    const questionsEnabled = document.getElementById('chatPageSuggestedEnabled')?.checked !== false;
+    const imageUploadEnabled = document.getElementById('chatPageImageUploadEnabled')?.checked !== false;
+
+    // Update Header
+    const previewHeader = document.getElementById('previewHeader');
+    if (previewHeader) previewHeader.style.backgroundColor = headerColor;
+
+    const previewTitle = document.getElementById('previewChatTitle');
+    if (previewTitle) {
+      previewTitle.textContent = title;
+      previewTitle.style.color = titleColor;
+    }
+
+    // Update Container & Backgrounds
+    const previewContainer = document.getElementById('livePreviewContainer');
+    if (previewContainer) previewContainer.style.backgroundColor = bgColor;
+
+    const previewChatArea = document.getElementById('previewChatArea');
+    if (previewChatArea) previewChatArea.style.backgroundColor = bgColor;
+
+    const previewFooter = document.getElementById('previewInputFooter');
+    if (previewFooter) previewFooter.style.backgroundColor = headerColor;
+
+    // Update Bubbles
+    const isLightBotBubble = botBubbleColor.toLowerCase() === '#e2e8f0' || botBubbleColor.toLowerCase() === '#ffffff' || botBubbleColor.toLowerCase() === '#f8fafc';
+    const botTextColor = isLightBotBubble ? '#0F172A' : '#FFFFFF';
+
+    const b1 = document.getElementById('previewBotBubble1');
+    if (b1) {
+      b1.style.backgroundColor = botBubbleColor;
+      b1.style.color = botTextColor;
+    }
+    const b2 = document.getElementById('previewBotBubble2');
+    if (b2) {
+      b2.style.backgroundColor = botBubbleColor;
+      b2.style.color = botTextColor;
+    }
+
+    const ub = document.getElementById('previewUserBubble');
+    if (ub) {
+      ub.style.backgroundColor = userBubbleColor;
+      ub.style.color = '#FFFFFF';
+    }
+
+    // Update Button & Image Toggle
+    const sendBtn = document.getElementById('previewSendBtn');
+    if (sendBtn) sendBtn.style.backgroundColor = buttonColor;
+
+    const imgBtn = document.getElementById('previewImageBtn');
+    if (imgBtn) imgBtn.style.display = imageUploadEnabled ? 'block' : 'none';
+
+    // Update Questions Chips
+    const questionsBar = document.getElementById('previewQuestionsBar');
+    if (questionsBar) {
+      if (questionsEnabled) {
+        questionsBar.style.display = 'flex';
+        questionsBar.innerHTML = '';
+        const questionsList = questionsText.split('\n').map(s => s.trim()).filter(Boolean);
+        const fallbackList = ['ما هي المنتجات والعروض المتوفرة؟', 'كيف يمكنني حجز موعد؟'];
+        const displayList = questionsList.length > 0 ? questionsList : fallbackList;
+
+        displayList.slice(0, 3).forEach(q => {
+          const chip = document.createElement('div');
+          chip.style.cssText = `padding:4px 10px; border-radius:14px; background:rgba(255,255,255,0.06); border:1px solid ${buttonColor}; color:#fff; font-size:10px; white-space:nowrap; cursor:pointer;`;
+          chip.textContent = q;
+          chip.onclick = () => {
+            const userB = document.getElementById('previewUserBubble');
+            if (userB) userB.textContent = q;
+          };
+          questionsBar.appendChild(chip);
+        });
+      } else {
+        questionsBar.style.display = 'none';
+      }
+    }
+  };
+
   window.openChatPageModal = async function(bot = null) {
     const targetBot = bot || currentBot;
     if (!targetBot) return;
@@ -2148,6 +2324,9 @@
 
         const widgetSnippet = `<script src="${window.location.origin}/widget.js" data-bot-id="${targetBot._id}"></script>`;
         document.getElementById('chatPageWidgetCode').value = widgetSnippet;
+
+        // Trigger Live Preview Update
+        window.updateLivePreview();
       }
     } catch (e) {
       console.error('Error fetching chat page:', e);
@@ -2732,6 +2911,63 @@
     renderAgents();
   }
 
+  function enforceToolAndSkillTierLimits() {
+    const isFree = !currentUser?.subscriptionTier || currentUser.subscriptionTier === 'free';
+    if (!isFree) return;
+
+    // 1. Tool Checkboxes Limit (Max 2 for free)
+    const toolCheckboxes = [
+      document.getElementById('agentToolBooking'),
+      document.getElementById('agentToolOrders'),
+      document.getElementById('agentToolWhatsapp'),
+      document.getElementById('agentToolTelegram')
+    ].filter(Boolean);
+
+    const checkedTools = toolCheckboxes.filter(chk => chk.checked);
+    const toolsMaxReached = checkedTools.length >= 2;
+
+    toolCheckboxes.forEach(chk => {
+      if (!chk.checked) {
+        chk.disabled = toolsMaxReached;
+        if (chk.parentElement) {
+          chk.parentElement.style.opacity = toolsMaxReached ? '0.45' : '1';
+          chk.parentElement.style.cursor = toolsMaxReached ? 'not-allowed' : 'pointer';
+          chk.parentElement.title = toolsMaxReached ? (currentLanguage === 'ar' ? 'الحد الأقصى في الباقة المجانية: أداتان فقط' : 'Free plan limit: 2 tools max') : '';
+        }
+      } else {
+        chk.disabled = false;
+        if (chk.parentElement) {
+          chk.parentElement.style.opacity = '1';
+          chk.parentElement.style.cursor = 'pointer';
+          chk.parentElement.title = '';
+        }
+      }
+    });
+
+    // 2. Skill Checkboxes Limit (Max 2 for free)
+    const skillCheckboxes = Array.from(document.querySelectorAll('input[name="agentSkill"]'));
+    const checkedSkills = skillCheckboxes.filter(chk => chk.checked);
+    const skillsMaxReached = checkedSkills.length >= 2;
+
+    skillCheckboxes.forEach(chk => {
+      if (!chk.checked) {
+        chk.disabled = skillsMaxReached;
+        if (chk.parentElement) {
+          chk.parentElement.style.opacity = skillsMaxReached ? '0.45' : '1';
+          chk.parentElement.style.cursor = skillsMaxReached ? 'not-allowed' : 'pointer';
+          chk.parentElement.title = skillsMaxReached ? (currentLanguage === 'ar' ? 'الحد الأقصى في الباقة المجانية: مهارتان فقط' : 'Free plan limit: 2 skills max') : '';
+        }
+      } else {
+        chk.disabled = false;
+        if (chk.parentElement) {
+          chk.parentElement.style.opacity = '1';
+          chk.parentElement.style.cursor = 'pointer';
+          chk.parentElement.title = '';
+        }
+      }
+    });
+  }
+
   const agentModal = document.getElementById('agentModal');
   function openAgentModal(bot = null) {
     const form = document.getElementById('agentForm');
@@ -2739,6 +2975,9 @@
     form.reset();
     document.getElementById('agentId').value = bot?._id || '';
     document.getElementById('agentModalTitle').textContent = bot ? (currentLanguage === 'ar' ? 'تعديل الوكيل' : 'Edit agent') : (currentLanguage === 'ar' ? 'إنشاء وكيل' : 'Create agent');
+    
+    const isFree = !currentUser?.subscriptionTier || currentUser.subscriptionTier === 'free';
+
     if (bot) {
       document.getElementById('agentName').value = bot.name || '';
       document.getElementById('agentType').value = bot.agentType || 'customer_support';
@@ -2765,15 +3004,37 @@
       if (toolTg) toolTg.checked = tools.telegramNotificationTool?.enabled !== false;
 
       // Skills checkboxes population
-      const skillsArray = Array.isArray(bot.agentSkills) ? bot.agentSkills.map(s => typeof s === 'string' ? s : s.skillKey) : ['sales_consultant', 'appointment_scheduler', 'order_manager', 'support_specialist', 'winback_agent'];
+      const skillsArray = Array.isArray(bot.agentSkills) ? bot.agentSkills.map(s => typeof s === 'string' ? s : s.skillKey) : ['sales_consultant', 'appointment_scheduler'];
       document.querySelectorAll('input[name="agentSkill"]').forEach(chk => {
         chk.checked = skillsArray.includes(chk.value);
       });
     } else {
-      document.querySelectorAll('input[name="agentSkill"]').forEach(chk => { chk.checked = true; });
+      // Default for new agent
+      const toolBooking = document.getElementById('agentToolBooking');
+      if (toolBooking) toolBooking.checked = true;
+      const toolOrders = document.getElementById('agentToolOrders');
+      if (toolOrders) toolOrders.checked = true;
+      const toolWa = document.getElementById('agentToolWhatsapp');
+      if (toolWa) toolWa.checked = !isFree;
+      const toolTg = document.getElementById('agentToolTelegram');
+      if (toolTg) toolTg.checked = !isFree;
+
+      document.querySelectorAll('input[name="agentSkill"]').forEach((chk, idx) => {
+        chk.checked = isFree ? (idx < 2) : true;
+      });
     }
+
+    enforceToolAndSkillTierLimits();
     agentModal.classList.add('active');
   }
+
+  // Bind change listeners to lock/unlock on user click
+  ['agentToolBooking', 'agentToolOrders', 'agentToolWhatsapp', 'agentToolTelegram'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', enforceToolAndSkillTierLimits);
+  });
+  document.querySelectorAll('input[name="agentSkill"]').forEach(chk => {
+    chk.addEventListener('change', enforceToolAndSkillTierLimits);
+  });
 
   document.getElementById('createAgentBtn')?.addEventListener('click', () => openAgentModal());
   document.querySelectorAll('.agent-modal-close').forEach((button) => button.addEventListener('click', () => agentModal?.classList.remove('active')));
