@@ -2503,7 +2503,9 @@
         }
       }
 
-      const chosenBg = document.getElementById('chatColorBg').value;
+      const chosenBg = document.getElementById('chatColorBg')?.value || '#0a0f1d';
+      const questionsText = document.getElementById('chatPageSuggestedQuestions')?.value || '';
+      const questionsList = questionsText.split('\n').map(s => s.trim()).filter(Boolean);
 
       const payload = {
         title: document.getElementById('chatPageTitleInput').value.trim(),
