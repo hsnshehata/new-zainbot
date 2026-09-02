@@ -2059,6 +2059,27 @@
                 </div>
               </div>
 
+              <!-- Chat Page Logo / Avatar Upload Section -->
+              <div style="background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+                <label style="font-weight:700; font-size:12px; margin-bottom:8px; display:block;" data-i18n="label_chat_page_logo">Chat Page Logo / Avatar</label>
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                  <div id="chatPageLogoPreviewContainer" style="width:42px; height:42px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid var(--cyan); display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; flex-shrink:0;">
+                    <img id="chatPageLogoImg" src="" alt="Avatar" style="width:100%; height:100%; object-fit:cover; display:none;" />
+                    <i id="chatPageDefaultLogoIcon" class="fas fa-robot" style="color:var(--cyan); font-size:18px;"></i>
+                  </div>
+                  <div style="flex:1; min-width:180px;">
+                    <div style="display:flex; gap:8px; align-items:center;">
+                      <label class="btn btn-secondary btn-sm" style="cursor:pointer; margin:0; font-size:11px; padding:4px 10px;">
+                        <i class="fas fa-upload"></i> <span data-i18n="btn_upload_logo">Upload Logo</span>
+                        <input type="file" id="chatPageLogoInput" accept="image/png,image/jpeg,image/webp" style="display:none;" onchange="handleChatLogoChange(event)" />
+                      </label>
+                      <button type="button" id="removeChatLogoBtn" class="btn btn-secondary btn-sm" style="color:#ef4444; display:none; font-size:11px; padding:4px 10px;" onclick="removeChatLogo()"><i class="fas fa-trash"></i> <span data-i18n="btn_remove_logo">Remove</span></button>
+                    </div>
+                    <small style="font-size:10px; color:var(--text-muted); display:block; margin-top:3px;" data-i18n="hint_logo_format">PNG or JPG up to 2MB</small>
+                  </div>
+                </div>
+              </div>
+
               <!-- General Info -->
               <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
                 <div class="form-group">
@@ -2145,8 +2166,9 @@
                 
                 <!-- Mockup Header -->
                 <div id="previewHeader" style="padding:12px 16px; background:#0F172A; display:flex; align-items:center; gap:10px; border-bottom:1px solid rgba(255,255,255,0.08); transition:0.25s ease;">
-                  <div style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#06b6d4,#3b82f6); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; box-shadow:0 2px 8px rgba(6,182,212,0.4);">
-                    <i class="fas fa-robot"></i>
+                  <div id="previewAvatarContainer" style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#06b6d4,#3b82f6); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; box-shadow:0 2px 8px rgba(6,182,212,0.4); overflow:hidden; flex-shrink:0;">
+                    <img id="previewLogoImg" src="" alt="Avatar" style="width:100%; height:100%; object-fit:cover; display:none;" />
+                    <i id="previewDefaultIcon" class="fas fa-robot"></i>
                   </div>
                   <div style="flex:1; min-width:0;">
                     <div id="previewChatTitle" style="font-weight:700; font-size:13px; color:#ffffff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">ZainBot AI Sales Agent</div>

@@ -450,7 +450,11 @@
       preview_status_online: 'Online · AI Sales Ready',
       preview_input_placeholder: 'Type your message here...',
       free_plan_tools_limit_badge: '(Free Plan Limit: 2 tools max)',
-      free_plan_skills_limit_badge: '(Free Plan Limit: 2 skills max)'
+      free_plan_skills_limit_badge: '(Free Plan Limit: 2 skills max)',
+      label_chat_page_logo: 'Chat Page Logo / Avatar',
+      btn_upload_logo: 'Upload Logo',
+      btn_remove_logo: 'Remove',
+      hint_logo_format: 'PNG or JPG up to 2MB'
     },
     ar: {
       menu_overview: 'نظرة عامة',
@@ -876,7 +880,11 @@
       preview_status_online: 'نشط · جاهز للرد والمبيعات',
       preview_input_placeholder: 'اكتب رسالتك هنا...',
       free_plan_tools_limit_badge: '(الحد الأقصى للباقة المجانية: أداتان فقط)',
-      free_plan_skills_limit_badge: '(الحد الأقصى للباقة المجانية: مهارتان فقط)'
+      free_plan_skills_limit_badge: '(الحد الأقصى للباقة المجانية: مهارتان فقط)',
+      label_chat_page_logo: 'شعار وأيقونة صفحة الدردشة',
+      btn_upload_logo: 'رفع شعار',
+      btn_remove_logo: 'إزالة',
+      hint_logo_format: 'PNG أو JPG حتى 2 ميجابايت'
     }
   };
 
@@ -2176,6 +2184,49 @@
     }
   };
 
+  let currentChatLogoUrl = '';
+  let chatLogoFileToUpload = null;
+
+  window.handleChatLogoChange = function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    chatLogoFileToUpload = file;
+    currentChatLogoUrl = URL.createObjectURL(file);
+
+    const logoImg = document.getElementById('chatPageLogoImg');
+    const defaultIcon = document.getElementById('chatPageDefaultLogoIcon');
+    const removeBtn = document.getElementById('removeChatLogoBtn');
+
+    if (logoImg) {
+      logoImg.src = currentChatLogoUrl;
+      logoImg.style.display = 'block';
+    }
+    if (defaultIcon) defaultIcon.style.display = 'none';
+    if (removeBtn) removeBtn.style.display = 'inline-flex';
+
+    window.updateLivePreview();
+  };
+
+  window.removeChatLogo = function() {
+    chatLogoFileToUpload = null;
+    currentChatLogoUrl = '';
+    const input = document.getElementById('chatPageLogoInput');
+    if (input) input.value = '';
+
+    const logoImg = document.getElementById('chatPageLogoImg');
+    const defaultIcon = document.getElementById('chatPageDefaultLogoIcon');
+    const removeBtn = document.getElementById('removeChatLogoBtn');
+
+    if (logoImg) {
+      logoImg.src = '';
+      logoImg.style.display = 'none';
+    }
+    if (defaultIcon) defaultIcon.style.display = 'block';
+    if (removeBtn) removeBtn.style.display = 'none';
+
+    window.updateLivePreview();
+  };
+
   window.applyThemePreset = function(presetKey) {
     const preset = THEME_PRESETS[presetKey];
     if (!preset) return;
@@ -2208,9 +2259,25 @@
     const questionsEnabled = document.getElementById('chatPageSuggestedEnabled')?.checked !== false;
     const imageUploadEnabled = document.getElementById('chatPageImageUploadEnabled')?.checked !== false;
 
-    // Update Header
+    // Update Header & Avatar
     const previewHeader = document.getElementById('previewHeader');
     if (previewHeader) previewHeader.style.backgroundColor = headerColor;
+
+    const previewLogoImg = document.getElementById('previewLogoImg');
+    const previewDefaultIcon = document.getElementById('previewDefaultIcon');
+    if (currentChatLogoUrl) {
+      if (previewLogoImg) {
+        previewLogoImg.src = currentChatLogoUrl;
+        previewLogoImg.style.display = 'block';
+      }
+      if (previewDefaultIcon) previewDefaultIcon.style.display = 'none';
+    } else {
+      if (previewLogoImg) {
+        previewLogoImg.src = '';
+        previewLogoImg.style.display = 'none';
+      }
+      if (previewDefaultIcon) previewDefaultIcon.style.display = 'block';
+    }
 
     const previewTitle = document.getElementById('previewChatTitle');
     if (previewTitle) {
@@ -2266,9 +2333,9 @@
         const fallbackList = ['ما هي المنتجات والعروض المتوفرة؟', 'كيف يمكنني حجز موعد؟'];
         const displayList = questionsList.length > 0 ? questionsList : fallbackList;
 
-        displayList.slice(0, 3).forEach(q => {
+        displayList.slice(0, 4).forEach((q, idx) => {
           const chip = document.createElement('div');
-          chip.style.cssText = `padding:4px 10px; border-radius:14px; background:rgba(255,255,255,0.06); border:1px solid ${buttonColor}; color:#fff; font-size:10px; white-space:nowrap; cursor:pointer;`;
+          chip.style.cssText = `padding:4px 10px; border-radius:14px; background:rgba(255,255,255,0.06); border:1px solid ${buttonColor}; color:#fff; font-size:10px; white-space:nowrap; cursor:pointer; transition:all 0.2s; animation:questionFadeIn 0.3s ease ${(idx*0.1).toFixed(2)}s forwards;`;
           chip.textContent = q;
           chip.onclick = () => {
             const userB = document.getElementById('previewUserBubble');
@@ -2296,6 +2363,32 @@
         document.getElementById('chatPageBotId').value = targetBot._id;
         document.getElementById('chatPageTitleInput').value = res.title || targetBot.name || 'ZainBot AI Sales Agent';
         document.getElementById('chatPageSlugInput').value = res.linkId || '';
+
+        // Reset and populate Logo
+        currentChatLogoUrl = res.logoUrl || '';
+        chatLogoFileToUpload = null;
+        const logoInput = document.getElementById('chatPageLogoInput');
+        if (logoInput) logoInput.value = '';
+
+        const logoImg = document.getElementById('chatPageLogoImg');
+        const defaultLogoIcon = document.getElementById('chatPageDefaultLogoIcon');
+        const removeLogoBtn = document.getElementById('removeChatLogoBtn');
+
+        if (currentChatLogoUrl) {
+          if (logoImg) {
+            logoImg.src = currentChatLogoUrl;
+            logoImg.style.display = 'block';
+          }
+          if (defaultLogoIcon) defaultLogoIcon.style.display = 'none';
+          if (removeLogoBtn) removeLogoBtn.style.display = 'inline-flex';
+        } else {
+          if (logoImg) {
+            logoImg.src = '';
+            logoImg.style.display = 'none';
+          }
+          if (defaultLogoIcon) defaultLogoIcon.style.display = 'block';
+          if (removeLogoBtn) removeLogoBtn.style.display = 'none';
+        }
 
         const colors = res.colors || {};
         document.getElementById('chatColorHeader').value = colors.header || '#0f172a';
@@ -2393,6 +2486,23 @@
       const chatPageId = document.getElementById('chatPageId').value;
       if (!chatPageId) return;
 
+      let finalLogoUrl = currentChatLogoUrl;
+      if (chatLogoFileToUpload) {
+        try {
+          const formData = new FormData();
+          formData.append('image', chatLogoFileToUpload);
+          const uploadRes = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          }).then(r => r.json());
+          if (uploadRes && uploadRes.imageUrl) {
+            finalLogoUrl = uploadRes.imageUrl;
+          }
+        } catch (uploadErr) {
+          console.warn('Logo upload failed, proceeding with previous logo url:', uploadErr);
+        }
+      }
+
       const questionsText = document.getElementById('chatPageSuggestedQuestions').value;
       const questionsList = questionsText.split('\n').map(s => s.trim()).filter(Boolean);
 
@@ -2400,6 +2510,7 @@
         title: document.getElementById('chatPageTitleInput').value.trim(),
         titleColor: document.getElementById('chatColorTitle').value,
         linkId: document.getElementById('chatPageSlugInput').value.trim(),
+        logoUrl: finalLogoUrl,
         colors: {
           header: document.getElementById('chatColorHeader').value,
           outerBackgroundColor: document.getElementById('chatColorBg').value,

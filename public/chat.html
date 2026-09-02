@@ -2,9 +2,9 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>صفحة الدردشة</title>
-<link rel="stylesheet" href="/css/chat.css?v=20260825" />
+  <link rel="stylesheet" href="/css/chat.css?v=20260902_2" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <style id="customStyles"></style>
 </head>
@@ -12,28 +12,44 @@
   <div class="chat-container">
     <header id="chatHeader">
       <div class="header-content">
-        <img id="chatLogo" src="" alt="Logo" style="display: none;">
-        <h1 id="chatTitle">صفحة الدردشة</h1>
+        <div id="chatAvatarContainer" class="chat-avatar">
+          <img id="chatLogo" src="" alt="Bot Logo" style="display:none;" />
+          <i id="chatDefaultIcon" class="fas fa-robot"></i>
+        </div>
+        <div class="header-info">
+          <h1 id="chatTitle">ZainBot AI Sales Agent</h1>
+          <div class="status-indicator">
+            <span class="status-dot"></span>
+            <span id="chatStatusText">نشط · جاهز للرد والمبيعات</span>
+          </div>
+        </div>
       </div>
     </header>
-    <div id="suggestedQuestions" style="display: none;"></div>
+
+    <!-- Staggered Suggested Questions Bar -->
+    <div id="suggestedQuestions" style="display:none;"></div>
+
+    <!-- Messages Stream -->
     <div id="chatMessages"></div>
-    <div class="chat-input">
-      <input type="text" id="messageInput" placeholder="اكتب رسالتك...">
-      <label for="imageInput" id="imageInputBtn" class="image-input-btn">
-        <i class="fas fa-image"></i>
-        <input type="file" id="imageInput" accept="image/*" style="display: none;">
-      </label>
-      <button id="sendMessageBtn"><i class="fas fa-arrow-up"></i></button>
+
+    <!-- Input Footer Area with modern pill wrapper and paper-plane button -->
+    <div class="chat-input-wrapper">
+      <div class="chat-input-pill">
+        <label for="imageInput" id="imageInputBtn" class="image-input-btn" title="إرفاق صورة">
+          <i class="fas fa-image"></i>
+          <input type="file" id="imageInput" accept="image/*" style="display:none;">
+        </label>
+        <input type="text" id="messageInput" placeholder="اكتب رسالتك هنا..." autocomplete="off">
+        <button id="sendMessageBtn" type="button" title="إرسال">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- تحميل مكتبة uuid من CDN -->
   <script src="https://cdn.jsdelivr.net/npm/fingerprintjs2@2.1.0/fingerprint2.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/uuid@9.0.1/dist/umd/uuidv4.min.js"></script>
-  <!-- تحميل utils.js كسكربت عادي -->
   <script defer src="/js/utils.js"></script>
-  <!-- تحميل chat.js -->
-<script src="/js/chat.js?v=20260825"></script>
+  <script src="/js/chat.js?v=20260902_2"></script>
 </body>
 </html>

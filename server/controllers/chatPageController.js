@@ -186,6 +186,10 @@ exports.updateChatPage = async (req, res) => {
     let logoUrl = chatPage.logoUrl;
     let logoDeleteUrl = chatPage.logoDeleteUrl;
 
+    if (req.body.logoUrl !== undefined) {
+      logoUrl = req.body.logoUrl ? String(req.body.logoUrl).trim() : '';
+    }
+
     if (req.file) {
       try {
         if (logoDeleteUrl) {
