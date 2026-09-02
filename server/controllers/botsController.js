@@ -202,7 +202,7 @@ exports.clearFeedbackByType = async (req, res) => {
 
 // إنشاء بوت جديد
 exports.createBot = async (req, res) => {
-  const { name, userId, facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, subscriptionType, welcomeMessage, agentType, description, customInstructions, objectives, handoffKeywords, autoReplyEnabled } = req.body;
+  const { name, userId, facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, subscriptionType, welcomeMessage, agentType, description, customInstructions, objectives, handoffKeywords, autoReplyEnabled, agentTools, agentSkills } = req.body;
 
   if (!name) {
     return res.status(400).json({ message: 'اسم البوت مطلوب' });
@@ -231,6 +231,28 @@ exports.createBot = async (req, res) => {
       return res.status(400).json({ message: 'المستخدم غير موجود' });
     }
 
+    // تحقق من قيود الباقة المجانية على الأدوات والمهارات
+    const isFree = !owner || owner.planTier === 'free' || owner.subscriptionType === 'free';
+    if (isFree && !isDirectSuperadmin) {
+      if (agentTools && typeof agentTools === 'object') {
+        const activeTools = Object.keys(agentTools).filter((k) => agentTools[k] && agentTools[k].enabled === true);
+        if (activeTools.length > 2) {
+          return res.status(400).json({
+            success: false,
+            error: 'FREE_PLAN_TOOLS_LIMIT',
+            message: 'تسمح الباقة المجانية بتفعيل أداتين فقط كحد أقصى للوكيل. يرجى الترقية لتفعيل أدوات غير محدودة.',
+          });
+        }
+      }
+      if (Array.isArray(agentSkills) && agentSkills.length > 2) {
+        return res.status(400).json({
+          success: false,
+          error: 'FREE_PLAN_SKILLS_LIMIT',
+          message: 'تسمح الباقة المجانية باختيار مهارتين فقط كحد أقصى للوكيل. يرجى الترقية لفتح كافة المهارات.',
+        });
+      }
+    }
+
     const activeAgentCount = await Bot.countDocuments({ userId: ownerUserId, archivedAt: null });
     const agentEntitlement = canCreateAgent(owner.subscriptionTier, activeAgentCount);
     if (!agentEntitlement.allowed) {
@@ -257,6 +279,8 @@ exports.createBot = async (req, res) => {
       objectives,
       handoffKeywords,
       autoReplyEnabled,
+      agentTools,
+      agentSkills,
     });
     await bot.save();
     invalidateBotCache(bot._id);
@@ -272,7 +296,7 @@ exports.createBot = async (req, res) => {
 
 // تعديل بوت
 exports.updateBot = async (req, res) => {
-  const { name, userId, facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, isActive, autoStopDate, subscriptionType, welcomeMessage, agentType, description, customInstructions, objectives, handoffKeywords, autoReplyEnabled, userApiKey, userProvider, userModel, userBaseUrl, backupApiKey, backupProvider, backupModel, backupBaseUrl } = req.body;
+  const { name, userId, facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, isActive, autoStopDate, subscriptionType, welcomeMessage, agentType, description, customInstructions, objectives, handoffKeywords, autoReplyEnabled, userApiKey, userProvider, userModel, userBaseUrl, backupApiKey, backupProvider, backupModel, backupBaseUrl, agentTools, agentSkills } = req.body;
 
   try {
     logger.info('bot_update_attempt', { botId: req.params.id, userId: req.user.userId, payloadKeys: Object.keys(req.body || {}) });
@@ -294,6 +318,29 @@ exports.updateBot = async (req, res) => {
       });
       if (!newOwner) {
         return res.status(400).json({ message: 'المستخدم الجديد غير موجود' });
+      }
+    }
+
+    // تحقق من قيود الباقة المجانية على الأدوات والمهارات عند التعديل
+    const currentOwner = await User.findById(bot.userId).select('planTier subscriptionType');
+    const isFree = !currentOwner || currentOwner.planTier === 'free' || currentOwner.subscriptionType === 'free';
+    if (isFree && !isDirectSuperadmin) {
+      if (agentTools && typeof agentTools === 'object') {
+        const activeTools = Object.keys(agentTools).filter((k) => agentTools[k] && agentTools[k].enabled === true);
+        if (activeTools.length > 2) {
+          return res.status(400).json({
+            success: false,
+            error: 'FREE_PLAN_TOOLS_LIMIT',
+            message: 'تسمح الباقة المجانية بتفعيل أداتين فقط كحد أقصى للوكيل. يرجى الترقية لتفعيل أدوات غير محدودة.',
+          });
+        }
+      }
+      if (Array.isArray(agentSkills) && agentSkills.length > 2) {
+        return res.status(400).json({
+          success: false,
+          error: 'FREE_PLAN_SKILLS_LIMIT',
+          message: 'تسمح الباقة المجانية باختيار مهارتين فقط كحد أقصى للوكيل. يرجى الترقية لفتح كافة المهارات.',
+        });
       }
     }
 
@@ -356,6 +403,8 @@ exports.updateBot = async (req, res) => {
     bot.backupProvider = backupProvider !== undefined ? backupProvider : bot.backupProvider;
     bot.backupModel = backupModel !== undefined ? backupModel : bot.backupModel;
     bot.backupBaseUrl = backupBaseUrl !== undefined ? backupBaseUrl : bot.backupBaseUrl;
+    if (agentTools !== undefined) bot.agentTools = agentTools;
+    if (agentSkills !== undefined) bot.agentSkills = agentSkills;
     if (isDirectSuperadmin && subscriptionType) {
       bot.subscriptionType = subscriptionType;
     }

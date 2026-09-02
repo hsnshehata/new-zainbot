@@ -44,6 +44,7 @@ const ordersRoutes = require('./routes/orders');
 const expensesRoutes = require('./routes/expenses');
 const chatOrdersRoutes = require('./routes/chatOrders');
 const chatCustomersRoutes = require('./routes/chatCustomers');
+const bookingsRoutes = require('./routes/bookings');
 const telegramRoutes = require('./routes/telegram');
 const whatsappRoutes = require('./routes/whatsapp');
 const AppError = require('./utils/appError');
@@ -327,6 +328,7 @@ const authenticatedPaths = [
   '/api/expenses',
   '/api/chat-orders',
   '/api/chat-customers',
+  '/api/bookings',
   '/api/integrations',
   '/api/admin',
   '/api/upload',
@@ -376,6 +378,7 @@ app.use('/api/orders', ordersRoutes);
 app.use('/api/expenses', expensesRoutes);
 app.use('/api/chat-orders', chatOrdersRoutes);
 app.use('/api/chat-customers', chatCustomersRoutes);
+app.use('/api/bookings', bookingsRoutes);
 app.use('/api/telegram', telegramRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/integrations', integrationsRoutes);

@@ -1082,11 +1082,108 @@
 
         <!-- ==================== 5. ORDERS & BOOKINGS CENTER ==================== -->
         <section id="page-orders" class="db-page">
-          <h2 data-i18n="orders_bookings_title" style="margin-bottom:24px;">Orders & Appointments Center</h2>
-          
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:24px;">
+            <div>
+              <h2 data-i18n="orders_bookings_title" style="margin-bottom:6px;">Orders & Appointments Center</h2>
+              <p style="color:var(--text-muted); font-size:13px;" data-i18n="orders_bookings_subtitle">Manage orders created from live chats and schedule, modify, and track customer appointments in real time.</p>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button id="createBookingBtn" class="btn btn-primary btn-sm" type="button"><i class="fas fa-calendar-plus"></i> <span data-i18n="btn_new_booking">New Appointment</span></button>
+              <button id="createOrderBtn" class="btn btn-secondary btn-sm" type="button"><i class="fas fa-cart-plus"></i> <span data-i18n="btn_new_order">New Order</span></button>
+              <button id="refreshOrdersBtn" class="btn btn-secondary btn-sm" type="button"><i class="fas fa-sync-alt"></i> <span data-i18n="btn_refresh">Refresh</span></button>
+            </div>
+          </div>
+
+          <!-- Quick KPIs for Orders and Bookings -->
+          <div class="stats-grid" style="margin-bottom:24px;">
+            <div class="glass-card stat-card" style="padding:16px;">
+              <div class="stat-info">
+                <h4 data-i18n="stat_orders_total">Total Orders</h4>
+                <p id="statOrdersTotal">0</p>
+              </div>
+              <div class="stat-icon bg-blue-gradient"><i class="fas fa-shopping-bag"></i></div>
+            </div>
+            <div class="glass-card stat-card" style="padding:16px;">
+              <div class="stat-info">
+                <h4 data-i18n="stat_orders_pending">Pending Orders</h4>
+                <p id="statOrdersPending" style="color:var(--orange);">0</p>
+              </div>
+              <div class="stat-icon bg-purple-gradient"><i class="fas fa-clock"></i></div>
+            </div>
+            <div class="glass-card stat-card" style="padding:16px;">
+              <div class="stat-info">
+                <h4 data-i18n="stat_bookings_total">Total Appointments</h4>
+                <p id="statBookingsTotal">0</p>
+              </div>
+              <div class="stat-icon bg-cyan-gradient"><i class="fas fa-calendar-check"></i></div>
+            </div>
+            <div class="glass-card stat-card" style="padding:16px;">
+              <div class="stat-info">
+                <h4 data-i18n="stat_bookings_confirmed">Confirmed Bookings</h4>
+                <p id="statBookingsConfirmed" style="color:var(--green);">0</p>
+              </div>
+              <div class="stat-icon bg-green-gradient"><i class="fas fa-user-check"></i></div>
+            </div>
+          </div>
+
+          <!-- Search & Filter Controls -->
+          <div class="glass-card" style="margin-bottom:24px; padding:16px;">
+            <div class="db-responsive-grid" style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:14px; align-items:center;">
+              <div class="form-group" style="margin-bottom:0;">
+                <input type="text" id="ordersSearchInput" class="form-control" data-i18n-placeholder="orders_search_placeholder" placeholder="Search by customer name, phone, or service..." />
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <select id="ordersStatusFilter" class="form-control" aria-label="Filter status" data-i18n-aria="orders_status_filter">
+                  <option value="" data-i18n="filter_all_statuses">All Statuses</option>
+                  <option value="pending" data-i18n="status_pending">Pending</option>
+                  <option value="processing" data-i18n="status_processing">Processing</option>
+                  <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
+                  <option value="completed" data-i18n="status_completed">Completed</option>
+                  <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <select id="ordersTypeFilter" class="form-control" aria-label="Filter view" data-i18n-aria="orders_type_filter">
+                  <option value="all" data-i18n="filter_view_all">All Records</option>
+                  <option value="orders" data-i18n="filter_view_orders">Orders Only</option>
+                  <option value="bookings" data-i18n="filter_view_bookings">Appointments Only</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Appointments list -->
+          <div class="glass-card" id="appointmentsCardContainer" style="margin-bottom:32px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+              <h3 data-i18n="appointments_list_title"><i class="fas fa-calendar-alt" style="color:var(--cyan);"></i> AI Booked Appointments Calendar</h3>
+              <span id="bookingsCountBadge" class="badge badge-info" style="font-size:12px;">0 Appointments</span>
+            </div>
+            <div class="custom-table-container">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th data-i18n="th_booking_id">Booking ID</th>
+                    <th data-i18n="th_booking_customer">Customer</th>
+                    <th data-i18n="th_booking_phone">Phone</th>
+                    <th data-i18n="th_booking_service">Service / Purpose</th>
+                    <th data-i18n="th_booking_time">Date & Time</th>
+                    <th data-i18n="th_booking_status">Status</th>
+                    <th data-i18n="th_booking_actions" style="text-align:center;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="bookingsTableBody">
+                  <!-- Generated dynamic booking rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <!-- Orders Table list -->
-          <div class="glass-card" style="margin-bottom:32px;">
-            <h3 data-i18n="chat_orders_list_title" style="margin-bottom:16px;">Orders Automatically Generated by AI</h3>
+          <div class="glass-card" id="ordersCardContainer" style="margin-bottom:32px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+              <h3 data-i18n="chat_orders_list_title"><i class="fas fa-box-open" style="color:var(--purple-light);"></i> Orders Automatically Generated by AI</h3>
+              <span id="ordersCountBadge" class="badge badge-info" style="font-size:12px;">0 Orders</span>
+            </div>
             <div class="custom-table-container">
               <table class="custom-table">
                 <thead>
@@ -1097,30 +1194,11 @@
                     <th data-i18n="th_items">Items</th>
                     <th data-i18n="th_total">Total</th>
                     <th data-i18n="th_status">Status</th>
+                    <th data-i18n="th_order_actions" style="text-align:center;">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="ordersTableBody">
                   <!-- Generated dynamic order rows -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Appointments list -->
-          <div class="glass-card">
-            <h3 data-i18n="appointments_list_title" style="margin-bottom:16px;">AI Booked Appointments Calendar</h3>
-            <div class="custom-table-container">
-              <table class="custom-table">
-                <thead>
-                  <tr>
-                    <th data-i18n="th_booking_customer">Customer</th>
-                    <th data-i18n="th_booking_phone">Phone</th>
-                    <th data-i18n="th_booking_time">Date & Time</th>
-                    <th data-i18n="th_booking_notes">AI Summary / Notes</th>
-                  </tr>
-                </thead>
-                <tbody id="bookingsTableBody">
-                  <!-- Generated dynamic booking rows -->
                 </tbody>
               </table>
             </div>
@@ -1131,6 +1209,41 @@
         <section id="page-settings" class="db-page">
           <h2 data-i18n="settings_billing_title" style="margin-bottom:24px;">Settings & Developer Integrations</h2>
           
+          <!-- Alert & Notification Recipients Card -->
+          <div class="glass-card" style="margin-bottom:24px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+              <div>
+                <h3 data-i18n="notification_recipients_title"><i class="fas fa-bell" style="color:var(--cyan);"></i> Multi-Channel Notification Recipients</h3>
+                <p style="font-size:12px; color:var(--text-muted); margin-top:4px;" data-i18n="notification_recipients_desc">Connect multiple WhatsApp numbers and Telegram accounts/channels to receive instant order and appointment notifications.</p>
+              </div>
+              <button id="addRecipientBtn" class="btn btn-primary btn-sm" type="button"><i class="fas fa-plus"></i> <span data-i18n="btn_add_recipient">Add Notification Channel</span></button>
+            </div>
+
+            <!-- Tier limit alert banner -->
+            <div id="recipientTierLimitBanner" style="background:rgba(6, 182, 212, 0.1); border:1px solid rgba(6, 182, 212, 0.3); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:16px; font-size:13px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+              <span id="recipientTierLimitText" data-i18n="recipient_tier_free_hint"><i class="fas fa-info-circle" style="color:var(--cyan);"></i> Free plan allows 1 notification recipient channel. Upgrade to Growth for unlimited channels.</span>
+              <a href="/#pricing" class="badge badge-warning" style="text-decoration:none; font-size:11px;" data-i18n="upgrade_plan_link">Upgrade Plan</a>
+            </div>
+
+            <div class="custom-table-container">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th data-i18n="th_rec_channel">Channel</th>
+                    <th data-i18n="th_rec_target">Target / Destination</th>
+                    <th data-i18n="th_rec_label">Label / Description</th>
+                    <th data-i18n="th_rec_events">Subscribed Events</th>
+                    <th data-i18n="th_rec_status">Status</th>
+                    <th data-i18n="th_rec_actions" style="text-align:center;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="notificationRecipientsTableBody">
+                  <!-- Loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
             <!-- Developer API Keys card -->
             <div class="glass-card" style="display:flex; flex-direction:column;">
@@ -1636,9 +1749,232 @@
           <div class="form-group"><label data-i18n="agent_instructions">Instructions</label><textarea id="agentInstructions" class="form-control" rows="7" maxlength="12000" placeholder="Tone, source of truth, do-not-do rules, and escalation behavior" data-i18n-placeholder="agent_instructions_placeholder"></textarea></div>
           <div class="form-group"><label data-i18n="agent_objectives">Objectives</label><textarea id="agentObjectives" class="form-control" rows="3" placeholder="One objective per line" data-i18n-placeholder="agent_objectives_placeholder"></textarea></div>
           <div class="form-group"><label data-i18n="agent_handoff_keywords">Human handoff keywords</label><input id="agentHandoffKeywords" class="form-control" placeholder="human, manager, complaint" data-i18n-placeholder="agent_handoff_placeholder" /></div>
-          <label style="display:flex; align-items:center; gap:8px;"><input id="agentAutoReplyEnabled" type="checkbox" checked /> <span data-i18n="agent_auto_reply">AI auto-reply enabled</span></label>
+          
+          <!-- Agent Tools Section -->
+          <div style="border-top:1px solid var(--glass-border); padding-top:16px; margin-top:16px;">
+            <h4 style="margin-bottom:12px; font-size:15px; color:var(--cyan);" data-i18n="agent_tools_section_title"><i class="fas fa-tools"></i> Agent Tools</h4>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+              <!-- Booking Tool -->
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                  <input id="agentToolBooking" type="checkbox" checked />
+                  <span data-i18n="agent_tool_booking_title">Appointment & Booking Scheduling Tool</span>
+                </label>
+                <div id="bookingToolSettingsGroup" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:12px;" data-i18n="agent_booking_hours_label">Working Hours</label>
+                    <input id="agentBookingWorkingHours" class="form-control" placeholder="09:00 - 22:00" value="09:00 - 22:00" />
+                  </div>
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:12px;" data-i18n="agent_booking_service_label">Default Service / Purpose</label>
+                    <input id="agentBookingDefaultService" class="form-control" placeholder="استشارة / موعد" value="استشارة / موعد" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Order Tracking Tool -->
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                  <input id="agentToolOrders" type="checkbox" checked />
+                  <span data-i18n="agent_tool_orders_title">Order Tracking & Management Tool</span>
+                </label>
+              </div>
+
+              <!-- WhatsApp Alerts Tool -->
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                  <input id="agentToolWhatsapp" type="checkbox" checked />
+                  <span data-i18n="agent_tool_wa_title">Instant WhatsApp Notifications Tool</span>
+                </label>
+              </div>
+
+              <!-- Telegram Alerts Tool -->
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                  <input id="agentToolTelegram" type="checkbox" checked />
+                  <span data-i18n="agent_tool_tg_title">Instant Telegram Notifications Tool</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Agent Skills Section -->
+          <div style="border-top:1px solid var(--glass-border); padding-top:16px; margin-top:16px;">
+            <h4 style="margin-bottom:12px; font-size:15px; color:var(--purple-light);" data-i18n="agent_skills_section_title"><i class="fas fa-brain"></i> Agent Skills</h4>
+            <div class="checkbox-group" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <label class="checkbox-item"><input type="checkbox" name="agentSkill" value="sales_consultant" checked /> <span data-i18n="skill_sales">Smart Sales Consultant</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="agentSkill" value="appointment_scheduler" checked /> <span data-i18n="skill_appointments">Appointment Coordinator</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="agentSkill" value="order_manager" checked /> <span data-i18n="skill_orders">Order & Delivery Manager</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="agentSkill" value="support_specialist" checked /> <span data-i18n="skill_support">Support & Complaints Specialist</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="agentSkill" value="winback_agent" checked /> <span data-i18n="skill_winback">Customer Retention & Win-back</span></label>
+            </div>
+          </div>
+
+          <label style="display:flex; align-items:center; gap:8px; margin-top:16px;"><input id="agentAutoReplyEnabled" type="checkbox" checked /> <span data-i18n="agent_auto_reply">AI auto-reply enabled</span></label>
         </div>
         <div class="db-modal-footer"><button class="btn btn-secondary btn-sm agent-modal-close" type="button" data-i18n="btn_cancel">Cancel</button><button class="btn btn-primary btn-sm" type="submit" data-i18n="agent_save">Save agent</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Booking Modal Form (Create / Edit Appointment) -->
+  <div class="db-modal" id="bookingModal">
+    <div class="db-modal-content" style="max-width:600px;">
+      <div class="db-modal-header">
+        <h3 id="bookingModalTitle" data-i18n="booking_modal_title"><i class="fas fa-calendar-alt"></i> Manage Appointment</h3>
+        <button class="btn btn-secondary btn-sm modal-close-btn booking-modal-close" type="button" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="bookingForm">
+        <div class="db-modal-body">
+          <input type="hidden" id="bookingIdInput" />
+          <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="form-group">
+              <label data-i18n="label_customer_name">Customer Name</label>
+              <input type="text" id="bookingCustomerName" class="form-control" required data-i18n-placeholder="placeholder_customer_name" placeholder="Full Name" />
+            </div>
+            <div class="form-group">
+              <label data-i18n="label_customer_phone">Phone Number</label>
+              <input type="text" id="bookingCustomerPhone" class="form-control" data-i18n-placeholder="placeholder_customer_phone" placeholder="01xxxxxxxxx" />
+            </div>
+          </div>
+          <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="form-group">
+              <label data-i18n="label_service_type">Service / Purpose</label>
+              <input type="text" id="bookingServiceType" class="form-control" placeholder="Consultation / Review" data-i18n-placeholder="placeholder_service_type" />
+            </div>
+            <div class="form-group">
+              <label data-i18n="label_booking_status">Status</label>
+              <select id="bookingStatusSelect" class="form-control">
+                <option value="pending" data-i18n="status_pending">Pending</option>
+                <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
+                <option value="completed" data-i18n="status_completed">Completed</option>
+                <option value="rescheduled" data-i18n="status_rescheduled">Rescheduled</option>
+                <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+          <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="form-group">
+              <label data-i18n="label_booking_date">Date & Time</label>
+              <input type="datetime-local" id="bookingDateTime" class="form-control" required />
+            </div>
+            <div class="form-group">
+              <label data-i18n="label_slot_duration">Duration (Minutes)</label>
+              <input type="number" id="bookingDuration" class="form-control" value="30" min="5" step="5" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_booking_notes">Notes / AI Summary</label>
+            <textarea id="bookingNotes" class="form-control" rows="3" data-i18n-placeholder="placeholder_booking_notes" placeholder="Additional details, requests, or notes..."></textarea>
+          </div>
+        </div>
+        <div class="db-modal-footer">
+          <button class="btn btn-secondary btn-sm booking-modal-close" type="button" data-i18n="btn_cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_save_booking">Save Appointment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Chat Order Modal Form (Create / Edit Order) -->
+  <div class="db-modal" id="chatOrderModal">
+    <div class="db-modal-content" style="max-width:650px;">
+      <div class="db-modal-header">
+        <h3 id="chatOrderModalTitle" data-i18n="chat_order_modal_title"><i class="fas fa-shopping-cart"></i> Manage Chat Order</h3>
+        <button class="btn btn-secondary btn-sm modal-close-btn order-modal-close" type="button" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="chatOrderForm">
+        <div class="db-modal-body">
+          <input type="hidden" id="chatOrderIdInput" />
+          <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="form-group">
+              <label data-i18n="label_customer_name">Customer Name</label>
+              <input type="text" id="orderCustomerName" class="form-control" required />
+            </div>
+            <div class="form-group">
+              <label data-i18n="label_customer_phone">Phone Number</label>
+              <input type="text" id="orderCustomerPhone" class="form-control" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_customer_address">Delivery Address</label>
+            <input type="text" id="orderCustomerAddress" class="form-control" required />
+          </div>
+          <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;">
+            <div class="form-group">
+              <label data-i18n="label_order_items">Items Summary</label>
+              <input type="text" id="orderItemsSummary" class="form-control" placeholder="Product name x1" data-i18n-placeholder="placeholder_order_items" />
+            </div>
+            <div class="form-group">
+              <label data-i18n="label_total_amount">Total Amount (EGP)</label>
+              <input type="number" id="orderTotalAmount" class="form-control" min="0" step="1" required />
+            </div>
+            <div class="form-group">
+              <label data-i18n="label_order_status">Status</label>
+              <select id="orderStatusSelect" class="form-control">
+                <option value="pending" data-i18n="status_pending">Pending</option>
+                <option value="processing" data-i18n="status_processing">Processing</option>
+                <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
+                <option value="shipped" data-i18n="status_shipped">Shipped</option>
+                <option value="delivered" data-i18n="status_delivered">Delivered</option>
+                <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_order_note">Order Note</label>
+            <textarea id="orderCustomerNote" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="db-modal-footer">
+          <button class="btn btn-secondary btn-sm order-modal-close" type="button" data-i18n="btn_cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_save_order">Save Order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notification Recipient Modal Form -->
+  <div class="db-modal" id="recipientModal">
+    <div class="db-modal-content" style="max-width:540px;">
+      <div class="db-modal-header">
+        <h3 id="recipientModalTitle" data-i18n="recipient_modal_title"><i class="fas fa-bell"></i> Add Notification Channel</h3>
+        <button class="btn btn-secondary btn-sm modal-close-btn recipient-modal-close" type="button" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="recipientForm">
+        <div class="db-modal-body">
+          <input type="hidden" id="recipientIdInput" />
+          <div class="form-group">
+            <label data-i18n="label_rec_channel">Notification Channel</label>
+            <select id="recipientChannelSelect" class="form-control" required>
+              <option value="whatsapp" data-i18n="channel_whatsapp">WhatsApp Number</option>
+              <option value="telegram" data-i18n="channel_telegram">Telegram Account / Channel ID</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_rec_target">Target Destination</label>
+            <input type="text" id="recipientTargetInput" class="form-control" placeholder="01xxxxxxxxx or Telegram Chat ID" data-i18n-placeholder="placeholder_rec_target" required />
+            <small style="color:var(--text-muted);" data-i18n="hint_rec_target">For WhatsApp: 01xxxxxxxxx or +201xxxxxxxxx. For Telegram: Chat ID (e.g. 123456789) or group/channel ID.</small>
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_rec_label">Label / Team Description</label>
+            <input type="text" id="recipientLabelInput" class="form-control" placeholder="Sales Manager, Kitchen, Operations..." data-i18n-placeholder="placeholder_rec_label" />
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_rec_events">Subscribed Alert Events</label>
+            <div class="checkbox-group">
+              <label class="checkbox-item"><input type="checkbox" name="recipientEvents" value="order_created" checked /> <span data-i18n="ev_order_created">New Orders</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="recipientEvents" value="order_status" checked /> <span data-i18n="ev_order_status">Order Status Updates</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="recipientEvents" value="booking_created" checked /> <span data-i18n="ev_booking_created">New Appointments</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="recipientEvents" value="booking_rescheduled" checked /> <span data-i18n="ev_booking_rescheduled">Rescheduled Bookings</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="recipientEvents" value="booking_cancelled" checked /> <span data-i18n="ev_booking_cancelled">Cancelled Bookings</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="db-modal-footer">
+          <button class="btn btn-secondary btn-sm recipient-modal-close" type="button" data-i18n="btn_cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_save_recipient">Save Notification Channel</button>
+        </div>
       </form>
     </div>
   </div>

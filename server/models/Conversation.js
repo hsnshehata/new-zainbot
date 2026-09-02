@@ -19,6 +19,12 @@ const conversationSchema = new mongoose.Schema({
   mutedUntil: { type: Date },
   mutedBy: { type: String },
   isHumanHandling: { type: Boolean, default: false },
+  category: { type: String, trim: true, default: '' },
+  labels: [{
+    name: { type: String, trim: true, required: true },
+    color: { type: String, trim: true, default: '#06b6d4' },
+    timestamp: { type: Date, default: Date.now },
+  }],
 });
 
 // إضافة Index على messages.timestamp لتسريع الـ Sort

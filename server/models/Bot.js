@@ -26,6 +26,39 @@ const botSchema = new mongoose.Schema({
   objectives: [{ type: String, trim: true, maxlength: 300 }],
   handoffKeywords: [{ type: String, trim: true, maxlength: 100 }],
   autoReplyEnabled: { type: Boolean, default: true },
+
+  // أدوات ومهارات الوكيل الذكي
+  agentTools: {
+    bookingTool: {
+      enabled: { type: Boolean, default: true },
+      autoConfirm: { type: Boolean, default: false },
+      slotDuration: { type: Number, default: 30 },
+      workingHours: { type: String, trim: true, default: '09:00 - 22:00' },
+      defaultService: { type: String, trim: true, default: 'استشارة / موعد' }
+    },
+    orderTrackingTool: {
+      enabled: { type: Boolean, default: true },
+      requirePhone: { type: Boolean, default: true }
+    },
+    whatsappNotificationTool: {
+      enabled: { type: Boolean, default: true },
+      notifyOnOrder: { type: Boolean, default: true },
+      notifyOnBooking: { type: Boolean, default: true }
+    },
+    telegramNotificationTool: {
+      enabled: { type: Boolean, default: true },
+      notifyOnOrder: { type: Boolean, default: true },
+      notifyOnBooking: { type: Boolean, default: true }
+    },
+    messageClassificationTool: {
+      enabled: { type: Boolean, default: true },
+      autoTag: { type: Boolean, default: true }
+    }
+  },
+  agentSkills: [{
+    type: String,
+    trim: true,
+  }],
   // إعدادات Webhook لفيسبوك
   messagingOptinsEnabled: { type: Boolean, default: true },
   messageReactionsEnabled: { type: Boolean, default: true },

@@ -50,6 +50,8 @@ const updateBotSchema = Joi.object({
   objectives: Joi.array().items(Joi.string().max(300)).max(20).optional(),
   handoffKeywords: Joi.array().items(Joi.string().max(100)).max(50).optional(),
   autoReplyEnabled: Joi.boolean().optional(),
+  agentTools: Joi.object().unknown(true).optional(),
+  agentSkills: Joi.array().items(Joi.string().max(100)).optional(),
   isActive: Joi.boolean().optional(),
   autoStopDate: Joi.date().optional(),
   userApiKey: Joi.string().max(500).allow('', null),
