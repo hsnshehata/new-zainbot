@@ -638,7 +638,7 @@ app.get('/set-whatsapp', (req, res) => {
   }
 });
 
-app.get('/chat/:linkId', (req, res) => {
+app.get(['/chat', '/chat.html', '/chat/:linkId'], (req, res) => {
   try {
     const filePath = path.join(__dirname, '../public/chat.html');
     logger.info('serve_chat_page', { filePath });
