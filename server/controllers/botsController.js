@@ -5,6 +5,7 @@ const axios = require('axios');
 const logger = require('../logger');
 const { serializeBot } = require('../utils/serializers');
 const { canCreateAgent } = require('../services/agentLimits');
+const { invalidateBotCache } = require('../botEngine');
 const AiTierEntitlement = require('../models/AiTierEntitlement');
 const AiUserOverride = require('../models/AiUserOverride');
 const AiModelCatalog = require('../models/AiModelCatalog');
