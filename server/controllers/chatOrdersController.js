@@ -1,5 +1,7 @@
-﻿const ChatOrder = require('../models/ChatOrder');
+const ChatOrder = require('../models/ChatOrder');
 const Bot = require('../models/Bot');
+const Store = require('../models/Store');
+const Order = require('../models/Order');
 const { notifyChatOrder, notifyOrderStatus } = require('../services/telegramService');
 const logger = require('../logger');
 
@@ -55,13 +57,19 @@ async function listOrders(req, res) {
     const isSuperAdmin = role === 'superadmin';
 
     let botFilter = {};
+    let userBotIds = [];
+
     if (!isSuperAdmin) {
       const bots = await Bot.find({ userId }).select('_id');
-      const botIds = bots.map((b) => b._id);
-      if (!botIds.length) {
+      userBotIds = bots.map((b) => b._id);
+      if (!userBotIds.length) {
         return res.json({ success: true, data: [], orders: [], counts: { total: 0, pending: 0, byStatus: {} } });
       }
-      botFilter.botId = { $in: botIds };
+      if (req.query.botId && userBotIds.some(id => String(id) === String(req.query.botId))) {
+        botFilter.botId = req.query.botId;
+      } else {
+        botFilter.botId = { $in: userBotIds };
+      }
     } else if (req.query.botId) {
       botFilter.botId = req.query.botId;
     } else {
@@ -69,15 +77,57 @@ async function listOrders(req, res) {
       return res.json({ success: true, data: [], orders: [], counts: { total: 0, pending: 0, byStatus: {} } });
     }
 
-    const orders = await ChatOrder.find(botFilter).sort({ lastModifiedAt: -1, createdAt: -1 }).limit(200);
+    const chatOrders = await ChatOrder.find(botFilter).sort({ lastModifiedAt: -1, createdAt: -1 }).limit(200).lean();
 
-    const counts = { total: orders.length, pending: 0, byStatus: {} };
-    orders.forEach((o) => {
+    // Also fetch store orders for user's stores if any
+    let storeOrders = [];
+    try {
+      let storeQuery = {};
+      if (isSuperAdmin) {
+        if (req.query.botId) storeQuery.botId = req.query.botId;
+      } else {
+        storeQuery.$or = [
+          { userId },
+          { botId: { $in: userBotIds } }
+        ];
+      }
+      const userStores = await Store.find(storeQuery).select('_id storeName').lean();
+      if (userStores.length > 0) {
+        const storeIds = userStores.map(s => s._id);
+        const rawStoreOrders = await Order.find({ storeId: { $in: storeIds } }).sort({ createdAt: -1 }).limit(100).lean();
+        storeOrders = rawStoreOrders.map(o => ({
+          _id: o._id,
+          orderId: o._id,
+          customerName: o.customerName || 'عميل المتجر',
+          customerPhone: o.customerWhatsapp || o.customerPhone || '',
+          customerAddress: o.customerAddress || '',
+          totalAmount: o.totalPrice || 0,
+          status: o.status || 'pending',
+          channel: 'store',
+          items: (o.products || []).map(p => ({
+            title: p.name || 'منتج',
+            quantity: p.quantity || 1,
+            price: p.price || 0,
+            currency: p.currency || 'EGP'
+          })),
+          notes: o.customerNote || '',
+          createdAt: o.createdAt || new Date(),
+          isStoreOrder: true,
+        }));
+      }
+    } catch (storeErr) {
+      logger.warn('store_orders_fetch_warning', { err: storeErr.message });
+    }
+
+    const allOrders = [...chatOrders, ...storeOrders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    const counts = { total: allOrders.length, pending: 0, byStatus: {} };
+    allOrders.forEach((o) => {
       counts.byStatus[o.status] = (counts.byStatus[o.status] || 0) + 1;
       if (PENDING_SET.has(o.status)) counts.pending += 1;
     });
 
-    return res.json({ success: true, data: orders, orders, counts });
+    return res.json({ success: true, data: allOrders, orders: allOrders, counts });
   } catch (err) {
     logger.error('chat_orders_list_error', { userId: req.user.userId, err: err.message, stack: err.stack });
     return res.status(500).json({ message: 'خطأ في جلب طلبات المحادثة' });

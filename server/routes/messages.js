@@ -197,11 +197,40 @@ router.get("/conversations", authenticate, loadAccessibleBot, async (req, res) =
     if (!botId) {
       return res.status(400).json({ success: false, message: "botId parameter is required" });
     }
-    // Find conversations
-    const conversations = await Conversation.find({ botId }).lean();
+    
+    // Find conversations matching either ObjectId or String representation
+    const idFilters = mongoose.Types.ObjectId.isValid(botId)
+      ? [{ botId: new mongoose.Types.ObjectId(botId) }, { botId: String(botId) }]
+      : [{ botId: String(botId) }];
+
+    const conversations = await Conversation.find({ $or: idFilters })
+      .sort({ "messages.timestamp": -1, updatedAt: -1, _id: -1 })
+      .lean();
+
+    // Normalize messages to ensure legacy and modern fields (role/sender, content/text) are both present
+    const normalizedData = conversations.map((conv) => {
+      const normalizedMessages = (conv.messages || []).map((m) => {
+        const role = m.role || (m.sender === 'user' ? 'user' : 'assistant');
+        const content = m.content || m.text || m.message || '';
+        return {
+          _id: m._id,
+          messageId: m.messageId,
+          role,
+          sender: role === 'user' ? 'user' : 'bot',
+          content,
+          text: content,
+          timestamp: m.timestamp || m.createdAt || new Date(),
+        };
+      });
+      return {
+        ...conv,
+        messages: normalizedMessages,
+      };
+    });
+
     res.status(200).json({
       success: true,
-      data: conversations
+      data: normalizedData,
     });
   } catch (err) {
     logger.error("Error in get conversations route", { err });

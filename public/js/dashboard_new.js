@@ -411,7 +411,32 @@
       booking_saved_ok: 'Appointment saved successfully!',
       order_saved_ok: 'Order saved successfully!',
       recipient_saved_ok: 'Notification channel saved successfully!',
-      recipient_test_sent: 'Test notification sent successfully!'
+      recipient_test_sent: 'Test notification sent successfully!',
+      chan_webchat_title: 'Dedicated Chat Page',
+      chan_desc_webchat: 'Standalone customized chat page and live bot tester.',
+      btn_customize_chat: 'Customize & Test',
+      btn_open_chat: 'Open Chat',
+      chat_page_customizer_title: 'Customize Dedicated Web Chat Page',
+      chat_page_share_link: 'Direct Chat Page URL',
+      btn_copy_link: 'Copy Link',
+      label_chat_page_title: 'Chat Page Title',
+      label_chat_page_slug: 'Custom Link ID / Slug',
+      chat_page_theme_colors: 'Theme & Interface Colors',
+      label_color_header: 'Header Color',
+      label_color_bg: 'Background',
+      label_color_bot_bubble: 'Bot Message Bubble',
+      label_color_user_bubble: 'User Message Bubble',
+      label_color_button: 'Send Button',
+      label_color_title: 'Title Text Color',
+      label_chat_suggested_questions: 'Suggested Quick Questions (One per line)',
+      chk_enable_suggested_questions: 'Enable Suggested Questions',
+      chk_enable_image_upload: 'Enable Image Upload',
+      label_embed_widget_code: 'Website Embed Code (Widget)',
+      btn_copy_code: 'Copy',
+      btn_save_chat_page: 'Save Settings',
+      chat_page_saved_ok: 'Chat page settings saved successfully!',
+      link_copied_ok: 'Link copied to clipboard!',
+      code_copied_ok: 'Widget code copied to clipboard!'
     },
     ar: {
       menu_overview: 'نظرة عامة',
@@ -798,7 +823,32 @@
       booking_saved_ok: 'تم حفظ الموعد بنجاح!',
       order_saved_ok: 'تم حفظ الطلب بنجاح!',
       recipient_saved_ok: 'تم حفظ قناة الإشعارات بنجاح!',
-      recipient_test_sent: 'تم إرسال الإشعار التجريبي بنجاح!'
+      recipient_test_sent: 'تم إرسال الإشعار التجريبي بنجاح!',
+      chan_webchat_title: 'صفحة الدردشة المستقلة',
+      chan_desc_webchat: 'صفحة دردشة مخصصة ومستقلة وتجربة تفاعلية للوكيل.',
+      btn_customize_chat: 'تخصيص واختبار',
+      btn_open_chat: 'فتح الدردشة',
+      chat_page_customizer_title: 'تخصيص صفحة الدردشة المستقلة',
+      chat_page_share_link: 'رابط صفحة الدردشة المباشر',
+      btn_copy_link: 'نسخ الرابط',
+      label_chat_page_title: 'عنوان صفحة الدردشة',
+      label_chat_page_slug: 'معرف / مسار الرابط المخصص',
+      chat_page_theme_colors: 'ألوان الواجهة والمظهر',
+      label_color_header: 'لون الهيدر',
+      label_color_bg: 'لون الخلفية',
+      label_color_bot_bubble: 'فقاعة رسالة الوكيل',
+      label_color_user_bubble: 'فقاعة رسالة العميل',
+      label_color_button: 'لون زر الإرسال',
+      label_color_title: 'لون نص العنوان',
+      label_chat_suggested_questions: 'الأسئلة السريعة المقترحة (سؤال في كل سطر)',
+      chk_enable_suggested_questions: 'تفعيل الأسئلة المقترحة',
+      chk_enable_image_upload: 'تفعيل إمكانية رفع الصور',
+      label_embed_widget_code: 'كود تضمين الويدجت في المواقع',
+      btn_copy_code: 'نسخ الكود',
+      btn_save_chat_page: 'حفظ إعدادات الدردشة',
+      chat_page_saved_ok: 'تم حفظ إعدادات صفحة الدردشة بنجاح!',
+      link_copied_ok: 'تم نسخ الرابط إلى الحافظة!',
+      code_copied_ok: 'تم نسخ كود التضمين إلى الحافظة!'
     }
   };
 
@@ -1107,7 +1157,8 @@
       const item = document.createElement('div');
       item.className = `chat-item ${selectedConversationId === chat._id ? 'active' : ''}`;
       
-      const lastMsg = chat.messages && chat.messages.length > 0 ? chat.messages[chat.messages.length - 1].content : '';
+      const lastMsgObj = chat.messages && chat.messages.length > 0 ? chat.messages[chat.messages.length - 1] : null;
+      const lastMsg = lastMsgObj ? (lastMsgObj.content || lastMsgObj.text || lastMsgObj.message || '') : '';
       let channelIcon = 'fa-globe';
       let channelColor = 'var(--cyan)';
       
@@ -1160,20 +1211,23 @@
     const msgContainer = document.getElementById('chatMessagesContainer');
     msgContainer.innerHTML = '';
 
-    chat.messages.forEach(msg => {
+    (chat.messages || []).forEach(msg => {
+      const isUser = msg.role === 'user' || msg.sender === 'user';
+      const textContent = msg.content || msg.text || msg.message || '';
+
       const bubbleRow = document.createElement('div');
       bubbleRow.style.display = 'flex';
-      bubbleRow.style.justifyContent = msg.role === 'user' ? 'flex-end' : 'flex-start';
+      bubbleRow.style.justifyContent = isUser ? 'flex-end' : 'flex-start';
       bubbleRow.style.marginBottom = '12px';
 
       const bubble = document.createElement('div');
       bubble.style.padding = '10px 16px';
-      bubble.style.borderRadius = msg.role === 'user' ? '12px 12px 0 12px' : '12px 12px 12px 0';
-      bubble.style.background = msg.role === 'user' ? 'var(--gradient)' : 'rgba(255,255,255,0.04)';
-      bubble.style.border = msg.role === 'user' ? 'none' : '1px solid var(--glass-border)';
+      bubble.style.borderRadius = isUser ? '12px 12px 0 12px' : '12px 12px 12px 0';
+      bubble.style.background = isUser ? 'var(--gradient)' : 'rgba(255,255,255,0.04)';
+      bubble.style.border = isUser ? 'none' : '1px solid var(--glass-border)';
       bubble.style.maxWidth = '70%';
       bubble.style.fontSize = '14px';
-      bubble.textContent = msg.content;
+      bubble.textContent = textContent;
 
       bubbleRow.appendChild(bubble);
       msgContainer.appendChild(bubbleRow);
@@ -1632,7 +1686,10 @@
       const statusLabel = t[`status_${order.status}`] || order.status;
 
       row.innerHTML = `
-        <td style="font-family:monospace; font-weight:600;">#${order._id.slice(-6).toUpperCase()}</td>
+        <td style="font-family:monospace; font-weight:600;">
+          #${order._id.slice(-6).toUpperCase()}
+          ${order.isStoreOrder ? '<span class="badge" style="font-size:10px; margin-inline-start:4px; background:rgba(139,92,246,0.2); color:var(--purple-light);">Store</span>' : '<span class="badge" style="font-size:10px; margin-inline-start:4px; background:rgba(6,182,212,0.15); color:var(--cyan);">Chat</span>'}
+        </td>
         <td><strong>${escapeHtml(order.customerName || 'Customer')}</strong></td>
         <td>${escapeHtml(order.customerPhone || 'N/A')}</td>
         <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(itemsStr)}</td>
@@ -2028,6 +2085,139 @@
           await loadNotificationRecipients();
         } else {
           alert(res?.message || 'Could not save recipient channel');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    });
+  }
+
+  // 5.5 DEDICATED WEB CHAT PAGE CUSTOMIZER
+  window.openChatPageModal = async function(bot = null) {
+    const targetBot = bot || currentBot;
+    if (!targetBot) return;
+
+    const modal = document.getElementById('chatPageModal');
+    if (!modal) return;
+
+    try {
+      const res = await apiFetch(`/api/chat-page/bot/${targetBot._id}`);
+      if (res && (res.success || res.link)) {
+        document.getElementById('chatPageId').value = res.chatPageId || '';
+        document.getElementById('chatPageBotId').value = targetBot._id;
+        document.getElementById('chatPageTitleInput').value = res.title || targetBot.name || 'ZainBot AI Sales Agent';
+        document.getElementById('chatPageSlugInput').value = res.linkId || '';
+
+        const colors = res.colors || {};
+        document.getElementById('chatColorHeader').value = colors.header || '#0f172a';
+        document.getElementById('chatColorBg').value = colors.outerBackgroundColor || '#0a0f1d';
+        document.getElementById('chatColorBotBubble').value = colors.botMessageBackground || '#1e293b';
+        document.getElementById('chatColorUserBubble').value = colors.userMessageBackground || '#06b6d4';
+        document.getElementById('chatColorButton').value = colors.sendButtonColor || '#06b6d4';
+        document.getElementById('chatColorTitle').value = res.titleColor || colors.titleColor || '#ffffff';
+
+        const questions = Array.isArray(res.suggestedQuestions) ? res.suggestedQuestions.join('\n') : '';
+        document.getElementById('chatPageSuggestedQuestions').value = questions;
+        document.getElementById('chatPageSuggestedEnabled').checked = res.suggestedQuestionsEnabled !== false;
+        document.getElementById('chatPageImageUploadEnabled').checked = res.imageUploadEnabled !== false;
+
+        const liveLink = res.link || `${window.location.origin}/chat/${res.linkId}`;
+        const liveLinkEl = document.getElementById('chatPageLiveLink');
+        if (liveLinkEl) {
+          liveLinkEl.href = liveLink;
+          liveLinkEl.textContent = liveLink;
+        }
+        const openBtn = document.getElementById('openChatPageBtn');
+        if (openBtn) openBtn.href = liveLink;
+
+        const directCardLink = document.getElementById('btnDirectWebChat');
+        if (directCardLink) directCardLink.href = liveLink;
+
+        const widgetSnippet = `<script src="${window.location.origin}/widget.js" data-bot-id="${targetBot._id}"></script>`;
+        document.getElementById('chatPageWidgetCode').value = widgetSnippet;
+      }
+    } catch (e) {
+      console.error('Error fetching chat page:', e);
+    }
+
+    modal.classList.add('active');
+  };
+
+  window.copyChatPageDirectLink = function() {
+    const linkEl = document.getElementById('chatPageLiveLink');
+    if (!linkEl) return;
+    const url = linkEl.href || linkEl.textContent;
+    navigator.clipboard.writeText(url).then(() => {
+      const t = translations[currentLanguage] || translations.en;
+      alert(t.link_copied_ok || 'Link copied to clipboard!');
+    });
+  };
+
+  window.copyWidgetEmbedCode = function() {
+    const input = document.getElementById('chatPageWidgetCode');
+    if (!input) return;
+    navigator.clipboard.writeText(input.value).then(() => {
+      const t = translations[currentLanguage] || translations.en;
+      alert(t.code_copied_ok || 'Widget code copied to clipboard!');
+    });
+  };
+
+  document.querySelectorAll('.chat-page-modal-close').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('chatPageModal')?.classList.remove('active');
+    });
+  });
+
+  const chatPageForm = document.getElementById('chatPageForm');
+  if (chatPageForm) {
+    chatPageForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const t = translations[currentLanguage] || translations.en;
+      const chatPageId = document.getElementById('chatPageId').value;
+      if (!chatPageId) return;
+
+      const questionsText = document.getElementById('chatPageSuggestedQuestions').value;
+      const questionsList = questionsText.split('\n').map(s => s.trim()).filter(Boolean);
+
+      const payload = {
+        title: document.getElementById('chatPageTitleInput').value.trim(),
+        titleColor: document.getElementById('chatColorTitle').value,
+        linkId: document.getElementById('chatPageSlugInput').value.trim(),
+        colors: {
+          header: document.getElementById('chatColorHeader').value,
+          outerBackgroundColor: document.getElementById('chatColorBg').value,
+          containerBackgroundColor: document.getElementById('chatColorBg').value,
+          chatAreaBackground: '#0B1329',
+          botMessageBackground: document.getElementById('chatColorBotBubble').value,
+          botMessageTextColor: '#ffffff',
+          userMessageBackground: document.getElementById('chatColorUserBubble').value,
+          userMessageTextColor: '#ffffff',
+          sendButtonColor: document.getElementById('chatColorButton').value,
+          button: document.getElementById('chatColorButton').value,
+          titleColor: document.getElementById('chatColorTitle').value,
+        },
+        suggestedQuestions: questionsList,
+        suggestedQuestionsEnabled: document.getElementById('chatPageSuggestedEnabled').checked,
+        imageUploadEnabled: document.getElementById('chatPageImageUploadEnabled').checked,
+      };
+
+      try {
+        const res = await apiFetch(`/api/chat-page/${chatPageId}`, {
+          method: 'PUT',
+          body: JSON.stringify(payload)
+        });
+
+        if (res && res.success) {
+          alert(t.chat_page_saved_ok || 'Chat page settings saved successfully!');
+          document.getElementById('chatPageModal')?.classList.remove('active');
+          if (res.link) {
+            const liveLinkEl = document.getElementById('chatPageLiveLink');
+            if (liveLinkEl) { liveLinkEl.href = res.link; liveLinkEl.textContent = res.link; }
+            const directCardLink = document.getElementById('btnDirectWebChat');
+            if (directCardLink) directCardLink.href = res.link;
+          }
+        } else {
+          alert(res?.message || 'Failed to save chat page settings');
         }
       } catch (err) {
         console.error(err);
@@ -2489,7 +2679,10 @@
       select.addEventListener('click', () => refreshActiveBot(bot));
       const edit = document.createElement('button');
       edit.type = 'button'; edit.className = 'btn btn-secondary btn-sm'; edit.textContent = currentLanguage === 'ar' ? 'تعديل' : 'Edit'; edit.addEventListener('click', () => openAgentModal(bot));
-      actions.append(select, edit); card.append(title, meta, description, actions); list.appendChild(card);
+      const chatBtn = document.createElement('button');
+      chatBtn.type = 'button'; chatBtn.className = 'btn btn-primary btn-sm'; chatBtn.innerHTML = `<i class="fas fa-comments"></i> ${currentLanguage === 'ar' ? 'تخصيص ودردشة' : 'Customize & Chat'}`;
+      chatBtn.addEventListener('click', () => window.openChatPageModal(bot));
+      actions.append(select, edit, chatBtn); card.append(title, meta, description, actions); list.appendChild(card);
     });
     if (workspaceBots.length === 0) {
       const empty = document.createElement('div'); empty.className = 'glass-card'; empty.textContent = currentLanguage === 'ar' ? 'أنشئ وكيلك الأول للبدء.' : 'Create your first agent to begin.'; list.appendChild(empty);
