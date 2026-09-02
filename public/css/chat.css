@@ -1,27 +1,54 @@
 /* chat.css */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: #06b6d4 rgba(10, 15, 29, 0.7);
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: rgba(10, 15, 29, 0.7); border-radius: 8px; }
+::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #06b6d4 0%, #3b82f6 50%, #7c3aed 100%); border-radius: 8px; border: 2px solid rgba(10, 15, 29, 0.85); transition: all 0.3s ease; }
+::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #22d3ee 0%, #60a5fa 50%, #a855f7 100%); box-shadow: 0 0 12px rgba(6, 182, 212, 0.8); }
+::-webkit-scrollbar-corner { background: transparent; }
+
 body {
   margin: 0;
   padding: 0;
-  background-color: #000000; /* اللون الافتراضي للخلفية الخارجية */
+  background-color: #0A0F1D;
+  font-family: 'Cairo', 'Inter', system-ui, sans-serif;
+  color: #f8fafc;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .chat-container {
   max-width: 800px;
+  width: 96%;
   margin: 20px auto;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
   overflow: hidden;
   direction: rtl;
-  font-family: 'Arial', sans-serif;
-  background-color: #ffffff; /* اللون الافتراضي لحاوية الدردشة */
+  font-family: 'Cairo', 'Inter', system-ui, sans-serif;
+  background-color: #0F172A;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  height: min(88vh, 750px);
 }
 
 #chatHeader {
-  padding: 15px 20px;
+  padding: 16px 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #2D3436; /* اللون الافتراضي للهيدر */
+  background-color: #0F172A;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .header-content {

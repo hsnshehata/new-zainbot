@@ -20,10 +20,9 @@ const upload = multer({
 // Routes
 router.post('/', authenticate, createChatPage);
 router.put('/:id', authenticate, upload.single('logo'), updateChatPage);
-// Public widget resolver must be registered before the public /:linkId route
 router.get('/public/bot/:botId', getPublicLinkIdByBot);
-router.get('/:linkId', getChatPageByLinkId);
 router.get('/bot/:botId', authenticate, getChatPageByBotId);
 router.post('/feedback', submitFeedback);
+router.get('/:linkId', getChatPageByLinkId);
 
 module.exports = router;

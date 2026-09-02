@@ -1078,6 +1078,19 @@
           widgetSnippetCode.textContent = `<script src="${window.location.origin}/widget.js" data-bot-id="${currentBot._id}"></script>`;
         }
         
+        // Preload direct chat page link
+        apiFetch(`/api/chat-page/bot/${currentBot._id}`).then(res => {
+          if (res && (res.link || res.linkId)) {
+            const url = res.link || `${window.location.origin}/chat/${res.linkId}`;
+            const directCardLink = document.getElementById('btnDirectWebChat');
+            if (directCardLink) directCardLink.href = url;
+            const openBtn = document.getElementById('openChatPageBtn');
+            if (openBtn) openBtn.href = url;
+            const liveLinkEl = document.getElementById('chatPageLiveLink');
+            if (liveLinkEl) { liveLinkEl.href = url; liveLinkEl.textContent = url; }
+          }
+        }).catch(err => console.warn('Could not preload chat page link:', err));
+
         // Load the initial overview only. Refreshing the agent page must not
         // switch the user away from the page they chose.
         if (activeTab === 'page-overview') switchTab('page-overview');
@@ -2162,11 +2175,36 @@
     });
   };
 
+  window.openDirectChatPage = async function(bot = null) {
+    const targetBot = bot || currentBot;
+    if (!targetBot) return;
+    try {
+      const res = await apiFetch(`/api/chat-page/bot/${targetBot._id}`);
+      if (res && (res.link || res.linkId)) {
+        const url = res.link || `${window.location.origin}/chat/${res.linkId}`;
+        window.open(url, '_blank');
+      } else {
+        window.open(`${window.location.origin}/chat/${targetBot._id}`, '_blank');
+      }
+    } catch (e) {
+      window.open(`${window.location.origin}/chat/${targetBot._id}`, '_blank');
+    }
+  };
+
   document.querySelectorAll('.chat-page-modal-close').forEach(btn => {
     btn.addEventListener('click', () => {
       document.getElementById('chatPageModal')?.classList.remove('active');
     });
   });
+
+  const chatModalEl = document.getElementById('chatPageModal');
+  if (chatModalEl) {
+    chatModalEl.addEventListener('click', (e) => {
+      if (e.target === chatModalEl) {
+        chatModalEl.classList.remove('active');
+      }
+    });
+  }
 
   const chatPageForm = document.getElementById('chatPageForm');
   if (chatPageForm) {

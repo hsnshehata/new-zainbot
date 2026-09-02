@@ -240,7 +240,10 @@ exports.updateChatPage = async (req, res) => {
 exports.getChatPageByLinkId = async (req, res) => {
   try {
     const { linkId } = req.params;
-    const chatPage = await ChatPage.findOne({ linkId }).populate('botId');
+    let chatPage = await ChatPage.findOne({ linkId }).populate('botId');
+    if (!chatPage && mongoose.Types.ObjectId.isValid(linkId)) {
+      chatPage = await ChatPage.findOne({ botId: linkId }).populate('botId') || await ChatPage.findById(linkId).populate('botId');
+    }
     if (!chatPage) {
       return res.status(404).json({ message: 'Chat page not found' });
     }

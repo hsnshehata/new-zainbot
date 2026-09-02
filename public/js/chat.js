@@ -5,7 +5,12 @@ try {
   document.addEventListener('DOMContentLoaded', async () => {
     console.log('📢 DOMContentLoaded event triggered at', new Date().toISOString());
 
-    const linkId = window.location.pathname.split('/').pop();
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const lastSegment = pathParts.length > 0 ? pathParts[pathParts.length - 1] : '';
+    const urlParams = new URLSearchParams(window.location.search);
+    const linkId = (lastSegment && lastSegment !== 'chat' && lastSegment !== 'chat.html')
+      ? lastSegment
+      : (urlParams.get('linkId') || urlParams.get('slug') || urlParams.get('botId') || urlParams.get('id') || '');
     const chatMessages = document.getElementById('chatMessages');
     const messageInput = document.getElementById('messageInput');
     const imageInput = document.getElementById('imageInput');
