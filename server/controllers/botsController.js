@@ -239,18 +239,23 @@ exports.createBot = async (req, res) => {
 
     // تحقق من قيود الباقة المجانية على الأدوات والمهارات
     const isFree = !owner || owner.planTier === 'free' || owner.subscriptionType === 'free';
+    const userFacingTools = ['bookingTool', 'orderTrackingTool', 'whatsappNotificationTool', 'telegramNotificationTool'];
+    const activeTools = agentTools && typeof agentTools === 'object'
+      ? userFacingTools.filter((k) => agentTools[k] && agentTools[k].enabled === true)
+      : [];
+    const normalizedSkills = Array.isArray(agentSkills)
+      ? agentSkills.map((s) => (typeof s === 'string' ? s.trim() : (s?.skillKey || '')).trim()).filter(Boolean)
+      : [];
+
     if (isFree && !isDirectSuperadmin) {
-      if (agentTools && typeof agentTools === 'object') {
-        const activeTools = Object.keys(agentTools).filter((k) => agentTools[k] && agentTools[k].enabled === true);
-        if (activeTools.length > 2) {
-          return res.status(400).json({
-            success: false,
-            error: 'FREE_PLAN_TOOLS_LIMIT',
-            message: 'تسمح الباقة المجانية بتفعيل أداتين فقط كحد أقصى للوكيل. يرجى الترقية لتفعيل أدوات غير محدودة.',
-          });
-        }
+      if (activeTools.length > 2) {
+        return res.status(400).json({
+          success: false,
+          error: 'FREE_PLAN_TOOLS_LIMIT',
+          message: 'تسمح الباقة المجانية بتفعيل أداتين فقط كحد أقصى للوكيل. يرجى الترقية لتفعيل أدوات غير محدودة.',
+        });
       }
-      if (Array.isArray(agentSkills) && agentSkills.length > 2) {
+      if (normalizedSkills.length > 2) {
         return res.status(400).json({
           success: false,
           error: 'FREE_PLAN_SKILLS_LIMIT',
@@ -286,7 +291,7 @@ exports.createBot = async (req, res) => {
       handoffKeywords,
       autoReplyEnabled,
       agentTools,
-      agentSkills,
+      agentSkills: normalizedSkills,
     });
     await bot.save();
     invalidateBotCache(bot._id);
@@ -330,18 +335,23 @@ exports.updateBot = async (req, res) => {
     // تحقق من قيود الباقة المجانية على الأدوات والمهارات عند التعديل
     const currentOwner = await User.findById(bot.userId).select('planTier subscriptionType');
     const isFree = !currentOwner || currentOwner.planTier === 'free' || currentOwner.subscriptionType === 'free';
+    const userFacingTools = ['bookingTool', 'orderTrackingTool', 'whatsappNotificationTool', 'telegramNotificationTool'];
+    const activeTools = agentTools && typeof agentTools === 'object'
+      ? userFacingTools.filter((k) => agentTools[k] && agentTools[k].enabled === true)
+      : [];
+    const normalizedSkills = Array.isArray(agentSkills)
+      ? agentSkills.map((s) => (typeof s === 'string' ? s.trim() : (s?.skillKey || '')).trim()).filter(Boolean)
+      : [];
+
     if (isFree && !isDirectSuperadmin) {
-      if (agentTools && typeof agentTools === 'object') {
-        const activeTools = Object.keys(agentTools).filter((k) => agentTools[k] && agentTools[k].enabled === true);
-        if (activeTools.length > 2) {
-          return res.status(400).json({
-            success: false,
-            error: 'FREE_PLAN_TOOLS_LIMIT',
-            message: 'تسمح الباقة المجانية بتفعيل أداتين فقط كحد أقصى للوكيل. يرجى الترقية لتفعيل أدوات غير محدودة.',
-          });
-        }
+      if (activeTools.length > 2) {
+        return res.status(400).json({
+          success: false,
+          error: 'FREE_PLAN_TOOLS_LIMIT',
+          message: 'تسمح الباقة المجانية بتفعيل أداتين فقط كحد أقصى للوكيل. يرجى الترقية لتفعيل أدوات غير محدودة.',
+        });
       }
-      if (Array.isArray(agentSkills) && agentSkills.length > 2) {
+      if (normalizedSkills.length > 2) {
         return res.status(400).json({
           success: false,
           error: 'FREE_PLAN_SKILLS_LIMIT',
@@ -410,7 +420,7 @@ exports.updateBot = async (req, res) => {
     bot.backupModel = backupModel !== undefined ? backupModel : bot.backupModel;
     bot.backupBaseUrl = backupBaseUrl !== undefined ? backupBaseUrl : bot.backupBaseUrl;
     if (agentTools !== undefined) bot.agentTools = agentTools;
-    if (agentSkills !== undefined) bot.agentSkills = agentSkills;
+    if (agentSkills !== undefined) bot.agentSkills = normalizedSkills;
     if (isDirectSuperadmin && subscriptionType) {
       bot.subscriptionType = subscriptionType;
     }

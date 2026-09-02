@@ -2990,23 +2990,39 @@
 
       // Tools population
       const tools = bot.agentTools || {};
+      const hasExplicitTools = Boolean(tools.bookingTool || tools.orderTrackingTool || tools.whatsappNotificationTool || tools.telegramNotificationTool);
+
       const toolBooking = document.getElementById('agentToolBooking');
-      if (toolBooking) toolBooking.checked = tools.bookingTool?.enabled !== false;
+      const toolOrders = document.getElementById('agentToolOrders');
+      const toolWa = document.getElementById('agentToolWhatsapp');
+      const toolTg = document.getElementById('agentToolTelegram');
+
+      if (hasExplicitTools) {
+        if (toolBooking) toolBooking.checked = Boolean(tools.bookingTool?.enabled);
+        if (toolOrders) toolOrders.checked = Boolean(tools.orderTrackingTool?.enabled);
+        if (toolWa) toolWa.checked = Boolean(tools.whatsappNotificationTool?.enabled);
+        if (toolTg) toolTg.checked = Boolean(tools.telegramNotificationTool?.enabled);
+      } else {
+        // Legacy bot without tools configured
+        if (toolBooking) toolBooking.checked = true;
+        if (toolOrders) toolOrders.checked = true;
+        if (toolWa) toolWa.checked = !isFree;
+        if (toolTg) toolTg.checked = !isFree;
+      }
+
       const bookingHours = document.getElementById('agentBookingWorkingHours');
       if (bookingHours) bookingHours.value = tools.bookingTool?.workingHours || '09:00 - 22:00';
       const bookingService = document.getElementById('agentBookingDefaultService');
       if (bookingService) bookingService.value = tools.bookingTool?.defaultService || 'استشارة / موعد';
-      const toolOrders = document.getElementById('agentToolOrders');
-      if (toolOrders) toolOrders.checked = tools.orderTrackingTool?.enabled !== false;
-      const toolWa = document.getElementById('agentToolWhatsapp');
-      if (toolWa) toolWa.checked = tools.whatsappNotificationTool?.enabled !== false;
-      const toolTg = document.getElementById('agentToolTelegram');
-      if (toolTg) toolTg.checked = tools.telegramNotificationTool?.enabled !== false;
 
       // Skills checkboxes population
-      const skillsArray = Array.isArray(bot.agentSkills) ? bot.agentSkills.map(s => typeof s === 'string' ? s : s.skillKey) : ['sales_consultant', 'appointment_scheduler'];
+      const rawSkills = Array.isArray(bot.agentSkills) && bot.agentSkills.length > 0
+        ? bot.agentSkills.map(s => typeof s === 'string' ? s : s?.skillKey).filter(Boolean)
+        : (isFree ? ['sales_consultant', 'appointment_scheduler'] : ['sales_consultant', 'appointment_scheduler', 'order_manager', 'support_specialist', 'winback_agent']);
+
+      const allowedSkills = (isFree && rawSkills.length > 2) ? rawSkills.slice(0, 2) : rawSkills;
       document.querySelectorAll('input[name="agentSkill"]').forEach(chk => {
-        chk.checked = skillsArray.includes(chk.value);
+        chk.checked = allowedSkills.includes(chk.value);
       });
     } else {
       // Default for new agent
@@ -3043,29 +3059,26 @@
     const id = document.getElementById('agentId').value;
     const splitValues = (value, separator) => value.split(separator).map((item) => item.trim()).filter(Boolean);
 
-    const selectedSkills = Array.from(document.querySelectorAll('input[name="agentSkill"]:checked')).map(el => ({
-      skillKey: el.value,
-      enabled: true
-    }));
+    const selectedSkills = Array.from(document.querySelectorAll('input[name="agentSkill"]:checked')).map(el => el.value);
 
     const agentTools = {
       bookingTool: {
-        enabled: document.getElementById('agentToolBooking')?.checked ?? true,
+        enabled: document.getElementById('agentToolBooking')?.checked === true,
         workingHours: document.getElementById('agentBookingWorkingHours')?.value.trim() || '09:00 - 22:00',
         defaultService: document.getElementById('agentBookingDefaultService')?.value.trim() || 'استشارة / موعد',
       },
       orderTrackingTool: {
-        enabled: document.getElementById('agentToolOrders')?.checked ?? true,
+        enabled: document.getElementById('agentToolOrders')?.checked === true,
       },
       whatsappNotificationTool: {
-        enabled: document.getElementById('agentToolWhatsapp')?.checked ?? true,
+        enabled: document.getElementById('agentToolWhatsapp')?.checked === true,
       },
       telegramNotificationTool: {
-        enabled: document.getElementById('agentToolTelegram')?.checked ?? true,
+        enabled: document.getElementById('agentToolTelegram')?.checked === true,
       },
       messageClassificationTool: {
-        enabled: true,
-        autoTag: true,
+        enabled: false,
+        autoTag: false,
       }
     };
 
