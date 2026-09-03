@@ -317,6 +317,34 @@ router.post('/:id/exchange-instagram-code', authenticate, (req, res) => {
   botsController.exchangeInstagramCode(req, res);
 });
 
+// تشغيل الأتمتة وفحص المبيعات يدوياً للبوت
+router.post('/:id/trigger-automation', authenticate, async (req, res) => {
+  try {
+    const { action } = req.body || {};
+    const botId = req.params.id;
+    const { runBotSalesRecovery, runBotDailySummary } = require('../cronJobs');
+
+    if (action === 'daily_digest') {
+      const summary = await runBotDailySummary(botId);
+      return res.json({
+        success: true,
+        message: 'تم توليد وإرسال ملخص المبيعات بنجاح',
+        data: summary,
+      });
+    }
+
+    const result = await runBotSalesRecovery(botId);
+    return res.json({
+      success: true,
+      message: `تم فحص المحادثات: تم استعادة ${result.recovered} محادثة مهتمة بنجاح`,
+      data: result,
+    });
+  } catch (err) {
+    logger.error('error_triggering_automation', { botId: req.params.id, err: err.message });
+    return res.status(500).json({ success: false, message: 'حدث خطأ أثناء تشغيل الأتمتة' });
+  }
+});
+
 // حذف بوت
 router.delete('/:id', authenticate, botsController.deleteBot);
 

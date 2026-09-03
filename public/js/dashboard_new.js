@@ -457,7 +457,43 @@
       hint_logo_format: 'PNG or JPG up to 2MB',
       placeholder_store_url: 'https://my-store.myshopify.com',
       store_sync_feedback: 'Store catalog sync configured successfully. Your AI agent can now recommend products from your catalog.',
-      store_sync_planned: 'Direct automated catalog sync for Shopify & WooCommerce is scheduled for live rollout. The built-in catalog is active.'
+      store_sync_planned: 'Direct automated catalog sync for Shopify & WooCommerce is scheduled for live rollout. The built-in catalog is active.',
+      automation_center_title: 'AI Sales Automation Center',
+      automation_center_desc: 'Manage autonomous background tasks: abandoned lead recovery, sales digests, and urgent triage.',
+      btn_trigger_recovery: 'Recover Lost Leads Now',
+      btn_trigger_digest: 'Send Sales Digest Now',
+      card_recovery_title: 'Abandoned Sales Recovery',
+      card_recovery_desc: 'Automatically re-engages leads who showed buying intent but stopped responding.',
+      card_digest_title: 'Daily Performance Digest',
+      card_digest_desc: 'Summarizes today\'s orders, revenue, and active chats to your Telegram or WhatsApp.',
+      card_stock_title: 'Low Stock Alerts',
+      card_stock_desc: 'Instantly alerts you when product quantities fall below the safe limit.',
+      card_complaints_title: 'Urgent Complaint Triage',
+      card_complaints_desc: 'Dispatches immediate alerts to your phone if a customer files a complaint.',
+      badge_active: 'Active',
+      badge_scheduled: 'Daily at 21:00',
+      badge_monitoring: 'Auto Monitoring',
+      badge_instant: 'Instant Alert',
+      agent_tool_recovery_title: 'Automated Abandoned Sales & Inquiries Recovery',
+      agent_recovery_delay_label: 'Follow-up After',
+      delay_2h: '2 Hours',
+      delay_4h: '4 Hours',
+      delay_12h: '12 Hours',
+      delay_24h: '24 Hours',
+      agent_recovery_msg_label: 'Custom Follow-up Message',
+      agent_recovery_msg_placeholder: 'Leave empty for automatic friendly recovery message',
+      agent_tool_digest_title: 'Daily Performance & Sales Digest Tool',
+      agent_digest_channel_label: 'Notification Channel',
+      channel_all: 'Telegram, WhatsApp & Dashboard',
+      channel_inapp: 'Dashboard Notifications Only',
+      agent_digest_time_label: 'Delivery Time',
+      agent_tool_upsell_title: 'Smart Catalog Upselling & Closing Strategy',
+      agent_sales_tone_label: 'Sales Persona Tone',
+      tone_consultative: 'Consultative & Helpful',
+      tone_enthusiastic: 'Enthusiastic & Promotional',
+      tone_formal: 'Direct & Professional',
+      agent_max_discount_label: 'Closing Incentive Discount',
+      discount_none: 'No extra discounts (0%)'
     },
     ar: {
       menu_overview: 'نظرة عامة',
@@ -890,7 +926,43 @@
       hint_logo_format: 'PNG أو JPG حتى 2 ميجابايت',
       placeholder_store_url: 'https://my-store.myshopify.com',
       store_sync_feedback: 'تم حفظ إعدادات مزامنة المتجر بنجاح. يستطيع الوكيل الذكي الآن ترشيح المنتجات من الكتالوج.',
-      store_sync_planned: 'المزامنة التلقائية المباشرة مع شوبيفاي ووكومرس قيد الإطلاق المباشر. كتالوج المتجر الداخلي نشط ويعمل حالياً.'
+      store_sync_planned: 'المزامنة التلقائية المباشرة مع شوبيفاي ووكومرس قيد الإطلاق المباشر. كتالوج المتجر الداخلي نشط ويعمل حالياً.',
+      automation_center_title: 'مركز أتمتة المبيعات والمهام التلقائية',
+      automation_center_desc: 'إدارة المهام التلقائية الخلفية: استعادة المبيعات المتروكة، تقرير المبيعات اليومي، وفرز الشكاوى العاجلة.',
+      btn_trigger_recovery: 'استعادة العملاء المحتملين الآن',
+      btn_trigger_digest: 'إرسال ملخص المبيعات الآن',
+      card_recovery_title: 'استعادة المبيعات المتروكة',
+      card_recovery_desc: 'إعادة استهداف ومتابعة العملاء الذين أبدوا رغبة بالشراء أو سألوا عن الأسعار وتوقفوا عن الرد.',
+      card_digest_title: 'تقرير الأداء والمبيعات اليومي',
+      card_digest_desc: 'ملخص شامل للطلبات اليومية والإيرادات والمحادثات يُرسل لحسابك على تيليجرام أو واتساب.',
+      card_stock_title: 'تنبيهات المخزون المنخفض',
+      card_stock_desc: 'مراقبة مستمرة لكميات المنتجات في الكتالوج وإرسال إنذار مبكر عند اقتراب نفاد المخزون.',
+      card_complaints_title: 'فرز وتنبيه الشكاوى العاجلة',
+      card_complaints_desc: 'تحويل فوري لشكاوى العملاء الحرجة وطلبات التدخل البشري إلى هاتفك دون تأخير.',
+      badge_active: 'نشط',
+      badge_scheduled: 'يومياً 9:00 م',
+      badge_monitoring: 'مراقبة تلقائية',
+      badge_instant: 'تنبيه فوري',
+      agent_tool_recovery_title: 'أداة المتابعة واستعادة المبيعات المتروكة تلقائياً',
+      agent_recovery_delay_label: 'المتابعة بعد',
+      delay_2h: 'ساعتان',
+      delay_4h: '4 ساعات',
+      delay_12h: '12 ساعة',
+      delay_24h: '24 ساعة',
+      agent_recovery_msg_label: 'رسالة المتابعة المخصصة',
+      agent_recovery_msg_placeholder: 'اتركه فارغاً لاستخدام الرسالة الافتراضية الذكية',
+      agent_tool_digest_title: 'أداة تقرير الأداء والمبيعات اليومي التلقائي',
+      agent_digest_channel_label: 'قناة استلام التقرير',
+      channel_all: 'تيليجرام وواتساب ولوحة التحكم',
+      channel_inapp: 'إشعارات لوحة التحكم فقط',
+      agent_digest_time_label: 'وقت الإرسال اليومي',
+      agent_tool_upsell_title: 'أداة ترشيح المنتجات التكميلية وإغلاق الصفقات',
+      agent_sales_tone_label: 'نبرة وأسلوب البيع',
+      tone_consultative: 'استشاري ومقنع',
+      tone_enthusiastic: 'حماسي وترويجي',
+      tone_formal: 'رسمي ومباشر',
+      agent_max_discount_label: 'صلاحية الخصم التشجيعي',
+      discount_none: 'بدون خصم إضافي (0%)'
     }
   };
 
@@ -3165,6 +3237,28 @@
       const bookingService = document.getElementById('agentBookingDefaultService');
       if (bookingService) bookingService.value = tools.bookingTool?.defaultService || 'استشارة / موعد';
 
+      // Sales & Marketing tools population
+      const toolRecovery = document.getElementById('agentToolSalesRecovery');
+      if (toolRecovery) toolRecovery.checked = tools.salesRecoveryTool ? tools.salesRecoveryTool.enabled !== false : true;
+      const delayEl = document.getElementById('agentSalesRecoveryDelay');
+      if (delayEl) delayEl.value = String(tools.salesRecoveryTool?.delayHours || 2);
+      const msgEl = document.getElementById('agentSalesRecoveryMsg');
+      if (msgEl) msgEl.value = tools.salesRecoveryTool?.customMessage || '';
+
+      const toolDigest = document.getElementById('agentToolDailyDigest');
+      if (toolDigest) toolDigest.checked = tools.dailyDigestTool ? tools.dailyDigestTool.enabled !== false : true;
+      const channelEl = document.getElementById('agentDailyDigestChannel');
+      if (channelEl) channelEl.value = tools.dailyDigestTool?.preferredChannel || 'all';
+      const timeEl = document.getElementById('agentDailyDigestTime');
+      if (timeEl) timeEl.value = tools.dailyDigestTool?.digestTime || '21:00';
+
+      const toolUpsell = document.getElementById('agentToolSalesUpsell');
+      if (toolUpsell) toolUpsell.checked = tools.salesUpsellTool ? tools.salesUpsellTool.enabled !== false : true;
+      const toneEl = document.getElementById('agentSalesTone');
+      if (toneEl) toneEl.value = tools.salesUpsellTool?.salesTone || 'consultative';
+      const discountEl = document.getElementById('agentMaxDiscount');
+      if (discountEl) discountEl.value = String(tools.salesUpsellTool?.maxDiscountPercent || 0);
+
       // Skills checkboxes population
       const rawSkills = Array.isArray(bot.agentSkills) && bot.agentSkills.length > 0
         ? bot.agentSkills.map(s => typeof s === 'string' ? s : s?.skillKey).filter(Boolean)
@@ -3185,6 +3279,27 @@
       const toolTg = document.getElementById('agentToolTelegram');
       if (toolTg) toolTg.checked = !isFree;
 
+      const toolRecovery = document.getElementById('agentToolSalesRecovery');
+      if (toolRecovery) toolRecovery.checked = true;
+      const delayEl = document.getElementById('agentSalesRecoveryDelay');
+      if (delayEl) delayEl.value = '2';
+      const msgEl = document.getElementById('agentSalesRecoveryMsg');
+      if (msgEl) msgEl.value = '';
+
+      const toolDigest = document.getElementById('agentToolDailyDigest');
+      if (toolDigest) toolDigest.checked = true;
+      const channelEl = document.getElementById('agentDailyDigestChannel');
+      if (channelEl) channelEl.value = 'all';
+      const timeEl = document.getElementById('agentDailyDigestTime');
+      if (timeEl) timeEl.value = '21:00';
+
+      const toolUpsell = document.getElementById('agentToolSalesUpsell');
+      if (toolUpsell) toolUpsell.checked = true;
+      const toneEl = document.getElementById('agentSalesTone');
+      if (toneEl) toneEl.value = 'consultative';
+      const discountEl = document.getElementById('agentMaxDiscount');
+      if (discountEl) discountEl.value = '0';
+
       document.querySelectorAll('input[name="agentSkill"]').forEach((chk, idx) => {
         chk.checked = isFree ? (idx < 2) : true;
       });
@@ -3195,7 +3310,7 @@
   }
 
   // Bind change listeners to lock/unlock on user click
-  ['agentToolBooking', 'agentToolOrders', 'agentToolWhatsapp', 'agentToolTelegram'].forEach(id => {
+  ['agentToolBooking', 'agentToolOrders', 'agentToolWhatsapp', 'agentToolTelegram', 'agentToolSalesRecovery', 'agentToolDailyDigest', 'agentToolSalesUpsell'].forEach(id => {
     document.getElementById(id)?.addEventListener('change', enforceToolAndSkillTierLimits);
   });
   document.querySelectorAll('input[name="agentSkill"]').forEach(chk => {
@@ -3226,9 +3341,24 @@
       telegramNotificationTool: {
         enabled: document.getElementById('agentToolTelegram')?.checked === true,
       },
+      salesRecoveryTool: {
+        enabled: document.getElementById('agentToolSalesRecovery')?.checked === true,
+        delayHours: parseInt(document.getElementById('agentSalesRecoveryDelay')?.value) || 2,
+        customMessage: document.getElementById('agentSalesRecoveryMsg')?.value?.trim() || '',
+      },
+      dailyDigestTool: {
+        enabled: document.getElementById('agentToolDailyDigest')?.checked === true,
+        preferredChannel: document.getElementById('agentDailyDigestChannel')?.value || 'all',
+        digestTime: document.getElementById('agentDailyDigestTime')?.value || '21:00',
+      },
+      salesUpsellTool: {
+        enabled: document.getElementById('agentToolSalesUpsell')?.checked === true,
+        salesTone: document.getElementById('agentSalesTone')?.value || 'consultative',
+        maxDiscountPercent: parseInt(document.getElementById('agentMaxDiscount')?.value) || 0,
+      },
       messageClassificationTool: {
-        enabled: false,
-        autoTag: false,
+        enabled: true,
+        autoTag: true,
       }
     };
 
@@ -3250,6 +3380,75 @@
     await loadAgents();
     if (!id && result._id) refreshActiveBot(result);
   });
+
+  // Wire AI Sales Automation Center trigger buttons
+  const triggerRecoveryBtn = document.getElementById('triggerRecoveryBtn');
+  if (triggerRecoveryBtn) {
+    triggerRecoveryBtn.addEventListener('click', async () => {
+      if (!currentBot) return;
+      const feedbackBox = document.getElementById('automationFeedbackBox');
+      triggerRecoveryBtn.disabled = true;
+      triggerRecoveryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (currentLanguage === 'ar' ? 'جاري الفحص...' : 'Checking...');
+      try {
+        const res = await apiFetch(`/api/bots/${currentBot._id}/trigger-automation`, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'sales_recovery' })
+        });
+        if (feedbackBox) {
+          feedbackBox.style.display = 'block';
+          feedbackBox.style.background = 'rgba(16, 185, 129, 0.15)';
+          feedbackBox.style.border = '1px solid var(--green)';
+          feedbackBox.style.color = 'var(--green)';
+          feedbackBox.textContent = res?.message || (currentLanguage === 'ar' ? 'تم فحص المحادثات بنجاح.' : 'Checked conversations successfully.');
+        }
+      } catch (err) {
+        if (feedbackBox) {
+          feedbackBox.style.display = 'block';
+          feedbackBox.style.background = 'rgba(239, 68, 68, 0.15)';
+          feedbackBox.style.border = '1px solid var(--red)';
+          feedbackBox.style.color = 'var(--red)';
+          feedbackBox.textContent = currentLanguage === 'ar' ? 'حدث خطأ أثناء تشغيل الفحص.' : 'Error triggering check.';
+        }
+      } finally {
+        triggerRecoveryBtn.disabled = false;
+        triggerRecoveryBtn.innerHTML = '<i class="fas fa-rotate"></i> ' + (translations[currentLanguage]?.btn_trigger_recovery || 'Recover Lost Leads Now');
+      }
+    });
+  }
+
+  const triggerDigestBtn = document.getElementById('triggerDigestBtn');
+  if (triggerDigestBtn) {
+    triggerDigestBtn.addEventListener('click', async () => {
+      if (!currentBot) return;
+      const feedbackBox = document.getElementById('automationFeedbackBox');
+      triggerDigestBtn.disabled = true;
+      triggerDigestBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (currentLanguage === 'ar' ? 'جاري الإرسال...' : 'Sending...');
+      try {
+        const res = await apiFetch(`/api/bots/${currentBot._id}/trigger-automation`, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'daily_digest' })
+        });
+        if (feedbackBox) {
+          feedbackBox.style.display = 'block';
+          feedbackBox.style.background = 'rgba(6, 182, 212, 0.15)';
+          feedbackBox.style.border = '1px solid var(--cyan)';
+          feedbackBox.style.color = 'var(--cyan)';
+          feedbackBox.textContent = res?.message || (currentLanguage === 'ar' ? 'تم إرسال الملخص بنجاح.' : 'Digest sent successfully.');
+        }
+      } catch (err) {
+        if (feedbackBox) {
+          feedbackBox.style.display = 'block';
+          feedbackBox.style.background = 'rgba(239, 68, 68, 0.15)';
+          feedbackBox.style.border = '1px solid var(--red)';
+          feedbackBox.style.color = 'var(--red)';
+          feedbackBox.textContent = currentLanguage === 'ar' ? 'حدث خطأ أثناء إرسال التقرير.' : 'Error sending digest.';
+        }
+      } finally {
+        triggerDigestBtn.disabled = false;
+        triggerDigestBtn.innerHTML = '<i class="fas fa-paper-plane"></i> ' + (translations[currentLanguage]?.btn_trigger_digest || 'Send Sales Digest Now');
+      }
+    });
+  }
 
   function adminAction(label, action, style = '') {
     const button = document.createElement('button');

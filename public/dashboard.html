@@ -915,6 +915,64 @@
             <div><h2 style="margin-bottom:8px;"><i class="fas fa-robot" style="color:var(--cyan);"></i> <span data-i18n="agents_title">AI Agents</span></h2><p style="color:var(--text-muted);" data-i18n="agents_desc">Build distinct agents for support, sales, and lead qualification. Choose one active agent for the workspace.</p></div>
             <button id="createAgentBtn" class="btn btn-primary" type="button"><i class="fas fa-plus"></i> <span data-i18n="agents_create">Create agent</span></button>
           </div>
+          <!-- AI Sales & Automation Center Card -->
+          <div class="glass-card" style="margin-bottom:24px; padding:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
+              <div>
+                <h3 style="margin-bottom:6px; display:flex; align-items:center; gap:8px;">
+                  <i class="fas fa-magic" style="color:var(--purple-light);"></i>
+                  <span data-i18n="automation_center_title">AI Sales Automation Center</span>
+                </h3>
+                <p style="color:var(--text-muted); font-size:13px; margin:0;" data-i18n="automation_center_desc">Manage autonomous background tasks: abandoned lead recovery, sales digests, and urgent triage.</p>
+              </div>
+              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button id="triggerRecoveryBtn" class="btn btn-secondary btn-sm" type="button">
+                  <i class="fas fa-rotate"></i> <span data-i18n="btn_trigger_recovery">Recover Lost Leads Now</span>
+                </button>
+                <button id="triggerDigestBtn" class="btn btn-secondary btn-sm" type="button">
+                  <i class="fas fa-paper-plane"></i> <span data-i18n="btn_trigger_digest">Send Sales Digest Now</span>
+                </button>
+              </div>
+            </div>
+
+            <div id="automationFeedbackBox" style="display:none; margin-bottom:14px; padding:10px 14px; border-radius:8px; font-size:13px;"></div>
+
+            <!-- Automation Grid Cards -->
+            <div class="db-responsive-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <strong style="font-size:13px;" data-i18n="card_recovery_title">Abandoned Sales Recovery</strong>
+                  <span class="badge" style="background:rgba(16,185,129,0.15); color:var(--green); font-size:11px;" data-i18n="badge_active">Active</span>
+                </div>
+                <p style="font-size:12px; color:var(--text-muted); margin:0;" data-i18n="card_recovery_desc">Automatically re-engages leads who showed buying intent but stopped responding.</p>
+              </div>
+
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <strong style="font-size:13px;" data-i18n="card_digest_title">Daily Performance Digest</strong>
+                  <span class="badge" style="background:rgba(6,182,212,0.15); color:var(--cyan); font-size:11px;" data-i18n="badge_scheduled">Daily at 21:00</span>
+                </div>
+                <p style="font-size:12px; color:var(--text-muted); margin:0;" data-i18n="card_digest_desc">Summarizes today's orders, revenue, and active chats to your Telegram or WhatsApp.</p>
+              </div>
+
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <strong style="font-size:13px;" data-i18n="card_stock_title">Low Stock Alerts</strong>
+                  <span class="badge" style="background:rgba(245,158,11,0.15); color:var(--orange); font-size:11px;" data-i18n="badge_monitoring">Auto Monitoring</span>
+                </div>
+                <p style="font-size:12px; color:var(--text-muted); margin:0;" data-i18n="card_stock_desc">Instantly alerts you when product quantities fall below the safe limit.</p>
+              </div>
+
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <strong style="font-size:13px;" data-i18n="card_complaints_title">Urgent Complaint Triage</strong>
+                  <span class="badge" style="background:rgba(239,68,68,0.15); color:var(--red); font-size:11px;" data-i18n="badge_instant">Instant Alert</span>
+                </div>
+                <p style="font-size:12px; color:var(--text-muted); margin:0;" data-i18n="card_complaints_desc">Dispatches immediate alerts to your phone if a customer files a complaint.</p>
+              </div>
+            </div>
+          </div>
+
           <div id="agentsEntitlement" class="glass-card" style="margin-bottom:20px; padding:14px 18px; color:var(--text-muted);"></div>
           <div id="agentsList" class="db-responsive-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:18px;"></div>
         </section>
@@ -1806,6 +1864,79 @@
                   <input id="agentToolTelegram" type="checkbox" checked />
                   <span data-i18n="agent_tool_tg_title">Instant Telegram Notifications Tool</span>
                 </label>
+              </div>
+
+              <!-- Sales Recovery Tool -->
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                  <input id="agentToolSalesRecovery" type="checkbox" checked />
+                  <span data-i18n="agent_tool_recovery_title">Automated Abandoned Sales & Inquiries Recovery</span>
+                </label>
+                <div id="salesRecoverySettingsGroup" style="display:grid; grid-template-columns:1fr 2fr; gap:12px; margin-top:12px;">
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:12px;" data-i18n="agent_recovery_delay_label">Follow-up After</label>
+                    <select id="agentSalesRecoveryDelay" class="form-control">
+                      <option value="2" data-i18n="delay_2h">2 Hours</option>
+                      <option value="4" data-i18n="delay_4h">4 Hours</option>
+                      <option value="12" data-i18n="delay_12h">12 Hours</option>
+                      <option value="24" data-i18n="delay_24h">24 Hours</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:12px;" data-i18n="agent_recovery_msg_label">Custom Follow-up Message</label>
+                    <input id="agentSalesRecoveryMsg" class="form-control" placeholder="Leave empty for automatic friendly recovery message" data-i18n-placeholder="agent_recovery_msg_placeholder" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Daily Performance Digest Tool -->
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                  <input id="agentToolDailyDigest" type="checkbox" checked />
+                  <span data-i18n="agent_tool_digest_title">Daily Performance & Sales Digest</span>
+                </label>
+                <div id="dailyDigestSettingsGroup" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:12px;" data-i18n="agent_digest_channel_label">Notification Channel</label>
+                    <select id="agentDailyDigestChannel" class="form-control">
+                      <option value="all" data-i18n="channel_all">Telegram, WhatsApp & Dashboard</option>
+                      <option value="telegram">Telegram Only</option>
+                      <option value="whatsapp">WhatsApp Only</option>
+                      <option value="in_app" data-i18n="channel_inapp">Dashboard Notifications Only</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:12px;" data-i18n="agent_digest_time_label">Delivery Time</label>
+                    <input id="agentDailyDigestTime" type="time" class="form-control" value="21:00" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Smart Upsell & Persona Tool -->
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                  <input id="agentToolSalesUpsell" type="checkbox" checked />
+                  <span data-i18n="agent_tool_upsell_title">Smart Catalog Upselling & Closing Strategy</span>
+                </label>
+                <div id="salesUpsellSettingsGroup" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:12px;" data-i18n="agent_sales_tone_label">Sales Persona Tone</label>
+                    <select id="agentSalesTone" class="form-control">
+                      <option value="consultative" data-i18n="tone_consultative">Consultative & Helpful</option>
+                      <option value="enthusiastic" data-i18n="tone_enthusiastic">Enthusiastic & Promotional</option>
+                      <option value="formal" data-i18n="tone_formal">Direct & Formal</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:12px;" data-i18n="agent_max_discount_label">Closing Incentive Discount</label>
+                    <select id="agentMaxDiscount" class="form-control">
+                      <option value="0" data-i18n="discount_none">No discounts (0%)</option>
+                      <option value="5">Up to 5% discount</option>
+                      <option value="10">Up to 10% discount</option>
+                      <option value="15">Up to 15% discount</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

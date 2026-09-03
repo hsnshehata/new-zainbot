@@ -53,6 +53,21 @@ const botSchema = new mongoose.Schema({
     messageClassificationTool: {
       enabled: { type: Boolean, default: true },
       autoTag: { type: Boolean, default: true }
+    },
+    salesRecoveryTool: {
+      enabled: { type: Boolean, default: true },
+      delayHours: { type: Number, default: 2 },
+      customMessage: { type: String, trim: true, default: '' }
+    },
+    dailyDigestTool: {
+      enabled: { type: Boolean, default: true },
+      preferredChannel: { type: String, enum: ['all', 'telegram', 'whatsapp', 'in_app'], default: 'all' },
+      digestTime: { type: String, trim: true, default: '21:00' }
+    },
+    salesUpsellTool: {
+      enabled: { type: Boolean, default: true },
+      salesTone: { type: String, enum: ['consultative', 'enthusiastic', 'formal'], default: 'consultative' },
+      maxDiscountPercent: { type: Number, default: 0 }
     }
   },
   agentSkills: [{

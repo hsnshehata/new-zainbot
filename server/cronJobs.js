@@ -295,6 +295,107 @@ const checkLowStock = () => {
   });
 };
 
+// تشغيل استعادة المبيعات لبوت معين
+async function runBotSalesRecovery(botId) {
+  const bot = await Bot.findById(botId).select('_id userId name agentTools isActive');
+  if (!bot || !bot.isActive) return { recovered: 0 };
+  if (bot.agentTools?.salesRecoveryTool?.enabled === false) return { recovered: 0, disabled: true };
+
+  const delayHours = Number(bot.agentTools?.salesRecoveryTool?.delayHours) || 2;
+  const now = Date.now();
+  const thresholdAgo = new Date(now - delayHours * 60 * 60 * 1000);
+  const maxAgo = new Date(now - 48 * 60 * 60 * 1000);
+
+  const candidateConversations = await Conversation.find({
+    botId: bot._id,
+    isHumanHandling: false,
+    followUpSentAt: { $exists: false },
+    $or: [
+      { category: { $in: ['مهتم بشدة 🔥', 'طلب أسعار 💰', 'طلب حجز 📅'] } },
+      { 'labels.name': { $in: ['مهتم بشدة 🔥', 'طلب أسعار 💰'] } }
+    ],
+    'messages.timestamp': { $gte: maxAgo, $lte: thresholdAgo }
+  }).limit(20);
+
+  let recovered = 0;
+  const customMsg = bot.agentTools?.salesRecoveryTool?.customMessage?.trim();
+  const followUpText = customMsg || `أهلاً بحضرتك 👋 نتمنى تكون بخير! لاحظنا اهتمامك معنا بالمنتجات، هل تحب نساعدك في إتمام طلبك أو عندك أي استفسار إضافي؟ يسعدنا خدمتك دائماً!`;
+
+  for (const conv of candidateConversations) {
+    if (conv.mutedUntil && new Date(conv.mutedUntil) > new Date()) continue;
+    if (!conv.messages || conv.messages.length === 0) continue;
+
+    const lastMessage = conv.messages[conv.messages.length - 1];
+    if (lastMessage.role === 'assistant' && lastMessage.content.includes('أهلاً بحضرتك')) continue;
+
+    try {
+      if (conv.channel === 'whatsapp') {
+        const { getWhatsAppSessionManager } = require('./services/whatsappSessionManager');
+        const waManager = getWhatsAppSessionManager();
+        const cleanPhone = String(conv.userId || '').replace(/[^0-9]/g, '');
+        if (cleanPhone) {
+          await waManager.sendDirectText(String(bot._id), `${cleanPhone}@c.us`, followUpText);
+        }
+      }
+    } catch (sendErr) {
+      logger.warn('abandoned_recovery_send_failed', { convId: conv._id, err: sendErr.message });
+    }
+
+    conv.messages.push({
+      role: 'assistant',
+      content: followUpText,
+      messageId: `followup_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      timestamp: new Date()
+    });
+    conv.followUpSentAt = new Date();
+    await conv.save();
+    recovered++;
+  }
+
+  return { recovered };
+}
+
+// تشغيل ملخص المبيعات اليومي لبوت معين
+async function runBotDailySummary(botId) {
+  const bot = await Bot.findById(botId).select('_id userId name agentTools');
+  if (!bot) return null;
+  if (bot.agentTools?.dailyDigestTool?.enabled === false) return null;
+
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const [orders, bookings, convsCount, hotLeadsCount] = await Promise.all([
+    ChatOrder.find({ botId: bot._id, createdAt: { $gte: startOfDay } }).select('totalAmount'),
+    Booking.find({ botId: bot._id, createdAt: { $gte: startOfDay } }).countDocuments(),
+    Conversation.countDocuments({ botId: bot._id, 'messages.timestamp': { $gte: startOfDay } }),
+    Conversation.countDocuments({ botId: bot._id, category: 'مهتم بشدة 🔥', 'messages.timestamp': { $gte: startOfDay } })
+  ]);
+
+  const ordersCount = orders.length;
+  const totalRevenue = orders.reduce((sum, ord) => sum + (Number(ord.totalAmount) || 0), 0);
+
+  const summaryData = {
+    conversationsCount: convsCount,
+    ordersCount,
+    revenue: totalRevenue,
+    currency: 'EGP',
+    bookingsCount,
+    hotLeadsCount
+  };
+
+  if (ordersCount > 0 || bookings > 0 || convsCount > 0) {
+    await dispatchMultiChannelNotification({
+      userId: bot.userId,
+      botId: bot._id,
+      event: 'daily_digest',
+      data: summaryData
+    });
+    logger.info('✅ Daily summary dispatched', { botId: bot._id, ordersCount, convsCount, totalRevenue });
+  }
+
+  return summaryData;
+}
+
 // وظيفة استعادة المحادثات والطلبات المتروكة (Abandoned Sales Recovery)
 const recoverAbandonedSalesConversations = () => {
   return cron.schedule('0 * * * *', async () => {
@@ -303,56 +404,10 @@ const recoverAbandonedSalesConversations = () => {
       const activeBots = await Bot.find({ isActive: true }).select('_id userId name');
       if (!activeBots.length) return;
 
-      const now = Date.now();
-      const twoHoursAgo = new Date(now - 2 * 60 * 60 * 1000);
-      const twentyFourHoursAgo = new Date(now - 24 * 60 * 60 * 1000);
-
       let totalRecovered = 0;
-
       for (const bot of activeBots) {
-        const candidateConversations = await Conversation.find({
-          botId: bot._id,
-          isHumanHandling: false,
-          followUpSentAt: { $exists: false },
-          $or: [
-            { category: { $in: ['مهتم بشدة 🔥', 'طلب أسعار 💰', 'طلب حجز 📅'] } },
-            { 'labels.name': { $in: ['مهتم بشدة 🔥', 'طلب أسعار 💰'] } }
-          ],
-          'messages.timestamp': { $gte: twentyFourHoursAgo, $lte: twoHoursAgo }
-        }).limit(20);
-
-        for (const conv of candidateConversations) {
-          if (conv.mutedUntil && new Date(conv.mutedUntil) > new Date()) continue;
-          if (!conv.messages || conv.messages.length === 0) continue;
-
-          const lastMessage = conv.messages[conv.messages.length - 1];
-          if (lastMessage.role === 'assistant' && lastMessage.content.includes('أهلاً بحضرتك 👋')) continue;
-
-          const followUpText = `أهلاً بحضرتك 👋 نتمنى تكون بخير! لاحظنا اهتمامك معنا بالمنتجات، هل تحب نساعدك في إتمام طلبك أو عندك أي استفسار إضافي؟ يسعدنا خدمتك دائماً!`;
-
-          try {
-            if (conv.channel === 'whatsapp') {
-              const { getWhatsAppSessionManager } = require('./services/whatsappSessionManager');
-              const waManager = getWhatsAppSessionManager();
-              const cleanPhone = String(conv.userId || '').replace(/[^0-9]/g, '');
-              if (cleanPhone) {
-                await waManager.sendDirectText(String(bot._id), `${cleanPhone}@c.us`, followUpText);
-              }
-            }
-          } catch (sendErr) {
-            logger.warn('abandoned_recovery_send_failed', { convId: conv._id, err: sendErr.message });
-          }
-
-          conv.messages.push({
-            role: 'assistant',
-            content: followUpText,
-            messageId: `followup_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-            timestamp: new Date()
-          });
-          conv.followUpSentAt = new Date();
-          await conv.save();
-          totalRecovered++;
-        }
+        const res = await runBotSalesRecovery(bot._id);
+        totalRecovered += (res?.recovered || 0);
       }
 
       logger.info('⏰ Abandoned sales recovery check completed.', { totalRecovered });
@@ -372,36 +427,8 @@ const sendDailyPerformanceSummary = () => {
       const activeBots = await Bot.find({ isActive: true }).select('_id userId name');
       if (!activeBots.length) return;
 
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
-
       for (const bot of activeBots) {
-        const [orders, bookings, convsCount, hotLeadsCount] = await Promise.all([
-          ChatOrder.find({ botId: bot._id, createdAt: { $gte: startOfDay } }).select('totalAmount'),
-          Booking.find({ botId: bot._id, createdAt: { $gte: startOfDay } }).countDocuments(),
-          Conversation.countDocuments({ botId: bot._id, 'messages.timestamp': { $gte: startOfDay } }),
-          Conversation.countDocuments({ botId: bot._id, category: 'مهتم بشدة 🔥', 'messages.timestamp': { $gte: startOfDay } })
-        ]);
-
-        const ordersCount = orders.length;
-        const totalRevenue = orders.reduce((sum, ord) => sum + (Number(ord.totalAmount) || 0), 0);
-
-        if (ordersCount > 0 || bookings > 0 || convsCount > 0) {
-          await dispatchMultiChannelNotification({
-            userId: bot.userId,
-            botId: bot._id,
-            event: 'daily_digest',
-            data: {
-              conversationsCount: convsCount,
-              ordersCount,
-              revenue: totalRevenue,
-              currency: 'EGP',
-              bookingsCount: bookings,
-              hotLeadsCount
-            }
-          });
-          logger.info('✅ Daily summary dispatched', { botId: bot._id, ordersCount, convsCount, totalRevenue });
-        }
+        await runBotDailySummary(bot._id);
       }
       logger.info('⏰ Daily performance summary completed.');
     } catch (err) {
@@ -478,5 +505,7 @@ module.exports = {
   recoverAbandonedSalesConversations,
   sendDailyPerformanceSummary,
   checkSubscriptionExpiringSoon,
-  cleanupOldLogs
+  cleanupOldLogs,
+  runBotSalesRecovery,
+  runBotDailySummary
 };
