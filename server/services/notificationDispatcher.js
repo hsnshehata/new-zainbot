@@ -4,7 +4,6 @@ const Bot = require('../models/Bot');
 const User = require('../models/User');
 const logger = require('../logger');
 const { sendTelegramMessage } = require('./telegramService');
-const { getWhatsAppSessionManager } = require('./whatsappSessionManager');
 
 function formatOrderNotificationMessage(data, botName = 'ZainBot AI') {
   const itemsStr = Array.isArray(data.items)
@@ -30,10 +29,30 @@ function formatBookingNotificationMessage(data, botName = 'ZainBot AI') {
     `🕒 <b>تم الحجز في:</b> ${new Date().toLocaleString('ar-EG', { timeZone: 'Africa/Cairo' })}`;
 }
 
+const Notification = require('../models/Notification');
+
+function formatComplaintNotificationMessage(data, botName = 'ZainBot AI') {
+  return `⚠️ <b>تنبيه عاجل: شكوى أو طلب تدخل بشري (${botName})</b>\n\n` +
+    `👤 <b>العميل:</b> ${data.customerName || data.username || data.sourceUsername || 'غير محدد'}\n` +
+    `📞 <b>معرف/هاتف:</b> ${data.customerPhone || data.userId || 'غير محدد'}\n` +
+    `💬 <b>نص الرسالة:</b> ${data.message || data.userMessageContent || 'طلب التحدث مع خدمة العملاء'}\n` +
+    `🕒 <b>الوقت:</b> ${new Date().toLocaleString('ar-EG', { timeZone: 'Africa/Cairo' })}`;
+}
+
+function formatDailyDigestNotificationMessage(data, botName = 'ZainBot AI') {
+  return `📊 <b>تقرير الأداء والمبيعات اليومي (${botName})</b>\n\n` +
+    `💬 <b>محادثات اليوم الجديدة:</b> ${data.conversationsCount || 0}\n` +
+    `🛒 <b>الطلبات الجديدة:</b> ${data.ordersCount || 0}\n` +
+    `💰 <b>إجمالي مبيعات اليوم:</b> ${data.revenue || 0} ${data.currency || 'EGP'}\n` +
+    `📅 <b>المواعيد المحجوزة:</b> ${data.bookingsCount || 0}\n` +
+    `🔥 <b>العملاء المهتمين بشدة:</b> ${data.hotLeadsCount || 0}\n` +
+    `🕒 <b>التاريخ:</b> ${new Date().toLocaleDateString('ar-EG', { timeZone: 'Africa/Cairo' })}`;
+}
+
 /**
  * Dispatch an alert message to all matching WhatsApp and Telegram recipients
  */
-async function dispatchMultiChannelNotification({ userId, botId, event, data }) {
+async function dispatchMultiChannelNotification({ userId, botId, event, data = {} }) {
   if (!userId && !botId) return { delivered: 0, failed: 0 };
 
   try {
@@ -73,27 +92,51 @@ async function dispatchMultiChannelNotification({ userId, botId, event, data }) 
     // Build notification message text in Arabic & English friendly format
     const botName = bot?.name || 'ZainBot AI';
     let messageText = '';
+    let notificationTitle = `تنبيه من ${botName}`;
 
     if (event === 'order_created' || event === 'chat_order') {
+      notificationTitle = `🛒 طلب جديد من المحادثة (${botName})`;
       messageText = formatOrderNotificationMessage(data, botName);
     } else if (event === 'booking_created') {
+      notificationTitle = `📅 حجز موعد جديد (${botName})`;
       messageText = formatBookingNotificationMessage(data, botName);
     } else if (event === 'booking_rescheduled') {
       const dateStr = data.bookingDate ? new Date(data.bookingDate).toLocaleString('ar-EG', { timeZone: 'Africa/Cairo' }) : 'قريباً';
+      notificationTitle = `🔄 تعديل موعد حجز (${botName})`;
       messageText = `🔄 <b>تم تعديل موعد الحجز (${botName})</b>\n\n` +
         `👤 <b>العميل:</b> ${data.customerName || 'غير محدد'}\n` +
         `📞 <b>الهاتف:</b> ${data.customerPhone || 'غير محدد'}\n` +
         `⏰ <b>الموعد الجديد:</b> ${dateStr}\n` +
         (data.notes ? `📝 <b>ملاحظة:</b> ${data.notes}\n` : '');
     } else if (event === 'booking_cancelled') {
+      notificationTitle = `❌ إلغاء حجز (${botName})`;
       messageText = `❌ <b>تم إلغاء الحجز (${botName})</b>\n\n` +
         `👤 <b>العميل:</b> ${data.customerName || 'غير محدد'}\n` +
         `📞 <b>الهاتف:</b> ${data.customerPhone || 'غير محدد'}\n` +
         (data.notes ? `📝 <b>السبب:</b> ${data.notes}\n` : '');
+    } else if (event === 'urgent_complaint' || event === 'human_handoff') {
+      notificationTitle = `⚠️ شكوى أو طلب تدخل بشري (${botName})`;
+      messageText = formatComplaintNotificationMessage(data, botName);
+    } else if (event === 'daily_digest') {
+      notificationTitle = `📊 ملخص المبيعات والأداء اليومي (${botName})`;
+      messageText = formatDailyDigestNotificationMessage(data, botName);
     } else {
       messageText = `🔔 <b>تنبيه من الوكيل (${botName})</b>\n\n` +
         `📌 <b>الحدث:</b> ${event}\n` +
         `📝 <b>التفاصيل:</b> ${data.message || JSON.stringify(data)}`;
+    }
+
+    // Always create an in-app notification record
+    try {
+      const plainSnippet = messageText.replace(/<[^>]*>/g, '').slice(0, 500);
+      await Notification.create({
+        user: effectiveUserId,
+        title: notificationTitle,
+        message: plainSnippet,
+        isRead: false,
+      });
+    } catch (notifErr) {
+      logger.warn('in_app_notification_creation_failed', { err: notifErr.message });
     }
 
     let delivered = 0;
@@ -121,6 +164,7 @@ async function dispatchMultiChannelNotification({ userId, botId, event, data }) 
     const waRecipients = recipients.filter((r) => r.channel === 'whatsapp');
     if (waRecipients.length > 0 && botId) {
       try {
+        const { getWhatsAppSessionManager } = require('./whatsappSessionManager');
         const waManager = getWhatsAppSessionManager();
         const plainText = messageText.replace(/<[^>]*>/g, '');
         for (const rec of waRecipients) {
@@ -148,4 +192,6 @@ module.exports = {
   dispatchMultiChannelNotification,
   formatOrderNotificationMessage,
   formatBookingNotificationMessage,
+  formatComplaintNotificationMessage,
+  formatDailyDigestNotificationMessage,
 };

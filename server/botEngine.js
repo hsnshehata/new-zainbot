@@ -23,6 +23,7 @@ const logger = require('./logger');
 const { getAiCompletion } = require('./services/aiFailover');
 const { checkPlanLimitsAndIncrement, settleMessageQuota } = require('./services/billingLimits');
 const { dispatchWebhook } = require('./services/webhookDispatcher');
+const { dispatchMultiChannelNotification } = require('./services/notificationDispatcher');
 
 // معرف المساعد الداخلي لتخطي هوكات الطلبات
 const ASSISTANT_BOT_ID = process.env.ASSISTANT_BOT_ID || '688ebdc24f6bd5cf70cb071d';
@@ -684,6 +685,20 @@ async function autoClassifyConversation({ bot, conversation, userMessageContent 
       conversation.labels.push({ name: category, color, timestamp: new Date() });
     }
     await conversation.save();
+
+    if (category === 'شكوى عاجلة ⚠️' && bot?.userId) {
+      dispatchMultiChannelNotification({
+        userId: bot.userId,
+        botId: bot._id,
+        event: 'urgent_complaint',
+        data: {
+          customerName: conversation.sourceUsername || 'عميل',
+          customerPhone: conversation.userId,
+          userMessageContent,
+          conversationId: conversation._id,
+        },
+      }).catch((err) => logger.warn('complaint_alert_dispatch_failed', { err: err.message }));
+    }
   } catch (err) {
     logger.warn('auto_classify_conversation_error', { err: err.message });
   }
@@ -804,10 +819,40 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
         conversation.isHumanHandling = true;
         await conversation.save();
         logger.info('bot_handoff_keyword_matched', { botId, conversationId: conversation._id });
+
+        dispatchMultiChannelNotification({
+          userId: bot.userId,
+          botId: bot._id,
+          event: 'human_handoff',
+          data: {
+            customerName: finalUsername || conversation.sourceUsername || 'عميل',
+            customerPhone: finalUserId,
+            userMessageContent: message,
+            conversationId: conversation._id,
+          },
+        }).catch((err) => logger.warn('handoff_alert_dispatch_failed', { err: err.message }));
+
         return null;
       }
       if (bot.agentType || bot.description || bot.customInstructions || bot.objectives?.length || bot.agentSkills?.length || bot.agentTools) {
         systemPrompt += `\nAgent profile: ${bot.agentType || 'customer_support'}.\n`;
+
+        if (bot.agentType === 'sales') {
+          systemPrompt += `\n[توجيه وكيل المبيعات والتسويق الذكي]:\n` +
+            `- هدفك الرئيسي: مساعدة العميل، ترشيح المنتجات الأنسب لاحتياجاته، زيادة المبيعات، وتشجيعه على إتمام الشراء بلباقة واحترافية.\n` +
+            `- اذكر ميزات المنتجات وسعرها بدقة بناءً على بيانات المتجر والقواعد فقط.\n` +
+            `- اقترح منتجات مكملة أو عروض جذابة عند السؤال عن المنتجات.\n` +
+            `- عند رغبة العميل في الشراء أو الطلب، رحب به فوراً واطلب منه بلطف بيانات التوصيل (الاسم، رقم الهاتف، العنوان) لتأكيد وتجهيز الطلب.\n`;
+        } else if (bot.agentType === 'lead_qualification') {
+          systemPrompt += `\n[توجيه وكيل تأهيل واستقطاب العملاء]:\n` +
+            `- هدفك الرئيسي: فهم احتياجات العميل بعناية، تقييم مدى ملاءمته، وجمع بيانات التواصل المطلوبة لتسهيل المتابعة.\n` +
+            `- اطرح أسئلة استشارية محددة وودودة لتحديد متطلبات العميل.\n`;
+        } else if (bot.agentType === 'customer_support') {
+          systemPrompt += `\n[توجيه وكيل خدمة العملاء والدعم الفني]:\n` +
+            `- هدفك الرئيسي: الاستماع باهتمام، تقديم حلول سريعة وموثوقة، والإجابة الدقيقة على استفسارات العميل.\n` +
+            `- تعامل بود واحترافية والتزم بالقواعد وسياسات المتجر.\n`;
+        }
+
         if (bot.description) systemPrompt += `Agent responsibility: ${bot.description}\n`;
         if (Array.isArray(bot.objectives) && bot.objectives.length) systemPrompt += `Agent objectives:\n${bot.objectives.map((objective) => `- ${objective}`).join('\n')}\n`;
         if (Array.isArray(bot.agentSkills) && bot.agentSkills.length) systemPrompt += `Active agent skills: ${bot.agentSkills.join(', ')}.\n`;

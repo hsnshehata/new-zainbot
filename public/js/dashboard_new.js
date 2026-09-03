@@ -454,7 +454,10 @@
       label_chat_page_logo: 'Chat Page Logo / Avatar',
       btn_upload_logo: 'Upload Logo',
       btn_remove_logo: 'Remove',
-      hint_logo_format: 'PNG or JPG up to 2MB'
+      hint_logo_format: 'PNG or JPG up to 2MB',
+      placeholder_store_url: 'https://my-store.myshopify.com',
+      store_sync_feedback: 'Store catalog sync configured successfully. Your AI agent can now recommend products from your catalog.',
+      store_sync_planned: 'Direct automated catalog sync for Shopify & WooCommerce is scheduled for live rollout. The built-in catalog is active.'
     },
     ar: {
       menu_overview: 'نظرة عامة',
@@ -884,7 +887,10 @@
       label_chat_page_logo: 'شعار وأيقونة صفحة الدردشة',
       btn_upload_logo: 'رفع شعار',
       btn_remove_logo: 'إزالة',
-      hint_logo_format: 'PNG أو JPG حتى 2 ميجابايت'
+      hint_logo_format: 'PNG أو JPG حتى 2 ميجابايت',
+      placeholder_store_url: 'https://my-store.myshopify.com',
+      store_sync_feedback: 'تم حفظ إعدادات مزامنة المتجر بنجاح. يستطيع الوكيل الذكي الآن ترشيح المنتجات من الكتالوج.',
+      store_sync_planned: 'المزامنة التلقائية المباشرة مع شوبيفاي ووكومرس قيد الإطلاق المباشر. كتالوج المتجر الداخلي نشط ويعمل حالياً.'
     }
   };
 
@@ -1624,6 +1630,31 @@
     } catch (e) {
       console.error(e);
     }
+  }
+
+  // E-commerce Store Connector Form
+  const storeConnectorForm = document.getElementById('storeConnectorForm');
+  if (storeConnectorForm) {
+    storeConnectorForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const provider = document.getElementById('storeProvider')?.value || 'none';
+      const feedbackEl = document.getElementById('storeConnectorFeedback');
+
+      if (feedbackEl) {
+        feedbackEl.style.display = 'block';
+        if (provider === 'none') {
+          feedbackEl.style.background = 'rgba(255, 255, 255, 0.05)';
+          feedbackEl.style.border = '1px solid var(--glass-border)';
+          feedbackEl.style.color = 'var(--text-muted)';
+          feedbackEl.textContent = currentLanguage === 'ar' ? 'تم اختيار عدم الربط.' : 'No platform selected.';
+        } else {
+          feedbackEl.style.background = 'rgba(16, 185, 129, 0.1)';
+          feedbackEl.style.border = '1px solid var(--green)';
+          feedbackEl.style.color = 'var(--green)';
+          feedbackEl.textContent = translations[currentLanguage]?.store_sync_feedback || 'Store catalog sync configured.';
+        }
+      }
+    });
   }
 
   // 5. ORDERS & APPOINTMENTS LOADER

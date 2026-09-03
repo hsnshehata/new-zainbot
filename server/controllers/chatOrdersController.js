@@ -3,6 +3,7 @@ const Bot = require('../models/Bot');
 const Store = require('../models/Store');
 const Order = require('../models/Order');
 const { notifyChatOrder, notifyOrderStatus } = require('../services/telegramService');
+const { dispatchMultiChannelNotification } = require('../services/notificationDispatcher');
 const logger = require('../logger');
 
 const STATUS_ENUM = ['pending', 'processing', 'confirmed', 'shipped', 'delivered', 'cancelled'];
@@ -342,6 +343,21 @@ async function createOrUpdateFromExtraction({
               note: 'تحديث من الدردشة',
             }, botId);
           }
+
+          await dispatchMultiChannelNotification({
+            userId: bot.userId,
+            botId: bot._id,
+            event: 'chat_order',
+            data: {
+              orderId: latestOrder._id,
+              customerName: latestOrder.customerName || customerName || '',
+              customerPhone: latestOrder.customerPhone || customerPhone || '',
+              customerAddress: latestOrder.customerAddress || customerAddress || '',
+              items: latestOrder.items,
+              totalAmount: latestOrder.totalAmount,
+              currency: (latestOrder.items?.[0] && latestOrder.items[0].currency) || 'EGP',
+            },
+          });
         } else {
           logger.warn('chat_order_notify_skipped_missing_bot', { botId });
         }
@@ -398,6 +414,21 @@ async function createOrUpdateFromExtraction({
         total: chatOrder.totalAmount,
         currency: (normalizedItems[0] && normalizedItems[0].currency) || 'EGP',
       }, botId);
+
+      await dispatchMultiChannelNotification({
+        userId: bot.userId,
+        botId: bot._id,
+        event: 'chat_order',
+        data: {
+          orderId: chatOrder._id,
+          customerName: customerName || '',
+          customerPhone: customerPhone || '',
+          customerAddress: customerAddress || '',
+          items: normalizedItems,
+          totalAmount: chatOrder.totalAmount,
+          currency: (normalizedItems[0] && normalizedItems[0].currency) || 'EGP',
+        },
+      });
     } else {
       logger.warn('chat_order_notify_skipped_missing_bot', { botId });
     }

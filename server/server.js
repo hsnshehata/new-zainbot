@@ -58,7 +58,16 @@ const Store = require('./models/Store');
 const Category = require('./models/Category'); // إضافة موديل Category
 const logger = require('./logger');
 const promClient = require('prom-client');
-const { checkAutoStopBots, refreshInstagramTokens, cleanupOldLogs } = require('./cronJobs');
+const {
+  checkAutoStopBots,
+  refreshInstagramTokens,
+  refreshFacebookTokens,
+  checkLowStock,
+  recoverAbandonedSalesConversations,
+  sendDailyPerformanceSummary,
+  checkSubscriptionExpiringSoon,
+  cleanupOldLogs,
+} = require('./cronJobs');
 const authenticate = require('./middleware/authenticate');
 const { loadAccessibleBot } = require('./middleware/botAccess');
 const auditMutation = require('./middleware/auditMutation');
@@ -743,6 +752,11 @@ async function startServer() {
   });
   checkAutoStopBots();
   refreshInstagramTokens();
+  refreshFacebookTokens();
+  checkLowStock();
+  recoverAbandonedSalesConversations();
+  sendDailyPerformanceSummary();
+  checkSubscriptionExpiringSoon();
   cleanupOldLogs();
 
   const port = process.env.PORT || 5000;

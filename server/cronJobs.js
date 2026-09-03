@@ -5,8 +5,12 @@ const Bot = require('./models/Bot');
 const Notification = require('./models/Notification');
 const Product = require('./models/Product');
 const Store = require('./models/Store');
+const Conversation = require('./models/Conversation');
+const ChatOrder = require('./models/ChatOrder');
+const Booking = require('./models/Booking');
 const axios = require('axios');
 const logger = require('./logger');
+const { dispatchMultiChannelNotification } = require('./services/notificationDispatcher');
 
 // دالة للتحقق من صلاحية التوكين
 const isTokenValid = async (accessToken, pageId) => {
@@ -41,7 +45,7 @@ const convertToLongLivedToken = async (shortLivedToken) => {
 
 // وظيفة دورية للتحقق من تاريخ الإيقاف التلقائي
 const checkAutoStopBots = () => {
-  cron.schedule('0 0 * * *', async () => {
+  return cron.schedule('0 0 * * *', async () => {
     try {
       logger.info('⏰ Starting auto-stop bot check...');
       const currentDate = new Date();
@@ -88,7 +92,7 @@ const checkAutoStopBots = () => {
 
 // وظيفة دورية لتجديد توكنات إنستجرام
 const refreshInstagramTokens = () => {
-  cron.schedule('0 0 * * *', async () => {
+  return cron.schedule('0 0 * * *', async () => {
     try {
       logger.info('⏰ Starting Instagram token refresh check...');
 
@@ -169,7 +173,7 @@ const refreshInstagramTokens = () => {
 
 // وظيفة دورية لتجديد توكنات فيسبوك
 const refreshFacebookTokens = () => {
-  cron.schedule('0 0 * * 0', async () => {
+  return cron.schedule('0 0 * * 0', async () => {
     try {
       logger.info('⏰ Starting Facebook token refresh check...');
 
@@ -240,12 +244,12 @@ const refreshFacebookTokens = () => {
 
 // وظيفة دورية للتحقق من المخزون المنخفض
 const checkLowStock = () => {
-  cron.schedule('0 0 * * *', async () => {
+  return cron.schedule('0 0 * * *', async () => {
     try {
       logger.info('⏰ Starting low stock check...');
 
       const lowStockProducts = await Product.find({
-        stock: { $lte: mongoose.Types.Long.fromString('lowStockThreshold') },
+        stock: { $lte: 10 },
         isActive: true
       });
 
@@ -258,7 +262,7 @@ const checkLowStock = () => {
 
       for (const product of lowStockProducts) {
         const store = await Store.findById(product.storeId);
-        if (!store) {
+        if (!store?.userId) {
           logger.warn('⚠️ Store not found for product', { storeId: product.storeId, productId: product._id });
           continue;
         }
@@ -270,12 +274,170 @@ const checkLowStock = () => {
           isRead: false
         });
         await notification.save();
+
+        dispatchMultiChannelNotification({
+          userId: store.userId,
+          event: 'low_stock',
+          data: {
+            message: `المنتج ${product.productName} في متجر ${store.storeName} قارب على النفاد (المتبقي: ${product.stock} فقط). يرجى تزويد المخزون.`
+          }
+        }).catch((e) => logger.warn('low_stock_dispatch_failed', { err: e.message }));
+
         logger.info('✅ Notification sent for low stock', { userId: store.userId, productId: product._id });
       }
 
       logger.info('⏰ Low stock check completed successfully.');
     } catch (err) {
-      logger.error('❌ Error in low stock check', { err });
+      logger.error('❌ Error in low stock check', { err: err.message });
+    }
+  }, {
+    timezone: 'Africa/Cairo'
+  });
+};
+
+// وظيفة استعادة المحادثات والطلبات المتروكة (Abandoned Sales Recovery)
+const recoverAbandonedSalesConversations = () => {
+  return cron.schedule('0 * * * *', async () => {
+    try {
+      logger.info('⏰ Starting abandoned sales recovery check...');
+      const activeBots = await Bot.find({ isActive: true }).select('_id userId name');
+      if (!activeBots.length) return;
+
+      const now = Date.now();
+      const twoHoursAgo = new Date(now - 2 * 60 * 60 * 1000);
+      const twentyFourHoursAgo = new Date(now - 24 * 60 * 60 * 1000);
+
+      let totalRecovered = 0;
+
+      for (const bot of activeBots) {
+        const candidateConversations = await Conversation.find({
+          botId: bot._id,
+          isHumanHandling: false,
+          followUpSentAt: { $exists: false },
+          $or: [
+            { category: { $in: ['مهتم بشدة 🔥', 'طلب أسعار 💰', 'طلب حجز 📅'] } },
+            { 'labels.name': { $in: ['مهتم بشدة 🔥', 'طلب أسعار 💰'] } }
+          ],
+          'messages.timestamp': { $gte: twentyFourHoursAgo, $lte: twoHoursAgo }
+        }).limit(20);
+
+        for (const conv of candidateConversations) {
+          if (conv.mutedUntil && new Date(conv.mutedUntil) > new Date()) continue;
+          if (!conv.messages || conv.messages.length === 0) continue;
+
+          const lastMessage = conv.messages[conv.messages.length - 1];
+          if (lastMessage.role === 'assistant' && lastMessage.content.includes('أهلاً بحضرتك 👋')) continue;
+
+          const followUpText = `أهلاً بحضرتك 👋 نتمنى تكون بخير! لاحظنا اهتمامك معنا بالمنتجات، هل تحب نساعدك في إتمام طلبك أو عندك أي استفسار إضافي؟ يسعدنا خدمتك دائماً!`;
+
+          try {
+            if (conv.channel === 'whatsapp') {
+              const { getWhatsAppSessionManager } = require('./services/whatsappSessionManager');
+              const waManager = getWhatsAppSessionManager();
+              const cleanPhone = String(conv.userId || '').replace(/[^0-9]/g, '');
+              if (cleanPhone) {
+                await waManager.sendDirectText(String(bot._id), `${cleanPhone}@c.us`, followUpText);
+              }
+            }
+          } catch (sendErr) {
+            logger.warn('abandoned_recovery_send_failed', { convId: conv._id, err: sendErr.message });
+          }
+
+          conv.messages.push({
+            role: 'assistant',
+            content: followUpText,
+            messageId: `followup_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            timestamp: new Date()
+          });
+          conv.followUpSentAt = new Date();
+          await conv.save();
+          totalRecovered++;
+        }
+      }
+
+      logger.info('⏰ Abandoned sales recovery check completed.', { totalRecovered });
+    } catch (err) {
+      logger.error('❌ Error in abandoned sales recovery check', { err: err.message });
+    }
+  }, {
+    timezone: 'Africa/Cairo'
+  });
+};
+
+// وظيفة ملخص المبيعات والأداء اليومي (Daily Sales & Performance Digest)
+const sendDailyPerformanceSummary = () => {
+  return cron.schedule('0 21 * * *', async () => {
+    try {
+      logger.info('⏰ Starting daily performance summary calculation...');
+      const activeBots = await Bot.find({ isActive: true }).select('_id userId name');
+      if (!activeBots.length) return;
+
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+
+      for (const bot of activeBots) {
+        const [orders, bookings, convsCount, hotLeadsCount] = await Promise.all([
+          ChatOrder.find({ botId: bot._id, createdAt: { $gte: startOfDay } }).select('totalAmount'),
+          Booking.find({ botId: bot._id, createdAt: { $gte: startOfDay } }).countDocuments(),
+          Conversation.countDocuments({ botId: bot._id, 'messages.timestamp': { $gte: startOfDay } }),
+          Conversation.countDocuments({ botId: bot._id, category: 'مهتم بشدة 🔥', 'messages.timestamp': { $gte: startOfDay } })
+        ]);
+
+        const ordersCount = orders.length;
+        const totalRevenue = orders.reduce((sum, ord) => sum + (Number(ord.totalAmount) || 0), 0);
+
+        if (ordersCount > 0 || bookings > 0 || convsCount > 0) {
+          await dispatchMultiChannelNotification({
+            userId: bot.userId,
+            botId: bot._id,
+            event: 'daily_digest',
+            data: {
+              conversationsCount: convsCount,
+              ordersCount,
+              revenue: totalRevenue,
+              currency: 'EGP',
+              bookingsCount: bookings,
+              hotLeadsCount
+            }
+          });
+          logger.info('✅ Daily summary dispatched', { botId: bot._id, ordersCount, convsCount, totalRevenue });
+        }
+      }
+      logger.info('⏰ Daily performance summary completed.');
+    } catch (err) {
+      logger.error('❌ Error in daily performance summary', { err: err.message });
+    }
+  }, {
+    timezone: 'Africa/Cairo'
+  });
+};
+
+// وظيفة تنبيه اقتراب انتهاء الاشتراك قبل 3 أيام
+const checkSubscriptionExpiringSoon = () => {
+  return cron.schedule('0 10 * * *', async () => {
+    try {
+      logger.info('⏰ Checking subscriptions expiring soon...');
+      const now = new Date();
+      const inThreeDays = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+
+      const expiringBots = await Bot.find({
+        isActive: true,
+        autoStopDate: { $gt: now, $lte: inThreeDays }
+      });
+
+      for (const bot of expiringBots) {
+        const formattedDate = new Date(bot.autoStopDate).toLocaleDateString('ar-EG');
+        const notif = new Notification({
+          user: bot.userId,
+          title: `تنبيه: اقتراب انتهاء اشتراك ${bot.name}`,
+          message: `اشتراك البوت ${bot.name} ينتهي بتاريخ ${formattedDate}. يرجى تجديد الاشتراك لتفادي توقف الوكيل الذكي تلقائياً.`,
+          isRead: false
+        });
+        await notif.save();
+      }
+      logger.info('⏰ Subscription expiry check completed.', { count: expiringBots.length });
+    } catch (err) {
+      logger.error('❌ Error in subscription expiry check', { err: err.message });
     }
   }, {
     timezone: 'Africa/Cairo'
@@ -284,7 +446,7 @@ const checkLowStock = () => {
 
 // تنظيف اللوجز الأقدم من 30 يومًا
 const cleanupOldLogs = () => {
-  cron.schedule('0 2 * * *', async () => {
+  return cron.schedule('0 2 * * *', async () => {
     try {
       const logsDir = path.join(__dirname, 'logs');
       const files = await fs.readdir(logsDir).catch(() => null);
@@ -308,4 +470,13 @@ const cleanupOldLogs = () => {
   }, { timezone: 'Africa/Cairo' });
 };
 
-module.exports = { checkAutoStopBots, refreshInstagramTokens, refreshFacebookTokens, checkLowStock, cleanupOldLogs };
+module.exports = {
+  checkAutoStopBots,
+  refreshInstagramTokens,
+  refreshFacebookTokens,
+  checkLowStock,
+  recoverAbandonedSalesConversations,
+  sendDailyPerformanceSummary,
+  checkSubscriptionExpiringSoon,
+  cleanupOldLogs
+};

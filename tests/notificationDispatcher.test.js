@@ -1,6 +1,11 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { formatOrderNotificationMessage, formatBookingNotificationMessage } = require('../server/services/notificationDispatcher');
+const {
+  formatOrderNotificationMessage,
+  formatBookingNotificationMessage,
+  formatComplaintNotificationMessage,
+  formatDailyDigestNotificationMessage,
+} = require('../server/services/notificationDispatcher');
 
 test('formatOrderNotificationMessage creates proper bilingual alert text', () => {
   const order = {
@@ -35,4 +40,36 @@ test('formatBookingNotificationMessage creates proper bilingual appointment aler
   assert.match(message, /سارة علي/);
   assert.match(message, /01123456789/);
   assert.match(message, /استشارة تسويقية/);
+});
+
+test('formatComplaintNotificationMessage creates urgent alert with customer and message', () => {
+  const data = {
+    customerName: 'محمود حسن',
+    customerPhone: '01099887766',
+    message: 'المنتج لم يصلني حتى الآن وأريد التحدث مع الإدارة',
+  };
+
+  const message = formatComplaintNotificationMessage(data, 'وكيل المبيعات');
+  assert.match(message, /تنبيه عاجل: شكوى أو طلب تدخل بشري/);
+  assert.match(message, /محمود حسن/);
+  assert.match(message, /01099887766/);
+  assert.match(message, /المنتج لم يصلني/);
+});
+
+test('formatDailyDigestNotificationMessage creates comprehensive daily sales report', () => {
+  const data = {
+    conversationsCount: 42,
+    ordersCount: 8,
+    revenue: 3200,
+    currency: 'EGP',
+    bookingsCount: 3,
+    hotLeadsCount: 12,
+  };
+
+  const message = formatDailyDigestNotificationMessage(data, 'بوت المتجر الرئيسي');
+  assert.match(message, /تقرير الأداء والمبيعات اليومي/);
+  assert.match(message, /42/);
+  assert.match(message, /8/);
+  assert.match(message, /3200/);
+  assert.match(message, /12/);
 });
