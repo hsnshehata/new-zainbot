@@ -206,6 +206,46 @@ async function getIdeaById(req, res) {
     const originalText = decryptIdeaField(project.encryptedOriginalText);
     const structuredIdea = decryptIdeaJson(project.encryptedStructuredIdea);
 
+    // Fetch all completed/partial runs for this idea to support round history
+    const allRuns = await IdeaEvaluationRun.find({
+      ideaId: project._id,
+      userId,
+      status: { $in: ['COMPLETED', 'PARTIAL'] },
+    }).sort({ createdAt: 1 }).lean();
+
+    const formattedRuns = await Promise.all(allRuns.map(async (runDoc, idx) => {
+      const finalReport = decryptIdeaJson(runDoc.encryptedFinalReport);
+      const truthBoard = decryptIdeaJson(runDoc.encryptedTruthBoard);
+      const agentDocs = await IdeaAgentResult.find({ runId: runDoc._id }).lean();
+      const agents = agentDocs.map((ar) => ({
+        role: ar.role,
+        status: ar.status,
+        confidence: ar.confidence,
+        output: ar.encryptedOutput ? decryptIdeaJson(ar.encryptedOutput) : null,
+        errorClass: ar.errorClass,
+        latencyMs: ar.latencyMs,
+        completedAt: ar.completedAt,
+      }));
+
+      return {
+        runId: runDoc._id,
+        roundNumber: runDoc.roundNumber || (idx + 1),
+        runType: runDoc.runType,
+        followupType: runDoc.followupType,
+        followupPrompt: runDoc.followupPrompt,
+        status: runDoc.status,
+        currentStage: runDoc.currentStage,
+        stageProgress: runDoc.stageProgress,
+        agents,
+        sourceReferences: runDoc.sourceReferences || [],
+        finalReport,
+        truthBoard: Array.isArray(truthBoard) ? truthBoard : (truthBoard?.items || []),
+        usageSummary: runDoc.usageSummary,
+        startedAt: runDoc.startedAt,
+        completedAt: runDoc.completedAt,
+      };
+    }));
+
     let latestRun = null;
     let synthesisReport = null;
     let truthBoardItems = [];
@@ -234,20 +274,30 @@ async function getIdeaById(req, res) {
 
         latestRun = {
           runId: runDoc._id,
+          roundNumber: runDoc.roundNumber || (formattedRuns.find(r => String(r.runId) === String(runDoc._id))?.roundNumber) || formattedRuns.length || 1,
           runType: runDoc.runType,
           followupType: runDoc.followupType,
+          followupPrompt: runDoc.followupPrompt,
           status: runDoc.status,
           currentStage: runDoc.currentStage,
           stageProgress: runDoc.stageProgress,
           agents: formattedAgents,
           sourceReferences,
           finalReport,
-          truthBoard,
+          truthBoard: truthBoardItems,
           usageSummary: runDoc.usageSummary,
           startedAt: runDoc.startedAt,
           completedAt: runDoc.completedAt,
         };
       }
+    }
+
+    if (!latestRun && formattedRuns.length > 0) {
+      latestRun = formattedRuns[formattedRuns.length - 1];
+      synthesisReport = latestRun.finalReport;
+      truthBoardItems = latestRun.truthBoard;
+      sourceReferences = latestRun.sourceReferences;
+      formattedAgents = latestRun.agents;
     }
 
     return res.status(200).json({
@@ -274,12 +324,14 @@ async function getIdeaById(req, res) {
         targetMarket: project.targetMarket,
         targetAudience: project.targetAudience,
         primaryConcern: project.primaryConcern,
-        initialEvaluationsUsed: project.initialEvaluationsUsed,
-        followupRoundsUsed: project.followupRoundsUsed,
-        followupRoundsRemaining: Math.max(0, 3 - project.followupRoundsUsed),
+        initialEvaluationsUsed: project.initialEvaluationsUsed || 0,
+        followupRoundsUsed: project.followupRoundsUsed || 0,
+        followupRoundsRemaining: Math.max(0, 3 - (project.followupRoundsUsed || 0)),
+        followUpRoundsRemaining: Math.max(0, 3 - (project.followupRoundsUsed || 0)),
         agents: formattedAgents,
+        runs: formattedRuns,
         latestRun,
-        activeRunId: project.latestRunId,
+        activeRunId: latestRun?.runId || project.latestRunId,
         synthesisReport,
         truthBoardItems,
         marketResearchPack: { sources: sourceReferences },
@@ -576,6 +628,7 @@ async function startEvaluation(req, res) {
       ideaId: project._id,
       userId,
       runType: 'INITIAL',
+      roundNumber: 1,
       status: 'QUEUED',
       idempotencyKey,
       ideaSnapshotVersion: project.version,
@@ -630,6 +683,7 @@ async function getRunStatus(req, res) {
       success: true,
       data: {
         runId: run._id,
+        roundNumber: run.roundNumber || 1,
         ideaId: run.ideaId,
         projectId: run.ideaId,
         runType: run.runType,
@@ -704,10 +758,12 @@ async function startFollowup(req, res) {
       });
     }
 
+    const nextRoundNumber = (project.followupRoundsUsed || 0) + 2;
     const run = await IdeaEvaluationRun.create({
       ideaId: project._id,
       userId,
       runType: 'FOLLOW_UP',
+      roundNumber: nextRoundNumber,
       followupType,
       followupPrompt: followupPrompt ? String(followupPrompt).trim() : null,
       status: 'QUEUED',

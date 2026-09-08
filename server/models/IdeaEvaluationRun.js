@@ -59,6 +59,10 @@ const ideaEvaluationRunSchema = new mongoose.Schema({
     enum: IDEA_RUN_TYPES,
     required: true,
   },
+  roundNumber: {
+    type: Number,
+    default: 1,
+  },
   followupType: {
     type: String,
     enum: [...IDEA_FOLLOWUP_TYPES, null],

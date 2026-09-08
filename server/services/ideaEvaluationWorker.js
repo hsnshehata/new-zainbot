@@ -212,6 +212,42 @@ class IdeaEvaluationWorker {
       );
     }
 
+    // Follow-up context retrieval if this is a follow-up round
+    let followupContext = null;
+    if (run.runType === 'FOLLOW_UP') {
+      const previousRun = await IdeaEvaluationRun.findOne({
+        ideaId: idea._id,
+        _id: { $ne: run._id },
+        status: { $in: ['COMPLETED', 'PARTIAL'] },
+      }).sort({ createdAt: -1 }).lean();
+
+      if (previousRun) {
+        const prevReport = previousRun.encryptedFinalReport
+          ? decryptIdeaJson(previousRun.encryptedFinalReport)
+          : null;
+        const prevTruthBoard = previousRun.encryptedTruthBoard
+          ? decryptIdeaJson(previousRun.encryptedTruthBoard)
+          : null;
+        const truthItems = Array.isArray(prevTruthBoard) ? prevTruthBoard : (prevTruthBoard?.items || []);
+
+        if ((!sources || sources.length === 0) && previousRun.sourceReferences?.length > 0) {
+          sources = previousRun.sourceReferences;
+          await IdeaEvaluationRun.updateOne({ _id: run._id }, { sourceReferences: sources });
+        }
+
+        followupContext = {
+          isFollowup: true,
+          roundNumber: (idea.followupRoundsUsed || 0) + 1,
+          followupType: run.followupType || 'FOLLOW_UP',
+          followupPrompt: run.followupPrompt || '',
+          previousVerdict: prevReport?.verdict || null,
+          previousSummary: prevReport?.executiveSummary || null,
+          previousWeakestLink: prevReport?.biggestRisk || null,
+          truthBoardItems: truthItems,
+        };
+      }
+    }
+
     // Stage 2: Agent Analysis
     await IdeaEvaluationRun.updateOne(
       { _id: run._id },
@@ -246,6 +282,7 @@ class IdeaEvaluationWorker {
             structuredIdea,
             language,
             sources,
+            followupContext,
             timeoutMs: config.agentTimeoutMs,
           });
 
@@ -287,6 +324,7 @@ class IdeaEvaluationWorker {
       agentOutputs,
       language,
       sources,
+      followupContext,
       timeoutMs: config.agentTimeoutMs * 1.5,
     });
 
@@ -303,8 +341,31 @@ class IdeaEvaluationWorker {
       ? encryptIdeaJson(chairpersonResult.output)
       : null;
 
-    const encryptedTruthBoard = chairpersonResult?.output?.truthBoardItems
-      ? encryptIdeaJson(chairpersonResult.output.truthBoardItems)
+    let finalTruthBoardItems = chairpersonResult?.output?.truthBoardItems || [];
+    if (followupContext && Array.isArray(followupContext.truthBoardItems) && followupContext.truthBoardItems.length > 0) {
+      const userNotesMap = new Map();
+      followupContext.truthBoardItems.forEach((it) => {
+        const key = String(it.id || it.statement || '').trim();
+        if (key && (it.userNotes || (it.workflowState && it.workflowState !== 'OPEN'))) {
+          userNotesMap.set(key, { workflowState: it.workflowState, userNotes: it.userNotes });
+        }
+      });
+      finalTruthBoardItems = finalTruthBoardItems.map((item) => {
+        const key = String(item.id || item.statement || '').trim();
+        const saved = userNotesMap.get(key);
+        if (saved) {
+          return {
+            ...item,
+            workflowState: saved.workflowState || item.workflowState,
+            userNotes: saved.userNotes || item.userNotes,
+          };
+        }
+        return item;
+      });
+    }
+
+    const encryptedTruthBoard = finalTruthBoardItems.length > 0
+      ? encryptIdeaJson(finalTruthBoardItems)
       : null;
 
     await IdeaEvaluationRun.updateOne(
@@ -321,12 +382,14 @@ class IdeaEvaluationWorker {
 
     // Update IdeaProject
     const projectUpdates = {
-      latestRunId: run._id,
-      status: finalStatus,
+      $set: {
+        latestRunId: run._id,
+        status: finalStatus,
+      },
     };
     if (finalStatus === 'COMPLETED' || finalStatus === 'PARTIAL') {
       if (run.runType === 'INITIAL') {
-        projectUpdates.initialEvaluationsUsed = 1;
+        projectUpdates.$set.initialEvaluationsUsed = 1;
         // Mark usage counter completed
         const yearMonthUtc = `${run.createdAt.getUTCFullYear()}-${String(run.createdAt.getUTCMonth() + 1).padStart(2, '0')}`;
         await IdeaUsageCounter.updateOne(
@@ -342,7 +405,7 @@ class IdeaEvaluationWorker {
     logger.info('idea_evaluation_completed', { runId: run._id, finalStatus, completedAgents: completedCount });
   }
 
-  async _executeSingleAgent({ run, idea, user, role, structuredIdea, language, sources, timeoutMs }) {
+  async _executeSingleAgent({ run, idea, user, role, structuredIdea, language, sources, followupContext, timeoutMs }) {
     // Check existing
     let existing = await IdeaAgentResult.findOne({ runId: run._id, role });
     if (existing && existing.status === 'COMPLETED' && existing.encryptedOutput) {
@@ -364,6 +427,7 @@ class IdeaEvaluationWorker {
     const prompt = buildAgentPrompt(role, structuredIdea, {
       language,
       researchEvidence: sources && sources.length > 0 ? sources : null,
+      followupContext,
     });
 
     const llmResult = await this._callLlm({
@@ -455,10 +519,11 @@ class IdeaEvaluationWorker {
     return { output: validation.value };
   }
 
-  async _executeChairperson({ run, idea, user, structuredIdea, agentOutputs, language, sources, timeoutMs }) {
+  async _executeChairperson({ run, idea, user, structuredIdea, agentOutputs, language, sources, followupContext, timeoutMs }) {
     const prompt = buildChairpersonPrompt(structuredIdea, agentOutputs, {
       language,
       sourceReferences: sources,
+      followupContext,
     });
 
     const llmResult = await this._callLlm({

@@ -592,6 +592,11 @@
       idea_tb_notes_placeholder: 'Founder validation notes...',
       idea_btn_export_md: 'Export Markdown',
       idea_btn_export_pdf: 'Print / PDF',
+      idea_rounds_history_title: 'Evaluation History:',
+      idea_round_prefix: 'Round',
+      idea_round_initial: 'Round 1 (Initial)',
+      idea_round_viewing: 'Viewing Round',
+      idea_round_founder_defense: 'Founder Defense / Input:',
       idea_followup_title: 'Follow-up Rounds (3 per idea)',
       idea_followup_remaining: 'Rounds remaining:',
       idea_btn_defend: 'Defend Idea',
@@ -1208,6 +1213,11 @@
       idea_tb_notes_placeholder: 'ملاحظات وتحديثات المؤسس...',
       idea_btn_export_md: 'تصدير Markdown',
       idea_btn_export_pdf: 'طباعة أو PDF',
+      idea_rounds_history_title: 'سجل جولات التقييم:',
+      idea_round_prefix: 'الجولة',
+      idea_round_initial: 'الجولة 1 (التقييم الأولي)',
+      idea_round_viewing: 'يتم الآن عرض نتائج تقييم الجولة',
+      idea_round_founder_defense: 'دفوع ومدخلات المؤسس للجولة:',
       idea_followup_title: 'جولات المتابعة (3 لكل فكرة)',
       idea_followup_remaining: 'الجولات المتبقية:',
       idea_btn_defend: 'دافع عن الفكرة',
@@ -5257,9 +5267,96 @@
     ideaPollTimer = setInterval(poll, 2000);
   }
 
-  function renderIdeaReport(idea) {
+  let activeIdeaRunId = null;
+
+  function renderRunsHistoryBar(runs = [], activeId = null) {
+    const historyBar = document.getElementById('ideaRoundsHistoryBar');
+    const buttonsContainer = document.getElementById('ideaRunsButtons');
+    const bannerEl = document.getElementById('ideaCurrentRoundBanner');
+    if (!historyBar || !buttonsContainer) return;
+
+    if (!Array.isArray(runs) || runs.length <= 1) {
+      historyBar.style.display = 'none';
+      return;
+    }
+
+    historyBar.style.display = 'flex';
+    buttonsContainer.innerHTML = '';
+
+    const followupTypeNames = {
+      DEFEND: { en: 'Defend', ar: 'دفاع' },
+      PIVOT: { en: 'Pivot', ar: 'تغيير مسار' },
+      VALIDATION_PLAN: { en: 'Test Plan', ar: 'خطة فحص' },
+      VOTE: { en: 'Vote', ar: 'تصويت' },
+      COMPARE: { en: 'Competitor', ar: 'مقارنة' },
+      MVP: { en: 'MVP Plan', ar: 'خطة MVP' }
+    };
+
+    let activeRunObj = null;
+
+    runs.forEach((run, idx) => {
+      const runId = run.runId || run._id;
+      const roundNum = run.roundNumber || (idx + 1);
+      const isSelected = String(runId) === String(activeId) || (!activeId && idx === runs.length - 1);
+      if (isSelected) activeRunObj = run;
+
+      let roundLabel = '';
+      if (idx === 0) {
+        roundLabel = currentLanguage === 'ar' ? 'الجولة 1 (التقييم الأولي)' : 'Round 1 (Initial)';
+      } else {
+        const typeInfo = followupTypeNames[run.followupType];
+        const typeLabel = typeInfo ? (currentLanguage === 'ar' ? typeInfo.ar : typeInfo.en) : (run.followupType || '');
+        const suffix = typeLabel ? ` (${typeLabel})` : '';
+        roundLabel = currentLanguage === 'ar' ? `الجولة ${roundNum}${suffix}` : `Round ${roundNum}${suffix}`;
+      }
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `btn btn-sm ${isSelected ? 'btn-primary' : 'btn-secondary'}`;
+      btn.style.fontSize = '12px';
+      btn.style.padding = '6px 12px';
+      btn.innerHTML = `${isSelected ? '<i class="fas fa-check-circle" style="margin-inline-end:4px;"></i>' : ''}${escapeIdeaHtml(roundLabel)}`;
+      btn.addEventListener('click', () => {
+        renderIdeaReport(currentIdea, runId);
+      });
+      buttonsContainer.appendChild(btn);
+    });
+
+    if (bannerEl) {
+      if (activeRunObj && activeRunObj.followupPrompt) {
+        const promptSnippet = activeRunObj.followupPrompt.length > 70 ? activeRunObj.followupPrompt.slice(0, 70) + '...' : activeRunObj.followupPrompt;
+        bannerEl.innerHTML = `<span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'مدخلات الجولة:' : 'Round input:'}</span> <strong style="color:var(--cyan); font-weight:500;">"${escapeIdeaHtml(promptSnippet)}"</strong>`;
+      } else {
+        const isLatest = activeRunObj && runs.length > 0 && String(activeRunObj.runId || activeRunObj._id) === String(runs[runs.length - 1].runId || runs[runs.length - 1]._id);
+        bannerEl.innerHTML = isLatest 
+          ? `<span class="badge" style="background:rgba(16,185,129,0.15); color:var(--green); font-size:11px;">${currentLanguage === 'ar' ? 'أحدث جولة تقييم' : 'Latest Evaluation Round'}</span>`
+          : `<span class="badge" style="background:rgba(245,158,11,0.15); color:var(--orange); font-size:11px;">${currentLanguage === 'ar' ? 'أرشيف جولة سابقة' : 'Viewing Past Round'}</span>`;
+      }
+    }
+  }
+
+  function renderIdeaReport(idea, selectedRunId = null) {
     currentIdea = idea;
-    const r = idea.synthesisReport || {};
+
+    // Resolve completed runs history
+    const runs = Array.isArray(idea.runs) && idea.runs.length > 0 ? idea.runs : (idea.latestRun ? [idea.latestRun] : []);
+
+    let currentRun = null;
+    if (selectedRunId) {
+      currentRun = runs.find(rn => String(rn.runId || rn._id) === String(selectedRunId));
+    }
+    if (!currentRun && activeIdeaRunId) {
+      currentRun = runs.find(rn => String(rn.runId || rn._id) === String(activeIdeaRunId));
+    }
+    if (!currentRun && runs.length > 0) {
+      currentRun = runs[runs.length - 1];
+    }
+
+    activeIdeaRunId = currentRun?.runId || currentRun?._id || idea.latestRunId || null;
+
+    renderRunsHistoryBar(runs, activeIdeaRunId);
+
+    const r = currentRun?.finalReport || idea.synthesisReport || {};
 
     const vBadge = document.getElementById('ideaVerdictBadge');
     if (vBadge) {
@@ -5338,7 +5435,9 @@
 
     const sourcesList = document.getElementById('ideaSourcesList');
     if (sourcesList) {
-      const sources = Array.isArray(idea.marketResearchPack?.sources) ? idea.marketResearchPack.sources : (r.sources || []);
+      const sources = Array.isArray(currentRun?.sourceReferences) && currentRun.sourceReferences.length > 0
+        ? currentRun.sourceReferences
+        : (Array.isArray(idea.marketResearchPack?.sources) ? idea.marketResearchPack.sources : (r.sources || []));
       if (sources.length === 0) {
         sourcesList.innerHTML = `<span style="font-size:12px; color:var(--text-muted);">${currentLanguage === 'ar' ? 'لا توجد مصادر خارجية مباشرة.' : 'No external web sources available.'}</span>`;
       } else {
@@ -5357,17 +5456,18 @@
     }
 
     const followCountEl = document.getElementById('ideaFollowupCountText');
-    const roundsRem = idea.followUpRoundsRemaining ?? 3;
+    const roundsRem = idea.followupRoundsRemaining ?? idea.followUpRoundsRemaining ?? Math.max(0, 3 - (idea.followupRoundsUsed || 0));
     if (followCountEl) followCountEl.textContent = roundsRem;
 
     document.querySelectorAll('.idea-followup-btn').forEach(btn => {
       btn.disabled = (roundsRem <= 0);
     });
 
-    const agents = idea.agents || idea.latestRun?.agents || [];
+    const agents = currentRun?.agents || idea.agents || idea.latestRun?.agents || [];
     renderCriticsBreakdown(agents);
 
-    renderTruthBoard(idea.truthBoardItems || r.truthBoardItems || []);
+    const truthItems = currentRun?.truthBoard || idea.truthBoardItems || r.truthBoardItems || [];
+    renderTruthBoard(truthItems);
   }
 
   function renderCriticsBreakdown(agents = []) {
@@ -5686,7 +5786,7 @@
   async function handleFollowUpClick(type) {
     const ideaId = currentIdea?._id || currentIdea?.id;
     if (!ideaId) return;
-    const roundsRem = currentIdea.followUpRoundsRemaining ?? currentIdea.followupRoundsRemaining ?? 3;
+    const roundsRem = currentIdea.followupRoundsRemaining ?? currentIdea.followUpRoundsRemaining ?? Math.max(0, 3 - (currentIdea.followupRoundsUsed || 0));
     if (roundsRem <= 0) {
       alert(currentLanguage === 'ar' ? 'لقد استنفدت جميع جولات المتابعة المتاحة لهذه الفكرة (3 جولات).' : 'All 3 follow-up rounds used for this idea.');
       return;

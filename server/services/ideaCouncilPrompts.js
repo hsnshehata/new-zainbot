@@ -118,6 +118,30 @@ function buildAgentPrompt(role, structuredIdea, options = {}) {
     throw new Error(`Unknown prompt role: ${role}`);
   }
 
+  const fc = options.followupContext;
+  let followupPromptText = '';
+  if (fc && fc.isFollowup) {
+    const truthSummary = (fc.truthBoardItems || [])
+      .map((it, idx) => `[Item ${idx + 1}] (${it.workflowState || it.status || 'OPEN'}) ${it.statement}${it.userNotes ? ` | Founder Note: ${it.userNotes}` : ''}`)
+      .join('\n');
+
+    followupPromptText = `\n\n--- FOLLOW-UP ROUND CONTEXT (Round ${fc.roundNumber || 2} - Mode: ${fc.followupType || 'FOLLOW_UP'}) ---
+Founder's New Defense / Pivot Arguments:
+"${fc.followupPrompt || 'No specific text provided'}"
+
+Previous Council Verdict: ${fc.previousVerdict || 'N/A'}
+Previous Summary: ${fc.previousSummary || 'N/A'}
+Previous Key Risk / Fragility: ${fc.previousWeakestLink || 'N/A'}
+
+Current Dynamic Truth Board Status & Founder Validations:
+${truthSummary || 'No items recorded'}
+
+CRITICAL FOLLOW-UP INSTRUCTIONS:
+- The founder is responding directly to the previous evaluation with new facts, metrics, team capabilities, or a revised angle.
+- Evaluate whether the founder's arguments (e.g. existing customer base, specialized team, current revenue, distribution channels) genuinely resolve prior skepticism or uncover new operational/market risks.
+- DO NOT blindly repeat the round 1 evaluation. Update your analysis, switching cost, and verdict specifically in response to what the founder provided.`;
+  }
+
   return {
     system: `${current.desc}
 You are evaluating an idea confirmed by the founder.
@@ -132,12 +156,27 @@ Language: Output entirely in ${lang}.
 No Markdown formatting around JSON. No introductory or trailing text.`,
     user: `Structured Idea Card:
 ${JSON.stringify(structuredIdea, null, 2)}
-${options.researchEvidence ? `\nMarket Evidence Pack:\n${JSON.stringify(options.researchEvidence, null, 2)}` : ''}`,
+${options.researchEvidence ? `\nMarket Evidence Pack:\n${JSON.stringify(options.researchEvidence, null, 2)}` : ''}
+${followupPromptText}`,
   };
 }
 
 function buildChairpersonPrompt(structuredIdea, agentResults, options = {}) {
   const lang = options.language === 'en' ? 'English' : 'Arabic';
+  const fc = options.followupContext;
+  let chairpersonFollowupText = '';
+  if (fc && fc.isFollowup) {
+    chairpersonFollowupText = `\n\n--- FOLLOW-UP ROUND SYNTHESIS (Round ${fc.roundNumber || 2} - Mode: ${fc.followupType || 'FOLLOW_UP'}) ---
+Founder's Arguments for this Round:
+"${fc.followupPrompt || ''}"
+Previous Verdict was: ${fc.previousVerdict || 'N/A'}
+
+CHAIRPERSON FOLLOW-UP DUTY:
+- Weigh the specialized agents' updated assessments against the founder's defense or proposed pivot.
+- If the founder's arguments and team credentials convincingly addressed the primary risks, update the verdict (e.g. from PIVOT/DO_NOT_BUILD to VALIDATE_FIRST or PROCEED_WITH_CONDITIONS).
+- Update the Truth Board items, reflecting any assumptions that were validated, refuting invalid claims, and logging new decisions or next validation steps.`;
+  }
+
   return {
     system: `You are the "Chairperson & Synthesizer" of the ZainBot Idea Council.
 Your duty is to integrate the findings of the 8 specialized council members into a unified, decisive strategic report.
@@ -204,14 +243,13 @@ Output ONLY valid JSON matching this schema:
 
 Language: Output strictly in ${lang}.
 Strictly valid JSON. No conversational text.`,
-    user: `Structured Idea Card:
+    user: `Structured Idea:
 ${JSON.stringify(structuredIdea, null, 2)}
 
-Council Members Analysis Results:
+Agent Outputs:
 ${JSON.stringify(agentResults, null, 2)}
-
-Market Research Sources:
-${JSON.stringify(options.sourceReferences || [], null, 2)}`,
+${options.sourceReferences ? `\nMarket Evidence Sources:\n${JSON.stringify(options.sourceReferences, null, 2)}` : ''}
+${chairpersonFollowupText}`,
   };
 }
 

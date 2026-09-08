@@ -186,6 +186,7 @@ test('ideaCouncil API: getIdeaById returns agents from latest run', async () => 
 
   const originalFindOneProject = IdeaProject.findOne;
   const originalFindOneRun = IdeaEvaluationRun.findOne;
+  const originalFindRun = IdeaEvaluationRun.find;
   const originalFindAgent = IdeaAgentResult.find;
 
   IdeaProject.findOne = () => Promise.resolve({
@@ -212,11 +213,31 @@ test('ideaCouncil API: getIdeaById returns agents from latest run', async () => 
       ideaId,
       userId,
       runType: 'INITIAL',
+      roundNumber: 1,
       status: 'COMPLETED',
       currentStage: 'SYNTHESIS',
       encryptedFinalReport: encryptIdeaJson({ verdict: 'BUILD' }),
       encryptedTruthBoard: encryptIdeaJson([]),
       sourceReferences: [{ title: 'Google', url: 'https://google.com' }],
+    }),
+  });
+
+  IdeaEvaluationRun.find = () => ({
+    sort: () => ({
+      lean: () => Promise.resolve([
+        {
+          _id: runId,
+          ideaId,
+          userId,
+          runType: 'INITIAL',
+          roundNumber: 1,
+          status: 'COMPLETED',
+          currentStage: 'SYNTHESIS',
+          encryptedFinalReport: encryptIdeaJson({ verdict: 'BUILD' }),
+          encryptedTruthBoard: encryptIdeaJson([]),
+          sourceReferences: [{ title: 'Google', url: 'https://google.com' }],
+        },
+      ]),
     }),
   });
 
@@ -249,9 +270,13 @@ test('ideaCouncil API: getIdeaById returns agents from latest run', async () => 
     assert.equal(res.body.data.agents[0].role, 'COLD_CUSTOMER');
     assert.equal(res.body.data.agents[0].output.rejectionReason, 'Too expensive');
     assert.equal(res.body.data.latestRun.agents.length, 2);
+    assert.ok(Array.isArray(res.body.data.runs));
+    assert.equal(res.body.data.runs.length, 1);
+    assert.equal(res.body.data.runs[0].roundNumber, 1);
   } finally {
     IdeaProject.findOne = originalFindOneProject;
     IdeaEvaluationRun.findOne = originalFindOneRun;
+    IdeaEvaluationRun.find = originalFindRun;
     IdeaAgentResult.find = originalFindAgent;
   }
 });
