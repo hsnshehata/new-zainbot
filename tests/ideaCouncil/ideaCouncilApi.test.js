@@ -140,8 +140,41 @@ test('ideaCouncil API: getUsage returns monthly quota information', async () => 
     assert.equal(res.body.data.limit, 3);
     assert.equal(res.body.data.used, 1);
     assert.equal(res.body.data.remaining, 2);
+    assert.equal(res.body.data.ideasRemaining, 2);
+    assert.equal(res.body.data.monthlyLimit, 3);
   } finally {
     IdeaCouncilConfig.getActiveConfig = originalGetActiveConfig;
     IdeaUsageCounter.getUsage = originalGetUsage;
   }
 });
+
+test('ideaCouncil API: /draft endpoint accepts rawText and reportLanguage aliases', async () => {
+  const originalCreate = IdeaProject.create;
+  const fakeId = new mongoose.Types.ObjectId();
+  IdeaProject.create = async (doc) => ({
+    _id: fakeId,
+    ...doc,
+    createdAt: new Date(),
+  });
+
+  try {
+    const longText = 'هذه فكرة مشروع مبتكرة لإنشاء منصة لوجستية تربط بين الشاحنات الصغيرة وأصحاب البضائع في المدن الكبرى لتوفير تكاليف النقل وتسريع التوصيل في نفس اليوم.';
+    const res = await supertest(app)
+      .post('/api/idea-council/draft')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        rawText: longText,
+        targetMarket: 'الشرق الأوسط',
+        reportLanguage: 'ar',
+      });
+
+    assert.equal(res.status, 201);
+    assert.equal(res.body.success, true);
+    assert.equal(res.body.data.id, fakeId.toString());
+    assert.equal(res.body.data._id, fakeId.toString());
+    assert.equal(res.body.data.rawIdea.rawText, longText);
+  } finally {
+    IdeaProject.create = originalCreate;
+  }
+});
+

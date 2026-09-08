@@ -4819,7 +4819,8 @@
     try {
       const query = filter !== 'ALL' ? `?status=${encodeURIComponent(filter)}` : '';
       const res = await apiFetch(`/api/idea-council/ideas${query}`);
-      const ideas = (res && res.success && Array.isArray(res.data)) ? res.data : [];
+      const rawList = res && res.success ? (Array.isArray(res.data) ? res.data : (res.data?.ideas || [])) : [];
+      const ideas = Array.isArray(rawList) ? rawList : [];
 
       if (ideas.length === 0) {
         container.innerHTML = '';
@@ -4844,22 +4845,23 @@
       };
 
       container.innerHTML = ideas.map(idea => {
-        const title = idea.structuredCard?.title || idea.rawIdea?.title || ideaT('idea_card_title');
-        const pitch = idea.structuredCard?.elevatorPitch || (idea.rawIdea?.rawText ? (idea.rawIdea.rawText.slice(0, 120) + '...') : '');
-        const date = new Date(idea.createdAt).toLocaleDateString(currentLanguage === 'ar' ? 'ar-EG' : 'en-US', {
+        const ideaId = idea._id || idea.id;
+        const title = idea.structuredCard?.title || idea.structuredIdea?.title || idea.rawIdea?.title || idea.title || ideaT('idea_card_title');
+        const pitch = idea.structuredCard?.elevatorPitch || idea.structuredIdea?.elevatorPitch || (idea.rawIdea?.rawText ? (idea.rawIdea.rawText.slice(0, 120) + '...') : '');
+        const date = new Date(idea.createdAt || Date.now()).toLocaleDateString(currentLanguage === 'ar' ? 'ar-EG' : 'en-US', {
           year: 'numeric', month: 'short', day: 'numeric'
         });
 
         const sc = statusColors[idea.status] || statusColors.DRAFT;
-        const statusKey = 'idea_status_' + idea.status.toLowerCase();
-        const statusLabel = ideaT(statusKey, idea.status);
+        const statusKey = 'idea_status_' + (idea.status || 'draft').toLowerCase();
+        const statusLabel = ideaT(statusKey, idea.status || 'DRAFT');
 
         const actionLabel = (idea.status === 'COMPLETED' || idea.status === 'PARTIAL')
           ? ideaT('idea_action_view')
           : ideaT('idea_action_resume');
 
         return `
-          <div class="glass-card idea-item-card" data-id="${idea._id}" style="display:flex; flex-direction:column; justify-content:space-between; cursor:pointer; padding:20px;">
+          <div class="glass-card idea-item-card" data-id="${ideaId}" style="display:flex; flex-direction:column; justify-content:space-between; cursor:pointer; padding:20px;">
             <div>
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <span class="badge" style="background:${sc.bg}; color:${sc.text}; font-size:11px; padding:4px 8px; border-radius:10px;">
@@ -4871,11 +4873,11 @@
               <p style="font-size:12px; color:var(--text-muted); line-height:1.5; margin-bottom:16px;">${escapeIdeaHtml(pitch)}</p>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--glass-border); padding-top:12px; margin-top:auto;">
-              <button class="btn btn-secondary btn-sm idea-open-card-btn" data-id="${idea._id}" type="button" style="font-size:12px;">
+              <button class="btn btn-secondary btn-sm idea-open-card-btn" data-id="${ideaId}" type="button" style="font-size:12px;">
                 ${escapeIdeaHtml(actionLabel)} <i class="fas ${currentLanguage === 'ar' ? 'fa-arrow-left' : 'fa-arrow-right'}" style="margin-inline-start:4px;"></i>
               </button>
               ${(idea.status === 'DRAFT' || idea.status === 'FAILED') ? `
-                <button class="btn btn-sm idea-delete-btn" data-id="${idea._id}" type="button" title="${ideaT('idea_action_delete')}" style="background:transparent; border:none; color:var(--text-muted); padding:6px 8px;">
+                <button class="btn btn-sm idea-delete-btn" data-id="${ideaId}" type="button" title="${ideaT('idea_action_delete')}" style="background:transparent; border:none; color:var(--text-muted); padding:6px 8px;">
                   <i class="fas fa-trash-alt"></i>
                 </button>
               ` : ''}
@@ -5001,17 +5003,28 @@
 
     if (statusEl) statusEl.textContent = ideaT('idea_msg_saving');
 
+    const payload = {
+      rawText,
+      originalText: rawText,
+      targetMarket,
+      targetAudience,
+      primaryConcern,
+      reportLanguage,
+      outputLanguage: reportLanguage
+    };
+
     try {
       let res;
-      if (currentIdea && currentIdea._id) {
-        res = await apiFetch(`/api/idea-council/draft/${currentIdea._id}`, {
+      const curId = currentIdea?._id || currentIdea?.id;
+      if (curId) {
+        res = await apiFetch(`/api/idea-council/draft/${curId}`, {
           method: 'PUT',
-          body: JSON.stringify({ rawText, targetMarket, targetAudience, primaryConcern, reportLanguage })
+          body: JSON.stringify(payload)
         });
       } else {
         res = await apiFetch('/api/idea-council/draft', {
           method: 'POST',
-          body: JSON.stringify({ rawText, targetMarket, targetAudience, primaryConcern, reportLanguage })
+          body: JSON.stringify(payload)
         });
       }
 
@@ -5048,20 +5061,22 @@
     }
 
     try {
-      if (!currentIdea || !currentIdea._id) {
+      const curId = currentIdea?._id || currentIdea?.id;
+      if (!curId) {
         const saved = await saveIdeaDraft(true);
         if (!saved) return;
       } else {
         await saveIdeaDraft(true);
       }
 
-      const res = await apiFetch(`/api/idea-council/ideas/${currentIdea._id}/structure`, {
+      const activeId = currentIdea?._id || currentIdea?.id;
+      const res = await apiFetch(`/api/idea-council/ideas/${activeId}/structure`, {
         method: 'POST'
       });
 
       if (res && res.success && res.data) {
-        currentIdea = res.data;
-        populateStructuredCardForm(currentIdea.structuredCard || {});
+        currentIdea = { ...currentIdea, ...res.data };
+        populateStructuredCardForm(currentIdea.structuredCard || currentIdea.structuredIdea || {});
         showIdeaView('card');
       } else {
         alert(res?.error || (currentLanguage === 'ar' ? 'فشل تنظيم بطاقة الفكرة.' : 'Failed to structure idea.'));
@@ -5085,7 +5100,8 @@
       return;
     }
 
-    if (!currentIdea || !currentIdea._id) return;
+    const ideaId = currentIdea?._id || currentIdea?.id;
+    if (!ideaId) return;
 
     const card = {
       title: document.getElementById('ideaCardFldTitle')?.value.trim() || '',
@@ -5107,17 +5123,21 @@
     }
 
     try {
-      await apiFetch(`/api/idea-council/ideas/${currentIdea._id}/card`, {
+      await apiFetch(`/api/idea-council/ideas/${ideaId}/card`, {
         method: 'PUT',
         body: JSON.stringify(card)
       });
 
-      const res = await apiFetch(`/api/idea-council/ideas/${currentIdea._id}/convene`, {
-        method: 'POST'
+      const idempotencyKey = `convene-${ideaId}-${Date.now()}`;
+      const res = await apiFetch(`/api/idea-council/ideas/${ideaId}/convene`, {
+        method: 'POST',
+        headers: { 'Idempotency-Key': idempotencyKey },
+        body: JSON.stringify({ idempotencyKey })
       });
 
-      if (res && res.success && res.runId) {
-        currentIdeaRunId = res.runId;
+      const runId = res?.runId || res?.data?.runId;
+      if (res && res.success && runId) {
+        currentIdeaRunId = runId;
         showIdeaView('session');
         renderCouncilAgentsGrid([]);
         startIdeaPolling(currentIdeaRunId);
@@ -5359,25 +5379,28 @@
     };
 
     container.innerHTML = items.map(item => {
-      const cc = catColors[item.category] || catColors.ASSUMPTION;
-      const catLabel = ideaT(cc.labelKey, item.category);
+      const itemId = item.id || item._id;
+      const category = item.category || item.type || 'ASSUMPTION';
+      const cc = catColors[category] || catColors.ASSUMPTION;
+      const catLabel = ideaT(cc.labelKey, category);
+      const currentStatus = item.status || item.workflowState || 'UNVERIFIED';
 
       return `
-        <div class="glass-card truth-board-card" data-id="${item._id}" style="padding:14px; background:rgba(255,255,255,0.02);">
+        <div class="glass-card truth-board-card" data-id="${escapeIdeaHtml(String(itemId))}" style="padding:14px; background:rgba(255,255,255,0.02);">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
             <span class="badge" style="background:${cc.bg}; color:${cc.text}; font-size:11px;">
               ${escapeIdeaHtml(catLabel)}
             </span>
-            <select class="form-control form-control-sm truth-item-status-select" data-id="${item._id}" style="width:auto; padding:4px 28px 4px 10px; font-size:11px; height:auto;">
-              <option value="UNVERIFIED" ${item.status === 'UNVERIFIED' ? 'selected' : ''}>${ideaT('idea_tb_status_open')}</option>
-              <option value="IN_PROGRESS" ${item.status === 'IN_PROGRESS' ? 'selected' : ''}>${ideaT('idea_tb_status_validating')}</option>
-              <option value="VALIDATED" ${item.status === 'VALIDATED' ? 'selected' : ''}>${ideaT('idea_tb_status_verified')}</option>
-              <option value="INVALIDATED" ${item.status === 'INVALIDATED' ? 'selected' : ''}>${ideaT('idea_tb_status_dismissed')}</option>
-              <option value="BLOCKED" ${item.status === 'BLOCKED' ? 'selected' : ''}>${ideaT('idea_tb_status_blocked')}</option>
+            <select class="form-control form-control-sm truth-item-status-select" data-id="${escapeIdeaHtml(String(itemId))}" style="width:auto; padding:4px 28px 4px 10px; font-size:11px; height:auto;">
+              <option value="UNVERIFIED" ${currentStatus === 'UNVERIFIED' || currentStatus === 'OPEN' ? 'selected' : ''}>${ideaT('idea_tb_status_open')}</option>
+              <option value="IN_PROGRESS" ${currentStatus === 'IN_PROGRESS' ? 'selected' : ''}>${ideaT('idea_tb_status_validating')}</option>
+              <option value="VALIDATED" ${currentStatus === 'VALIDATED' ? 'selected' : ''}>${ideaT('idea_tb_status_verified')}</option>
+              <option value="INVALIDATED" ${currentStatus === 'INVALIDATED' ? 'selected' : ''}>${ideaT('idea_tb_status_dismissed')}</option>
+              <option value="BLOCKED" ${currentStatus === 'BLOCKED' ? 'selected' : ''}>${ideaT('idea_tb_status_blocked')}</option>
             </select>
           </div>
-          <p style="font-size:13px; color:#fff; margin:0 0 10px 0; line-height:1.4;">${escapeIdeaHtml(item.statement)}</p>
-          <input type="text" class="form-control form-control-sm truth-item-notes-input" data-id="${item._id}" value="${escapeIdeaHtml(item.notes || '')}" placeholder="${ideaT('idea_tb_notes_placeholder')}" style="font-size:11px; padding:6px 10px;" />
+          <p style="font-size:13px; color:#fff; margin:0 0 10px 0; line-height:1.4;">${escapeIdeaHtml(item.statement || '')}</p>
+          <input type="text" class="form-control form-control-sm truth-item-notes-input" data-id="${escapeIdeaHtml(String(itemId))}" value="${escapeIdeaHtml(item.notes || item.userNotes || '')}" placeholder="${ideaT('idea_tb_notes_placeholder')}" style="font-size:11px; padding:6px 10px;" />
         </div>
       `;
     }).join('');
@@ -5385,21 +5408,25 @@
     container.querySelectorAll('.truth-item-status-select').forEach(sel => {
       sel.addEventListener('change', async () => {
         const id = sel.getAttribute('data-id');
-        await updateTruthItem(id, { status: sel.value }, sel);
+        await updateTruthItem(id, { status: sel.value, workflowState: sel.value }, sel);
       });
     });
 
     container.querySelectorAll('.truth-item-notes-input').forEach(inp => {
       inp.addEventListener('blur', async () => {
         const id = inp.getAttribute('data-id');
-        await updateTruthItem(id, { notes: inp.value.trim() }, inp);
+        await updateTruthItem(id, { notes: inp.value.trim(), userNotes: inp.value.trim() }, inp);
       });
     });
   }
 
   async function updateTruthItem(itemId, patchData, triggerEl) {
     try {
-      const res = await apiFetch(`/api/idea-council/truth-items/${itemId}`, {
+      const ideaId = currentIdea?._id || currentIdea?.id;
+      const url = ideaId
+        ? `/api/idea-council/ideas/${ideaId}/truth-items/${itemId}`
+        : `/api/idea-council/truth-items/${itemId}`;
+      const res = await apiFetch(url, {
         method: 'PATCH',
         body: JSON.stringify(patchData)
       });
@@ -5416,8 +5443,9 @@
   }
 
   async function handleFollowUpClick(type) {
-    if (!currentIdea || !currentIdea._id) return;
-    const roundsRem = currentIdea.followUpRoundsRemaining ?? 3;
+    const ideaId = currentIdea?._id || currentIdea?.id;
+    if (!ideaId) return;
+    const roundsRem = currentIdea.followUpRoundsRemaining ?? currentIdea.followupRoundsRemaining ?? 3;
     if (roundsRem <= 0) {
       alert(currentLanguage === 'ar' ? 'لقد استنفدت جميع جولات المتابعة المتاحة لهذه الفكرة (3 جولات).' : 'All 3 follow-up rounds used for this idea.');
       return;
@@ -5434,12 +5462,28 @@
     }
 
     try {
-      const res = await apiFetch(`/api/idea-council/ideas/${currentIdea._id}/follow-up`, {
+      const idempotencyKey = `followup-${ideaId}-${Date.now()}`;
+      const res = await apiFetch(`/api/idea-council/ideas/${ideaId}/follow-up`, {
         method: 'POST',
-        body: JSON.stringify({ type, userPrompt: promptText.trim() })
+        headers: { 'Idempotency-Key': idempotencyKey },
+        body: JSON.stringify({
+          type,
+          followupType: type,
+          userPrompt: promptText.trim(),
+          followupPrompt: promptText.trim(),
+          idempotencyKey
+        })
       });
 
-      if (res && res.success && res.data) {
+      const runId = res?.runId || res?.data?.runId;
+      if (res && res.success && runId) {
+        currentIdeaRunId = runId;
+        showIdeaView('session');
+        renderCouncilAgentsGrid([]);
+        startIdeaPolling(currentIdeaRunId);
+        loadIdeaCouncilUsage();
+        alert(ideaT('idea_msg_followup_success'));
+      } else if (res && res.success && res.data) {
         currentIdea = res.data;
         renderIdeaReport(currentIdea);
         alert(ideaT('idea_msg_followup_success'));

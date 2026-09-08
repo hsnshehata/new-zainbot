@@ -39,9 +39,11 @@ async function getUsage(req, res) {
       data: {
         enabled: config.enabled,
         limit: usage.limit,
+        monthlyLimit: usage.limit,
         used: usage.used,
         completed: usage.completed,
         remaining: usage.remaining,
+        ideasRemaining: usage.remaining,
         yearMonthUtc: usage.yearMonthUtc,
         nextResetDate: usage.nextResetDate,
       },
@@ -127,7 +129,11 @@ async function getIdeas(req, res) {
 async function createIdea(req, res) {
   try {
     const userId = getUserId(req);
-    const { originalText, targetMarket, targetAudience, primaryConcern, outputLanguage } = req.body;
+    const originalText = req.body.originalText || req.body.rawText;
+    const targetMarket = req.body.targetMarket;
+    const targetAudience = req.body.targetAudience;
+    const primaryConcern = req.body.primaryConcern;
+    const outputLanguage = req.body.outputLanguage || req.body.reportLanguage;
 
     if (!originalText || typeof originalText !== 'string' || originalText.trim().length < 100) {
       return res.status(400).json({
@@ -164,9 +170,18 @@ async function createIdea(req, res) {
       success: true,
       data: {
         id: project._id,
+        _id: project._id,
         title: defaultTitle,
         status: project.status,
         outputLanguage: project.outputLanguage,
+        reportLanguage: project.outputLanguage,
+        rawIdea: {
+          rawText: originalText.trim(),
+          title: defaultTitle,
+          targetMarket: project.targetMarket,
+          targetAudience: project.targetAudience,
+          primaryConcern: project.primaryConcern,
+        },
         createdAt: project.createdAt,
       },
     });
@@ -192,11 +207,18 @@ async function getIdeaById(req, res) {
     const structuredIdea = decryptIdeaJson(project.encryptedStructuredIdea);
 
     let latestRun = null;
+    let synthesisReport = null;
+    let truthBoardItems = [];
+    let sourceReferences = [];
+
     if (project.latestRunId) {
       const runDoc = await IdeaEvaluationRun.findOne({ _id: project.latestRunId, userId }).lean();
       if (runDoc) {
         const finalReport = decryptIdeaJson(runDoc.encryptedFinalReport);
         const truthBoard = decryptIdeaJson(runDoc.encryptedTruthBoard);
+        synthesisReport = finalReport;
+        truthBoardItems = Array.isArray(truthBoard) ? truthBoard : (truthBoard?.items || []);
+        sourceReferences = runDoc.sourceReferences || [];
         latestRun = {
           runId: runDoc._id,
           runType: runDoc.runType,
@@ -204,7 +226,7 @@ async function getIdeaById(req, res) {
           status: runDoc.status,
           currentStage: runDoc.currentStage,
           stageProgress: runDoc.stageProgress,
-          sourceReferences: runDoc.sourceReferences || [],
+          sourceReferences,
           finalReport,
           truthBoard,
           usageSummary: runDoc.usageSummary,
@@ -218,12 +240,23 @@ async function getIdeaById(req, res) {
       success: true,
       data: {
         id: project._id,
+        _id: project._id,
         title,
         originalText,
+        rawText: originalText,
+        rawIdea: {
+          rawText: originalText,
+          title,
+          targetMarket: project.targetMarket,
+          targetAudience: project.targetAudience,
+          primaryConcern: project.primaryConcern,
+        },
         structuredIdea,
+        structuredCard: structuredIdea,
         status: project.status,
         version: project.version,
         outputLanguage: project.outputLanguage,
+        reportLanguage: project.outputLanguage,
         targetMarket: project.targetMarket,
         targetAudience: project.targetAudience,
         primaryConcern: project.primaryConcern,
@@ -231,6 +264,10 @@ async function getIdeaById(req, res) {
         followupRoundsUsed: project.followupRoundsUsed,
         followupRoundsRemaining: Math.max(0, 3 - project.followupRoundsUsed),
         latestRun,
+        activeRunId: project.latestRunId,
+        synthesisReport,
+        truthBoardItems,
+        marketResearchPack: { sources: sourceReferences },
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
       },
@@ -246,7 +283,23 @@ async function updateIdea(req, res) {
   try {
     const userId = getUserId(req);
     const { ideaId } = req.params;
-    const { originalText, structuredIdea, targetMarket, targetAudience, primaryConcern, outputLanguage, version } = req.body;
+    const originalText = req.body.originalText || req.body.rawText;
+    let structuredIdea = req.body.structuredIdea || req.body.structuredCard;
+    if (!structuredIdea && (req.body.title || req.body.elevatorPitch || req.body.coreProblem)) {
+      structuredIdea = {
+        title: req.body.title,
+        elevatorPitch: req.body.elevatorPitch,
+        targetCustomer: req.body.targetCustomer,
+        revenueModel: req.body.revenueModel,
+        coreProblem: req.body.coreProblem,
+        proposedSolution: req.body.proposedSolution,
+        valueProposition: req.body.valueProposition,
+        currentAlternatives: req.body.currentAlternatives,
+        coreEvaluationQuestion: req.body.coreEvaluationQuestion,
+      };
+    }
+    const { targetMarket, targetAudience, primaryConcern, version } = req.body;
+    const outputLanguage = req.body.outputLanguage || req.body.reportLanguage;
 
     const query = { _id: ideaId, userId, isDeleted: false };
     if (version !== undefined && version !== null) {
@@ -285,12 +338,29 @@ async function updateIdea(req, res) {
       });
     }
 
+    const decryptedTitle = decryptIdeaField(updated.encryptedTitle);
+    const decryptedRaw = decryptIdeaField(updated.encryptedOriginalText);
+    const decryptedCard = decryptIdeaJson(updated.encryptedStructuredIdea);
+
     return res.status(200).json({
       success: true,
       data: {
         id: updated._id,
+        _id: updated._id,
+        title: decryptedTitle,
         version: updated.version,
         status: updated.status,
+        outputLanguage: updated.outputLanguage,
+        reportLanguage: updated.outputLanguage,
+        structuredIdea: decryptedCard,
+        structuredCard: decryptedCard,
+        rawIdea: {
+          rawText: decryptedRaw,
+          title: decryptedTitle,
+          targetMarket: updated.targetMarket,
+          targetAudience: updated.targetAudience,
+          primaryConcern: updated.primaryConcern,
+        },
       },
     });
   } catch (error) {
@@ -421,15 +491,7 @@ async function startEvaluation(req, res) {
   try {
     const userId = getUserId(req);
     const { ideaId } = req.params;
-    const idempotencyKey = req.header('idempotency-key') || req.body.idempotencyKey;
-
-    if (!idempotencyKey) {
-      return res.status(400).json({
-        success: false,
-        error: 'IDEMPOTENCY_KEY_REQUIRED',
-        message: 'Idempotency-Key header is required',
-      });
-    }
+    const idempotencyKey = req.header('idempotency-key') || req.body.idempotencyKey || `eval-${ideaId}-${Date.now()}`;
 
     // Check config
     const config = await IdeaCouncilConfig.getActiveConfig();
@@ -464,6 +526,7 @@ async function startEvaluation(req, res) {
         success: false,
         error: 'IDEA_RUN_IN_PROGRESS',
         message: 'An evaluation is already running for this idea',
+        runId: activeRun._id,
         data: { runId: activeRun._id, status: activeRun.status },
       });
     }
@@ -473,6 +536,7 @@ async function startEvaluation(req, res) {
     if (existingRun) {
       return res.status(202).json({
         success: true,
+        runId: existingRun._id,
         data: {
           runId: existingRun._id,
           status: existingRun.status,
@@ -509,6 +573,7 @@ async function startEvaluation(req, res) {
 
     return res.status(202).json({
       success: true,
+      runId: run._id,
       data: {
         runId: run._id,
         status: 'QUEUED',
@@ -551,11 +616,14 @@ async function getRunStatus(req, res) {
       data: {
         runId: run._id,
         ideaId: run.ideaId,
+        projectId: run.ideaId,
         runType: run.runType,
         followupType: run.followupType,
         status: run.status,
         currentStage: run.currentStage,
+        stage: run.currentStage,
         stageProgress: run.stageProgress,
+        progress: run.stageProgress,
         agents: formattedAgents,
         sourceReferences: run.sourceReferences || [],
         finalReport,
@@ -577,16 +645,9 @@ async function startFollowup(req, res) {
   try {
     const userId = getUserId(req);
     const { ideaId } = req.params;
-    const { followupType, followupPrompt } = req.body;
-    const idempotencyKey = req.header('idempotency-key') || req.body.idempotencyKey;
-
-    if (!idempotencyKey) {
-      return res.status(400).json({
-        success: false,
-        error: 'IDEMPOTENCY_KEY_REQUIRED',
-        message: 'Idempotency-Key header is required',
-      });
-    }
+    const followupType = req.body.followupType || req.body.type;
+    const followupPrompt = req.body.followupPrompt || req.body.userPrompt;
+    const idempotencyKey = req.header('idempotency-key') || req.body.idempotencyKey || `followup-${ideaId}-${Date.now()}`;
 
     const project = await IdeaProject.findOne({ _id: ideaId, userId, isDeleted: false });
     if (!project) {
@@ -610,6 +671,21 @@ async function startFollowup(req, res) {
         success: false,
         error: 'IDEA_RUN_IN_PROGRESS',
         message: 'An evaluation is already running for this idea',
+        runId: activeRun._id,
+        data: { runId: activeRun._id, status: activeRun.status },
+      });
+    }
+
+    const existingRun = await IdeaEvaluationRun.findOne({ userId, idempotencyKey });
+    if (existingRun) {
+      return res.status(202).json({
+        success: true,
+        runId: existingRun._id,
+        data: {
+          runId: existingRun._id,
+          status: existingRun.status,
+          pollAfterMs: 2000,
+        },
       });
     }
 
@@ -631,6 +707,7 @@ async function startFollowup(req, res) {
 
     return res.status(202).json({
       success: true,
+      runId: run._id,
       data: {
         runId: run._id,
         status: 'QUEUED',
@@ -711,40 +788,67 @@ async function cancelRun(req, res) {
   }
 }
 
-// PATCH /ideas/:ideaId/truth-items/:itemId
+// PATCH /ideas/:ideaId/truth-items/:itemId OR PATCH /truth-items/:itemId
 async function updateTruthItem(req, res) {
   try {
     const userId = getUserId(req);
     const { ideaId, itemId } = req.params;
-    const { workflowState, userNotes } = req.body;
+    const workflowState = req.body.workflowState || req.body.status;
+    const userNotes = req.body.userNotes !== undefined ? req.body.userNotes : req.body.notes;
 
-    const project = await IdeaProject.findOne({ _id: ideaId, userId, isDeleted: false });
-    if (!project || !project.latestRunId) {
-      return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'Idea or evaluation run not found' });
+    let run = null;
+    let project = null;
+
+    if (ideaId) {
+      project = await IdeaProject.findOne({ _id: ideaId, userId, isDeleted: false });
+      if (project && project.latestRunId) {
+        run = await IdeaEvaluationRun.findOne({ _id: project.latestRunId, userId });
+      }
     }
 
-    const run = await IdeaEvaluationRun.findOne({ _id: project.latestRunId, userId });
+    if (!run) {
+      const recentRuns = await IdeaEvaluationRun.find({ userId }).sort({ createdAt: -1 }).limit(20);
+      for (const r of recentRuns) {
+        if (r.encryptedTruthBoard) {
+          const tb = decryptIdeaJson(r.encryptedTruthBoard);
+          const list = Array.isArray(tb) ? tb : (tb?.items || []);
+          if (list.some((it) => String(it.id) === String(itemId) || String(it._id) === String(itemId))) {
+            run = r;
+            break;
+          }
+        }
+      }
+    }
+
     if (!run || !run.encryptedTruthBoard) {
       return res.status(404).json({ success: false, error: 'TRUTH_BOARD_NOT_FOUND', message: 'Truth board not available' });
     }
 
     const truthBoard = decryptIdeaJson(run.encryptedTruthBoard) || [];
-    const itemIndex = truthBoard.findIndex((item) => String(item.id) === String(itemId));
+    const list = Array.isArray(truthBoard) ? truthBoard : (truthBoard.items || []);
+    const itemIndex = list.findIndex((item) => String(item.id) === String(itemId) || String(item._id) === String(itemId));
 
     if (itemIndex === -1) {
       return res.status(404).json({ success: false, error: 'ITEM_NOT_FOUND', message: 'Truth item not found' });
     }
 
-    if (workflowState) truthBoard[itemIndex].workflowState = workflowState;
-    if (userNotes !== undefined) truthBoard[itemIndex].userNotes = userNotes;
+    if (workflowState) {
+      list[itemIndex].workflowState = workflowState;
+      list[itemIndex].status = workflowState;
+    }
+    if (userNotes !== undefined) {
+      list[itemIndex].userNotes = userNotes;
+      list[itemIndex].notes = userNotes;
+    }
 
-    const encryptedTruthBoard = encryptIdeaJson(truthBoard);
+    const updatedTruthBoard = Array.isArray(truthBoard) ? list : { ...truthBoard, items: list };
+    const encryptedTruthBoard = encryptIdeaJson(updatedTruthBoard);
     await IdeaEvaluationRun.updateOne({ _id: run._id }, { encryptedTruthBoard });
 
     return res.status(200).json({
       success: true,
       data: {
-        item: truthBoard[itemIndex],
+        item: list[itemIndex],
       },
     });
   } catch (error) {
