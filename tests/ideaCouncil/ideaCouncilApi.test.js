@@ -178,3 +178,80 @@ test('ideaCouncil API: /draft endpoint accepts rawText and reportLanguage aliase
   }
 });
 
+test('ideaCouncil API: getIdeaById returns agents from latest run', async () => {
+  const IdeaEvaluationRun = require('../../server/models/IdeaEvaluationRun');
+  const IdeaAgentResult = require('../../server/models/IdeaAgentResult');
+  const ideaId = new mongoose.Types.ObjectId();
+  const runId = new mongoose.Types.ObjectId();
+
+  const originalFindOneProject = IdeaProject.findOne;
+  const originalFindOneRun = IdeaEvaluationRun.findOne;
+  const originalFindAgent = IdeaAgentResult.find;
+
+  IdeaProject.findOne = () => Promise.resolve({
+    _id: ideaId,
+    userId,
+    isDeleted: false,
+    latestRunId: runId,
+    encryptedTitle: encryptIdeaField('اختبار الفكرة'),
+    encryptedOriginalText: encryptIdeaField('نص فكرة طويل لاختبار الإرجاع'),
+    encryptedStructuredIdea: encryptIdeaJson({ title: 'اختبار' }),
+    targetMarket: 'Global',
+    outputLanguage: 'ar',
+    status: 'COMPLETED',
+    version: 1,
+    initialEvaluationsUsed: 1,
+    followupRoundsUsed: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  IdeaEvaluationRun.findOne = () => ({
+    lean: () => Promise.resolve({
+      _id: runId,
+      ideaId,
+      userId,
+      runType: 'INITIAL',
+      status: 'COMPLETED',
+      currentStage: 'SYNTHESIS',
+      encryptedFinalReport: encryptIdeaJson({ verdict: 'BUILD' }),
+      encryptedTruthBoard: encryptIdeaJson([]),
+      sourceReferences: [{ title: 'Google', url: 'https://google.com' }],
+    }),
+  });
+
+  IdeaAgentResult.find = () => ({
+    lean: () => Promise.resolve([
+      {
+        role: 'COLD_CUSTOMER',
+        status: 'COMPLETED',
+        confidence: 0.9,
+        encryptedOutput: encryptIdeaJson({ rejectionReason: 'Too expensive' }),
+      },
+      {
+        role: 'HARSH_AUDITOR',
+        status: 'COMPLETED',
+        confidence: 0.95,
+        encryptedOutput: encryptIdeaJson({ weakestLink: 'High CAC' }),
+      },
+    ]),
+  });
+
+  try {
+    const res = await supertest(app)
+      .get(`/api/idea-council/ideas/${ideaId}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.success, true);
+    assert.ok(Array.isArray(res.body.data.agents));
+    assert.equal(res.body.data.agents.length, 2);
+    assert.equal(res.body.data.agents[0].role, 'COLD_CUSTOMER');
+    assert.equal(res.body.data.agents[0].output.rejectionReason, 'Too expensive');
+    assert.equal(res.body.data.latestRun.agents.length, 2);
+  } finally {
+    IdeaProject.findOne = originalFindOneProject;
+    IdeaEvaluationRun.findOne = originalFindOneRun;
+    IdeaAgentResult.find = originalFindAgent;
+  }
+});

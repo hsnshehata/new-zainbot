@@ -121,7 +121,12 @@ function buildAgentPrompt(role, structuredIdea, options = {}) {
   return {
     system: `${current.desc}
 You are evaluating an idea confirmed by the founder.
-Output ONLY valid JSON matching this schema:
+CRITICAL INSTRUCTIONS:
+- Ban generic startup advice, superficial encouragement, and textbook platitudes.
+- Be concrete, brutally honest, and specific to this concept, its target market, and user profile.
+- If real competitors or market evidence are provided in the Market Evidence Pack, directly cite and analyze them by name.
+- Explicitly contrast this idea with those real competitors to highlight switching costs and real-world failure triggers.
+- Output ONLY valid JSON matching this schema:
 ${current.json}
 Language: Output entirely in ${lang}.
 No Markdown formatting around JSON. No introductory or trailing text.`,
@@ -136,7 +141,8 @@ function buildChairpersonPrompt(structuredIdea, agentResults, options = {}) {
   return {
     system: `You are the "Chairperson & Synthesizer" of the ZainBot Idea Council.
 Your duty is to integrate the findings of the 8 specialized council members into a unified, decisive strategic report.
-Do NOT invent new market facts. Summarize and weigh the evidence and agent outputs.
+Do NOT invent new market facts. Summarize and weigh the concrete evidence and agent outputs.
+Ban vague marketing filler or generic startup advice. Mention real competitors and specific failure conditions identified by the council.
 The verdict must be one of:
 - VALIDATE_FIRST
 - PROCEED_WITH_CONDITIONS

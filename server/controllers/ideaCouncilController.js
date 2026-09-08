@@ -210,6 +210,7 @@ async function getIdeaById(req, res) {
     let synthesisReport = null;
     let truthBoardItems = [];
     let sourceReferences = [];
+    let formattedAgents = [];
 
     if (project.latestRunId) {
       const runDoc = await IdeaEvaluationRun.findOne({ _id: project.latestRunId, userId }).lean();
@@ -219,6 +220,18 @@ async function getIdeaById(req, res) {
         synthesisReport = finalReport;
         truthBoardItems = Array.isArray(truthBoard) ? truthBoard : (truthBoard?.items || []);
         sourceReferences = runDoc.sourceReferences || [];
+
+        const agentDocs = await IdeaAgentResult.find({ runId: runDoc._id }).lean();
+        formattedAgents = agentDocs.map((ar) => ({
+          role: ar.role,
+          status: ar.status,
+          confidence: ar.confidence,
+          output: ar.encryptedOutput ? decryptIdeaJson(ar.encryptedOutput) : null,
+          errorClass: ar.errorClass,
+          latencyMs: ar.latencyMs,
+          completedAt: ar.completedAt,
+        }));
+
         latestRun = {
           runId: runDoc._id,
           runType: runDoc.runType,
@@ -226,6 +239,7 @@ async function getIdeaById(req, res) {
           status: runDoc.status,
           currentStage: runDoc.currentStage,
           stageProgress: runDoc.stageProgress,
+          agents: formattedAgents,
           sourceReferences,
           finalReport,
           truthBoard,
@@ -263,6 +277,7 @@ async function getIdeaById(req, res) {
         initialEvaluationsUsed: project.initialEvaluationsUsed,
         followupRoundsUsed: project.followupRoundsUsed,
         followupRoundsRemaining: Math.max(0, 3 - project.followupRoundsUsed),
+        agents: formattedAgents,
         latestRun,
         activeRunId: project.latestRunId,
         synthesisReport,

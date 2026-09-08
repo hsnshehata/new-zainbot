@@ -363,7 +363,7 @@ class IdeaEvaluationWorker {
 
     const prompt = buildAgentPrompt(role, structuredIdea, {
       language,
-      researchEvidence: role === 'MARKET_RESEARCHER' ? sources : null,
+      researchEvidence: sources && sources.length > 0 ? sources : null,
     });
 
     const llmResult = await this._callLlm({

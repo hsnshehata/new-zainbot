@@ -581,6 +581,8 @@
       idea_wedge_title: 'Unique Wedge & Value',
       idea_consensus_title: 'Consensus & Dissent Points',
       idea_sources_title: 'Verified Market Sources',
+      idea_critics_title: 'Council Members Detailed Critiques',
+      idea_critics_subtitle: '8 specialized angles on viability, execution, and risks',
       idea_truth_board_title: 'Dynamic Truth Board',
       idea_truth_board_desc: 'Track key assumptions, risks, and validation steps in real time without consuming AI quotas.',
       idea_tb_status_open: 'Open',
@@ -1195,6 +1197,8 @@
       idea_wedge_title: 'زاوية التميّز ولحظة القيمة',
       idea_consensus_title: 'نقاط الاتفاق والتباين',
       idea_sources_title: 'مصادر البحث الموثقة',
+      idea_critics_title: 'تحليلات وتقييمات أعضاء اللجنة التفصيلية',
+      idea_critics_subtitle: '8 زوايا تخصصية حول الجدوى وقابلية التنفيذ والمخاطر',
       idea_truth_board_title: 'لوحة الحقيقة التفاعلية',
       idea_truth_board_desc: 'تابع الافتراضات والمخاطر وخطوات التحقق في الوقت الفعلي دون استهلاك جولات الذكاء الاصطناعي.',
       idea_tb_status_open: 'مفتوح',
@@ -4763,14 +4767,14 @@
   }
 
   const COUNCIL_MEMBERS = [
-    { key: 'customer_advocate', icon: 'fa-user-check', labelKey: 'idea_role_customer_advocate' },
-    { key: 'financial_auditor', icon: 'fa-coins', labelKey: 'idea_role_financial_auditor' },
-    { key: 'growth_marketer', icon: 'fa-chart-line', labelKey: 'idea_role_growth_marketer' },
-    { key: 'direct_competitor', icon: 'fa-chess-knight', labelKey: 'idea_role_direct_competitor' },
-    { key: 'technical_architect', icon: 'fa-server', labelKey: 'idea_role_technical_architect' },
-    { key: 'execution_risk_officer', icon: 'fa-shield-halved', labelKey: 'idea_role_execution_risk_officer' },
-    { key: 'monetization_strategist', icon: 'fa-hand-holding-dollar', labelKey: 'idea_role_monetization_strategist' },
-    { key: 'simplicity_editor', icon: 'fa-scissors', labelKey: 'idea_role_simplicity_editor' }
+    { key: 'COLD_CUSTOMER', icon: 'fa-user-check', labelKey: 'member_cold_customer', roleKey: 'member_cold_customer_role' },
+    { key: 'HARSH_AUDITOR', icon: 'fa-shield-halved', labelKey: 'member_harsh_auditor', roleKey: 'member_harsh_auditor_role' },
+    { key: 'EXECUTION_EXPERT', icon: 'fa-laptop-code', labelKey: 'member_execution_expert', roleKey: 'member_execution_expert_role' },
+    { key: 'MARKET_RESEARCHER', icon: 'fa-chart-line', labelKey: 'member_market_researcher', roleKey: 'member_market_researcher_role' },
+    { key: 'DEVILS_ADVOCATE', icon: 'fa-fire', labelKey: 'member_devils_advocate', roleKey: 'member_devils_advocate_role' },
+    { key: 'WEDGE_HUNTER', icon: 'fa-bullseye', labelKey: 'member_wedge_hunter', roleKey: 'member_wedge_hunter_role' },
+    { key: 'UX_DESIGNER', icon: 'fa-compass-drafting', labelKey: 'member_ux_designer', roleKey: 'member_ux_designer_role' },
+    { key: 'CANDID_CHAMPION', icon: 'fa-award', labelKey: 'member_candid_champion', roleKey: 'member_candid_champion_role' }
   ];
 
   function showIdeaView(viewName) {
@@ -5163,7 +5167,8 @@
     grid.innerHTML = COUNCIL_MEMBERS.map(member => {
       const agentResult = agents.find(a => a.role === member.key);
       const status = agentResult?.status || 'PENDING';
-      const insight = agentResult?.keyInsight || agentResult?.recommendation || '';
+      const output = agentResult?.output;
+      const insight = output?.summary || agentResult?.keyInsight || agentResult?.recommendation || '';
 
       const statusMap = {
         PENDING: { label: currentLanguage === 'ar' ? 'بانتظار البدء' : 'Pending', color: 'var(--text-muted)', icon: 'fa-clock' },
@@ -5214,7 +5219,7 @@
         if (run.stage === 'RESEARCH') {
           pct = 20;
           stg = currentLanguage === 'ar' ? 'جارٍ إجراء البحث السوقي المباشر وجمع الأدلة...' : 'Conducting live web market research...';
-        } else if (run.stage === 'AGENT_ANALYSIS') {
+        } else if (run.stage === 'AGENT_ANALYSIS' || run.stage === 'ANALYSIS') {
           const completed = (run.agents || []).filter(a => a.status === 'COMPLETED').length;
           pct = 25 + Math.round((completed / 8) * 55);
           stg = (currentLanguage === 'ar' ? 'أعضاء اللجنة يحللون الفكرة بالتوازي' : 'Council members analyzing in parallel') + ` (${completed}/8)...`;
@@ -5359,7 +5364,243 @@
       btn.disabled = (roundsRem <= 0);
     });
 
+    const agents = idea.agents || idea.latestRun?.agents || [];
+    renderCriticsBreakdown(agents);
+
     renderTruthBoard(idea.truthBoardItems || r.truthBoardItems || []);
+  }
+
+  function renderCriticsBreakdown(agents = []) {
+    const container = document.getElementById('ideaCriticsBreakdownList');
+    if (!container) return;
+
+    if (!Array.isArray(agents) || agents.length === 0) {
+      container.innerHTML = `<div style="padding:16px; text-align:center; color:var(--text-muted); font-size:13px;">${currentLanguage === 'ar' ? 'لم يتم حفظ تقارير أعضاء اللجنة بعد.' : 'No council member critiques recorded yet.'}</div>`;
+      return;
+    }
+
+    const cardsHtml = COUNCIL_MEMBERS.map(member => {
+      const agent = agents.find(a => a.role === member.key);
+      const output = agent?.output || {};
+      const status = agent?.status || (output && Object.keys(output).length > 0 ? 'COMPLETED' : 'PENDING');
+      const roleTitle = ideaT(member.labelKey, member.key);
+      const roleDesc = ideaT(member.roleKey, '');
+
+      let metricsHtml = '';
+      if (member.key === 'COLD_CUSTOMER') {
+        metricsHtml = `
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:12px; font-size:12px;">
+            <div style="background:rgba(239, 68, 68, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(239, 68, 68, 0.2);">
+              <strong style="color:var(--red); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'سبب الرفض والتردد:' : 'Rejection Reason:'}</strong>
+              <span style="color:#e2e8f0;">${escapeIdeaHtml(output.rejectionReason || '—')}</span>
+            </div>
+            <div style="background:rgba(245, 158, 11, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(245, 158, 11, 0.2);">
+              <strong style="color:var(--orange); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'تكلفة التبديل والانتقال:' : 'Switching Cost:'}</strong>
+              <span style="color:#e2e8f0;">${escapeIdeaHtml(output.switchingCost || '—')}</span>
+            </div>
+            <div style="background:rgba(6, 182, 212, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(6, 182, 212, 0.2);">
+              <strong style="color:var(--cyan); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'محفز التجربة الحقيقي:' : 'Trigger to Try:'}</strong>
+              <span style="color:#e2e8f0;">${escapeIdeaHtml(output.triggerToTry || '—')}</span>
+            </div>
+            ${output.willingnessToPay ? `
+            <div style="background:rgba(16, 185, 129, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(16, 185, 129, 0.2);">
+              <strong style="color:var(--green); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'الاستعداد للدفع:' : 'Willingness to Pay:'}</strong>
+              <span style="color:#e2e8f0;">${escapeIdeaHtml(output.willingnessToPay)}</span>
+            </div>` : ''}
+          </div>
+        `;
+      } else if (member.key === 'HARSH_AUDITOR') {
+        const assumptions = Array.isArray(output.top3Assumptions) ? output.top3Assumptions : [];
+        const hardQuestions = Array.isArray(output.hardQuestions) ? output.hardQuestions : [];
+        metricsHtml = `
+          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
+            ${output.weakestLink ? `
+            <div style="background:rgba(239, 68, 68, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(239, 68, 68, 0.2);">
+              <strong style="color:var(--red);">${currentLanguage === 'ar' ? 'أضعف نقطة في المفهوم:' : 'Weakest Link:'}</strong>
+              <span style="color:#e2e8f0; margin-inline-start:4px;">${escapeIdeaHtml(output.weakestLink)}</span>
+            </div>` : ''}
+            ${assumptions.length > 0 ? `
+            <div>
+              <strong style="color:var(--orange); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'أخطر الافتراضات غير المثبتة:' : 'Deadliest Assumptions:'}</strong>
+              <ul style="margin:0; padding-inline-start:18px; color:#cbd5e1;">
+                ${assumptions.map(a => `<li>${escapeIdeaHtml(a)}</li>`).join('')}
+              </ul>
+            </div>` : ''}
+            ${hardQuestions.length > 0 ? `
+            <div>
+              <strong style="color:var(--cyan); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'أسئلة حاسمة تتطلب إثباتاً بالأرقام:' : 'Hard Questions to Settle:'}</strong>
+              <ul style="margin:0; padding-inline-start:18px; color:#cbd5e1;">
+                ${hardQuestions.map(q => `<li>${escapeIdeaHtml(q)}</li>`).join('')}
+              </ul>
+            </div>` : ''}
+          </div>
+        `;
+      } else if (member.key === 'EXECUTION_EXPERT') {
+        const mvpScope = Array.isArray(output.mvpScope7Days) ? output.mvpScope7Days : [];
+        const deferred = Array.isArray(output.deferredItems) ? output.deferredItems : [];
+        metricsHtml = `
+          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
+            <div style="display:flex; gap:12px; align-items:center;">
+              <span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'مستوى التعقيد الهندسي:' : 'Complexity Level:'}</span>
+              <span class="badge" style="background:rgba(6,182,212,0.15); color:var(--cyan); font-weight:700;">${escapeIdeaHtml(output.complexityLevel || 'MEDIUM')}</span>
+            </div>
+            ${mvpScope.length > 0 ? `
+            <div>
+              <strong style="color:var(--purple-light); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'نطاق MVP القابل للإطلاق خلال 7 أيام:' : '7-Day MVP Scope:'}</strong>
+              <ul style="margin:0; padding-inline-start:18px; color:#cbd5e1;">
+                ${mvpScope.map(item => `<li>${escapeIdeaHtml(item)}</li>`).join('')}
+              </ul>
+            </div>` : ''}
+            ${deferred.length > 0 ? `
+            <div>
+              <strong style="color:var(--text-muted); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'ما يجب حذفه/تأجيله خارج النسخة الأولى:' : 'Cut / Deferred for V1:'}</strong>
+              <ul style="margin:0; padding-inline-start:18px; color:var(--text-muted);">
+                ${deferred.map(item => `<li>${escapeIdeaHtml(item)}</li>`).join('')}
+              </ul>
+            </div>` : ''}
+          </div>
+        `;
+      } else if (member.key === 'MARKET_RESEARCHER') {
+        const directAlts = Array.isArray(output.directAlternatives) ? output.directAlternatives : [];
+        const indirectAlts = Array.isArray(output.indirectAlternatives) ? output.indirectAlternatives : [];
+        metricsHtml = `
+          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
+            <div style="display:flex; gap:12px; align-items:center;">
+              <span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'تشبع السوق:' : 'Market Saturation:'}</span>
+              <strong style="color:#fff;">${escapeIdeaHtml(output.marketSaturation || '—')}</strong>
+            </div>
+            ${directAlts.length > 0 ? `
+            <div>
+              <strong style="color:var(--cyan); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'المنافسون والبدائل المباشرة في السوق:' : 'Direct Market Competitors:'}</strong>
+              <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                ${directAlts.map(alt => `<span class="badge" style="background:rgba(6,182,212,0.15); color:var(--cyan);">${escapeIdeaHtml(alt)}</span>`).join('')}
+              </div>
+            </div>` : ''}
+            ${indirectAlts.length > 0 ? `
+            <div>
+              <strong style="color:var(--text-muted); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'البدائل غير المباشرة وطرق العمل الحالية:' : 'Indirect Alternatives & Workarounds:'}</strong>
+              <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                ${indirectAlts.map(alt => `<span class="badge" style="background:rgba(255,255,255,0.06); color:var(--text-muted);">${escapeIdeaHtml(alt)}</span>`).join('')}
+              </div>
+            </div>` : ''}
+          </div>
+        `;
+      } else if (member.key === 'DEVILS_ADVOCATE') {
+        const conditions = Array.isArray(output.failureConditions) ? output.failureConditions : [];
+        const warnings = Array.isArray(output.earlyWarningSigns) ? output.earlyWarningSigns : [];
+        metricsHtml = `
+          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
+            ${output.primaryFailureReason ? `
+            <div style="background:rgba(239, 68, 68, 0.1); border-radius:6px; padding:10px 12px; border:1px solid rgba(239, 68, 68, 0.3);">
+              <strong style="color:var(--red); display:block; margin-bottom:3px;">${currentLanguage === 'ar' ? 'السبب الجذري الأول الذي قد يقضي على المشروع:' : 'Primary Root Cause of Death:'}</strong>
+              <span style="color:#fff; font-weight:600;">${escapeIdeaHtml(output.primaryFailureReason)}</span>
+            </div>` : ''}
+            ${conditions.length > 0 ? `
+            <div>
+              <strong style="color:var(--red); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'شروط وسيناريوهات الفشل:' : 'Failure Conditions:'}</strong>
+              <ul style="margin:0; padding-inline-start:18px; color:#cbd5e1;">
+                ${conditions.map(c => `<li>${escapeIdeaHtml(c)}</li>`).join('')}
+              </ul>
+            </div>` : ''}
+            ${warnings.length > 0 ? `
+            <div>
+              <strong style="color:var(--orange); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'مؤشرات الخطر المبكرة:' : 'Early Warning Signs:'}</strong>
+              <ul style="margin:0; padding-inline-start:18px; color:#cbd5e1;">
+                ${warnings.map(w => `<li>${escapeIdeaHtml(w)}</li>`).join('')}
+              </ul>
+            </div>` : ''}
+          </div>
+        `;
+      } else if (member.key === 'WEDGE_HUNTER') {
+        metricsHtml = `
+          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
+            ${output.uniqueWedge ? `
+            <div style="background:rgba(168, 85, 247, 0.1); border-radius:6px; padding:10px 12px; border:1px solid rgba(168, 85, 247, 0.3);">
+              <strong style="color:var(--purple-light); display:block; margin-bottom:3px;">${currentLanguage === 'ar' ? 'زاوية الدخول الحادة (Unique Wedge):' : 'Unique Wedge Angle:'}</strong>
+              <span style="color:#fff;">${escapeIdeaHtml(output.uniqueWedge)}</span>
+            </div>` : ''}
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <div>
+                <strong style="color:var(--cyan); display:block;">${currentLanguage === 'ar' ? 'القابلية للدفاع ضد المنافسين:' : 'Defensibility Moat:'}</strong>
+                <span style="color:#cbd5e1;">${escapeIdeaHtml(output.defensibility || '—')}</span>
+              </div>
+              <div>
+                <strong style="color:var(--orange); display:block;">${currentLanguage === 'ar' ? 'سهولة وسرعة النسخ:' : 'Ease / Speed of Copying:'}</strong>
+                <span style="color:#cbd5e1;">${escapeIdeaHtml(output.easeOfCopying || '—')}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (member.key === 'UX_DESIGNER') {
+        metricsHtml = `
+          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
+            ${output.firstMomentOfValue60s ? `
+            <div style="background:rgba(6, 182, 212, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(6, 182, 212, 0.2);">
+              <strong style="color:var(--cyan); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'أول لحظة قيمة في الـ 60 ثانية الأولى:' : 'First Moment of Value in 60s:'}</strong>
+              <span style="color:#fff;">${escapeIdeaHtml(output.firstMomentOfValue60s)}</span>
+            </div>` : ''}
+            ${output.biggestFriction ? `
+            <div style="background:rgba(239, 68, 68, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(239, 68, 68, 0.2);">
+              <strong style="color:var(--red); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'أكبر نقطة احتكاك أو تسرب للمستخدمين:' : 'Biggest Friction / Drop-off Point:'}</strong>
+              <span style="color:#e2e8f0;">${escapeIdeaHtml(output.biggestFriction)}</span>
+            </div>` : ''}
+          </div>
+        `;
+      } else if (member.key === 'CANDID_CHAMPION') {
+        metricsHtml = `
+          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
+            ${output.coreStrength ? `
+            <div style="background:rgba(16, 185, 129, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(16, 185, 129, 0.2);">
+              <strong style="color:var(--green); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'الشرارة الحقيقية ونقطة القوة الجوهرية:' : 'Core Strength Worth Fighting For:'}</strong>
+              <span style="color:#fff;">${escapeIdeaHtml(output.coreStrength)}</span>
+            </div>` : ''}
+            ${output.reasonToProceed ? `
+            <div>
+              <strong style="color:var(--cyan); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'أقوى سبب للاستمرار وعدم التراجع:' : 'Single Best Reason to Proceed:'}</strong>
+              <span style="color:#cbd5e1;">${escapeIdeaHtml(output.reasonToProceed)}</span>
+            </div>` : ''}
+            ${output.indispensableAsset ? `
+            <div>
+              <strong style="color:var(--orange); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'الأصل الذي لا يمكن التنازل عنه:' : 'Indispensable Asset:'}</strong>
+              <span style="color:#cbd5e1;">${escapeIdeaHtml(output.indispensableAsset)}</span>
+            </div>` : ''}
+          </div>
+        `;
+      }
+
+      return `
+        <div class="glass-card" style="padding:16px 20px; border-inline-start:4px solid var(--cyan); background:rgba(15, 23, 42, 0.65);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:36px; height:36px; border-radius:8px; background:rgba(6,182,212,0.12); display:flex; align-items:center; justify-content:center; color:var(--cyan); font-size:16px;">
+                <i class="fas ${member.icon}"></i>
+              </div>
+              <div>
+                <strong style="font-size:14px; color:#fff; display:block;">${escapeIdeaHtml(roleTitle)}</strong>
+                <span style="font-size:12px; color:var(--text-muted);">${escapeIdeaHtml(roleDesc)}</span>
+              </div>
+            </div>
+            <span class="badge" style="background:${status === 'COMPLETED' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)'}; color:${status === 'COMPLETED' ? 'var(--green)' : 'var(--orange)'}; font-size:11px;">
+              ${status === 'COMPLETED' ? (currentLanguage === 'ar' ? 'اكتمل التحليل' : 'Analyzed') : (currentLanguage === 'ar' ? 'قيد المراجعة' : 'Pending')}
+            </span>
+          </div>
+
+          ${metricsHtml}
+
+          ${output.summary ? `
+          <div style="border-top:1px solid var(--glass-border); padding-top:10px; margin-top:8px;">
+            <span style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:600; display:block; margin-bottom:4px;">
+              ${currentLanguage === 'ar' ? 'البيان النهائي للناقد:' : 'Full Critic Verdict:'}
+            </span>
+            <p style="font-size:13px; color:#f1f5f9; line-height:1.6; margin:0;">
+              ${escapeIdeaHtml(output.summary)}
+            </p>
+          </div>` : ''}
+        </div>
+      `;
+    }).join('');
+
+    container.innerHTML = cardsHtml;
   }
 
   function renderTruthBoard(items = []) {
