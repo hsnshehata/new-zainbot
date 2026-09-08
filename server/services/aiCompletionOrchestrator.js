@@ -118,7 +118,7 @@ function createAiCompletionOrchestrator(deps = {}) {
         userId: effectiveUser._id || effectiveUser.userId,
         botId: bot?._id,
         tier: effectiveUser.subscriptionTier,
-        useCase: 'general',
+        useCase: options.useCase || 'general',
         policies,
         entitlements,
         overrides,
@@ -211,6 +211,11 @@ function createAiCompletionOrchestrator(deps = {}) {
             outputTokens: usage.outputTokens,
             latencyMs,
             fallbackUsed: index > 0,
+            feature: options.feature || null,
+            operationId: options.operationId || null,
+            stage: options.stage || null,
+            agentRole: options.agentRole || null,
+            searchCalls: Number(options.searchCalls || 0),
           });
 
           return { response, resolution };
@@ -247,6 +252,11 @@ function createAiCompletionOrchestrator(deps = {}) {
             errorClass: classification.category,
             retryable: classification.retryable,
             fallbackUsed: index > 0,
+            feature: options.feature || null,
+            operationId: options.operationId || null,
+            stage: options.stage || null,
+            agentRole: options.agentRole || null,
+            searchCalls: Number(options.searchCalls || 0),
           });
 
           if (!classification.retryable || attemptInCandidate >= candidate.maxAttempts) {

@@ -122,6 +122,35 @@ const aiUsageEventSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  feature: {
+    type: String,
+    trim: true,
+    maxlength: 60,
+    default: null,
+  },
+  operationId: {
+    type: String,
+    trim: true,
+    maxlength: 120,
+    default: null,
+  },
+  stage: {
+    type: String,
+    trim: true,
+    maxlength: 60,
+    default: null,
+  },
+  agentRole: {
+    type: String,
+    trim: true,
+    maxlength: 60,
+    default: null,
+  },
+  searchCalls: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
 }, {
   strict: 'throw',
   timestamps: { createdAt: true, updatedAt: false },

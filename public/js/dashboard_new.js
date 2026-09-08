@@ -493,7 +493,152 @@
       tone_enthusiastic: 'Enthusiastic & Promotional',
       tone_formal: 'Direct & Professional',
       agent_max_discount_label: 'Closing Incentive Discount',
-      discount_none: 'No extra discounts (0%)'
+      discount_none: 'No extra discounts (0%)',
+      menu_idea_council: 'Idea Council',
+      idea_council_desc: 'AI-powered strategic validation panel and decision pipeline for founders',
+      idea_quota_label: 'Monthly Idea Quota',
+      idea_quota_text: 'ideas available this month',
+      idea_btn_new: 'New Idea',
+      idea_btn_back_list: 'Back to Ideas',
+      idea_filter_all: 'All',
+      idea_filter_drafts: 'Drafts',
+      idea_filter_running: 'In Progress',
+      idea_filter_completed: 'Completed',
+      idea_list_empty: 'No ideas submitted yet. Click New Idea to start.',
+      idea_input_title: 'Describe Your Project Idea',
+      idea_input_desc_label: 'Raw Idea Description (100 - 8,000 characters)',
+      idea_input_desc_placeholder: 'Describe what you want to build, the core problem it solves, and why people would use it...',
+      idea_input_market_label: 'Target Market / Geography (Optional)',
+      idea_input_market_placeholder: 'e.g. Saudi Arabia, GCC, Global SaaS',
+      idea_input_audience_label: 'Target Audience / Customer Profile (Optional)',
+      idea_input_audience_placeholder: 'e.g. B2B Founders, Independent Cafes',
+      idea_input_concern_label: 'Primary Concern to Evaluate (Optional)',
+      idea_input_concern_placeholder: 'e.g. Will customers actually pay? Is it easy to clone?',
+      idea_lang_label: 'Report Language',
+      idea_lang_ar: 'Arabic',
+      idea_lang_en: 'English',
+      idea_privacy_notice: 'Confidentiality guarantee: Your idea and reports are private to your account and never used to train general AI models.',
+      idea_guiding_questions_title: 'Guiding Questions',
+      idea_gq_one: 'What is the core problem and who suffers from it?',
+      idea_gq_two: 'What are they currently doing instead?',
+      idea_gq_three: 'Why would they change their daily habit to switch to you?',
+      idea_btn_structure: 'Structure Idea Card',
+      idea_btn_structuring: 'Structuring Idea...',
+      idea_card_title: 'Structured Idea Card',
+      idea_card_desc: 'Review and adjust how the Council understands your idea before analysis begins.',
+      idea_fld_title: 'Suggested Title',
+      idea_fld_pitch: 'Elevator Pitch',
+      idea_fld_customer: 'Target Customer',
+      idea_fld_problem: 'Core Problem',
+      idea_fld_solution: 'Proposed Solution',
+      idea_fld_value: 'Value Proposition',
+      idea_fld_alternatives: 'Current Alternatives',
+      idea_fld_revenue: 'Revenue Model',
+      idea_fld_assumptions: 'Initial Assumptions',
+      idea_fld_gaps: 'Information Gaps',
+      idea_fld_core_question: 'Core Evaluation Question',
+      idea_confirm_card_text: 'I confirm this structured card accurately represents my idea.',
+      idea_btn_start_council: 'Convene Idea Council',
+      idea_btn_save_draft: 'Save Draft',
+      idea_session_progress_title: 'Council Session in Progress',
+      idea_session_progress_desc: 'The council runs in the background. You can safely leave this page and come back anytime.',
+      idea_step_research: 'Live Market Research',
+      idea_step_analysis: 'Council Members Analysis',
+      idea_step_synthesis: 'Synthesizing Verdict',
+      member_cold_customer: 'The Cold Customer',
+      member_cold_customer_role: 'Buyer Inertia & Willingness to Pay',
+      member_harsh_auditor: 'The Harsh Auditor',
+      member_harsh_auditor_role: 'Hidden Flaws & Lethal Assumptions',
+      member_execution_expert: 'The Execution Expert',
+      member_execution_expert_role: 'Technical Feasibility & 7-Day MVP',
+      member_market_researcher: 'The Market Researcher',
+      member_market_researcher_role: 'Competitor Landscape & Demand',
+      member_devils_advocate: "The Devil's Advocate",
+      member_devils_advocate_role: 'Pre-Mortem & Root Failure Cause',
+      member_wedge_hunter: 'The Wedge Hunter',
+      member_wedge_hunter_role: 'Unique Wedge & Defensibility',
+      member_ux_designer: 'The UX Designer',
+      member_ux_designer_role: 'First 60s Value & Friction Points',
+      member_candid_champion: 'The Candid Champion',
+      member_candid_champion_role: 'Viable Core Worth Fighting For',
+      idea_report_title: 'Council Decision & Synthesis Report',
+      idea_verdict_label: 'Executive Verdict',
+      idea_seven_day_build_label: '7-Day Build Verdict',
+      idea_opp_label: 'Strongest Opportunity',
+      idea_risk_label: 'Biggest Risk',
+      idea_assumptions_label: 'Top 3 Unproven Assumptions',
+      idea_question_label: 'Critical Question to Settle',
+      idea_cut_list_label: 'Cut / Defer List for V1',
+      idea_validation_plan_title: 'Adaptive Validation Plan',
+      idea_val_hypothesis: 'Hypothesis',
+      idea_val_audience: 'Audience',
+      idea_val_channel: 'Channel',
+      idea_val_duration: 'Suggested Duration',
+      idea_val_cost: 'Estimated Cost',
+      idea_val_metric: 'Success Metric',
+      idea_val_stop: 'Stop Condition',
+      idea_mvp_title: '7-Day MVP Scope',
+      idea_wedge_title: 'Unique Wedge & Value',
+      idea_consensus_title: 'Consensus & Dissent Points',
+      idea_sources_title: 'Verified Market Sources',
+      idea_truth_board_title: 'Dynamic Truth Board',
+      idea_truth_board_desc: 'Track key assumptions, risks, and validation steps in real time without consuming AI quotas.',
+      idea_tb_status_open: 'Open',
+      idea_tb_status_validating: 'Validating',
+      idea_tb_status_verified: 'Verified',
+      idea_tb_status_dismissed: 'Dismissed',
+      idea_tb_notes_placeholder: 'Founder validation notes...',
+      idea_btn_export_md: 'Export Markdown',
+      idea_btn_export_pdf: 'Print / PDF',
+      idea_followup_title: 'Follow-up Rounds (3 per idea)',
+      idea_followup_remaining: 'Rounds remaining:',
+      idea_btn_defend: 'Defend Idea',
+      idea_btn_pivot: 'Propose Pivot',
+      idea_btn_val_plan: 'Small Test Plan',
+      idea_btn_vote: 'Council Vote',
+      idea_btn_compare: 'Compare Competitor',
+      idea_btn_mvp: '7-Day MVP Plan',
+      idea_followup_prompt_placeholder: 'Enter your defense arguments, proposed pivot direction, or specific question...',
+      idea_btn_start_followup: 'Start Follow-up Round',
+      idea_feedback_title: 'Was this evaluation helpful?',
+      idea_btn_feedback_submit: 'Send Feedback',
+      idea_disclaimer: 'Disclaimer: This report is an AI-generated decision-support tool, not certified legal or financial advice.',
+      idea_verdict_build: 'Build (Green Light)',
+      idea_verdict_validate: 'Validate First (Amber Light)',
+      idea_verdict_pivot: 'Pivot Needed',
+      idea_verdict_do_not_build: 'Do Not Build (Red Light)',
+      idea_role_customer_advocate: 'Customer Advocate',
+      idea_role_financial_auditor: 'Financial Auditor',
+      idea_role_growth_marketer: 'Distribution & Growth',
+      idea_role_direct_competitor: 'Direct Competitor',
+      idea_role_technical_architect: 'Technical Architect',
+      idea_role_execution_risk_officer: 'Execution & Risk',
+      idea_role_monetization_strategist: 'Monetization Strategist',
+      idea_role_simplicity_editor: 'Simplicity & MVP Scope',
+      idea_tb_cat_assumption: 'Assumption',
+      idea_tb_cat_market_fact: 'Market Fact',
+      idea_tb_cat_validation_test: 'Validation Test',
+      idea_tb_cat_critical_risk: 'Critical Risk',
+      idea_tb_status_blocked: 'Blocked',
+      idea_action_resume: 'Resume',
+      idea_action_view: 'View Report',
+      idea_action_delete: 'Delete',
+      idea_msg_saved: 'Draft saved',
+      idea_msg_saving: 'Saving draft...',
+      idea_msg_confirm_delete: 'Are you sure you want to delete this idea?',
+      idea_msg_confirm_checkbox_req: 'Please confirm the structured card before convening the Council.',
+      idea_msg_quota_exceeded: 'Monthly idea quota reached (3 ideas/month).',
+      idea_msg_card_saved: 'Structured card saved.',
+      idea_msg_followup_prompt: 'Enter context or arguments for this follow-up round:',
+      idea_msg_followup_success: 'Follow-up round completed.',
+      idea_status_draft: 'Draft',
+      idea_status_structuring: 'Structuring',
+      idea_status_awaiting_conf: 'Awaiting Confirmation',
+      idea_status_queued: 'Queued',
+      idea_status_running: 'In Progress',
+      idea_status_completed: 'Completed',
+      idea_status_partial: 'Partial',
+      idea_status_failed: 'Failed'
     },
     ar: {
       menu_overview: 'نظرة عامة',
@@ -962,7 +1107,152 @@
       tone_enthusiastic: 'حماسي وترويجي',
       tone_formal: 'رسمي ومباشر',
       agent_max_discount_label: 'صلاحية الخصم التشجيعي',
-      discount_none: 'بدون خصم إضافي (0%)'
+      discount_none: 'بدون خصم إضافي (0%)',
+      menu_idea_council: 'لجنة الأفكار',
+      idea_council_desc: 'لجنة تحليل متخصصة بالذكاء الاصطناعي لتقييم المشاريع وصناعة القرار',
+      idea_quota_label: 'رصيد الأفكار الشهري',
+      idea_quota_text: 'أفكار متاحة هذا الشهر',
+      idea_btn_new: 'اعرض فكرة جديدة',
+      idea_btn_back_list: 'العودة لقائمة الأفكار',
+      idea_filter_all: 'الكل',
+      idea_filter_drafts: 'المسودات',
+      idea_filter_running: 'قيد التقييم',
+      idea_filter_completed: 'مكتملة',
+      idea_list_empty: 'لا توجد أفكار مسجلة حتى الآن. انقر فوق فكرة جديدة للبدء.',
+      idea_input_title: 'صف فكرة مشروعك',
+      idea_input_desc_label: 'وصف الفكرة بالتفصيل (من 100 إلى 8,000 حرف)',
+      idea_input_desc_placeholder: 'اكتب فكرتك بحرية: ما المشكلة التي تحلها؟ لمن تقدم؟ ولماذا قد يغير الناس سلوكهم لاستخدامها؟',
+      idea_input_market_label: 'السوق المستهدف أو النطاق الجغرافي (اختياري)',
+      idea_input_market_placeholder: 'مثال: السعودية، الخليج، متجر محلي',
+      idea_input_audience_label: 'الفئة المستهدفة من العملاء (اختياري)',
+      idea_input_audience_placeholder: 'مثال: أصحاب المطاعم، المستقلين',
+      idea_input_concern_label: 'أكثر شيء يقلقك وتريد تقييمه (اختياري)',
+      idea_input_concern_placeholder: 'مثال: هل سيدفع العميل فعلاً؟ هل يسهل تقليدها؟',
+      idea_lang_label: 'لغة التقرير',
+      idea_lang_ar: 'العربية',
+      idea_lang_en: 'الإنجليزية',
+      idea_privacy_notice: 'ضمان الخصوصية: أفكارك وتقاريرك خاصة بحسابك ومشفرة ولا تُستخدم لتدريب النماذج العامة.',
+      idea_guiding_questions_title: 'أسئلة مساعدة استرشادية',
+      idea_gq_one: 'ما هي المشكلة الأساسية ومن الذي يعاني منها؟',
+      idea_gq_two: 'ماذا يفعل العملاء حالياً كبديل لحلك؟',
+      idea_gq_three: 'لماذا قد يغير الناس عاداتهم اليومية للانتقال إليك؟',
+      idea_btn_structure: 'تنظيم بطاقة الفكرة',
+      idea_btn_structuring: 'جارٍ تنظيم الفكرة...',
+      idea_card_title: 'بطاقة الفكرة المنظمة',
+      idea_card_desc: 'راجع وعدل كيفية فهم اللجنة لفكرتك قبل بدء جلسة التقييم.',
+      idea_fld_title: 'العنوان المقترح',
+      idea_fld_pitch: 'الوصف المختصر',
+      idea_fld_customer: 'العميل المستهدف',
+      idea_fld_problem: 'المشكلة الأساسية',
+      idea_fld_solution: 'الحل المقترح',
+      idea_fld_value: 'القيمة المقترحة',
+      idea_fld_alternatives: 'البدائل الحالية',
+      idea_fld_revenue: 'نموذج الربح',
+      idea_fld_assumptions: 'الافتراضات الأولية',
+      idea_fld_gaps: 'المعلومات الناقصة',
+      idea_fld_core_question: 'سؤال التقييم الأساسي',
+      idea_confirm_card_text: 'أؤكد أن هذه البطاقة تمثل فكرتي بدقة وجاهز لبدء التقييم.',
+      idea_btn_start_council: 'ابدأ جلسة التقييم',
+      idea_btn_save_draft: 'حفظ كمسودة',
+      idea_session_progress_title: 'جلسة اللجنة منعقدة حالياً',
+      idea_session_progress_desc: 'تعمل اللجنة في الخلفية. يمكنك مغادرة الصفحة والعودة في أي وقت دون فقدان التقدم.',
+      idea_step_research: 'البحث السوقي الحي',
+      idea_step_analysis: 'تحليل أعضاء اللجنة',
+      idea_step_synthesis: 'صياغة التقرير النهائي',
+      member_cold_customer: 'العميل البارد',
+      member_cold_customer_role: 'سلوك المشتري ومحفز التجربة',
+      member_harsh_auditor: 'المدقق القاسي',
+      member_harsh_auditor_role: 'كشف الافتراضات والثغرات',
+      member_execution_expert: 'خبير التنفيذ',
+      member_execution_expert_role: 'قابلية البناء ونطاق 7 أيام',
+      member_market_researcher: 'باحث السوق',
+      member_market_researcher_role: 'بحث البدائل وإشارات الطلب',
+      member_devils_advocate: 'محامي الشيطان',
+      member_devils_advocate_role: 'سيناريو الفشل الأسوأ',
+      member_wedge_hunter: 'صائد التميّز',
+      member_wedge_hunter_role: 'زاوية الدخول والقابلية للدفاع',
+      member_ux_designer: 'مصمم التجربة',
+      member_ux_designer_role: 'أول لحظة قيمة ونقاط الاحتكاك',
+      member_candid_champion: 'الداعم الصريح',
+      member_candid_champion_role: 'نقطة القوة الواقعية للاستمرار',
+      idea_report_title: 'تقرير القرار الموحد للجنة الأفكار',
+      idea_verdict_label: 'القرار التنفيذي',
+      idea_seven_day_build_label: 'قرار البناء لسبعة أيام',
+      idea_opp_label: 'أقوى فرصة',
+      idea_risk_label: 'أكبر خطر',
+      idea_assumptions_label: 'أخطر 3 افتراضات غير مثبتة',
+      idea_question_label: 'أهم سؤال يجب حسمه',
+      idea_cut_list_label: 'ما يجب حذفه أو تأجيله',
+      idea_validation_plan_title: 'خطة التحقق المرنة',
+      idea_val_hypothesis: 'الفرضية',
+      idea_val_audience: 'الجمهور',
+      idea_val_channel: 'القناة',
+      idea_val_duration: 'المدة المقترحة',
+      idea_val_cost: 'التكلفة التقديرية',
+      idea_val_metric: 'معيار النجاح',
+      idea_val_stop: 'شرط التوقف',
+      idea_mvp_title: 'نطاق MVP لسبعة أيام',
+      idea_wedge_title: 'زاوية التميّز ولحظة القيمة',
+      idea_consensus_title: 'نقاط الاتفاق والتباين',
+      idea_sources_title: 'مصادر البحث الموثقة',
+      idea_truth_board_title: 'لوحة الحقيقة التفاعلية',
+      idea_truth_board_desc: 'تابع الافتراضات والمخاطر وخطوات التحقق في الوقت الفعلي دون استهلاك جولات الذكاء الاصطناعي.',
+      idea_tb_status_open: 'مفتوح',
+      idea_tb_status_validating: 'جارٍ التحقق',
+      idea_tb_status_verified: 'تم التحقق',
+      idea_tb_status_dismissed: 'مستبعد',
+      idea_tb_notes_placeholder: 'ملاحظات وتحديثات المؤسس...',
+      idea_btn_export_md: 'تصدير Markdown',
+      idea_btn_export_pdf: 'طباعة أو PDF',
+      idea_followup_title: 'جولات المتابعة (3 لكل فكرة)',
+      idea_followup_remaining: 'الجولات المتبقية:',
+      idea_btn_defend: 'دافع عن الفكرة',
+      idea_btn_pivot: 'اقترح Pivot',
+      idea_btn_val_plan: 'خطة تحقق صغيرة',
+      idea_btn_vote: 'تصويت اللجنة',
+      idea_btn_compare: 'قارن بمنافس',
+      idea_btn_mvp: 'خطة MVP لـ 7 أيام',
+      idea_followup_prompt_placeholder: 'اكتب حجتك الدفاعية، أو اتجاه الـ Pivot المقترح، أو سؤالك المحدد للجنة...',
+      idea_btn_start_followup: 'بدء جولة المتابعة',
+      idea_feedback_title: 'هل كان هذا التقييم مفيداً لك؟',
+      idea_btn_feedback_submit: 'إرسال التقييم',
+      idea_disclaimer: 'إخلاء مسؤولية: هذا التقرير أداة استرشادية للمساعدة في القرار وليس استشارة قانونية أو مالية معتمدة.',
+      idea_verdict_build: 'انطلق في البناء (ضوء أخضر)',
+      idea_verdict_validate: 'تحقق أولاً (ضوء أصفر)',
+      idea_verdict_pivot: 'إعادة توجيه (Pivot)',
+      idea_verdict_do_not_build: 'لا تبنِ الآن (ضوء أحمر)',
+      idea_role_customer_advocate: 'محامي العميل البارد',
+      idea_role_financial_auditor: 'المدقق المالي',
+      idea_role_growth_marketer: 'خبير التوزيع والنمو',
+      idea_role_direct_competitor: 'المنافس الشرس',
+      idea_role_technical_architect: 'المهندس التقني',
+      idea_role_execution_risk_officer: 'مسؤول مخاطر التنفيذ',
+      idea_role_monetization_strategist: 'استراتيجي التسعير والربح',
+      idea_role_simplicity_editor: 'محرر البساطة ونطاق MVP',
+      idea_tb_cat_assumption: 'فرضية',
+      idea_tb_cat_market_fact: 'حقيقة سوقية',
+      idea_tb_cat_validation_test: 'اختبار تحقق',
+      idea_tb_cat_critical_risk: 'خطر جوهري',
+      idea_tb_status_blocked: 'معلق',
+      idea_action_resume: 'استكمال',
+      idea_action_view: 'عرض التقرير',
+      idea_action_delete: 'حذف',
+      idea_msg_saved: 'تم حفظ المسودة',
+      idea_msg_saving: 'جاري الحفظ...',
+      idea_msg_confirm_delete: 'هل أنت متأكد من حذف هذه الفكرة؟',
+      idea_msg_confirm_checkbox_req: 'يرجى تأكيد بطاقة الفكرة قبل استدعاء اللجنة.',
+      idea_msg_quota_exceeded: 'تم استهلاك رصيد الأفكار الشهري بالكامل (3 أفكار شهرياً).',
+      idea_msg_card_saved: 'تم حفظ بطاقة الفكرة.',
+      idea_msg_followup_prompt: 'أدخل ملاحظاتك أو حجتك الدفاعية لجولة المتابعة:',
+      idea_msg_followup_success: 'تم إكمال جولة المتابعة بنجاح.',
+      idea_status_draft: 'مسودة',
+      idea_status_structuring: 'قيد الصياغة',
+      idea_status_awaiting_conf: 'بانتظار التأكيد',
+      idea_status_queued: 'قيد الانتظار',
+      idea_status_running: 'جارٍ التحليل',
+      idea_status_completed: 'مكتمل',
+      idea_status_partial: 'مكتمل جزئياً',
+      idea_status_failed: 'فشل'
     }
   };
 
@@ -1053,6 +1343,8 @@
       loadOverviewData();
     } else if (tabId === 'page-agents') {
       loadAgents();
+    } else if (tabId === 'page-idea-council') {
+      loadIdeaCouncilData();
     } else if (tabId === 'page-inbox') {
       loadInboxData();
     } else if (tabId === 'page-training') {
@@ -4439,7 +4731,900 @@
 
   if (sidebarLogout) sidebarLogout.addEventListener('click', logout);
 
+  // ==========================================
+  // IDEA COUNCIL FRONTEND CONTROLLER
+  // ==========================================
+
+  let currentIdea = null;
+  let currentIdeaRunId = null;
+  let ideaPollTimer = null;
+  let ideaAutoSaveTimer = null;
+  let ideaCurrentFilter = 'ALL';
+  let ideaUsageData = null;
+
+  function escapeIdeaHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function ideaT(key, fallback = '') {
+    if (typeof translations !== 'undefined' && translations[currentLanguage] && translations[currentLanguage][key]) {
+      return translations[currentLanguage][key];
+    }
+    if (typeof translations !== 'undefined' && translations.en && translations.en[key]) {
+      return translations.en[key];
+    }
+    return fallback || key;
+  }
+
+  const COUNCIL_MEMBERS = [
+    { key: 'customer_advocate', icon: 'fa-user-check', labelKey: 'idea_role_customer_advocate' },
+    { key: 'financial_auditor', icon: 'fa-coins', labelKey: 'idea_role_financial_auditor' },
+    { key: 'growth_marketer', icon: 'fa-chart-line', labelKey: 'idea_role_growth_marketer' },
+    { key: 'direct_competitor', icon: 'fa-chess-knight', labelKey: 'idea_role_direct_competitor' },
+    { key: 'technical_architect', icon: 'fa-server', labelKey: 'idea_role_technical_architect' },
+    { key: 'execution_risk_officer', icon: 'fa-shield-halved', labelKey: 'idea_role_execution_risk_officer' },
+    { key: 'monetization_strategist', icon: 'fa-hand-holding-dollar', labelKey: 'idea_role_monetization_strategist' },
+    { key: 'simplicity_editor', icon: 'fa-scissors', labelKey: 'idea_role_simplicity_editor' }
+  ];
+
+  function showIdeaView(viewName) {
+    const viewMap = {
+      list: document.getElementById('ideaListView'),
+      input: document.getElementById('ideaInputView'),
+      card: document.getElementById('ideaCardView'),
+      session: document.getElementById('ideaSessionView'),
+      report: document.getElementById('ideaReportView')
+    };
+    Object.keys(viewMap).forEach(key => {
+      if (viewMap[key]) {
+        viewMap[key].style.display = (key === viewName ? 'block' : 'none');
+      }
+    });
+  }
+
+  async function loadIdeaCouncilData() {
+    await Promise.all([
+      loadIdeaCouncilUsage(),
+      loadIdeaCouncilList(ideaCurrentFilter)
+    ]);
+  }
+
+  async function loadIdeaCouncilUsage() {
+    try {
+      const res = await apiFetch('/api/idea-council/usage');
+      if (res && res.success && res.data) {
+        ideaUsageData = res.data;
+        const remainingEl = document.getElementById('ideaQuotaRemaining');
+        const limitEl = document.getElementById('ideaQuotaLimit');
+        if (remainingEl) remainingEl.textContent = ideaUsageData.ideasRemaining;
+        if (limitEl) limitEl.textContent = ideaUsageData.monthlyLimit;
+      }
+    } catch (err) {
+      console.error('Failed to load Idea Council usage:', err);
+    }
+  }
+
+  async function loadIdeaCouncilList(filter = 'ALL') {
+    ideaCurrentFilter = filter;
+    const container = document.getElementById('ideasListContainer');
+    const emptyEl = document.getElementById('ideaListEmpty');
+    if (!container) return;
+
+    try {
+      const query = filter !== 'ALL' ? `?status=${encodeURIComponent(filter)}` : '';
+      const res = await apiFetch(`/api/idea-council/ideas${query}`);
+      const ideas = (res && res.success && Array.isArray(res.data)) ? res.data : [];
+
+      if (ideas.length === 0) {
+        container.innerHTML = '';
+        container.style.display = 'none';
+        if (emptyEl) emptyEl.style.display = 'block';
+        return;
+      }
+
+      if (emptyEl) emptyEl.style.display = 'none';
+      container.style.display = 'grid';
+
+      const statusColors = {
+        DRAFT: { bg: 'rgba(148, 163, 184, 0.15)', text: 'var(--text-muted)' },
+        STRUCTURING: { bg: 'rgba(59, 130, 246, 0.15)', text: 'var(--blue)' },
+        AWAITING_CONFIRMATION: { bg: 'rgba(245, 158, 11, 0.15)', text: 'var(--orange)' },
+        QUEUED: { bg: 'rgba(6, 182, 212, 0.15)', text: 'var(--cyan)' },
+        RUNNING: { bg: 'rgba(6, 182, 212, 0.15)', text: 'var(--cyan)' },
+        COMPLETED: { bg: 'rgba(16, 185, 129, 0.15)', text: 'var(--green)' },
+        PARTIAL: { bg: 'rgba(245, 158, 11, 0.15)', text: 'var(--orange)' },
+        FAILED: { bg: 'rgba(239, 68, 68, 0.15)', text: 'var(--red)' },
+        CANCELED: { bg: 'rgba(148, 163, 184, 0.15)', text: 'var(--text-muted)' }
+      };
+
+      container.innerHTML = ideas.map(idea => {
+        const title = idea.structuredCard?.title || idea.rawIdea?.title || ideaT('idea_card_title');
+        const pitch = idea.structuredCard?.elevatorPitch || (idea.rawIdea?.rawText ? (idea.rawIdea.rawText.slice(0, 120) + '...') : '');
+        const date = new Date(idea.createdAt).toLocaleDateString(currentLanguage === 'ar' ? 'ar-EG' : 'en-US', {
+          year: 'numeric', month: 'short', day: 'numeric'
+        });
+
+        const sc = statusColors[idea.status] || statusColors.DRAFT;
+        const statusKey = 'idea_status_' + idea.status.toLowerCase();
+        const statusLabel = ideaT(statusKey, idea.status);
+
+        const actionLabel = (idea.status === 'COMPLETED' || idea.status === 'PARTIAL')
+          ? ideaT('idea_action_view')
+          : ideaT('idea_action_resume');
+
+        return `
+          <div class="glass-card idea-item-card" data-id="${idea._id}" style="display:flex; flex-direction:column; justify-content:space-between; cursor:pointer; padding:20px;">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span class="badge" style="background:${sc.bg}; color:${sc.text}; font-size:11px; padding:4px 8px; border-radius:10px;">
+                  ${idea.status === 'RUNNING' ? '<i class="fas fa-spinner fa-spin" style="margin-inline-end:4px;"></i>' : ''}${escapeIdeaHtml(statusLabel)}
+                </span>
+                <span style="font-size:11px; color:var(--text-muted);">${date}</span>
+              </div>
+              <h4 style="font-size:15px; margin-bottom:8px; line-height:1.4; color:#fff;">${escapeIdeaHtml(title)}</h4>
+              <p style="font-size:12px; color:var(--text-muted); line-height:1.5; margin-bottom:16px;">${escapeIdeaHtml(pitch)}</p>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--glass-border); padding-top:12px; margin-top:auto;">
+              <button class="btn btn-secondary btn-sm idea-open-card-btn" data-id="${idea._id}" type="button" style="font-size:12px;">
+                ${escapeIdeaHtml(actionLabel)} <i class="fas ${currentLanguage === 'ar' ? 'fa-arrow-left' : 'fa-arrow-right'}" style="margin-inline-start:4px;"></i>
+              </button>
+              ${(idea.status === 'DRAFT' || idea.status === 'FAILED') ? `
+                <button class="btn btn-sm idea-delete-btn" data-id="${idea._id}" type="button" title="${ideaT('idea_action_delete')}" style="background:transparent; border:none; color:var(--text-muted); padding:6px 8px;">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.querySelectorAll('.idea-item-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+          if (e.target.closest('.idea-delete-btn')) return;
+          const id = card.getAttribute('data-id');
+          openIdea(id);
+        });
+      });
+
+      container.querySelectorAll('.idea-delete-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const id = btn.getAttribute('data-id');
+          if (!confirm(ideaT('idea_msg_confirm_delete'))) return;
+          try {
+            await apiFetch(`/api/idea-council/ideas/${id}`, { method: 'DELETE' });
+            await loadIdeaCouncilList(ideaCurrentFilter);
+            await loadIdeaCouncilUsage();
+          } catch (err) {
+            console.error('Failed to delete idea:', err);
+          }
+        });
+      });
+
+    } catch (err) {
+      console.error('Failed to load Idea Council list:', err);
+    }
+  }
+
+  async function openIdea(ideaId) {
+    try {
+      const res = await apiFetch(`/api/idea-council/ideas/${ideaId}`);
+      if (!res || !res.success || !res.data) return;
+      currentIdea = res.data;
+
+      if (currentIdea.status === 'DRAFT') {
+        const rawInput = document.getElementById('ideaRawText');
+        const mktInput = document.getElementById('ideaTargetMarket');
+        const audInput = document.getElementById('ideaTargetAudience');
+        const conInput = document.getElementById('ideaPrimaryConcern');
+        const langSelect = document.getElementById('ideaOutputLang');
+
+        if (rawInput) rawInput.value = currentIdea.rawIdea?.rawText || '';
+        if (mktInput) mktInput.value = currentIdea.rawIdea?.targetMarket || '';
+        if (audInput) audInput.value = currentIdea.rawIdea?.targetAudience || '';
+        if (conInput) conInput.value = currentIdea.rawIdea?.primaryConcern || '';
+        if (langSelect) langSelect.value = currentIdea.reportLanguage || currentLanguage || 'ar';
+        updateIdeaCharCount();
+        showIdeaView('input');
+      } else if (currentIdea.status === 'STRUCTURING' || currentIdea.status === 'AWAITING_CONFIRMATION') {
+        populateStructuredCardForm(currentIdea.structuredCard || {});
+        showIdeaView('card');
+      } else if (currentIdea.status === 'QUEUED' || currentIdea.status === 'RUNNING') {
+        showIdeaView('session');
+        if (currentIdea.activeRunId) {
+          startIdeaPolling(currentIdea.activeRunId);
+        }
+      } else if (currentIdea.status === 'COMPLETED' || currentIdea.status === 'PARTIAL') {
+        renderIdeaReport(currentIdea);
+        showIdeaView('report');
+      }
+    } catch (err) {
+      console.error('Failed to open idea:', err);
+    }
+  }
+
+  function populateStructuredCardForm(card) {
+    const flds = {
+      ideaCardFldTitle: card.title || '',
+      ideaCardFldPitch: card.elevatorPitch || '',
+      ideaCardFldCustomer: card.targetCustomer || '',
+      ideaCardFldRevenue: card.revenueModel || '',
+      ideaCardFldProblem: card.coreProblem || '',
+      ideaCardFldSolution: card.proposedSolution || '',
+      ideaCardFldValue: card.valueProposition || '',
+      ideaCardFldAlternatives: card.currentAlternatives || '',
+      ideaCardFldCoreQuestion: card.coreEvaluationQuestion || ''
+    };
+    Object.keys(flds).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = flds[id];
+    });
+    const chk = document.getElementById('ideaConfirmCheckbox');
+    if (chk) chk.checked = false;
+  }
+
+  function updateIdeaCharCount() {
+    const rawEl = document.getElementById('ideaRawText');
+    const charEl = document.getElementById('ideaCharCount');
+    if (!rawEl || !charEl) return;
+    const len = rawEl.value.length;
+    charEl.textContent = `${len} / 8,000`;
+    charEl.style.color = (len >= 100 && len <= 8000) ? 'var(--cyan)' : 'var(--text-muted)';
+  }
+
+  async function saveIdeaDraft(silent = false) {
+    const rawEl = document.getElementById('ideaRawText');
+    const mktEl = document.getElementById('ideaTargetMarket');
+    const audEl = document.getElementById('ideaTargetAudience');
+    const conEl = document.getElementById('ideaPrimaryConcern');
+    const langEl = document.getElementById('ideaOutputLang');
+    const statusEl = document.getElementById('ideaAutoSaveStatus');
+
+    const rawText = rawEl ? rawEl.value.trim() : '';
+    const targetMarket = mktEl ? mktEl.value.trim() : '';
+    const targetAudience = audEl ? audEl.value.trim() : '';
+    const primaryConcern = conEl ? conEl.value.trim() : '';
+    const reportLanguage = langEl ? langEl.value : 'ar';
+
+    if (rawText.length < 100) {
+      if (!silent) {
+        alert(currentLanguage === 'ar' ? 'يجب أن لا يقل وصف الفكرة عن 100 حرف.' : 'Idea description must be at least 100 characters.');
+      }
+      return null;
+    }
+
+    if (statusEl) statusEl.textContent = ideaT('idea_msg_saving');
+
+    try {
+      let res;
+      if (currentIdea && currentIdea._id) {
+        res = await apiFetch(`/api/idea-council/draft/${currentIdea._id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ rawText, targetMarket, targetAudience, primaryConcern, reportLanguage })
+        });
+      } else {
+        res = await apiFetch('/api/idea-council/draft', {
+          method: 'POST',
+          body: JSON.stringify({ rawText, targetMarket, targetAudience, primaryConcern, reportLanguage })
+        });
+      }
+
+      if (res && res.success && res.data) {
+        currentIdea = res.data;
+        if (statusEl) {
+          statusEl.textContent = ideaT('idea_msg_saved');
+          setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000);
+        }
+        return currentIdea;
+      }
+    } catch (err) {
+      console.error('Failed to save idea draft:', err);
+      if (statusEl) statusEl.textContent = '';
+    }
+    return null;
+  }
+
+  async function handleIdeaStructureSubmit(e) {
+    if (e) e.preventDefault();
+    const rawEl = document.getElementById('ideaRawText');
+    const rawText = rawEl ? rawEl.value.trim() : '';
+
+    if (rawText.length < 100) {
+      alert(currentLanguage === 'ar' ? 'يجب أن لا يقل وصف الفكرة عن 100 حرف.' : 'Idea description must be at least 100 characters.');
+      return;
+    }
+
+    const btn = document.getElementById('ideaSubmitStructureBtn');
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${ideaT('idea_btn_structuring')}`;
+    }
+
+    try {
+      if (!currentIdea || !currentIdea._id) {
+        const saved = await saveIdeaDraft(true);
+        if (!saved) return;
+      } else {
+        await saveIdeaDraft(true);
+      }
+
+      const res = await apiFetch(`/api/idea-council/ideas/${currentIdea._id}/structure`, {
+        method: 'POST'
+      });
+
+      if (res && res.success && res.data) {
+        currentIdea = res.data;
+        populateStructuredCardForm(currentIdea.structuredCard || {});
+        showIdeaView('card');
+      } else {
+        alert(res?.error || (currentLanguage === 'ar' ? 'فشل تنظيم بطاقة الفكرة.' : 'Failed to structure idea.'));
+      }
+    } catch (err) {
+      console.error('Error structuring idea:', err);
+      alert(currentLanguage === 'ar' ? 'حدث خطأ أثناء تنظيم الفكرة.' : 'Error structuring idea.');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+  }
+
+  async function handleConveneCouncilSubmit(e) {
+    if (e) e.preventDefault();
+    const confirmCheck = document.getElementById('ideaConfirmCheckbox');
+    if (!confirmCheck || !confirmCheck.checked) {
+      alert(ideaT('idea_msg_confirm_checkbox_req'));
+      return;
+    }
+
+    if (!currentIdea || !currentIdea._id) return;
+
+    const card = {
+      title: document.getElementById('ideaCardFldTitle')?.value.trim() || '',
+      elevatorPitch: document.getElementById('ideaCardFldPitch')?.value.trim() || '',
+      targetCustomer: document.getElementById('ideaCardFldCustomer')?.value.trim() || '',
+      revenueModel: document.getElementById('ideaCardFldRevenue')?.value.trim() || '',
+      coreProblem: document.getElementById('ideaCardFldProblem')?.value.trim() || '',
+      proposedSolution: document.getElementById('ideaCardFldSolution')?.value.trim() || '',
+      valueProposition: document.getElementById('ideaCardFldValue')?.value.trim() || '',
+      currentAlternatives: document.getElementById('ideaCardFldAlternatives')?.value.trim() || '',
+      coreEvaluationQuestion: document.getElementById('ideaCardFldCoreQuestion')?.value.trim() || ''
+    };
+
+    const btn = document.getElementById('ideaStartCouncilBtn');
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (currentLanguage === 'ar' ? 'جارٍ الاستدعاء...' : 'Convening...');
+    }
+
+    try {
+      await apiFetch(`/api/idea-council/ideas/${currentIdea._id}/card`, {
+        method: 'PUT',
+        body: JSON.stringify(card)
+      });
+
+      const res = await apiFetch(`/api/idea-council/ideas/${currentIdea._id}/convene`, {
+        method: 'POST'
+      });
+
+      if (res && res.success && res.runId) {
+        currentIdeaRunId = res.runId;
+        showIdeaView('session');
+        renderCouncilAgentsGrid([]);
+        startIdeaPolling(currentIdeaRunId);
+        loadIdeaCouncilUsage();
+      } else {
+        alert(res?.error || ideaT('idea_msg_quota_exceeded'));
+      }
+    } catch (err) {
+      console.error('Failed to convene council:', err);
+      alert(currentLanguage === 'ar' ? 'فشل استدعاء لجنة الأفكار.' : 'Failed to convene idea council.');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+  }
+
+  function renderCouncilAgentsGrid(agents = []) {
+    const grid = document.getElementById('ideaAgentsGrid');
+    if (!grid) return;
+
+    grid.innerHTML = COUNCIL_MEMBERS.map(member => {
+      const agentResult = agents.find(a => a.role === member.key);
+      const status = agentResult?.status || 'PENDING';
+      const insight = agentResult?.keyInsight || agentResult?.recommendation || '';
+
+      const statusMap = {
+        PENDING: { label: currentLanguage === 'ar' ? 'بانتظار البدء' : 'Pending', color: 'var(--text-muted)', icon: 'fa-clock' },
+        RUNNING: { label: currentLanguage === 'ar' ? 'جارٍ التحليل...' : 'Analyzing...', color: 'var(--cyan)', icon: 'fa-spinner fa-spin' },
+        COMPLETED: { label: currentLanguage === 'ar' ? 'اكتمل' : 'Completed', color: 'var(--green)', icon: 'fa-check' },
+        FAILED: { label: currentLanguage === 'ar' ? 'فشل' : 'Failed', color: 'var(--red)', icon: 'fa-times' }
+      };
+
+      const sm = statusMap[status] || statusMap.PENDING;
+      const roleName = ideaT(member.labelKey, member.key);
+
+      return `
+        <div class="glass-card" style="padding:16px; display:flex; flex-direction:column; justify-content:space-between; border-inline-start:3px solid ${sm.color};">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <i class="fas ${member.icon}" style="color:var(--cyan); font-size:16px;"></i>
+                <strong style="font-size:13px; color:#fff;">${escapeIdeaHtml(roleName)}</strong>
+              </div>
+              <span style="font-size:11px; color:${sm.color}; display:flex; align-items:center; gap:4px;">
+                <i class="fas ${sm.icon}"></i> ${escapeIdeaHtml(sm.label)}
+              </span>
+            </div>
+            <p style="font-size:12px; color:var(--text-muted); margin:0; line-height:1.4;">
+              ${insight ? escapeIdeaHtml(insight) : (currentLanguage === 'ar' ? 'في انتظار فحص الفكرة والأدلة...' : 'Awaiting evidence inspection...')}
+            </p>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function startIdeaPolling(runId) {
+    if (ideaPollTimer) clearInterval(ideaPollTimer);
+
+    const progressBar = document.getElementById('ideaSessionProgressBar');
+    const stageText = document.getElementById('ideaSessionStageText');
+
+    async function poll() {
+      try {
+        const res = await apiFetch(`/api/idea-council/runs/${runId}`);
+        if (!res || !res.success || !res.data) return;
+        const run = res.data;
+
+        let pct = 15;
+        let stg = ideaT('idea_step_research', 'Conducting live web market research...');
+
+        if (run.stage === 'RESEARCH') {
+          pct = 20;
+          stg = currentLanguage === 'ar' ? 'جارٍ إجراء البحث السوقي المباشر وجمع الأدلة...' : 'Conducting live web market research...';
+        } else if (run.stage === 'AGENT_ANALYSIS') {
+          const completed = (run.agents || []).filter(a => a.status === 'COMPLETED').length;
+          pct = 25 + Math.round((completed / 8) * 55);
+          stg = (currentLanguage === 'ar' ? 'أعضاء اللجنة يحللون الفكرة بالتوازي' : 'Council members analyzing in parallel') + ` (${completed}/8)...`;
+        } else if (run.stage === 'SYNTHESIS') {
+          pct = 88;
+          stg = currentLanguage === 'ar' ? 'رئيس اللجنة يصيغ التقرير النهائي ولوحة الحقيقة...' : 'Chairperson synthesizing verdict and truth board...';
+        }
+
+        if (progressBar) progressBar.style.width = `${pct}%`;
+        if (stageText) stageText.textContent = stg;
+
+        renderCouncilAgentsGrid(run.agents || []);
+
+        if (run.status === 'COMPLETED' || run.status === 'PARTIAL') {
+          clearInterval(ideaPollTimer);
+          ideaPollTimer = null;
+          if (progressBar) progressBar.style.width = '100%';
+          setTimeout(async () => {
+            await openIdea(run.projectId);
+          }, 800);
+        } else if (run.status === 'FAILED') {
+          clearInterval(ideaPollTimer);
+          ideaPollTimer = null;
+          if (stageText) {
+            stageText.textContent = currentLanguage === 'ar' ? 'فشل تشغيل جلسة التقييم.' : 'Evaluation run failed.';
+            stageText.style.color = 'var(--red)';
+          }
+        }
+      } catch (err) {
+        console.error('Idea polling error:', err);
+      }
+    }
+
+    poll();
+    ideaPollTimer = setInterval(poll, 2000);
+  }
+
+  function renderIdeaReport(idea) {
+    currentIdea = idea;
+    const r = idea.synthesisReport || {};
+
+    const vBadge = document.getElementById('ideaVerdictBadge');
+    if (vBadge) {
+      const vColors = {
+        BUILD: { bg: 'rgba(16, 185, 129, 0.2)', text: 'var(--green)', labelKey: 'idea_verdict_build' },
+        VALIDATE_FIRST: { bg: 'rgba(6, 182, 212, 0.2)', text: 'var(--cyan)', labelKey: 'idea_verdict_validate' },
+        PIVOT: { bg: 'rgba(245, 158, 11, 0.2)', text: 'var(--orange)', labelKey: 'idea_verdict_pivot' },
+        DO_NOT_BUILD: { bg: 'rgba(239, 68, 68, 0.2)', text: 'var(--red)', labelKey: 'idea_verdict_do_not_build' }
+      };
+      const vc = vColors[r.verdict] || vColors.VALIDATE_FIRST;
+      vBadge.style.background = vc.bg;
+      vBadge.style.color = vc.text;
+      vBadge.textContent = ideaT(vc.labelKey, r.verdict || 'VALIDATE_FIRST');
+    }
+
+    const titleEl = document.getElementById('ideaReportTitle');
+    if (titleEl) titleEl.textContent = r.summary || idea.structuredCard?.title || idea.title || '—';
+
+    const execEl = document.getElementById('ideaExecSummary');
+    if (execEl) execEl.textContent = r.executiveSummary || '—';
+
+    const explEl = document.getElementById('ideaVerdictExplanation');
+    if (explEl) explEl.textContent = r.verdictExplanation || '—';
+
+    const sevenDayEl = document.getElementById('idea7DayVerdictText');
+    if (sevenDayEl) {
+      sevenDayEl.textContent = r.sevenDayBuildVerdict?.recommendation || (r.sevenDayBuildVerdict?.canBuildIn7Days ? 'YES' : 'NO') || '—';
+    }
+
+    const oppEl = document.getElementById('ideaStrongestOpportunity');
+    if (oppEl) oppEl.textContent = r.strongestOpportunity || '—';
+
+    const riskEl = document.getElementById('ideaBiggestRisk');
+    if (riskEl) riskEl.textContent = r.biggestRisk || '—';
+
+    const assumpList = document.getElementById('ideaTopAssumptionsList');
+    if (assumpList) {
+      const items = Array.isArray(r.top3Assumptions) ? r.top3Assumptions : [];
+      assumpList.innerHTML = items.map(a => `<li>${escapeIdeaHtml(a)}</li>`).join('') || '<li>—</li>';
+    }
+
+    const questEl = document.getElementById('ideaCriticalQuestion');
+    if (questEl) questEl.textContent = r.criticalQuestionToSettle || '—';
+
+    const cutList = document.getElementById('ideaCutList');
+    if (cutList) {
+      const items = Array.isArray(r.cutListForV1) ? r.cutListForV1 : [];
+      cutList.innerHTML = items.map(c => `<li>${escapeIdeaHtml(c)}</li>`).join('') || '<li>—</li>';
+    }
+
+    const vp = r.validationPlan || {};
+    const valFields = {
+      ideaValHypothesis: vp.coreHypothesis || '—',
+      ideaValAudience: vp.targetAudience || '—',
+      ideaValChannel: vp.testingChannel || '—',
+      ideaValDuration: vp.suggestedDuration || '—',
+      ideaValMetric: vp.successMetric || '—',
+      ideaValStop: vp.stopCondition || '—'
+    };
+    Object.keys(valFields).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = valFields[id];
+    });
+
+    const mvpList = document.getElementById('ideaMvpScopeList');
+    if (mvpList) {
+      const feats = Array.isArray(r.sevenDayMvpScope?.coreFeatures) ? r.sevenDayMvpScope.coreFeatures : [];
+      mvpList.innerHTML = feats.map(f => `<li>${escapeIdeaHtml(f)}</li>`).join('') || '<li>—</li>';
+    }
+
+    const wedgeEl = document.getElementById('ideaUniqueWedge');
+    if (wedgeEl) wedgeEl.textContent = r.sevenDayMvpScope?.uniqueWedge || '—';
+
+    const firstValEl = document.getElementById('ideaFirstMomentOfValue');
+    if (firstValEl) firstValEl.textContent = r.sevenDayMvpScope?.firstMomentOfValue ? (`First Moment: ${r.sevenDayMvpScope.firstMomentOfValue}`) : '';
+
+    const sourcesList = document.getElementById('ideaSourcesList');
+    if (sourcesList) {
+      const sources = Array.isArray(idea.marketResearchPack?.sources) ? idea.marketResearchPack.sources : (r.sources || []);
+      if (sources.length === 0) {
+        sourcesList.innerHTML = `<span style="font-size:12px; color:var(--text-muted);">${currentLanguage === 'ar' ? 'لا توجد مصادر خارجية مباشرة.' : 'No external web sources available.'}</span>`;
+      } else {
+        sourcesList.innerHTML = sources.map(s => `
+          <div style="font-size:12px; padding:8px 12px; background:rgba(255,255,255,0.02); border-radius:6px; border:1px solid var(--glass-border);">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <a href="${escapeIdeaHtml(s.url)}" target="_blank" rel="noopener" style="color:var(--cyan); font-weight:600;">
+                ${escapeIdeaHtml(s.title || s.url)}
+              </a>
+              <span class="badge" style="background:rgba(6,182,212,0.15); color:var(--cyan); font-size:10px;">${escapeIdeaHtml(s.credibilityScore || 'WEB')}</span>
+            </div>
+            ${s.snippet ? `<p style="margin:4px 0 0 0; color:var(--text-muted); font-size:11px;">${escapeIdeaHtml(s.snippet)}</p>` : ''}
+          </div>
+        `).join('');
+      }
+    }
+
+    const followCountEl = document.getElementById('ideaFollowupCountText');
+    const roundsRem = idea.followUpRoundsRemaining ?? 3;
+    if (followCountEl) followCountEl.textContent = roundsRem;
+
+    document.querySelectorAll('.idea-followup-btn').forEach(btn => {
+      btn.disabled = (roundsRem <= 0);
+    });
+
+    renderTruthBoard(idea.truthBoardItems || r.truthBoardItems || []);
+  }
+
+  function renderTruthBoard(items = []) {
+    const container = document.getElementById('truthBoardItemsList');
+    if (!container) return;
+
+    if (!items || items.length === 0) {
+      container.innerHTML = `<div style="font-size:13px; color:var(--text-muted); text-align:center; padding:20px;">${currentLanguage === 'ar' ? 'لا توجد عناصر مسجلة في لوحة الحقيقة.' : 'No truth items recorded yet.'}</div>`;
+      return;
+    }
+
+    const catColors = {
+      ASSUMPTION: { bg: 'rgba(168, 85, 247, 0.15)', text: 'var(--purple-light)', labelKey: 'idea_tb_cat_assumption' },
+      MARKET_FACT: { bg: 'rgba(59, 130, 246, 0.15)', text: 'var(--blue)', labelKey: 'idea_tb_cat_market_fact' },
+      VALIDATION_TEST: { bg: 'rgba(6, 182, 212, 0.15)', text: 'var(--cyan)', labelKey: 'idea_tb_cat_validation_test' },
+      CRITICAL_RISK: { bg: 'rgba(239, 68, 68, 0.15)', text: 'var(--red)', labelKey: 'idea_tb_cat_critical_risk' }
+    };
+
+    container.innerHTML = items.map(item => {
+      const cc = catColors[item.category] || catColors.ASSUMPTION;
+      const catLabel = ideaT(cc.labelKey, item.category);
+
+      return `
+        <div class="glass-card truth-board-card" data-id="${item._id}" style="padding:14px; background:rgba(255,255,255,0.02);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span class="badge" style="background:${cc.bg}; color:${cc.text}; font-size:11px;">
+              ${escapeIdeaHtml(catLabel)}
+            </span>
+            <select class="form-control form-control-sm truth-item-status-select" data-id="${item._id}" style="width:auto; padding:4px 28px 4px 10px; font-size:11px; height:auto;">
+              <option value="UNVERIFIED" ${item.status === 'UNVERIFIED' ? 'selected' : ''}>${ideaT('idea_tb_status_open')}</option>
+              <option value="IN_PROGRESS" ${item.status === 'IN_PROGRESS' ? 'selected' : ''}>${ideaT('idea_tb_status_validating')}</option>
+              <option value="VALIDATED" ${item.status === 'VALIDATED' ? 'selected' : ''}>${ideaT('idea_tb_status_verified')}</option>
+              <option value="INVALIDATED" ${item.status === 'INVALIDATED' ? 'selected' : ''}>${ideaT('idea_tb_status_dismissed')}</option>
+              <option value="BLOCKED" ${item.status === 'BLOCKED' ? 'selected' : ''}>${ideaT('idea_tb_status_blocked')}</option>
+            </select>
+          </div>
+          <p style="font-size:13px; color:#fff; margin:0 0 10px 0; line-height:1.4;">${escapeIdeaHtml(item.statement)}</p>
+          <input type="text" class="form-control form-control-sm truth-item-notes-input" data-id="${item._id}" value="${escapeIdeaHtml(item.notes || '')}" placeholder="${ideaT('idea_tb_notes_placeholder')}" style="font-size:11px; padding:6px 10px;" />
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.truth-item-status-select').forEach(sel => {
+      sel.addEventListener('change', async () => {
+        const id = sel.getAttribute('data-id');
+        await updateTruthItem(id, { status: sel.value }, sel);
+      });
+    });
+
+    container.querySelectorAll('.truth-item-notes-input').forEach(inp => {
+      inp.addEventListener('blur', async () => {
+        const id = inp.getAttribute('data-id');
+        await updateTruthItem(id, { notes: inp.value.trim() }, inp);
+      });
+    });
+  }
+
+  async function updateTruthItem(itemId, patchData, triggerEl) {
+    try {
+      const res = await apiFetch(`/api/idea-council/truth-items/${itemId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(patchData)
+      });
+      if (res && res.success && triggerEl) {
+        const card = triggerEl.closest('.truth-board-card');
+        if (card) {
+          card.style.borderColor = 'var(--green)';
+          setTimeout(() => { card.style.borderColor = ''; }, 1200);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to update truth item:', err);
+    }
+  }
+
+  async function handleFollowUpClick(type) {
+    if (!currentIdea || !currentIdea._id) return;
+    const roundsRem = currentIdea.followUpRoundsRemaining ?? 3;
+    if (roundsRem <= 0) {
+      alert(currentLanguage === 'ar' ? 'لقد استنفدت جميع جولات المتابعة المتاحة لهذه الفكرة (3 جولات).' : 'All 3 follow-up rounds used for this idea.');
+      return;
+    }
+
+    const promptText = window.prompt(ideaT('idea_msg_followup_prompt'));
+    if (!promptText || !promptText.trim()) return;
+
+    const clickedBtn = document.querySelector(`.idea-followup-btn[data-type="${type}"]`);
+    const originalText = clickedBtn ? clickedBtn.innerHTML : '';
+    if (clickedBtn) {
+      clickedBtn.disabled = true;
+      clickedBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    }
+
+    try {
+      const res = await apiFetch(`/api/idea-council/ideas/${currentIdea._id}/follow-up`, {
+        method: 'POST',
+        body: JSON.stringify({ type, userPrompt: promptText.trim() })
+      });
+
+      if (res && res.success && res.data) {
+        currentIdea = res.data;
+        renderIdeaReport(currentIdea);
+        alert(ideaT('idea_msg_followup_success'));
+      } else {
+        alert(res?.error || (currentLanguage === 'ar' ? 'فشل تنفيذ جولة المتابعة.' : 'Failed to run follow-up round.'));
+      }
+    } catch (err) {
+      console.error('Follow-up error:', err);
+      alert(currentLanguage === 'ar' ? 'حدث خطأ أثناء تنفيذ جولة المتابعة.' : 'Error during follow-up round.');
+    } finally {
+      if (clickedBtn) {
+        clickedBtn.disabled = false;
+        clickedBtn.innerHTML = originalText;
+      }
+    }
+  }
+
+  async function exportIdeaReport(format) {
+    if (!currentIdea || !currentIdea._id) return;
+    try {
+      const token = getToken();
+      const res = await fetch(`/api/idea-council/ideas/${currentIdea._id}/export?format=${format}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      if (format === 'html') {
+        const url = window.URL.createObjectURL(blob);
+        const printWin = window.open(url, '_blank');
+        if (printWin) printWin.focus();
+      } else {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const filename = (currentIdea.structuredCard?.title || currentIdea.title || 'idea_report')
+          .replace(/[^a-zA-Z0-9_\u0600-\u06FF]/g, '_') + '.md';
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error('Export error:', err);
+      alert(currentLanguage === 'ar' ? 'فشل تصدير التقرير.' : 'Failed to export report.');
+    }
+  }
+
+  function initIdeaCouncil() {
+    const ideaNewBtn = document.getElementById('ideaNewBtn');
+    if (ideaNewBtn) {
+      ideaNewBtn.addEventListener('click', () => {
+        if (ideaUsageData && ideaUsageData.ideasRemaining <= 0) {
+          alert(ideaT('idea_msg_quota_exceeded'));
+          return;
+        }
+        currentIdea = null;
+        currentIdeaRunId = null;
+        const rawEl = document.getElementById('ideaRawText');
+        const mktEl = document.getElementById('ideaTargetMarket');
+        const audEl = document.getElementById('ideaTargetAudience');
+        const conEl = document.getElementById('ideaPrimaryConcern');
+        const langEl = document.getElementById('ideaOutputLang');
+
+        if (rawEl) rawEl.value = '';
+        if (mktEl) mktEl.value = '';
+        if (audEl) audEl.value = '';
+        if (conEl) conEl.value = '';
+        if (langEl) langEl.value = currentLanguage === 'en' ? 'en' : 'ar';
+        updateIdeaCharCount();
+        showIdeaView('input');
+      });
+    }
+
+    const cancelInputBtn = document.getElementById('ideaCancelInputBtn');
+    if (cancelInputBtn) {
+      cancelInputBtn.addEventListener('click', () => {
+        showIdeaView('list');
+        loadIdeaCouncilList(ideaCurrentFilter);
+      });
+    }
+
+    const rawTextEl = document.getElementById('ideaRawText');
+    if (rawTextEl) {
+      rawTextEl.addEventListener('input', () => {
+        updateIdeaCharCount();
+        clearTimeout(ideaAutoSaveTimer);
+        const len = rawTextEl.value.length;
+        if (len >= 100 && len <= 8000) {
+          ideaAutoSaveTimer = setTimeout(() => {
+            saveIdeaDraft(true);
+          }, 2000);
+        }
+      });
+    }
+
+    const saveDraftBtn = document.getElementById('ideaSaveDraftBtn');
+    if (saveDraftBtn) {
+      saveDraftBtn.addEventListener('click', () => {
+        saveIdeaDraft(false);
+      });
+    }
+
+    const createForm = document.getElementById('ideaCreateForm');
+    if (createForm) {
+      createForm.addEventListener('submit', handleIdeaStructureSubmit);
+    }
+
+    const cardBackBtn = document.getElementById('ideaCardBackBtn');
+    if (cardBackBtn) {
+      cardBackBtn.addEventListener('click', () => {
+        showIdeaView('list');
+        loadIdeaCouncilList(ideaCurrentFilter);
+      });
+    }
+
+    const saveCardBtn = document.getElementById('ideaSaveCardBtn');
+    if (saveCardBtn) {
+      saveCardBtn.addEventListener('click', async () => {
+        if (!currentIdea || !currentIdea._id) return;
+        const card = {
+          title: document.getElementById('ideaCardFldTitle')?.value.trim() || '',
+          elevatorPitch: document.getElementById('ideaCardFldPitch')?.value.trim() || '',
+          targetCustomer: document.getElementById('ideaCardFldCustomer')?.value.trim() || '',
+          revenueModel: document.getElementById('ideaCardFldRevenue')?.value.trim() || '',
+          coreProblem: document.getElementById('ideaCardFldProblem')?.value.trim() || '',
+          proposedSolution: document.getElementById('ideaCardFldSolution')?.value.trim() || '',
+          valueProposition: document.getElementById('ideaCardFldValue')?.value.trim() || '',
+          currentAlternatives: document.getElementById('ideaCardFldAlternatives')?.value.trim() || '',
+          coreEvaluationQuestion: document.getElementById('ideaCardFldCoreQuestion')?.value.trim() || ''
+        };
+        try {
+          await apiFetch(`/api/idea-council/ideas/${currentIdea._id}/card`, {
+            method: 'PUT',
+            body: JSON.stringify(card)
+          });
+          alert(ideaT('idea_msg_card_saved'));
+        } catch (err) {
+          console.error('Failed to save card:', err);
+        }
+      });
+    }
+
+    const cardEditForm = document.getElementById('ideaCardEditForm');
+    if (cardEditForm) {
+      cardEditForm.addEventListener('submit', handleConveneCouncilSubmit);
+    }
+
+    const reportBackBtn = document.getElementById('ideaReportBackBtn');
+    if (reportBackBtn) {
+      reportBackBtn.addEventListener('click', () => {
+        showIdeaView('list');
+        loadIdeaCouncilList(ideaCurrentFilter);
+      });
+    }
+
+    const exportMdBtn = document.getElementById('ideaExportMdBtn');
+    if (exportMdBtn) {
+      exportMdBtn.addEventListener('click', () => exportIdeaReport('markdown'));
+    }
+
+    const exportPdfBtn = document.getElementById('ideaExportPdfBtn');
+    if (exportPdfBtn) {
+      exportPdfBtn.addEventListener('click', () => exportIdeaReport('html'));
+    }
+
+    document.querySelectorAll('.idea-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.idea-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const st = btn.getAttribute('data-status') || 'ALL';
+        loadIdeaCouncilList(st);
+      });
+    });
+
+    document.querySelectorAll('.idea-followup-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.getAttribute('data-type');
+        handleFollowUpClick(type);
+      });
+    });
+  }
+
   // Initialize and Boot System
+  initIdeaCouncil();
   checkAuthAndLoad();
   applyLanguage(currentLanguage);
 

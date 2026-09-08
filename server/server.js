@@ -47,6 +47,10 @@ const chatCustomersRoutes = require('./routes/chatCustomers');
 const bookingsRoutes = require('./routes/bookings');
 const telegramRoutes = require('./routes/telegram');
 const whatsappRoutes = require('./routes/whatsapp');
+const ideaCouncilRoutes = require('./routes/ideaCouncil');
+const {
+  startIdeaEvaluationWorker,
+} = require('./services/ideaEvaluationWorker');
 const AppError = require('./utils/appError');
 const errorHandler = require('./middleware/errorHandler');
 // removed waRoutes (local WA app)
@@ -342,6 +346,7 @@ const authenticatedPaths = [
   '/api/integrations',
   '/api/admin',
   '/api/upload',
+  '/api/idea-council',
 ];
 app.use(authenticatedPaths, authenticate, accountLimiter);
 
@@ -404,6 +409,7 @@ app.use(
   })
 );
 app.use('/api/admin/ai', createAiControlPlaneRouter());
+app.use('/api/idea-council', ideaCouncilRoutes);
 app.use('/', indexRoutes);
 
 // مسار المتركات (حماية اختيارية عبر METRICS_TOKEN)
@@ -758,6 +764,7 @@ async function startServer() {
   sendDailyPerformanceSummary();
   checkSubscriptionExpiringSoon();
   cleanupOldLogs();
+  startIdeaEvaluationWorker();
 
   const port = process.env.PORT || 5000;
   activeHttpServer = app.listen(port, '0.0.0.0', () => {
