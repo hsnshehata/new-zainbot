@@ -148,6 +148,60 @@ test('ideaCouncil API: getUsage returns monthly quota information', async () => 
   }
 });
 
+test('ideaCouncil API: getUsage returns unlimited quota for superadmin', async () => {
+  const originalFindById = User.findById;
+  const originalGetActiveConfig = IdeaCouncilConfig.getActiveConfig;
+  const originalGetUsage = IdeaUsageCounter.getUsage;
+
+  const adminToken = signAccessToken({
+    _id: userId,
+    username: 'admin',
+    role: 'superadmin',
+    sessionVersion: 1,
+  });
+
+  User.findById = () => ({
+    select: () => ({
+      lean: () => Promise.resolve({
+        _id: userId,
+        username: 'admin',
+        role: 'superadmin',
+        status: 'active',
+        isVerified: true,
+        sessionVersion: 1,
+      }),
+    }),
+  });
+  IdeaCouncilConfig.getActiveConfig = async () => ({
+    enabled: true,
+    monthlyIdeaLimit: 3,
+  });
+  IdeaUsageCounter.getUsage = async () => ({
+    limit: 3,
+    used: 1,
+    completed: 1,
+    remaining: 2,
+    yearMonthUtc: '2026-09',
+    nextResetDate: new Date('2026-10-01T00:00:00.000Z'),
+  });
+
+  try {
+    const res = await supertest(app)
+      .get('/api/idea-council/usage')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.success, true);
+    assert.equal(res.body.data.isSuperadmin, true);
+    assert.equal(res.body.data.limit, '∞');
+    assert.equal(res.body.data.remaining, '∞');
+  } finally {
+    User.findById = originalFindById;
+    IdeaCouncilConfig.getActiveConfig = originalGetActiveConfig;
+    IdeaUsageCounter.getUsage = originalGetUsage;
+  }
+});
+
 test('ideaCouncil API: /draft endpoint accepts rawText and reportLanguage aliases', async () => {
   const originalCreate = IdeaProject.create;
   const fakeId = new mongoose.Types.ObjectId();

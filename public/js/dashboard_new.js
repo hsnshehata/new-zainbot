@@ -5471,11 +5471,12 @@
     }
 
     const followCountEl = document.getElementById('ideaFollowupCountText');
-    const roundsRem = idea.followupRoundsRemaining ?? idea.followUpRoundsRemaining ?? Math.max(0, 3 - (idea.followupRoundsUsed || 0));
+    const isSuperadmin = Boolean(ideaUsageData?.isSuperadmin || idea.isSuperadmin);
+    const roundsRem = isSuperadmin ? '∞' : (idea.followupRoundsRemaining ?? idea.followUpRoundsRemaining ?? Math.max(0, 3 - (idea.followupRoundsUsed || 0)));
     if (followCountEl) followCountEl.textContent = roundsRem;
 
     document.querySelectorAll('.idea-followup-btn').forEach(btn => {
-      btn.disabled = (roundsRem <= 0);
+      btn.disabled = !isSuperadmin && (Number(roundsRem) <= 0);
     });
 
     const agents = currentRun?.agents || idea.agents || idea.latestRun?.agents || [];
@@ -5892,7 +5893,7 @@
     const ideaNewBtn = document.getElementById('ideaNewBtn');
     if (ideaNewBtn) {
       ideaNewBtn.addEventListener('click', () => {
-        if (ideaUsageData && ideaUsageData.ideasRemaining <= 0) {
+        if (ideaUsageData && !ideaUsageData.isSuperadmin && !ideaUsageData.isUnlimited && Number(ideaUsageData.ideasRemaining) <= 0) {
           alert(ideaT('idea_msg_quota_exceeded'));
           return;
         }

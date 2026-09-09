@@ -27,25 +27,42 @@ function getUserId(req) {
   return req.user?.userId || req.user?._id || req.auth?.actorUserId || req.auth?.subjectUserId;
 }
 
+// Helper to check if requester is administrator / superadmin
+function isSuperadminUser(req) {
+  return Boolean(
+    req.user?.role === 'superadmin' ||
+    req.auth?.actorRole === 'superadmin' ||
+    req.auth?.subjectRole === 'superadmin' ||
+    req.user?.username === 'admin' ||
+    req.user?.subscriptionTier === 'unlimited'
+  );
+}
+
 // GET /usage
 async function getUsage(req, res) {
   try {
     const userId = getUserId(req);
+    const isSuperadmin = isSuperadminUser(req);
     const config = await IdeaCouncilConfig.getActiveConfig();
     const usage = await IdeaUsageCounter.getUsage(userId, config.monthlyIdeaLimit);
+
+    const limit = isSuperadmin ? '∞' : usage.limit;
+    const remaining = isSuperadmin ? '∞' : usage.remaining;
 
     return res.status(200).json({
       success: true,
       data: {
         enabled: config.enabled,
-        limit: usage.limit,
-        monthlyLimit: usage.limit,
+        limit,
+        monthlyLimit: limit,
         used: usage.used,
         completed: usage.completed,
-        remaining: usage.remaining,
-        ideasRemaining: usage.remaining,
+        remaining,
+        ideasRemaining: remaining,
         yearMonthUtc: usage.yearMonthUtc,
         nextResetDate: usage.nextResetDate,
+        isSuperadmin,
+        isUnlimited: isSuperadmin,
       },
     });
   } catch (error) {
@@ -77,6 +94,7 @@ async function getIdeas(req, res) {
         .lean(),
     ]);
 
+    const isSuperadmin = isSuperadminUser(req);
     const formattedIdeas = ideas.map((idea) => {
       let title = 'Untitled';
       try {
@@ -99,7 +117,7 @@ async function getIdeas(req, res) {
         targetAudience: idea.targetAudience,
         initialEvaluationsUsed: idea.initialEvaluationsUsed,
         followupRoundsUsed: idea.followupRoundsUsed,
-        followupRoundsRemaining: Math.max(0, 3 - idea.followupRoundsUsed),
+        followupRoundsRemaining: isSuperadmin ? '∞' : Math.max(0, 3 - idea.followupRoundsUsed),
         verdict: finalReport?.verdict || null,
         sevenDayBuildVerdict: finalReport?.sevenDayBuildVerdict || null,
         createdAt: idea.createdAt,
@@ -326,8 +344,9 @@ async function getIdeaById(req, res) {
         primaryConcern: project.primaryConcern,
         initialEvaluationsUsed: project.initialEvaluationsUsed || 0,
         followupRoundsUsed: project.followupRoundsUsed || 0,
-        followupRoundsRemaining: Math.max(0, 3 - (project.followupRoundsUsed || 0)),
-        followUpRoundsRemaining: Math.max(0, 3 - (project.followupRoundsUsed || 0)),
+        followupRoundsRemaining: isSuperadminUser(req) ? '∞' : Math.max(0, 3 - (project.followupRoundsUsed || 0)),
+        followUpRoundsRemaining: isSuperadminUser(req) ? '∞' : Math.max(0, 3 - (project.followupRoundsUsed || 0)),
+        isSuperadmin: isSuperadminUser(req),
         agents: formattedAgents,
         runs: formattedRuns,
         latestRun,
@@ -612,15 +631,35 @@ async function startEvaluation(req, res) {
       });
     }
 
-    // Atomic quota reservation for initial run
-    const quota = await IdeaUsageCounter.reserveQuota(userId, config.monthlyIdeaLimit);
-    if (!quota.allowed) {
-      return res.status(429).json({
-        success: false,
-        error: 'IDEA_LIMIT_REACHED',
-        message: `Monthly idea limit of ${config.monthlyIdeaLimit} reached for this account`,
-        data: { limit: quota.limit, used: quota.used },
-      });
+    // Atomic quota reservation for initial run (bypassed for superadmin)
+    const isSuperadmin = isSuperadminUser(req);
+    if (!isSuperadmin) {
+      const quota = await IdeaUsageCounter.reserveQuota(userId, config.monthlyIdeaLimit);
+      if (!quota.allowed) {
+        return res.status(429).json({
+          success: false,
+          error: 'IDEA_LIMIT_REACHED',
+          message: `Monthly idea limit of ${config.monthlyIdeaLimit} reached for this account`,
+          data: { limit: quota.limit, used: quota.used },
+        });
+      }
+    } else {
+      // Record reservation in counter for analytics without quota limit
+      const now = new Date();
+      const yearMonthUtc = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+      await IdeaUsageCounter.updateOne(
+        { counterKey: `${userId}:${yearMonthUtc}` },
+        {
+          $setOnInsert: {
+            counterKey: `${userId}:${yearMonthUtc}`,
+            userId,
+            yearMonthUtc,
+            initialRunsCompleted: 0,
+          },
+          $inc: { initialRunsReserved: 1 },
+        },
+        { upsert: true }
+      );
     }
 
     // Create run
@@ -723,7 +762,8 @@ async function startFollowup(req, res) {
       return res.status(404).json({ success: false, error: 'IDEA_NOT_FOUND', message: 'Idea not found' });
     }
 
-    if (project.followupRoundsUsed >= 3) {
+    const isSuperadmin = isSuperadminUser(req);
+    if (!isSuperadmin && project.followupRoundsUsed >= 3) {
       return res.status(429).json({
         success: false,
         error: 'FOLLOWUP_LIMIT_REACHED',
