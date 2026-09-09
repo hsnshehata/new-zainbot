@@ -668,6 +668,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 .bento-card:hover::before { opacity: 1; }
 .bento-wide { grid-column: span 2; }
+.bento-full { grid-column: 1 / -1; }
 .bento-icon {
   width: 44px; height: 44px;
   border-radius: 12px;

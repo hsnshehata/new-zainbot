@@ -5399,22 +5399,24 @@
     }
 
     const questEl = document.getElementById('ideaCriticalQuestion');
-    if (questEl) questEl.textContent = r.criticalQuestionToSettle || '—';
+    if (questEl) questEl.textContent = r.criticalQuestionToSettle || r.criticalQuestion || '—';
 
     const cutList = document.getElementById('ideaCutList');
     if (cutList) {
-      const items = Array.isArray(r.cutListForV1) ? r.cutListForV1 : [];
+      const items = (Array.isArray(r.cutListForV1) && r.cutListForV1.length > 0)
+        ? r.cutListForV1
+        : (Array.isArray(r.killOrDeferList) ? r.killOrDeferList : []);
       cutList.innerHTML = items.map(c => `<li>${escapeIdeaHtml(c)}</li>`).join('') || '<li>—</li>';
     }
 
     const vp = r.validationPlan || {};
     const valFields = {
-      ideaValHypothesis: vp.coreHypothesis || '—',
-      ideaValAudience: vp.targetAudience || '—',
-      ideaValChannel: vp.testingChannel || '—',
-      ideaValDuration: vp.suggestedDuration || '—',
-      ideaValMetric: vp.successMetric || '—',
-      ideaValStop: vp.stopCondition || '—'
+      ideaValHypothesis: vp.coreHypothesis || vp.hypothesis || '—',
+      ideaValAudience: vp.targetAudience || vp.audience || '—',
+      ideaValChannel: vp.testingChannel || vp.channel || '—',
+      ideaValDuration: vp.suggestedDuration || vp.duration || '—',
+      ideaValMetric: vp.successMetric || vp.metric || '—',
+      ideaValStop: vp.stopCondition || vp.stopCriteria || '—'
     };
     Object.keys(valFields).forEach(id => {
       const el = document.getElementById(id);
@@ -5423,15 +5425,28 @@
 
     const mvpList = document.getElementById('ideaMvpScopeList');
     if (mvpList) {
-      const feats = Array.isArray(r.sevenDayMvpScope?.coreFeatures) ? r.sevenDayMvpScope.coreFeatures : [];
+      let feats = [];
+      if (Array.isArray(r.sevenDayMvpScope)) {
+        feats = r.sevenDayMvpScope;
+      } else if (Array.isArray(r.sevenDayMvpScope?.coreFeatures)) {
+        feats = r.sevenDayMvpScope.coreFeatures;
+      }
       mvpList.innerHTML = feats.map(f => `<li>${escapeIdeaHtml(f)}</li>`).join('') || '<li>—</li>';
     }
 
+    const wedgeVal = r.sevenDayMvpScope?.uniqueWedge || r.uniqueWedge || '—';
     const wedgeEl = document.getElementById('ideaUniqueWedge');
-    if (wedgeEl) wedgeEl.textContent = r.sevenDayMvpScope?.uniqueWedge || '—';
+    if (wedgeEl) wedgeEl.textContent = wedgeVal;
 
+    const firstVal = r.sevenDayMvpScope?.firstMomentOfValue || r.firstMomentOfValue || '';
     const firstValEl = document.getElementById('ideaFirstMomentOfValue');
-    if (firstValEl) firstValEl.textContent = r.sevenDayMvpScope?.firstMomentOfValue ? (`First Moment: ${r.sevenDayMvpScope.firstMomentOfValue}`) : '';
+    if (firstValEl) {
+      if (firstVal) {
+        firstValEl.textContent = currentLanguage === 'ar' ? `لحظة القيمة الأولى: ${firstVal}` : `First Moment: ${firstVal}`;
+      } else {
+        firstValEl.textContent = '';
+      }
+    }
 
     const sourcesList = document.getElementById('ideaSourcesList');
     if (sourcesList) {

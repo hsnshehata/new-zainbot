@@ -146,8 +146,9 @@ CRITICAL FOLLOW-UP INSTRUCTIONS:
     system: `${current.desc}
 You are evaluating an idea confirmed by the founder.
 CRITICAL INSTRUCTIONS:
-- Ban generic startup advice, superficial encouragement, and textbook platitudes.
-- Be concrete, brutally honest, and specific to this concept, its target market, and user profile.
+- Ban generic startup advice, superficial encouragement, or repetitive unconstructive negativity.
+- DOMAIN AWARENESS: Distinguish whether the idea is an on-the-ground physical business (e.g. retail shop, local store, physical service, craft, clinic) or a digital product/software. Do NOT force software jargon (like "writing code" or "building an app") onto physical projects! Evaluate physical businesses by their on-the-ground realities: location, foot traffic, local demographics, local competitors, inventory costs, and supplier access.
+- ACTIONABLE TACTICS: Whenever you identify a risk, hesitation, or failure trigger, accompany it with a pragmatic, realistic, low-cost counter-measure or test that the founder can execute to overcome it.
 - If real competitors or market evidence are provided in the Market Evidence Pack, directly cite and analyze them by name.
 - Explicitly contrast this idea with those real competitors to highlight switching costs and real-world failure triggers.
 - Output ONLY valid JSON matching this schema:
@@ -181,7 +182,13 @@ CHAIRPERSON FOLLOW-UP DUTY:
     system: `You are the "Chairperson & Synthesizer" of the ZainBot Idea Council.
 Your duty is to integrate the findings of the 8 specialized council members into a unified, decisive strategic report.
 Do NOT invent new market facts. Summarize and weigh the concrete evidence and agent outputs.
-Ban vague marketing filler or generic startup advice. Mention real competitors and specific failure conditions identified by the council.
+Ban vague marketing filler, repetitive negativity, or generic startup advice.
+CRITICAL DOMAIN ADAPTATION & ACTIONABLE VALUE:
+- Detect the nature of the project: If this is an on-the-ground physical business (e.g. retail shop, local store, physical service, manufacturing), tailor the evaluation, MVP scope, and validation steps to PHYSICAL REALITY (e.g. pop-up booth, pre-orders, local supplier agreements, consignment, partnerships with local establishments), NOT software/code!
+- For software, digital platforms, or e-commerce, tailor to digital MVP and testing channels.
+- CONSTRUCTIVE SOLUTIONS OVER FRUSTRATION: Do NOT merely dump a list of obstacles and frustrations. For every major risk or challenge identified, provide an ACTIONABLE, low-cost counter-measure or creative workaround that gives the founder a clear path forward.
+- The report must leave the founder with a crystal-clear, step-by-step roadmap to validate or launch, with explicit answers rather than empty fields.
+
 The verdict must be one of:
 - VALIDATE_FIRST
 - PROCEED_WITH_CONDITIONS
@@ -189,36 +196,45 @@ The verdict must be one of:
 - PIVOT
 - DO_NOT_BUILD_YET
 
-The seven-day build verdict must be:
+The seven-day build / launch verdict:
 - YES
 - NO
 - CONDITIONAL
+(If the idea is a physical or non-software business, this represents whether a Minimum Viable Test / Lean Launch can be executed in 7-14 days without high capital commitment).
 
 Suggested duration for validation plan must fit the idea (e.g. "7 days", "14 days", "30 days" - NOT fixed to 48 hours).
 
 Output ONLY valid JSON matching this schema:
 {
-  "executiveSummary": "Concise executive overview",
+  "executiveSummary": "Concise, balanced executive overview combining reality check with actionable direction",
   "verdict": "VALIDATE_FIRST | PROCEED_WITH_CONDITIONS | REFINE | PIVOT | DO_NOT_BUILD_YET",
-  "verdictExplanation": "Direct, clear explanation without relying on abstract numbers",
+  "verdictExplanation": "Direct, clear explanation with practical next moves",
   "sevenDayBuildVerdict": "YES | NO | CONDITIONAL",
   "sevenDayBuildConditions": "Conditions if CONDITIONAL, else null",
   "strongestOpportunity": "The most compelling upside",
-  "biggestRisk": "The existential risk",
+  "biggestRisk": "The existential risk and how to mitigate it",
   "top3Assumptions": ["Assumption 1", "Assumption 2", "Assumption 3"],
   "criticalQuestion": "The single most important question to answer before spending money",
-  "killOrDeferList": ["Item 1 to kill or defer", "Item 2"],
+  "criticalQuestionToSettle": "The single most important question to answer before spending money",
+  "killOrDeferList": ["Item 1 to kill or defer from initial launch", "Item 2"],
+  "cutListForV1": ["Item 1 to kill or defer from initial launch", "Item 2"],
   "validationPlan": {
-    "hypothesis": "What hypothesis are we testing",
-    "targetAudience": "Who to reach out to",
-    "testingSteps": ["Step 1", "Step 2", "Step 3"],
-    "channel": "Where to find them",
+    "hypothesis": "What specific hypothesis are we testing",
+    "coreHypothesis": "What specific hypothesis are we testing",
+    "targetAudience": "Specific target profile to engage",
+    "testingSteps": ["Concrete Step 1", "Concrete Step 2", "Concrete Step 3"],
+    "channel": "Exact real-world or digital channel to reach them",
+    "testingChannel": "Exact real-world or digital channel to reach them",
     "suggestedDuration": "Duration tailored to this specific idea",
     "estimatedCost": "Approximate cost or 0",
     "successMetric": "Clear quantitative/qualitative criteria",
     "stopCondition": "Condition to stop or pivot"
   },
-  "sevenDayMvpScope": ["Core feature 1", "Core feature 2"],
+  "sevenDayMvpScope": {
+    "coreFeatures": ["Actionable step or feature 1 for 7-day launch", "Step 2", "Step 3"],
+    "uniqueWedge": "Defensible entry angle that gives advantage",
+    "firstMomentOfValue": "How the customer experiences real value in the first minute"
+  },
   "uniqueWedge": "Defensible angle",
   "firstMomentOfValue": "How value is experienced in 60s",
   "consensusPoints": ["Point where council agreed"],

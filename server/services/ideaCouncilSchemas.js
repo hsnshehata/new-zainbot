@@ -85,15 +85,17 @@ const CANDID_CHAMPION_SCHEMA = Joi.object({
 });
 
 const VALIDATION_PLAN_SCHEMA = Joi.object({
-  hypothesis: Joi.string().required(),
+  hypothesis: Joi.string().allow('', null).default(''),
+  coreHypothesis: Joi.string().allow('', null).default(''),
   targetAudience: Joi.string().required(),
-  testingSteps: Joi.array().items(Joi.string()).min(1).required(),
-  channel: Joi.string().required(),
+  testingSteps: Joi.array().items(Joi.string()).default([]),
+  channel: Joi.string().allow('', null).default(''),
+  testingChannel: Joi.string().allow('', null).default(''),
   suggestedDuration: Joi.string().required(),
   estimatedCost: Joi.string().allow('', null).default('0'),
   successMetric: Joi.string().required(),
   stopCondition: Joi.string().required(),
-});
+}).unknown(true);
 
 const TRUTH_BOARD_ITEM_SCHEMA = Joi.object({
   id: Joi.string().required(),
@@ -117,18 +119,27 @@ const CHAIRPERSON_SYNTHESIS_SCHEMA = Joi.object({
   strongestOpportunity: Joi.string().required(),
   biggestRisk: Joi.string().required(),
   top3Assumptions: Joi.array().items(Joi.string()).min(1).max(3).required(),
-  criticalQuestion: Joi.string().required(),
+  criticalQuestion: Joi.string().allow('', null).default(''),
+  criticalQuestionToSettle: Joi.string().allow('', null).default(''),
   killOrDeferList: Joi.array().items(Joi.string()).default([]),
+  cutListForV1: Joi.array().items(Joi.string()).default([]),
   validationPlan: VALIDATION_PLAN_SCHEMA.required(),
-  sevenDayMvpScope: Joi.array().items(Joi.string()).min(1).required(),
-  uniqueWedge: Joi.string().required(),
-  firstMomentOfValue: Joi.string().required(),
+  sevenDayMvpScope: Joi.alternatives().try(
+    Joi.array().items(Joi.string()),
+    Joi.object({
+      coreFeatures: Joi.array().items(Joi.string()).default([]),
+      uniqueWedge: Joi.string().allow('', null).default(''),
+      firstMomentOfValue: Joi.string().allow('', null).default('')
+    })
+  ).required(),
+  uniqueWedge: Joi.string().allow('', null).default(''),
+  firstMomentOfValue: Joi.string().allow('', null).default(''),
   consensusPoints: Joi.array().items(Joi.string()).default([]),
   dissentPoints: Joi.array().items(Joi.string()).default([]),
   confidenceLevel: Joi.number().min(0).max(1).default(0.8),
   evidenceQuality: Joi.string().valid('HIGH', 'MEDIUM', 'LOW', 'INSUFFICIENT_EVIDENCE').default('MEDIUM'),
   truthBoardItems: Joi.array().items(TRUTH_BOARD_ITEM_SCHEMA).min(1).required(),
-});
+}).unknown(true);
 
 const AGENT_SCHEMAS = {
   STRUCTURER: IDEA_STRUCTURER_SCHEMA,

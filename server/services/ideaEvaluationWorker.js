@@ -526,8 +526,11 @@ class IdeaEvaluationWorker {
       followupContext,
     });
 
+    const chairpersonModel = process.env.IDEA_COUNCIL_CHAIRPERSON_MODEL || 'gpt-5.6-terra';
+
     const llmResult = await this._callLlm({
       user,
+      model: chairpersonModel,
       messages: [
         { role: 'system', content: prompt.system },
         { role: 'user', content: prompt.user },
@@ -552,6 +555,7 @@ class IdeaEvaluationWorker {
       const repairPrompt = `Fix this synthesis JSON to match the schema exactly. Schema error: ${validation.error}. Return ONLY the valid JSON:`;
       const repaired = await this._callLlm({
         user,
+        model: chairpersonModel,
         messages: [
           { role: 'system', content: prompt.system },
           { role: 'user', content: prompt.user },
@@ -577,11 +581,36 @@ class IdeaEvaluationWorker {
       return null;
     }
 
-    return { output: validation.value };
+    const out = validation.value;
+    out.criticalQuestionToSettle = out.criticalQuestionToSettle || out.criticalQuestion || '';
+    out.criticalQuestion = out.criticalQuestion || out.criticalQuestionToSettle || '';
+    out.cutListForV1 = (Array.isArray(out.cutListForV1) && out.cutListForV1.length > 0) ? out.cutListForV1 : (Array.isArray(out.killOrDeferList) ? out.killOrDeferList : []);
+    out.killOrDeferList = (Array.isArray(out.killOrDeferList) && out.killOrDeferList.length > 0) ? out.killOrDeferList : (Array.isArray(out.cutListForV1) ? out.cutListForV1 : []);
+    if (out.validationPlan) {
+      out.validationPlan.coreHypothesis = out.validationPlan.coreHypothesis || out.validationPlan.hypothesis || '';
+      out.validationPlan.hypothesis = out.validationPlan.hypothesis || out.validationPlan.coreHypothesis || '';
+      out.validationPlan.testingChannel = out.validationPlan.testingChannel || out.validationPlan.channel || '';
+      out.validationPlan.channel = out.validationPlan.channel || out.validationPlan.testingChannel || '';
+    }
+    if (Array.isArray(out.sevenDayMvpScope)) {
+      const arr = out.sevenDayMvpScope;
+      out.sevenDayMvpScope = {
+        coreFeatures: arr,
+        uniqueWedge: out.uniqueWedge || '',
+        firstMomentOfValue: out.firstMomentOfValue || ''
+      };
+    } else if (out.sevenDayMvpScope && typeof out.sevenDayMvpScope === 'object') {
+      out.uniqueWedge = out.uniqueWedge || out.sevenDayMvpScope.uniqueWedge || '';
+      out.firstMomentOfValue = out.firstMomentOfValue || out.sevenDayMvpScope.firstMomentOfValue || '';
+    }
+
+    return { output: out };
   }
 
   async _callLlm(params) {
     const startedAt = Date.now();
+    const targetModel = params.model || process.env.IDEA_COUNCIL_AGENT_MODEL || 'gpt-4o-mini';
+
     if (this.orchestrator && typeof this.orchestrator.runAutoCompletion === 'function') {
       try {
         const result = await this.orchestrator.runAutoCompletion({
@@ -594,20 +623,23 @@ class IdeaEvaluationWorker {
             operationId: params.operationId,
             messages: params.messages,
             timeoutMs: params.timeoutMs,
+            model: targetModel,
           },
         });
         const latencyMs = Date.now() - startedAt;
         const text = result.response?.choices?.[0]?.message?.content || result.response?.content || '';
-        return {
-          raw: text,
-          modelId: result.resolution?.candidates?.[0]?.modelId || 'auto',
-          provider: result.resolution?.candidates?.[0]?.provider || 'auto',
-          tokenUsage: {
-            inputTokens: Number(result.response?.usage?.prompt_tokens || 0),
-            outputTokens: Number(result.response?.usage?.completion_tokens || 0),
-          },
-          latencyMs,
-        };
+        if (text) {
+          return {
+            raw: text,
+            modelId: result.resolution?.candidates?.[0]?.modelId || targetModel || 'auto',
+            provider: result.resolution?.candidates?.[0]?.provider || 'auto',
+            tokenUsage: {
+              inputTokens: Number(result.response?.usage?.prompt_tokens || 0),
+              outputTokens: Number(result.response?.usage?.completion_tokens || 0),
+            },
+            latencyMs,
+          };
+        }
       } catch (orchErr) {
         logger.warn('orchestrator_call_failed_fallback_to_openai_direct', { error: orchErr.message });
       }
@@ -616,34 +648,43 @@ class IdeaEvaluationWorker {
     // Direct fallback using OpenAI if available
     const apiKey = process.env.OPENAI_API_KEY;
     if (apiKey) {
-      try {
-        const axios = require('axios');
-        const res = await axios.post(
-          'https://api.openai.com/v1/chat/completions',
-          {
-            model: 'gpt-4o-mini',
-            messages: params.messages,
-            temperature: 0.3,
-            response_format: { type: 'json_object' },
-          },
-          {
-            headers: { Authorization: `Bearer ${apiKey}` },
-            timeout: params.timeoutMs || 45000,
-          }
-        );
-        const latencyMs = Date.now() - startedAt;
-        return {
-          raw: res.data.choices[0].message.content,
-          modelId: 'gpt-4o-mini',
-          provider: 'openai',
-          tokenUsage: {
-            inputTokens: res.data.usage?.prompt_tokens || 0,
-            outputTokens: res.data.usage?.completion_tokens || 0,
-          },
-          latencyMs,
-        };
-      } catch (directErr) {
-        logger.error('direct_openai_fallback_failed', { error: directErr.message });
+      const axios = require('axios');
+      const candidateModels = [targetModel];
+      if (targetModel !== 'gpt-4o' && targetModel !== 'gpt-4o-mini') {
+        candidateModels.push('gpt-4o', 'gpt-4o-mini');
+      } else if (targetModel === 'gpt-4o') {
+        candidateModels.push('gpt-4o-mini');
+      }
+
+      for (const modelToTry of candidateModels) {
+        try {
+          const res = await axios.post(
+            'https://api.openai.com/v1/chat/completions',
+            {
+              model: modelToTry,
+              messages: params.messages,
+              temperature: 0.3,
+              response_format: { type: 'json_object' },
+            },
+            {
+              headers: { Authorization: `Bearer ${apiKey}` },
+              timeout: params.timeoutMs || 45000,
+            }
+          );
+          const latencyMs = Date.now() - startedAt;
+          return {
+            raw: res.data.choices[0].message.content,
+            modelId: modelToTry,
+            provider: 'openai',
+            tokenUsage: {
+              inputTokens: res.data.usage?.prompt_tokens || 0,
+              outputTokens: res.data.usage?.completion_tokens || 0,
+            },
+            latencyMs,
+          };
+        } catch (directErr) {
+          logger.warn('openai_model_call_failed_trying_next', { model: modelToTry, error: directErr.message });
+        }
       }
     }
 
