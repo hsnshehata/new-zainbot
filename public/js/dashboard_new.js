@@ -607,6 +607,32 @@
       idea_btn_mvp: '7-Day MVP Plan',
       idea_followup_prompt_placeholder: 'Enter your defense arguments, proposed pivot direction, or specific question...',
       idea_btn_start_followup: 'Start Follow-up Round',
+      idea_followup_modal_title: 'Council Follow-up & Defense',
+      idea_followup_modal_subtitle: 'Present new arguments, strategic angles, and evidence to challenge council skepticism.',
+      idea_followup_action_label: 'Round Goal & Action Type',
+      idea_followup_chips_label: 'Strategic Advantage Angles (Click to toggle)',
+      idea_chip_pricing: '💰 Lower Price / Cost Advantage',
+      idea_chip_niche: '🎯 Underserved Niche Segment',
+      idea_chip_distribution: '🤝 Existing Distribution / Partners',
+      idea_chip_guarantee: '🛡️ Risk-Free Trial / Guarantee',
+      idea_chip_speed: '⚡ Radical Simplification',
+      idea_chip_team: '👥 Proven Domain Expert Team',
+      idea_chip_offline: '📍 Prime Physical Location / Foot Traffic',
+      idea_chip_inventory: '📦 Existing Prototype / Inventory Ready',
+      idea_followup_target_critic_label: 'Primary Critic to Address',
+      idea_critic_opt_all: 'Entire Council (All Members)',
+      idea_critic_opt_customer: 'Cold Customer (Hesitation & Switching Cost)',
+      idea_critic_opt_auditor: 'Harsh Auditor (Financials & Unit Economics)',
+      idea_critic_opt_competitor: 'Vicious Competitor (Differentiation & Moat)',
+      idea_critic_opt_ops: 'Operations & Feasibility Expert',
+      idea_followup_review_mode_label: 'Council Review Tone',
+      idea_mode_opt_balanced: 'Constructive & Pragmatic',
+      idea_mode_opt_strict: 'High-Stress Skeptical',
+      idea_followup_defense_label: 'Your Defense, Answers & Strategic Evidence',
+      idea_followup_evidence_label: 'Extra Proof, Numbers, or Competitor Reference (Optional)',
+      idea_followup_evidence_placeholder: 'e.g. 150 pre-orders, link to alternative, supplier agreement...',
+      idea_followup_submit_btn: 'Submit & Launch Round',
+      idea_followup_err_empty: 'Please enter your defense arguments or plan details.',
       idea_feedback_title: 'Was this evaluation helpful?',
       idea_btn_feedback_submit: 'Send Feedback',
       idea_disclaimer: 'Disclaimer: This report is an AI-generated decision-support tool, not certified legal or financial advice.',
@@ -1228,6 +1254,32 @@
       idea_btn_mvp: 'خطة MVP لـ 7 أيام',
       idea_followup_prompt_placeholder: 'اكتب حجتك الدفاعية، أو اتجاه الـ Pivot المقترح، أو سؤالك المحدد للجنة...',
       idea_btn_start_followup: 'بدء جولة المتابعة',
+      idea_followup_modal_title: 'جولة المتابعة ودفاع الفكرة',
+      idea_followup_modal_subtitle: 'قدّم حججاً وأدلة وزوايا استراتيجية جديدة لتفنيد شكوك وتحديات أعضاء اللجنة.',
+      idea_followup_action_label: 'هدف الجولة ونوع التحرك',
+      idea_followup_chips_label: 'زوايا الدفاع والميزات الاستراتيجية (انقر للتحديد)',
+      idea_chip_pricing: '💰 تسعير وميزة تكلفة أقل',
+      idea_chip_niche: '🎯 استهداف شريحة نيتش محددة',
+      idea_chip_distribution: '🤝 شراكات وقنوات توزيع جاهزة',
+      idea_chip_guarantee: '🛡️ ضمان استرجاع أو تجربة مجانية',
+      idea_chip_speed: '⚡ تبسيط الحل وحذف التعقيد',
+      idea_chip_team: '👥 فريق متخصص وخبرة ميدانية',
+      idea_chip_offline: '📍 موقع فعلي وتواجد محلي قوي',
+      idea_chip_inventory: '📦 نموذج أولي جاهز أو بضاعة متوفرة',
+      idea_followup_target_critic_label: 'الناقد المستهدف بالرد الأساسي',
+      idea_critic_opt_all: 'كامل أعضاء اللجنة',
+      idea_critic_opt_customer: 'العميل البارد (تردد الشراء وتكلفة التبديل)',
+      idea_critic_opt_auditor: 'المدقق المالي الصارم (الإيرادات والجدوى)',
+      idea_critic_opt_competitor: 'المنافس الشرس (التميز وحواجز الدخول)',
+      idea_critic_opt_ops: 'خبير العمليات والجدوى التشغيلية',
+      idea_followup_review_mode_label: 'أسلوب مراجعة اللجنة',
+      idea_mode_opt_balanced: 'بناء وعملي موجه للحلول',
+      idea_mode_opt_strict: 'نقد صارم واختبار ضغط متشدد',
+      idea_followup_defense_label: 'حججك الدفاعية والبيانات والتعديلات المقترحة',
+      idea_followup_evidence_label: 'أدلة إضافية، أرقام، أو اسم منافس محدد (اختياري)',
+      idea_followup_evidence_placeholder: 'مثال: جمع 150 طلباً مسبقاً، رابط بديل في السوق، اتفاق توريد محلي...',
+      idea_followup_submit_btn: 'إرسال وبدء الجولة التفاعلية',
+      idea_followup_err_empty: 'يرجى كتابة حجتك الدفاعية أو تفاصيل خطتك قبل الإرسال.',
       idea_feedback_title: 'هل كان هذا التقييم مفيداً لك؟',
       idea_btn_feedback_submit: 'إرسال التقييم',
       idea_disclaimer: 'إخلاء مسؤولية: هذا التقرير أداة استرشادية للمساعدة في القرار وليس استشارة قانونية أو مالية معتمدة.',
@@ -5799,23 +5851,148 @@
     }
   }
 
-  async function handleFollowUpClick(type) {
+  let activeFollowupType = 'DEFEND';
+
+  function openIdeaFollowupModal(type = 'DEFEND') {
+    const modal = document.getElementById('ideaFollowupModal');
+    if (!modal) return;
+
     const ideaId = currentIdea?._id || currentIdea?.id;
     if (!ideaId) return;
-    const roundsRem = currentIdea.followupRoundsRemaining ?? currentIdea.followUpRoundsRemaining ?? Math.max(0, 3 - (currentIdea.followupRoundsUsed || 0));
-    if (roundsRem <= 0) {
+
+    const isSuperadmin = Boolean(ideaUsageData?.isSuperadmin || currentIdea?.isSuperadmin);
+    const roundsRem = isSuperadmin ? '∞' : (currentIdea.followupRoundsRemaining ?? currentIdea.followUpRoundsRemaining ?? Math.max(0, 3 - (currentIdea.followupRoundsUsed || 0)));
+    if (!isSuperadmin && Number(roundsRem) <= 0) {
       alert(currentLanguage === 'ar' ? 'لقد استنفدت جميع جولات المتابعة المتاحة لهذه الفكرة (3 جولات).' : 'All 3 follow-up rounds used for this idea.');
       return;
     }
 
-    const promptText = window.prompt(ideaT('idea_msg_followup_prompt'));
-    if (!promptText || !promptText.trim()) return;
+    activeFollowupType = type || 'DEFEND';
 
-    const clickedBtn = document.querySelector(`.idea-followup-btn[data-type="${type}"]`);
-    const originalText = clickedBtn ? clickedBtn.innerHTML : '';
-    if (clickedBtn) {
-      clickedBtn.disabled = true;
-      clickedBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    // Update Round Badge
+    const roundBadge = document.getElementById('ideaFollowupRoundBadge');
+    if (roundBadge) {
+      const nextRound = (currentIdea.followupRoundsUsed || 0) + 2;
+      roundBadge.textContent = currentLanguage === 'ar' ? `الجولة ${nextRound}` : `Round ${nextRound}`;
+    }
+
+    // Update Rounds Left text
+    const roundsLeftEl = document.getElementById('ideaFollowupModalRoundsLeft');
+    if (roundsLeftEl) {
+      roundsLeftEl.textContent = roundsRem;
+    }
+
+    // Update active button in type grid
+    updateFollowupTypeButtons(activeFollowupType);
+
+    // Reset chips to inactive
+    document.querySelectorAll('.idea-strategy-chip').forEach(chip => {
+      chip.classList.remove('active');
+      chip.style.background = 'rgba(255,255,255,0.05)';
+      chip.style.borderColor = 'var(--glass-border)';
+      chip.style.color = '#e2e8f0';
+      chip.style.fontWeight = 'normal';
+    });
+
+    // Reset prompt and inputs
+    const promptInput = document.getElementById('ideaFollowupPromptInput');
+    const evidenceInput = document.getElementById('ideaFollowupEvidenceInput');
+    const charCount = document.getElementById('ideaFollowupCharCount');
+    const criticSelect = document.getElementById('ideaFollowupTargetCritic');
+    const modeSelect = document.getElementById('ideaFollowupReviewMode');
+
+    if (promptInput) promptInput.value = '';
+    if (evidenceInput) evidenceInput.value = '';
+    if (charCount) charCount.textContent = '0';
+    if (criticSelect) criticSelect.value = 'ALL';
+    if (modeSelect) modeSelect.value = 'BALANCED';
+
+    modal.classList.add('active');
+    if (promptInput) setTimeout(() => promptInput.focus(), 100);
+  }
+
+  function closeIdeaFollowupModal() {
+    const modal = document.getElementById('ideaFollowupModal');
+    if (modal) modal.classList.remove('active');
+  }
+
+  function updateFollowupTypeButtons(selectedType) {
+    activeFollowupType = selectedType;
+    document.querySelectorAll('.idea-fup-type-btn').forEach(btn => {
+      const btnType = btn.getAttribute('data-type');
+      if (btnType === selectedType) {
+        btn.classList.add('active');
+        btn.style.background = 'rgba(124, 58, 237, 0.25)';
+        btn.style.borderColor = 'var(--purple-light)';
+        btn.style.color = '#fff';
+      } else {
+        btn.classList.remove('active');
+        btn.style.background = '';
+        btn.style.borderColor = '';
+        btn.style.color = '';
+      }
+    });
+
+    const iconEl = document.getElementById('ideaFollowupModalIcon');
+    if (iconEl) {
+      const iconMap = {
+        DEFEND: 'fa-shield-halved',
+        PIVOT: 'fa-shuffle',
+        VALIDATION_PLAN: 'fa-vial',
+        VOTE: 'fa-check-to-slot',
+        COMPARE: 'fa-code-compare',
+        MVP: 'fa-rocket'
+      };
+      iconEl.className = `fas ${iconMap[selectedType] || 'fa-shield-halved'}`;
+    }
+  }
+
+  async function submitFollowupModal() {
+    const ideaId = currentIdea?._id || currentIdea?.id;
+    if (!ideaId) return;
+
+    const promptInput = document.getElementById('ideaFollowupPromptInput');
+    const evidenceInput = document.getElementById('ideaFollowupEvidenceInput');
+    const criticSelect = document.getElementById('ideaFollowupTargetCritic');
+    const modeSelect = document.getElementById('ideaFollowupReviewMode');
+    const submitBtn = document.getElementById('ideaFollowupSubmitBtn');
+
+    const mainDefense = promptInput ? promptInput.value.trim() : '';
+    const selectedChips = Array.from(document.querySelectorAll('.idea-strategy-chip.active')).map(c => c.textContent.trim());
+
+    if (!mainDefense && selectedChips.length === 0) {
+      alert(ideaT('idea_followup_err_empty'));
+      if (promptInput) promptInput.focus();
+      return;
+    }
+
+    const criticLabel = criticSelect ? criticSelect.options[criticSelect.selectedIndex].text : '';
+    const modeLabel = modeSelect ? modeSelect.options[modeSelect.selectedIndex].text : '';
+    const extraEvidence = evidenceInput ? evidenceInput.value.trim() : '';
+
+    const parts = [];
+    if (selectedChips.length > 0) {
+      parts.push(`[Strategic Angles / ميزات استراتيجية]: ${selectedChips.join(' | ')}`);
+    }
+    if (criticSelect && criticSelect.value !== 'ALL') {
+      parts.push(`[Target Critic Focus / الناقد المستهدف]: ${criticLabel}`);
+    }
+    if (modeLabel) {
+      parts.push(`[Review Tone / أسلوب المراجعة]: ${modeLabel}`);
+    }
+    if (extraEvidence) {
+      parts.push(`[Extra Evidence / أدلة وأرقام إضافية]: ${extraEvidence}`);
+    }
+    if (mainDefense) {
+      parts.push(`[Founder Defense & Details / حجج وتفاصيل المؤسس]:\n${mainDefense}`);
+    }
+
+    const combinedPrompt = parts.join('\n\n');
+
+    const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-inline-end:6px;"></i> ' + (currentLanguage === 'ar' ? 'جارٍ الإطلاق...' : 'Launching...');
     }
 
     try {
@@ -5824,38 +6001,42 @@
         method: 'POST',
         headers: { 'Idempotency-Key': idempotencyKey },
         body: JSON.stringify({
-          type,
-          followupType: type,
-          userPrompt: promptText.trim(),
-          followupPrompt: promptText.trim(),
+          type: activeFollowupType,
+          followupType: activeFollowupType,
+          userPrompt: combinedPrompt,
+          followupPrompt: combinedPrompt,
           idempotencyKey
         })
       });
 
       const runId = res?.runId || res?.data?.runId;
       if (res && res.success && runId) {
+        closeIdeaFollowupModal();
         currentIdeaRunId = runId;
         showIdeaView('session');
         renderCouncilAgentsGrid([]);
         startIdeaPolling(currentIdeaRunId);
         loadIdeaCouncilUsage();
-        alert(ideaT('idea_msg_followup_success'));
       } else if (res && res.success && res.data) {
+        closeIdeaFollowupModal();
         currentIdea = res.data;
         renderIdeaReport(currentIdea);
-        alert(ideaT('idea_msg_followup_success'));
       } else {
-        alert(res?.error || (currentLanguage === 'ar' ? 'فشل تنفيذ جولة المتابعة.' : 'Failed to run follow-up round.'));
+        alert(res?.error || res?.message || (currentLanguage === 'ar' ? 'فشل تنفيذ جولة المتابعة.' : 'Failed to run follow-up round.'));
       }
     } catch (err) {
-      console.error('Follow-up error:', err);
+      console.error('Follow-up submit error:', err);
       alert(currentLanguage === 'ar' ? 'حدث خطأ أثناء تنفيذ جولة المتابعة.' : 'Error during follow-up round.');
     } finally {
-      if (clickedBtn) {
-        clickedBtn.disabled = false;
-        clickedBtn.innerHTML = originalText;
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHtml;
       }
     }
+  }
+
+  function handleFollowUpClick(type) {
+    openIdeaFollowupModal(type);
   }
 
   async function exportIdeaReport(format) {
@@ -6022,6 +6203,54 @@
         handleFollowUpClick(type);
       });
     });
+
+    document.querySelectorAll('.idea-followup-modal-close').forEach(btn => {
+      btn.addEventListener('click', closeIdeaFollowupModal);
+    });
+
+    const followupModalEl = document.getElementById('ideaFollowupModal');
+    if (followupModalEl) {
+      followupModalEl.addEventListener('click', (e) => {
+        if (e.target === followupModalEl) closeIdeaFollowupModal();
+      });
+    }
+
+    document.querySelectorAll('.idea-strategy-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        chip.classList.toggle('active');
+        if (chip.classList.contains('active')) {
+          chip.style.background = 'rgba(6, 182, 212, 0.2)';
+          chip.style.borderColor = 'var(--cyan)';
+          chip.style.color = 'var(--cyan)';
+          chip.style.fontWeight = '600';
+        } else {
+          chip.style.background = 'rgba(255, 255, 255, 0.05)';
+          chip.style.borderColor = 'var(--glass-border)';
+          chip.style.color = '#e2e8f0';
+          chip.style.fontWeight = 'normal';
+        }
+      });
+    });
+
+    document.querySelectorAll('.idea-fup-type-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const btnType = btn.getAttribute('data-type');
+        updateFollowupTypeButtons(btnType);
+      });
+    });
+
+    const followupPromptInput = document.getElementById('ideaFollowupPromptInput');
+    const followupCharCount = document.getElementById('ideaFollowupCharCount');
+    if (followupPromptInput && followupCharCount) {
+      followupPromptInput.addEventListener('input', () => {
+        followupCharCount.textContent = followupPromptInput.value.length;
+      });
+    }
+
+    const followupSubmitBtn = document.getElementById('ideaFollowupSubmitBtn');
+    if (followupSubmitBtn) {
+      followupSubmitBtn.addEventListener('click', submitFollowupModal);
+    }
   }
 
   // Initialize and Boot System
