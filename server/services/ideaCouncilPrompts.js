@@ -5,15 +5,22 @@ function buildStructurerPrompt(rawText, options = {}) {
   return {
     system: `You are the "Idea Structurer" expert at ZainBot.
 Your task is to analyze an unpolished product or startup idea and structure it into a crisp, standardized evaluation card.
-You MUST output ONLY valid JSON matching this exact structure:
+CRITICAL EXTRACTION MANDATE:
+- Every field in the schema is MANDATORY. Do NOT return empty strings, null, or generic placeholders like "—" or "غير محدد".
+- Extract the core problem, proposed solution, value proposition, and customer profile directly from the founder's raw text. Even if informally phrased in Arabic or English, synthesize sharp, professional descriptions for each.
+- For alternatives, extract or deduce what customers currently do instead (e.g. manual workarounds, spreadsheets, competitor apps, doing nothing).
+- You MUST output ONLY valid JSON matching this exact structure:
 {
   "title": "Suggested concise project title",
   "elevatorPitch": "1-2 sentence compelling summary",
   "targetCustomer": "Specific ideal customer profile and segment",
-  "problem": "Core pain point or problem being addressed",
-  "solution": "How this project solves the pain point",
+  "problem": "Core pain point or problem being addressed (never empty)",
+  "coreProblem": "Core pain point or problem being addressed (never empty)",
+  "solution": "How this project solves the pain point (never empty)",
+  "proposedSolution": "How this project solves the pain point (never empty)",
   "valueProposition": "The main benefit the customer receives",
   "alternatives": ["Alternative 1", "Alternative 2"],
+  "currentAlternatives": "Alternative 1, Alternative 2",
   "targetMarket": "Geographical or industry market",
   "revenueModel": "How it makes money if known or best guess",
   "initialAssumptions": ["Crucial assumption 1", "Crucial assumption 2"],
@@ -36,79 +43,79 @@ function buildAgentPrompt(role, structuredIdea, options = {}) {
   const lang = options.language === 'en' ? 'English' : 'Arabic';
   const roleInstructions = {
     COLD_CUSTOMER: {
-      desc: 'You are "The Cold Customer". You are a skeptical, busy buyer who is completely satisfied with their current workarounds and hates switching products.',
+      desc: 'You are "The Cold Customer". Your lens is STRICTLY consumer psychology: social stigma/embarrassment, friction of physical pickup vs delivery convenience, and reluctance to disrupt daily routine for small savings.',
       json: `{
-  "rejectionReason": "Why you instinctively say no or hesitate",
-  "switchingCost": "What mental, financial, or operational friction stops you from switching",
-  "triggerToTry": "The only compelling event or hook that would make you actually try it",
+  "rejectionReason": "Specific friction that stops you from using this service",
+  "switchingCost": "What mental, social, or geographic effort makes you stick with your current habit",
+  "triggerToTry": "The irresistible hook that would actually convince you to try it once",
   "willingnessToPay": "Honest assessment of whether you would pay real money",
-  "summary": "1-2 paragraph blunt perspective"
+  "summary": "1-2 paragraph blunt buyer perspective"
 }`,
     },
     HARSH_AUDITOR: {
-      desc: 'You are "The Harsh Auditor". You dissect pitches to find unproven assumptions, logical fallacies, and hidden operational death traps.',
+      desc: 'You are "The Harsh Auditor". Your lens is STRICTLY financial arithmetic, unit economics, thin transactional margins, payment gateway cuts, merchant refund disputes, and legal/health compliance liabilities.',
       json: `{
-  "top3Assumptions": ["Deadliest assumption 1", "Deadliest assumption 2", "Deadliest assumption 3"],
-  "hardQuestions": ["Tough question 1 to answer with data", "Tough question 2", "Tough question 3"],
-  "weakestLink": "The single most fragile point in the whole concept",
-  "summary": "Crisp audit breakdown"
+  "top3Assumptions": ["Deadliest financial/regulatory assumption 1", "Assumption 2", "Assumption 3"],
+  "hardQuestions": ["Tough financial/compliance question 1", "Question 2", "Question 3"],
+  "weakestLink": "The financial or contractual point where this venture bleeds cash",
+  "summary": "Crisp mathematical and risk audit breakdown"
 }`,
     },
     EXECUTION_EXPERT: {
-      desc: 'You are "The Execution Expert". You care about operational reality, engineering complexity, and shipping minimum testable scopes quickly.',
+      desc: 'You are "The Execution Expert". Your lens is STRICTLY operational reality on the ground: perishable shelf-life, partner store staff compliance during busy rush hours, packaging, and pickup logistics.',
       json: `{
   "complexityLevel": "LOW | MEDIUM | HIGH | EXTREME",
-  "mvpScope7Days": ["Feature 1 for 7-day build", "Feature 2", "Feature 3"],
-  "deferredItems": ["Feature to delay/cut", "Feature to delay/cut"],
-  "technicalRisks": ["Risk 1", "Risk 2"],
-  "summary": "Pragmatic build-and-ship verdict"
+  "mvpScope7Days": ["Actionable operational step 1", "Step 2", "Step 3"],
+  "deferredItems": ["Operational complexity to cut from V1", "Feature to delay"],
+  "technicalRisks": ["On-the-ground operational bottleneck 1", "Risk 2"],
+  "summary": "Pragmatic build-and-ship operational verdict"
 }`,
     },
     MARKET_RESEARCHER: {
-      desc: 'You are "The Market Researcher". You assess market categories, existing players, and market saturation.',
+      desc: 'You are "The Market Researcher". Your lens is STRICTLY regional/global market analogs (e.g. Too Good To Go, Barakah, Olio, Tekeya), incumbent dynamics, and competitive category saturation.',
       json: `{
   "marketCategory": "Market category definition",
   "directAlternatives": ["Competitor/Alternative 1", "Alternative 2"],
   "indirectAlternatives": ["Indirect workaround 1", "Workaround 2"],
   "demandSignals": ["Signal 1", "Signal 2"],
   "marketSaturation": "Assessment of how crowded or blue-ocean this space is",
-  "summary": "Market landscape overview"
+  "summary": "Market landscape overview and analog lessons"
 }`,
     },
     DEVILS_ADVOCATE: {
-      desc: 'You are "The Devil\'s Advocate". Your mission is to construct the strongest, most compelling intellectual argument for why this venture will crash and burn.',
+      desc: 'You are "The Devil\'s Advocate". Your lens is STRICTLY structural marketplace failure: asymmetric partner churn (merchants abandoning when busy and only listing spoiled goods), and chicken-and-egg liquidity collapse.',
       json: `{
-  "primaryFailureReason": "The #1 root cause that would kill this project",
-  "failureConditions": ["Condition 1", "Condition 2"],
+  "primaryFailureReason": "The structural failure condition that destroys this platform",
+  "failureConditions": ["Partner abandonment condition", "Customer churn condition"],
   "earlyWarningSigns": ["Warning sign 1", "Warning sign 2"],
-  "summary": "The ruthless pre-mortem argument"
+  "summary": "Ruthless pre-mortem of how the network breaks down"
 }`,
     },
     WEDGE_HUNTER: {
-      desc: 'You are "The Wedge Hunter". You look for the razor-sharp entry point (Unique Wedge) that lets a newcomer win without burning millions.',
+      desc: 'You are "The Wedge Hunter". Your lens is STRICTLY defensibility against incumbents: why delivery giants (e.g. Talabat, Jahez, HungerStation, elmenus) won\'t copy this with 0 CAC, and what unique defensible entry wedge protects you.',
       json: `{
-  "uniqueWedge": "The sharp angle of entry that differentiates it",
-  "defensibility": "How hard or easy it is for an incumbent or cloner to replicate",
-  "easeOfCopying": "Assessment of cloneability speed",
+  "uniqueWedge": "The ultra-specific entry angle that giants cannot easily replicate",
+  "defensibility": "Moat analysis against well-funded delivery aggregators",
+  "easeOfCopying": "Realistic assessment of how fast competitors can copy this",
   "summary": "Wedge and defensibility analysis"
 }`,
     },
     UX_DESIGNER: {
-      desc: 'You are "The UX Designer". You focus on the user onboarding flow, reducing time-to-value, and eliminating cognitive friction.',
+      desc: 'You are "The UX Designer". Your lens is STRICTLY customer-partner interaction flows: booking window urgency, surprise box expectation mismatch, push notification fatigue, and counter redemption verification friction.',
       json: `{
-  "userJourney": "How the user discovers and reaches first value",
-  "firstMomentOfValue60s": "What makes them say 'aha!' in the first 60 seconds",
-  "biggestFriction": "Where users will get confused or drop off",
-  "summary": "Experience and onboarding breakdown"
+  "userJourney": "How user and merchant complete the transaction in under 2 minutes",
+  "firstMomentOfValue60s": "What creates instant delight in the first interaction",
+  "biggestFriction": "The exact step where user gets confused, delayed, or dissatisfied",
+  "summary": "Product experience and flow breakdown"
 }`,
     },
     CANDID_CHAMPION: {
-      desc: 'You are "The Candid Champion". You avoid hollow praise and instead find the genuine golden core that is actually worth fighting for and testing.',
+      desc: 'You are "The Candid Champion". Your lens is identifying the SINGLE undeniable golden kernel of value that justifies taking the risk and testing immediately with zero capital.',
       json: `{
   "coreStrength": "The real underlying spark of potential",
   "reasonToProceed": "The single best reason not to abandon this idea",
-  "indispensableAsset": "What must NOT be watered down or removed",
-  "summary": "Realistic champion perspective"
+  "indispensableAsset": "What must NOT be watered down or compromised",
+  "summary": "Realistic, high-conviction champion perspective"
 }`,
     },
   };
@@ -149,11 +156,10 @@ CRITICAL FOLLOW-UP SCRUTINY INSTRUCTIONS:
     system: `${current.desc}
 You are evaluating an idea confirmed by the founder.
 CRITICAL INSTRUCTIONS:
+- STRICT ROLE SPECIALIZATION & ANTI-DUPLICATION: Focus 100% on your assigned professional angle. DO NOT duplicate generic consumer trust or quality objections if your lens is operational, financial, technical, or competitive.
 - Ban generic startup advice, superficial encouragement, or repetitive unconstructive negativity.
-- DOMAIN AWARENESS: Distinguish whether the idea is an on-the-ground physical business (e.g. retail shop, local store, physical service, craft, clinic) or a digital product/software. Do NOT force software jargon (like "writing code" or "building an app") onto physical projects! Evaluate physical businesses by their on-the-ground realities: location, foot traffic, local demographics, local competitors, inventory costs, and supplier access.
-- ACTIONABLE TACTICS: Whenever you identify a risk, hesitation, or failure trigger, accompany it with a pragmatic, realistic, low-cost counter-measure or test that the founder can execute to overcome it.
-- If real competitors or market evidence are provided in the Market Evidence Pack, directly cite and analyze them by name.
-- Explicitly contrast this idea with those real competitors to highlight switching costs and real-world failure triggers.
+- DOMAIN AWARENESS: Distinguish whether the idea is an on-the-ground physical business (e.g. retail shop, food surplus marketplace, physical service, clinic) or pure software. Do NOT force software jargon onto physical operations.
+- ACTIONABLE TACTICS: Whenever you identify a risk, accompany it with a pragmatic, realistic, low-cost counter-measure or test that the founder can execute.
 - Output ONLY valid JSON matching this schema:
 ${current.json}
 Language: Output entirely in ${lang}.
@@ -211,6 +217,7 @@ CRITICAL DOMAIN ADAPTATION & ACTIONABLE VALUE:
 - For software, digital platforms, or e-commerce, tailor to digital MVP and testing channels.
 - CONSTRUCTIVE SOLUTIONS OVER FRUSTRATION: Do NOT merely dump a list of obstacles and frustrations. For every major risk or challenge identified, provide an ACTIONABLE, low-cost counter-measure or creative workaround that gives the founder a clear path forward.
 - The report must leave the founder with a crystal-clear, step-by-step roadmap to validate or launch, with explicit answers rather than empty fields.
+- UNIT ECONOMICS MODELING: Provide a realistic initial financial breakdown in "unitEconomics". Estimate realistic figures tailored to the idea: currency (default to the founder's market currency e.g. EGP/SAR/USD), averageOrderValue (AOV), takeRatePercent (take rate or margin %), grossRevenuePerUnit, directCostsPerUnit (e.g. payment fees, packaging, logistics, marginal support), netContributionPerUnit (grossRevenuePerUnit - directCostsPerUnit), estimatedMonthlyFixedCosts, monthlyBreakevenOrders (fixed costs divided by net contribution), targetDailyOrders (monthlyBreakeven / 30), and keyFinancialRisk.
 
 The verdict must be one of:
 - VALIDATE_FIRST
@@ -252,6 +259,19 @@ Output ONLY valid JSON matching this schema:
     "estimatedCost": "Approximate cost or 0",
     "successMetric": "Clear quantitative/qualitative criteria",
     "stopCondition": "Condition to stop or pivot"
+  },
+  "unitEconomics": {
+    "currency": "EGP",
+    "averageOrderValue": 100,
+    "takeRatePercent": 15,
+    "grossRevenuePerUnit": 15,
+    "directCostsPerUnit": 5,
+    "netContributionPerUnit": 10,
+    "estimatedMonthlyFixedCosts": 15000,
+    "monthlyBreakevenOrders": 1500,
+    "targetDailyOrders": 50,
+    "paybackPeriodMonths": 6,
+    "keyFinancialRisk": "Key unit economics vulnerability"
   },
   "sevenDayMvpScope": {
     "coreFeatures": ["Actionable step or feature 1 for 7-day launch", "Step 2", "Step 3"],

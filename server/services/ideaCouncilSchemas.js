@@ -12,17 +12,20 @@ const WORKFLOW_STATE_ENUM = ['OPEN', 'VALIDATING', 'VERIFIED', 'DISMISSED'];
 const IDEA_STRUCTURER_SCHEMA = Joi.object({
   title: Joi.string().required().min(3).max(150),
   elevatorPitch: Joi.string().required().min(10).max(500),
-  targetCustomer: Joi.string().required().min(5).max(300),
-  problem: Joi.string().required().min(10).max(1000),
-  solution: Joi.string().required().min(10).max(1000),
-  valueProposition: Joi.string().required().min(10).max(500),
-  alternatives: Joi.array().items(Joi.string()).default([]),
+  targetCustomer: Joi.string().required().min(3).max(300),
+  problem: Joi.string().allow('', null).default(''),
+  coreProblem: Joi.string().allow('', null).default(''),
+  solution: Joi.string().allow('', null).default(''),
+  proposedSolution: Joi.string().allow('', null).default(''),
+  valueProposition: Joi.string().required().min(5).max(500),
+  alternatives: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()).default([]),
+  currentAlternatives: Joi.string().allow('', null).default(''),
   targetMarket: Joi.string().allow('', null).default(null),
   revenueModel: Joi.string().allow('', null).default(null),
   initialAssumptions: Joi.array().items(Joi.string()).default([]),
   missingInformation: Joi.array().items(Joi.string()).default([]),
   coreEvaluationQuestion: Joi.string().required().min(5).max(300),
-});
+}).unknown(true);
 
 const COLD_CUSTOMER_SCHEMA = Joi.object({
   rejectionReason: Joi.string().required(),
@@ -110,6 +113,20 @@ const TRUTH_BOARD_ITEM_SCHEMA = Joi.object({
   userNotes: Joi.string().allow('', null).default(''),
 });
 
+const UNIT_ECONOMICS_SCHEMA = Joi.object({
+  currency: Joi.string().allow('', null).default('EGP'),
+  averageOrderValue: Joi.number().allow(null).default(0),
+  takeRatePercent: Joi.number().allow(null).default(15),
+  grossRevenuePerUnit: Joi.number().allow(null).default(0),
+  directCostsPerUnit: Joi.number().allow(null).default(0),
+  netContributionPerUnit: Joi.number().allow(null).default(0),
+  estimatedMonthlyFixedCosts: Joi.number().allow(null).default(0),
+  monthlyBreakevenOrders: Joi.number().allow(null).default(0),
+  targetDailyOrders: Joi.number().allow(null).default(0),
+  paybackPeriodMonths: Joi.number().allow(null).default(null),
+  keyFinancialRisk: Joi.string().allow('', null).default(''),
+}).unknown(true).default(null);
+
 const CHAIRPERSON_SYNTHESIS_SCHEMA = Joi.object({
   executiveSummary: Joi.string().required(),
   verdict: Joi.string().valid(...VERDICT_ENUM).required(),
@@ -124,6 +141,7 @@ const CHAIRPERSON_SYNTHESIS_SCHEMA = Joi.object({
   killOrDeferList: Joi.array().items(Joi.string()).default([]),
   cutListForV1: Joi.array().items(Joi.string()).default([]),
   validationPlan: VALIDATION_PLAN_SCHEMA.required(),
+  unitEconomics: UNIT_ECONOMICS_SCHEMA,
   sevenDayMvpScope: Joi.alternatives().try(
     Joi.array().items(Joi.string()),
     Joi.object({
@@ -163,6 +181,25 @@ function validateAgentOutput(role, data) {
   if (error) {
     return { valid: false, error: error.message, value: null };
   }
+
+  // Normalize structurer output field aliases
+  if (role === 'STRUCTURER' && value) {
+    value.problem = value.problem || value.coreProblem || '';
+    value.coreProblem = value.coreProblem || value.problem || '';
+    value.solution = value.solution || value.proposedSolution || '';
+    value.proposedSolution = value.proposedSolution || value.solution || '';
+    if (!value.alternatives && value.currentAlternatives) {
+      value.alternatives = typeof value.currentAlternatives === 'string'
+        ? value.currentAlternatives.split(',').map((s) => s.trim()).filter(Boolean)
+        : value.currentAlternatives;
+    }
+    if (!value.currentAlternatives && value.alternatives) {
+      value.currentAlternatives = Array.isArray(value.alternatives)
+        ? value.alternatives.join(', ')
+        : String(value.alternatives);
+    }
+  }
+
   return { valid: true, error: null, value };
 }
 

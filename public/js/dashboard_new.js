@@ -593,6 +593,27 @@
       idea_btn_export_md: 'Export Markdown',
       idea_btn_export_pdf: 'Print / PDF',
       idea_rounds_history_title: 'Evaluation History:',
+      idea_btn_compare_rounds: 'Compare Rounds',
+      idea_unit_econ_title: 'Interactive Unit Economics Calculator',
+      idea_unit_econ_subtitle: 'Simulate margins, order volume, and breakeven thresholds. Adjust sliders to test stress levels.',
+      idea_unit_econ_aov: 'Average Order Value (AOV):',
+      idea_unit_econ_margin: 'Take Rate / Margin %:',
+      idea_unit_econ_direct_costs: 'Direct Per-Order Costs:',
+      idea_unit_econ_fixed_costs: 'Monthly Fixed Costs:',
+      idea_unit_econ_net_contribution: 'Net Contribution / Order',
+      idea_unit_econ_breakeven_orders: 'Monthly Breakeven Orders',
+      idea_unit_econ_daily_orders: 'Required Daily Orders',
+      idea_unit_econ_risk_none: 'Healthy margin profile at current parameters.',
+      idea_compare_modal_title: 'Evaluation Rounds Comparison (Round Delta)',
+      idea_compare_modal_subtitle: "Track how the council's verdict, assumptions, and validation plan evolved after your defense.",
+      idea_compare_round_a: 'Base Round:',
+      idea_compare_round_b: 'Comparison Round:',
+      idea_compare_verdict: 'Executive Verdict',
+      idea_compare_assumptions: 'Assumptions Evolution',
+      idea_compare_question: 'Critical Question to Settle',
+      idea_compare_validation: 'Validation Plan Progression',
+      idea_compare_founder_defense: 'Founder Defense & Arguments',
+      idea_compare_no_rounds: 'Need at least 2 evaluation rounds to compare.',
       idea_round_prefix: 'Round',
       idea_round_initial: 'Round 1 (Initial)',
       idea_round_viewing: 'Viewing Round',
@@ -1240,6 +1261,27 @@
       idea_btn_export_md: 'تصدير Markdown',
       idea_btn_export_pdf: 'طباعة أو PDF',
       idea_rounds_history_title: 'سجل جولات التقييم:',
+      idea_btn_compare_rounds: 'مقارنة الجولات',
+      idea_unit_econ_title: 'حاسبة اقتصاديات الوحدة التفاعلية',
+      idea_unit_econ_subtitle: 'محاكاة الهامش وحجم الطلبات ونقاط التعادل. حرّك المؤشرات لاختبار صلابة النموذج المالي.',
+      idea_unit_econ_aov: 'متوسط قيمة الطلب (AOV):',
+      idea_unit_econ_margin: 'نسبة العمولة / هامش الربح:',
+      idea_unit_econ_direct_costs: 'التكاليف المباشرة لكل طلب:',
+      idea_unit_econ_fixed_costs: 'المصاريف التشغيلية الثابتة شهرياً:',
+      idea_unit_econ_net_contribution: 'صافي المساهمة لكل طلب',
+      idea_unit_econ_breakeven_orders: 'طلبات التعادل الشهرية',
+      idea_unit_econ_daily_orders: 'الطلبات اليومية المطلوبة',
+      idea_unit_econ_risk_none: 'هيكل هوامش صحي عند المؤشرات الحالية.',
+      idea_compare_modal_title: 'مقارنة جولات التقييم (فارق الجولات)',
+      idea_compare_modal_subtitle: 'تتبع كيف تطور قرار اللجنة وافتراضاتها وخطة التحقق بعد دفاعك ومدخلاتك.',
+      idea_compare_round_a: 'الجولة الأساسية:',
+      idea_compare_round_b: 'جولة المقارنة:',
+      idea_compare_verdict: 'القرار التنفيذي',
+      idea_compare_assumptions: 'تطور الافتراضات',
+      idea_compare_question: 'السؤال المحوري للحسم',
+      idea_compare_validation: 'تدرج خطة التحقق',
+      idea_compare_founder_defense: 'دفاع وحجج المؤسس',
+      idea_compare_no_rounds: 'يلزم توفر جولتي تقييم على الأقل للمقارنة.',
       idea_round_prefix: 'الجولة',
       idea_round_initial: 'الجولة 1 (التقييم الأولي)',
       idea_round_viewing: 'يتم الآن عرض نتائج تقييم الجولة',
@@ -5018,16 +5060,21 @@
   }
 
   function populateStructuredCardForm(card) {
+    if (!card) return;
+    const alternativesVal = Array.isArray(card.currentAlternatives || card.alternatives)
+      ? (card.currentAlternatives || card.alternatives).join(', ')
+      : (card.currentAlternatives || card.alternatives || '');
+
     const flds = {
       ideaCardFldTitle: card.title || '',
-      ideaCardFldPitch: card.elevatorPitch || '',
+      ideaCardFldPitch: card.elevatorPitch || card.valueProposition || '',
       ideaCardFldCustomer: card.targetCustomer || '',
-      ideaCardFldRevenue: card.revenueModel || '',
-      ideaCardFldProblem: card.coreProblem || '',
-      ideaCardFldSolution: card.proposedSolution || '',
-      ideaCardFldValue: card.valueProposition || '',
-      ideaCardFldAlternatives: card.currentAlternatives || '',
-      ideaCardFldCoreQuestion: card.coreEvaluationQuestion || ''
+      ideaCardFldRevenue: card.revenueModel || card.businessModel || '',
+      ideaCardFldProblem: card.coreProblem || card.problem || '',
+      ideaCardFldSolution: card.proposedSolution || card.solution || '',
+      ideaCardFldValue: card.valueProposition || card.elevatorPitch || '',
+      ideaCardFldAlternatives: alternativesVal,
+      ideaCardFldCoreQuestion: card.coreEvaluationQuestion || card.criticalQuestion || card.criticalQuestionToSettle || ''
     };
     Object.keys(flds).forEach(id => {
       const el = document.getElementById(id);
@@ -5169,16 +5216,31 @@
     const ideaId = currentIdea?._id || currentIdea?.id;
     if (!ideaId) return;
 
+    const titleVal = document.getElementById('ideaCardFldTitle')?.value.trim() || '';
+    const pitchVal = document.getElementById('ideaCardFldPitch')?.value.trim() || '';
+    const customerVal = document.getElementById('ideaCardFldCustomer')?.value.trim() || '';
+    const revenueVal = document.getElementById('ideaCardFldRevenue')?.value.trim() || '';
+    const problemVal = document.getElementById('ideaCardFldProblem')?.value.trim() || '';
+    const solutionVal = document.getElementById('ideaCardFldSolution')?.value.trim() || '';
+    const valueVal = document.getElementById('ideaCardFldValue')?.value.trim() || '';
+    const altVal = document.getElementById('ideaCardFldAlternatives')?.value.trim() || '';
+    const questionVal = document.getElementById('ideaCardFldCoreQuestion')?.value.trim() || '';
+
     const card = {
-      title: document.getElementById('ideaCardFldTitle')?.value.trim() || '',
-      elevatorPitch: document.getElementById('ideaCardFldPitch')?.value.trim() || '',
-      targetCustomer: document.getElementById('ideaCardFldCustomer')?.value.trim() || '',
-      revenueModel: document.getElementById('ideaCardFldRevenue')?.value.trim() || '',
-      coreProblem: document.getElementById('ideaCardFldProblem')?.value.trim() || '',
-      proposedSolution: document.getElementById('ideaCardFldSolution')?.value.trim() || '',
-      valueProposition: document.getElementById('ideaCardFldValue')?.value.trim() || '',
-      currentAlternatives: document.getElementById('ideaCardFldAlternatives')?.value.trim() || '',
-      coreEvaluationQuestion: document.getElementById('ideaCardFldCoreQuestion')?.value.trim() || ''
+      title: titleVal,
+      elevatorPitch: pitchVal,
+      targetCustomer: customerVal,
+      revenueModel: revenueVal,
+      businessModel: revenueVal,
+      coreProblem: problemVal,
+      problem: problemVal,
+      proposedSolution: solutionVal,
+      solution: solutionVal,
+      valueProposition: valueVal,
+      currentAlternatives: altVal,
+      alternatives: altVal,
+      coreEvaluationQuestion: questionVal,
+      criticalQuestion: questionVal
     };
 
     const btn = document.getElementById('ideaStartCouncilBtn');
@@ -5375,6 +5437,11 @@
       buttonsContainer.appendChild(btn);
     });
 
+    const compareBtn = document.getElementById('ideaCompareRoundsBtn');
+    if (compareBtn) {
+      compareBtn.style.display = runs.length >= 2 ? 'inline-flex' : 'none';
+    }
+
     if (bannerEl) {
       if (activeRunObj && activeRunObj.followupPrompt) {
         const promptSnippet = activeRunObj.followupPrompt.length > 70 ? activeRunObj.followupPrompt.slice(0, 70) + '...' : activeRunObj.followupPrompt;
@@ -5533,6 +5600,7 @@
     });
 
     const agents = currentRun?.agents || idea.agents || idea.latestRun?.agents || [];
+    renderUnitEconomics(r.unitEconomics);
     renderCriticsBreakdown(agents);
 
     const truthItems = currentRun?.truthBoard || idea.truthBoardItems || r.truthBoardItems || [];
@@ -5785,6 +5853,323 @@
     }).join('');
 
     container.innerHTML = cardsHtml;
+  }
+
+  function updateUnitEconomicsDisplay(currency = 'EGP') {
+    const aovInput = document.getElementById('ideaCalcRangeAov');
+    const marginInput = document.getElementById('ideaCalcRangeMargin');
+    const directInput = document.getElementById('ideaCalcRangeDirectCosts');
+    const fixedInput = document.getElementById('ideaCalcRangeFixedCosts');
+
+    if (!aovInput || !marginInput || !directInput || !fixedInput) return;
+
+    const aov = parseFloat(aovInput.value) || 0;
+    const marginPct = parseFloat(marginInput.value) || 0;
+    const directCosts = parseFloat(directInput.value) || 0;
+    const fixedCosts = parseFloat(fixedInput.value) || 0;
+
+    const valAov = document.getElementById('ideaCalcValAov');
+    const valMargin = document.getElementById('ideaCalcValMargin');
+    const valDirect = document.getElementById('ideaCalcValDirectCosts');
+    const valFixed = document.getElementById('ideaCalcValFixedCosts');
+
+    if (valAov) valAov.textContent = `${aov} ${currency}`;
+    if (valMargin) valMargin.textContent = `${marginPct}%`;
+    if (valDirect) valDirect.textContent = `${directCosts} ${currency}`;
+    if (valFixed) valFixed.textContent = `${fixedCosts.toLocaleString()} ${currency}`;
+
+    const grossMarginPerUnit = aov * (marginPct / 100);
+    const netContributionPerUnit = grossMarginPerUnit - directCosts;
+
+    const netEl = document.getElementById('ideaCalcNetContribution');
+    const beEl = document.getElementById('ideaCalcBreakevenOrders');
+    const dailyEl = document.getElementById('ideaCalcDailyOrders');
+    const riskBox = document.getElementById('ideaCalcFinancialRiskBox');
+    const riskText = document.getElementById('ideaCalcFinancialRiskText');
+
+    if (netEl) {
+      netEl.textContent = `${netContributionPerUnit >= 0 ? '+' : ''}${netContributionPerUnit.toFixed(1)} ${currency}`;
+      netEl.style.color = netContributionPerUnit > 0 ? 'var(--green)' : 'var(--red)';
+    }
+
+    if (netContributionPerUnit <= 0) {
+      if (beEl) {
+        beEl.textContent = '∞';
+        beEl.style.color = 'var(--red)';
+      }
+      if (dailyEl) {
+        dailyEl.textContent = '—';
+        dailyEl.style.color = 'var(--red)';
+      }
+      if (riskBox && riskText) {
+        riskBox.style.display = 'flex';
+        riskBox.style.background = 'rgba(239, 68, 68, 0.12)';
+        riskBox.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+        riskText.textContent = currentLanguage === 'ar'
+          ? 'تحذير حرج: صافي المساهمة سالب! تخسر أموالاً في كل طلب قبل حساب المصاريف الثابتة.'
+          : 'Critical Warning: Negative contribution margin! You lose money on every order before overhead.';
+      }
+    } else {
+      const monthlyOrders = Math.ceil(fixedCosts / netContributionPerUnit);
+      const dailyOrders = Math.ceil(monthlyOrders / 30);
+
+      if (beEl) {
+        beEl.textContent = `${monthlyOrders.toLocaleString()} ${currentLanguage === 'ar' ? 'طلب/شهر' : 'orders/mo'}`;
+        beEl.style.color = 'var(--cyan)';
+      }
+      if (dailyEl) {
+        dailyEl.textContent = `${dailyOrders.toLocaleString()} ${currentLanguage === 'ar' ? 'طلب/يوم' : 'orders/day'}`;
+        dailyEl.style.color = 'var(--purple-light)';
+      }
+
+      if (riskBox && riskText) {
+        if (dailyOrders > 250) {
+          riskBox.style.display = 'flex';
+          riskBox.style.background = 'rgba(245, 158, 11, 0.12)';
+          riskBox.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+          riskText.style.color = '#fca5a5';
+          riskText.textContent = currentLanguage === 'ar'
+            ? `مخاطرة حجم مرتفعة: تحتاج لأكثر من ${dailyOrders} طلب يومياً لتغطية النفقات الثابتة.`
+            : `High Volume Hurdle: Requires ${dailyOrders} orders daily just to break even on fixed costs.`;
+        } else {
+          riskBox.style.display = 'flex';
+          riskBox.style.background = 'rgba(16, 185, 129, 0.08)';
+          riskBox.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+          riskText.style.color = 'var(--green)';
+          riskText.textContent = ideaT('idea_unit_econ_risk_none', 'Healthy margin profile at current parameters.');
+        }
+      }
+    }
+  }
+
+  function renderUnitEconomics(ueData = null) {
+    const card = document.getElementById('ideaUnitEconomicsCard');
+    if (!card) return;
+
+    const currency = ueData?.currency || 'EGP';
+    const badge = document.getElementById('ideaUnitEconCurrencyBadge');
+    if (badge) badge.textContent = currency;
+
+    const aovInput = document.getElementById('ideaCalcRangeAov');
+    const marginInput = document.getElementById('ideaCalcRangeMargin');
+    const directInput = document.getElementById('ideaCalcRangeDirectCosts');
+    const fixedInput = document.getElementById('ideaCalcRangeFixedCosts');
+
+    if (aovInput && typeof ueData?.averageOrderValue === 'number' && ueData.averageOrderValue > 0) aovInput.value = ueData.averageOrderValue;
+    if (marginInput && typeof ueData?.takeRatePercent === 'number' && ueData.takeRatePercent > 0) marginInput.value = ueData.takeRatePercent;
+    if (directInput && typeof ueData?.directCostsPerUnit === 'number') directInput.value = ueData.directCostsPerUnit;
+    if (fixedInput && typeof ueData?.estimatedMonthlyFixedCosts === 'number' && ueData.estimatedMonthlyFixedCosts > 0) fixedInput.value = ueData.estimatedMonthlyFixedCosts;
+
+    updateUnitEconomicsDisplay(currency);
+
+    if (!card.dataset.eventsBound) {
+      card.dataset.eventsBound = 'true';
+      ['ideaCalcRangeAov', 'ideaCalcRangeMargin', 'ideaCalcRangeDirectCosts', 'ideaCalcRangeFixedCosts'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+          input.addEventListener('input', () => {
+            const currentCurrency = document.getElementById('ideaUnitEconCurrencyBadge')?.textContent || 'EGP';
+            updateUnitEconomicsDisplay(currentCurrency);
+          });
+        }
+      });
+    }
+
+    if (ueData?.keyFinancialRisk) {
+      const riskText = document.getElementById('ideaCalcFinancialRiskText');
+      const riskBox = document.getElementById('ideaCalcFinancialRiskBox');
+      if (riskText && riskBox) {
+        riskBox.style.display = 'flex';
+        riskText.textContent = ueData.keyFinancialRisk;
+      }
+    }
+  }
+
+  function openIdeaCompareModal() {
+    const modal = document.getElementById('ideaRoundsComparisonModal');
+    if (!modal) return;
+    const runs = Array.isArray(currentIdea?.runs) ? currentIdea.runs : [];
+    if (runs.length < 2) {
+      alert(ideaT('idea_compare_no_rounds'));
+      return;
+    }
+
+    const selectA = document.getElementById('ideaCompareSelectA');
+    const selectB = document.getElementById('ideaCompareSelectB');
+    if (selectA && selectB) {
+      selectA.innerHTML = '';
+      selectB.innerHTML = '';
+
+      runs.forEach((r, idx) => {
+        const roundNum = r.roundNumber || (idx + 1);
+        const label = idx === 0 
+          ? `${ideaT('idea_round_prefix', 'Round')} 1 (${currentLanguage === 'ar' ? 'التقييم الأولي' : 'Initial'})`
+          : `${ideaT('idea_round_prefix', 'Round')} ${roundNum} (${r.followupType || 'FOLLOW_UP'})`;
+        
+        const optA = document.createElement('option');
+        optA.value = r.runId || r._id;
+        optA.textContent = label;
+        selectA.appendChild(optA);
+
+        const optB = document.createElement('option');
+        optB.value = r.runId || r._id;
+        optB.textContent = label;
+        selectB.appendChild(optB);
+      });
+
+      selectA.value = runs[0].runId || runs[0]._id;
+      selectB.value = runs[runs.length - 1].runId || runs[runs.length - 1]._id;
+    }
+
+    const runA = runs[0];
+    const runB = runs[runs.length - 1];
+    renderRoundsComparison(runA, runB);
+
+    modal.classList.add('active');
+  }
+
+  function closeIdeaCompareModal() {
+    const modal = document.getElementById('ideaRoundsComparisonModal');
+    if (modal) modal.classList.remove('active');
+  }
+
+  function handleCompareSelectChange() {
+    const runs = Array.isArray(currentIdea?.runs) ? currentIdea.runs : [];
+    const valA = document.getElementById('ideaCompareSelectA')?.value;
+    const valB = document.getElementById('ideaCompareSelectB')?.value;
+
+    const runA = runs.find(r => String(r.runId || r._id) === String(valA));
+    const runB = runs.find(r => String(r.runId || r._id) === String(valB));
+
+    renderRoundsComparison(runA, runB);
+  }
+
+  function renderRoundsComparison(runA, runB) {
+    const container = document.getElementById('ideaCompareDeltaContent');
+    if (!container) return;
+
+    if (!runA || !runB) {
+      container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">${ideaT('idea_compare_no_rounds')}</div>`;
+      return;
+    }
+
+    const rA = runA.finalReport || {};
+    const rB = runB.finalReport || {};
+
+    const numA = runA.roundNumber || 1;
+    const numB = runB.roundNumber || 2;
+    const labelA = `${ideaT('idea_round_prefix', 'Round')} ${numA}`;
+    const labelB = `${ideaT('idea_round_prefix', 'Round')} ${numB}`;
+
+    const assumpA = Array.isArray(rA.top3Assumptions) ? rA.top3Assumptions : [];
+    const assumpB = Array.isArray(rB.top3Assumptions) ? rB.top3Assumptions : [];
+
+    const vpA = rA.validationPlan || {};
+    const vpB = rB.validationPlan || {};
+
+    let defenseHtml = '';
+    if (runB.followupPrompt) {
+      defenseHtml = `
+        <div class="glass-card" style="border-inline-start:3px solid var(--purple-light); padding:14px;">
+          <h4 style="font-size:13px; color:var(--purple-light); margin-bottom:6px;">
+            <i class="fas fa-shield-halved" style="margin-inline-end:6px;"></i>
+            ${ideaT('idea_compare_founder_defense', 'Founder Defense & Arguments')} (${labelB})
+          </h4>
+          <p style="font-size:13px; color:#fff; margin:0; line-height:1.5;">"${escapeIdeaHtml(runB.followupPrompt)}"</p>
+          ${runB.strategicAngles && runB.strategicAngles.length > 0 ? `
+            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
+              ${runB.strategicAngles.map(a => `<span class="badge" style="font-size:10px; background:rgba(124,58,237,0.2); color:var(--purple-light);">${escapeIdeaHtml(a)}</span>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    container.innerHTML = `
+      ${defenseHtml}
+
+      <!-- Verdict Comparison -->
+      <div class="glass-card" style="padding:16px;">
+        <h4 style="font-size:13px; color:var(--cyan); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+          <i class="fas fa-gavel"></i> ${ideaT('idea_compare_verdict', 'Executive Verdict')}
+        </h4>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong style="color:var(--text-muted); font-size:12px;">${escapeIdeaHtml(labelA)}</strong>
+              <span class="badge" style="background:rgba(6,182,212,0.15); color:var(--cyan); font-size:11px;">${escapeIdeaHtml(rA.verdict || '—')}</span>
+            </div>
+            <p style="font-size:12px; color:#e2e8f0; margin:0; line-height:1.5;">${escapeIdeaHtml(rA.verdictExplanation || rA.executiveSummary || '—')}</p>
+          </div>
+          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px; border-inline-start:3px solid var(--green);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong style="color:var(--text-muted); font-size:12px;">${escapeIdeaHtml(labelB)}</strong>
+              <span class="badge" style="background:rgba(16,185,129,0.15); color:var(--green); font-size:11px;">${escapeIdeaHtml(rB.verdict || '—')}</span>
+            </div>
+            <p style="font-size:12px; color:#e2e8f0; margin:0; line-height:1.5;">${escapeIdeaHtml(rB.verdictExplanation || rB.executiveSummary || '—')}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Assumptions Delta -->
+      <div class="glass-card" style="padding:16px;">
+        <h4 style="font-size:13px; color:var(--orange); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+          <i class="fas fa-layer-group"></i> ${ideaT('idea_compare_assumptions', 'Assumptions Evolution')}
+        </h4>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px;">
+            <strong style="color:var(--text-muted); font-size:12px; display:block; margin-bottom:8px;">${escapeIdeaHtml(labelA)}</strong>
+            <ul style="padding-inline-start:18px; margin:0; font-size:12px; color:#e2e8f0;">
+              ${assumpA.map(a => `<li>${escapeIdeaHtml(a)}</li>`).join('') || '<li>—</li>'}
+            </ul>
+          </div>
+          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px; border-inline-start:3px solid var(--orange);">
+            <strong style="color:var(--text-muted); font-size:12px; display:block; margin-bottom:8px;">${escapeIdeaHtml(labelB)}</strong>
+            <ul style="padding-inline-start:18px; margin:0; font-size:12px; color:#e2e8f0;">
+              ${assumpB.map(a => `<li>${escapeIdeaHtml(a)}</li>`).join('') || '<li>—</li>'}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Critical Question Delta -->
+      <div class="glass-card" style="padding:16px;">
+        <h4 style="font-size:13px; color:var(--cyan); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+          <i class="fas fa-circle-question"></i> ${ideaT('idea_compare_question', 'Critical Question to Settle')}
+        </h4>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px;">
+            <strong style="color:var(--text-muted); font-size:12px; display:block; margin-bottom:6px;">${escapeIdeaHtml(labelA)}</strong>
+            <p style="font-size:12px; color:#e2e8f0; margin:0;">${escapeIdeaHtml(rA.criticalQuestionToSettle || rA.criticalQuestion || '—')}</p>
+          </div>
+          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px; border-inline-start:3px solid var(--cyan);">
+            <strong style="color:var(--text-muted); font-size:12px; display:block; margin-bottom:6px;">${escapeIdeaHtml(labelB)}</strong>
+            <p style="font-size:12px; color:#fff; font-weight:600; margin:0;">${escapeIdeaHtml(rB.criticalQuestionToSettle || rB.criticalQuestion || '—')}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Validation Plan Delta -->
+      <div class="glass-card" style="padding:16px;">
+        <h4 style="font-size:13px; color:var(--green); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+          <i class="fas fa-vial"></i> ${ideaT('idea_compare_validation', 'Validation Plan Progression')}
+        </h4>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px; font-size:12px;">
+            <strong style="color:var(--text-muted); display:block; margin-bottom:6px;">${escapeIdeaHtml(labelA)}</strong>
+            <div><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'المدة المقترحة:' : 'Duration:'}</span> <strong style="color:var(--cyan);">${escapeIdeaHtml(vpA.suggestedDuration || vpA.duration || '—')}</strong></div>
+            <div style="margin-top:4px;"><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'معيار النجاح:' : 'Success Metric:'}</span> <span>${escapeIdeaHtml(vpA.successMetric || vpA.metric || '—')}</span></div>
+            <div style="margin-top:4px;"><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'شرط التوقف:' : 'Stop Condition:'}</span> <span>${escapeIdeaHtml(vpA.stopCondition || vpA.stopCriteria || '—')}</span></div>
+          </div>
+          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px; font-size:12px; border-inline-start:3px solid var(--green);">
+            <strong style="color:var(--text-muted); display:block; margin-bottom:6px;">${escapeIdeaHtml(labelB)}</strong>
+            <div><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'المدة المقترحة:' : 'Duration:'}</span> <strong style="color:var(--cyan);">${escapeIdeaHtml(vpB.suggestedDuration || vpB.duration || '—')}</strong></div>
+            <div style="margin-top:4px;"><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'معيار النجاح:' : 'Success Metric:'}</span> <strong style="color:var(--green);">${escapeIdeaHtml(vpB.successMetric || vpB.metric || '—')}</strong></div>
+            <div style="margin-top:4px;"><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'شرط التوقف:' : 'Stop Condition:'}</span> <strong style="color:var(--red);">${escapeIdeaHtml(vpB.stopCondition || vpB.stopCriteria || '—')}</strong></div>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   function renderTruthBoard(items = []) {
@@ -6159,16 +6544,31 @@
     if (saveCardBtn) {
       saveCardBtn.addEventListener('click', async () => {
         if (!currentIdea || !currentIdea._id) return;
+        const titleVal = document.getElementById('ideaCardFldTitle')?.value.trim() || '';
+        const pitchVal = document.getElementById('ideaCardFldPitch')?.value.trim() || '';
+        const customerVal = document.getElementById('ideaCardFldCustomer')?.value.trim() || '';
+        const revenueVal = document.getElementById('ideaCardFldRevenue')?.value.trim() || '';
+        const problemVal = document.getElementById('ideaCardFldProblem')?.value.trim() || '';
+        const solutionVal = document.getElementById('ideaCardFldSolution')?.value.trim() || '';
+        const valueVal = document.getElementById('ideaCardFldValue')?.value.trim() || '';
+        const altVal = document.getElementById('ideaCardFldAlternatives')?.value.trim() || '';
+        const questionVal = document.getElementById('ideaCardFldCoreQuestion')?.value.trim() || '';
+
         const card = {
-          title: document.getElementById('ideaCardFldTitle')?.value.trim() || '',
-          elevatorPitch: document.getElementById('ideaCardFldPitch')?.value.trim() || '',
-          targetCustomer: document.getElementById('ideaCardFldCustomer')?.value.trim() || '',
-          revenueModel: document.getElementById('ideaCardFldRevenue')?.value.trim() || '',
-          coreProblem: document.getElementById('ideaCardFldProblem')?.value.trim() || '',
-          proposedSolution: document.getElementById('ideaCardFldSolution')?.value.trim() || '',
-          valueProposition: document.getElementById('ideaCardFldValue')?.value.trim() || '',
-          currentAlternatives: document.getElementById('ideaCardFldAlternatives')?.value.trim() || '',
-          coreEvaluationQuestion: document.getElementById('ideaCardFldCoreQuestion')?.value.trim() || ''
+          title: titleVal,
+          elevatorPitch: pitchVal,
+          targetCustomer: customerVal,
+          revenueModel: revenueVal,
+          businessModel: revenueVal,
+          coreProblem: problemVal,
+          problem: problemVal,
+          proposedSolution: solutionVal,
+          solution: solutionVal,
+          valueProposition: valueVal,
+          currentAlternatives: altVal,
+          alternatives: altVal,
+          coreEvaluationQuestion: questionVal,
+          criticalQuestion: questionVal
         };
         try {
           await apiFetch(`/api/idea-council/ideas/${currentIdea._id}/card`, {
@@ -6267,6 +6667,32 @@
     const followupSubmitBtn = document.getElementById('ideaFollowupSubmitBtn');
     if (followupSubmitBtn) {
       followupSubmitBtn.addEventListener('click', submitFollowupModal);
+    }
+
+    const compareBtn = document.getElementById('ideaCompareRoundsBtn');
+    if (compareBtn) {
+      compareBtn.addEventListener('click', openIdeaCompareModal);
+    }
+
+    document.querySelectorAll('.idea-compare-modal-close').forEach(btn => {
+      btn.addEventListener('click', closeIdeaCompareModal);
+    });
+
+    const compareModalEl = document.getElementById('ideaRoundsComparisonModal');
+    if (compareModalEl) {
+      compareModalEl.addEventListener('click', (e) => {
+        if (e.target === compareModalEl) closeIdeaCompareModal();
+      });
+    }
+
+    const compareSelectA = document.getElementById('ideaCompareSelectA');
+    if (compareSelectA) {
+      compareSelectA.addEventListener('change', handleCompareSelectChange);
+    }
+
+    const compareSelectB = document.getElementById('ideaCompareSelectB');
+    if (compareSelectB) {
+      compareSelectB.addEventListener('change', handleCompareSelectChange);
     }
   }
 

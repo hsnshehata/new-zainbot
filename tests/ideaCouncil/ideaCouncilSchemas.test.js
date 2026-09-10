@@ -83,3 +83,90 @@ test('ideaCouncilSchemas: validates Cold Customer output schema', () => {
   assert.equal(res.valid, true);
   assert.equal(res.error, null);
 });
+
+test('ideaCouncilSchemas: validates chairperson output with unitEconomics', () => {
+  const validChairperson = {
+    executiveSummary: 'خلاصة التقرير الاستراتيجي',
+    verdict: 'VALIDATE_FIRST',
+    verdictExplanation: 'فكرة واعدة لكن تحتاج تحقق مسبق',
+    sevenDayBuildVerdict: 'CONDITIONAL',
+    sevenDayBuildConditions: 'البدء بتجربة يدوية',
+    strongestOpportunity: 'فرصة قوية',
+    biggestRisk: 'مخاطرة كبرى',
+    top3Assumptions: ['افتراض 1', 'افتراض 2', 'افتراض 3'],
+    criticalQuestion: 'سؤال محوري',
+    criticalQuestionToSettle: 'سؤال محوري',
+    killOrDeferList: ['ميزة متقدمة'],
+    cutListForV1: ['ميزة متقدمة'],
+    validationPlan: {
+      hypothesis: 'فرضية',
+      coreHypothesis: 'فرضية',
+      targetAudience: 'أصحاب المطاعم',
+      testingSteps: ['خطوة 1'],
+      channel: 'واتساب مباشر',
+      testingChannel: 'واتساب مباشر',
+      suggestedDuration: '30 يوماً',
+      estimatedCost: '0',
+      successMetric: 'معيار نجاح',
+      stopCondition: 'شرط توقف',
+    },
+    unitEconomics: {
+      currency: 'EGP',
+      averageOrderValue: 120,
+      takeRatePercent: 20,
+      grossRevenuePerUnit: 24,
+      directCostsPerUnit: 4,
+      netContributionPerUnit: 20,
+      estimatedMonthlyFixedCosts: 10000,
+      monthlyBreakevenOrders: 500,
+      targetDailyOrders: 17,
+      keyFinancialRisk: 'حساسية تكلفة التوصيل',
+    },
+    sevenDayMvpScope: ['ميزة 1'],
+    uniqueWedge: 'ميزة تميز',
+    firstMomentOfValue: 'لحظة قيمة',
+    truthBoardItems: [
+      {
+        id: 'tb-1',
+        type: 'ASSUMPTION',
+        epistemicStatus: 'UNPROVEN',
+        priority: 'HIGH',
+        statement: 'بيان',
+        rationale: 'سبب',
+        nextAction: 'إجراء',
+      },
+    ],
+  };
+
+  const res = validateAgentOutput('CHAIRPERSON', validChairperson);
+  assert.equal(res.valid, true);
+  assert.equal(res.error, null);
+  assert.equal(res.value.unitEconomics.monthlyBreakevenOrders, 500);
+});
+
+test('OpenAiWebResearchAdapter: extracts domain keywords and filters news noise', () => {
+  const { OpenAiWebResearchAdapter } = require('../../server/services/ideaWebResearchAdapter');
+  const adapter = new OpenAiWebResearchAdapter();
+
+  const keywords = adapter._extractDomainKeywords({
+    title: 'آخر ساعة',
+    problem: 'فائض الطعام وهدر الوجبات في المطاعم قبل الإغلاق',
+    targetMarket: 'مصر',
+  });
+
+  assert.ok(keywords.includes('فائض'));
+  assert.ok(keywords.includes('الطعام'));
+  assert.ok(keywords.includes('المطاعم'));
+
+  const filtered = adapter._normalizeResults(
+    [
+      { title: 'حادث تصادم على طريق السويس خلال آخر ساعة', rawHref: 'https://youm7.com/story1', snippet: 'لقي شخص مصرعه' },
+      { title: 'تطبيق مصري لإنقاذ فائض الطعام من المطاعم', rawHref: 'https://youm7.com/story2', snippet: 'منصة ناشئة لإعادة بيع الوجبات' },
+    ],
+    keywords
+  );
+
+  assert.equal(filtered.length, 1);
+  assert.equal(filtered[0].title, 'تطبيق مصري لإنقاذ فائض الطعام من المطاعم');
+});
+
