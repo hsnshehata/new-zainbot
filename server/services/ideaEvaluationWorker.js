@@ -37,13 +37,17 @@ const ALL_COUNCIL_ROLES = [
   'CANDID_CHAMPION',
 ];
 
-function resolveDirectOpenAiModel(model) {
-  if (!model) return 'gpt-4o-mini';
+function isReasoningModel(model) {
+  if (!model) return false;
   const m = String(model).toLowerCase().trim();
-  if (m.includes('5.6') || m.includes('terra')) {
-    return 'gpt-4o';
-  }
-  return model;
+  return (
+    m.includes('terra') ||
+    m.includes('sol') ||
+    m.includes('luna') ||
+    m.includes('o1') ||
+    m.includes('o3') ||
+    m.startsWith('gpt-5')
+  );
 }
 
 const FOLLOWUP_ROLES_MAP = {
@@ -589,7 +593,7 @@ class IdeaEvaluationWorker {
       followupContext,
     });
 
-    const chairpersonModel = process.env.IDEA_COUNCIL_CHAIRPERSON_MODEL || 'gpt-4o';
+    const chairpersonModel = process.env.IDEA_COUNCIL_CHAIRPERSON_MODEL || 'gpt-5.6-terra';
 
     const llmResult = await this._callLlm({
       user,
@@ -712,27 +716,48 @@ class IdeaEvaluationWorker {
     const apiKey = process.env.OPENAI_API_KEY;
     if (apiKey) {
       const axios = require('axios');
-      const resolvedTarget = resolveDirectOpenAiModel(targetModel);
-      const candidateModels = [resolvedTarget];
-      if (resolvedTarget !== 'gpt-4o' && resolvedTarget !== 'gpt-4o-mini') {
+      const candidateModels = [targetModel];
+      if (targetModel !== 'gpt-4o' && targetModel !== 'gpt-4o-mini') {
         candidateModels.push('gpt-4o', 'gpt-4o-mini');
-      } else if (resolvedTarget === 'gpt-4o') {
+      } else if (targetModel === 'gpt-4o') {
         candidateModels.push('gpt-4o-mini');
       }
 
       for (const modelToTry of candidateModels) {
         try {
+          const isReasoning = isReasoningModel(modelToTry);
+          let messagesToSend = params.messages;
+          if (isReasoning && Array.isArray(messagesToSend)) {
+            messagesToSend = messagesToSend.map((msg) => (
+              msg.role === 'system' ? { ...msg, role: 'developer' } : msg
+            ));
+          }
+
+          const requestBody = {
+            model: modelToTry,
+            messages: messagesToSend,
+            response_format: { type: 'json_object' },
+          };
+
+          if (isReasoning) {
+            // Reasoning models (e.g. gpt-5.6-terra, o1, o3-mini) do NOT support custom temperature or top_p
+            requestBody.reasoning_effort = params.reasoningEffort || 'medium';
+            if (params.maxTokens) {
+              requestBody.max_completion_tokens = params.maxTokens;
+            }
+          } else {
+            requestBody.temperature = params.temperature ?? 0.3;
+            if (params.maxTokens) {
+              requestBody.max_tokens = params.maxTokens;
+            }
+          }
+
           const res = await axios.post(
             'https://api.openai.com/v1/chat/completions',
-            {
-              model: modelToTry,
-              messages: params.messages,
-              temperature: 0.3,
-              response_format: { type: 'json_object' },
-            },
+            requestBody,
             {
               headers: { Authorization: `Bearer ${apiKey}` },
-              timeout: params.timeoutMs || 45000,
+              timeout: params.timeoutMs || 60000,
             }
           );
           const latencyMs = Date.now() - startedAt;
@@ -747,7 +772,8 @@ class IdeaEvaluationWorker {
             latencyMs,
           };
         } catch (directErr) {
-          logger.warn('openai_model_call_failed_trying_next', { model: modelToTry, error: directErr.message });
+          const errMsg = directErr.response?.data?.error?.message || directErr.message;
+          logger.warn('openai_model_call_failed_trying_next', { model: modelToTry, error: errMsg });
         }
       }
     }
@@ -818,4 +844,5 @@ module.exports = {
   startIdeaEvaluationWorker,
   ALL_COUNCIL_ROLES,
   FOLLOWUP_ROLES_MAP,
+  isReasoningModel,
 };

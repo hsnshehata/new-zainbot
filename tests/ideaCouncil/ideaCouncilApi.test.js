@@ -392,3 +392,59 @@ test('ideaCouncil API: /follow-up creates follow-up run with targetCritic', asyn
     IdeaEvaluationRun.create = originalCreateRun;
   }
 });
+
+test('ideaCouncil Worker: isReasoningModel accurately identifies gpt-5.6-terra and reasoning family', () => {
+  const { isReasoningModel } = require('../../server/services/ideaEvaluationWorker');
+  assert.equal(isReasoningModel('gpt-5.6-terra'), true);
+  assert.equal(isReasoningModel('gpt-5.6-sol'), true);
+  assert.equal(isReasoningModel('gpt-5.6-luna'), true);
+  assert.equal(isReasoningModel('o1'), true);
+  assert.equal(isReasoningModel('o3-mini'), true);
+  assert.equal(isReasoningModel('gpt-4o'), false);
+  assert.equal(isReasoningModel('gpt-4o-mini'), false);
+});
+
+test('ideaCouncil Worker: _callLlm constructs valid reasoning payload for gpt-5.6-terra (no temperature)', async () => {
+  const axios = require('axios');
+  const originalPost = axios.post;
+  const originalApiKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = 'test-key-123';
+
+  let capturedPayload = null;
+  axios.post = (url, body) => {
+    capturedPayload = body;
+    return Promise.resolve({
+      data: {
+        choices: [{ message: { content: '{"status":"ok"}' } }],
+        usage: { prompt_tokens: 10, completion_tokens: 20 },
+      },
+    });
+  };
+
+  try {
+    const { IdeaEvaluationWorker } = require('../../server/services/ideaEvaluationWorker');
+    const worker = new IdeaEvaluationWorker();
+    const result = await worker._callLlm({
+      model: 'gpt-5.6-terra',
+      messages: [{ role: 'system', content: 'You are an evaluator.' }, { role: 'user', content: 'Hello' }],
+    });
+
+    assert.ok(result);
+    assert.equal(result.raw, '{"status":"ok"}');
+    assert.equal(result.modelId, 'gpt-5.6-terra');
+    assert.ok(capturedPayload);
+    assert.equal(capturedPayload.model, 'gpt-5.6-terra');
+    // Temperature must be undefined (omitted) for reasoning models like gpt-5.6-terra
+    assert.equal(capturedPayload.temperature, undefined);
+    assert.equal(capturedPayload.reasoning_effort, 'medium');
+    // System message mapped to developer
+    assert.equal(capturedPayload.messages[0].role, 'developer');
+  } finally {
+    axios.post = originalPost;
+    if (originalApiKey !== undefined) {
+      process.env.OPENAI_API_KEY = originalApiKey;
+    } else {
+      delete process.env.OPENAI_API_KEY;
+    }
+  }
+});
