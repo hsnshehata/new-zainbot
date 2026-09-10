@@ -5283,8 +5283,9 @@
           stg = currentLanguage === 'ar' ? 'جارٍ إجراء البحث السوقي المباشر وجمع الأدلة...' : 'Conducting live web market research...';
         } else if (run.stage === 'AGENT_ANALYSIS' || run.stage === 'ANALYSIS') {
           const completed = (run.agents || []).filter(a => a.status === 'COMPLETED').length;
-          pct = 25 + Math.round((completed / 8) * 55);
-          stg = (currentLanguage === 'ar' ? 'أعضاء اللجنة يحللون الفكرة بالتوازي' : 'Council members analyzing in parallel') + ` (${completed}/8)...`;
+          const total = run.stageProgress?.agentsTotal || (run.agents || []).length || 8;
+          pct = 25 + Math.round((completed / Math.max(1, total)) * 55);
+          stg = (currentLanguage === 'ar' ? 'أعضاء اللجنة يحللون الفكرة بالتوازي' : 'Council members analyzing in parallel') + ` (${completed}/${total})...`;
         } else if (run.stage === 'SYNTHESIS') {
           pct = 88;
           stg = currentLanguage === 'ar' ? 'رئيس اللجنة يصيغ التقرير النهائي ولوحة الحقيقة...' : 'Chairperson synthesizing verdict and truth board...';
@@ -5748,9 +5749,24 @@
                 <span style="font-size:12px; color:var(--text-muted);">${escapeIdeaHtml(roleDesc)}</span>
               </div>
             </div>
-            <span class="badge" style="background:${status === 'COMPLETED' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)'}; color:${status === 'COMPLETED' ? 'var(--green)' : 'var(--orange)'}; font-size:11px;">
-              ${status === 'COMPLETED' ? (currentLanguage === 'ar' ? 'اكتمل التحليل' : 'Analyzed') : (currentLanguage === 'ar' ? 'قيد المراجعة' : 'Pending')}
-            </span>
+            ${(() => {
+              const isCarryover = Boolean(agent?.isFromPreviousRound);
+              let bLabel = currentLanguage === 'ar' ? 'اكتمل التحليل' : 'Analyzed';
+              let bBg = 'rgba(16, 185, 129, 0.15)';
+              let bColor = 'var(--green)';
+
+              if (status !== 'COMPLETED') {
+                bLabel = currentLanguage === 'ar' ? 'قيد المراجعة' : 'Pending';
+                bBg = 'rgba(245, 158, 11, 0.15)';
+                bColor = 'var(--orange)';
+              } else if (isCarryover) {
+                bLabel = currentLanguage === 'ar' ? 'الجولة السابقة' : 'Prior Round';
+                bBg = 'rgba(6, 182, 212, 0.15)';
+                bColor = 'var(--cyan)';
+              }
+
+              return `<span class="badge" style="background:${bBg}; color:${bColor}; font-size:11px;">${escapeIdeaHtml(bLabel)}</span>`;
+            })()}
           </div>
 
           ${metricsHtml}
@@ -6003,6 +6019,7 @@
         body: JSON.stringify({
           type: activeFollowupType,
           followupType: activeFollowupType,
+          targetCritic: criticSelect ? criticSelect.value : 'ALL',
           userPrompt: combinedPrompt,
           followupPrompt: combinedPrompt,
           idempotencyKey

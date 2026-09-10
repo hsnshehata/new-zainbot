@@ -713,6 +713,7 @@ async function getRunStatus(req, res) {
       output: ar.encryptedOutput ? decryptIdeaJson(ar.encryptedOutput) : null,
       errorClass: ar.errorClass,
       latencyMs: ar.latencyMs,
+      isFromPreviousRound: Boolean(ar.encryptedInputHash === 'carryover' || ar.metadata?.fromPreviousRound),
     }));
 
     const finalReport = run.encryptedFinalReport ? decryptIdeaJson(run.encryptedFinalReport) : null;
@@ -754,6 +755,7 @@ async function startFollowup(req, res) {
     const userId = getUserId(req);
     const { ideaId } = req.params;
     const followupType = req.body.followupType || req.body.type;
+    const targetCritic = req.body.targetCritic || req.body.critic || 'ALL';
     const followupPrompt = req.body.followupPrompt || req.body.userPrompt;
     const idempotencyKey = req.header('idempotency-key') || req.body.idempotencyKey || `followup-${ideaId}-${Date.now()}`;
 
@@ -805,6 +807,7 @@ async function startFollowup(req, res) {
       runType: 'FOLLOW_UP',
       roundNumber: nextRoundNumber,
       followupType,
+      targetCritic,
       followupPrompt: followupPrompt ? String(followupPrompt).trim() : null,
       status: 'QUEUED',
       idempotencyKey,

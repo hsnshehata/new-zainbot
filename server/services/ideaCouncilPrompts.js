@@ -126,20 +126,23 @@ function buildAgentPrompt(role, structuredIdea, options = {}) {
       .join('\n');
 
     followupPromptText = `\n\n--- FOLLOW-UP ROUND CONTEXT (Round ${fc.roundNumber || 2} - Mode: ${fc.followupType || 'FOLLOW_UP'}) ---
-Founder's New Defense / Pivot Arguments:
+Founder's New Defense / Proposed Pilot / Operational Details:
 "${fc.followupPrompt || 'No specific text provided'}"
 
-Previous Council Verdict: ${fc.previousVerdict || 'N/A'}
+Previous Round Verdict: ${fc.previousVerdict || 'N/A'}
 Previous Summary: ${fc.previousSummary || 'N/A'}
-Previous Key Risk / Fragility: ${fc.previousWeakestLink || 'N/A'}
+Previous Key Risk: ${fc.previousWeakestLink || 'N/A'}
 
-Current Dynamic Truth Board Status & Founder Validations:
+Current Dynamic Truth Board Status:
 ${truthSummary || 'No items recorded'}
 
-CRITICAL FOLLOW-UP INSTRUCTIONS:
-- The founder is responding directly to the previous evaluation with new facts, metrics, team capabilities, or a revised angle.
-- Evaluate whether the founder's arguments (e.g. existing customer base, specialized team, current revenue, distribution channels) genuinely resolve prior skepticism or uncover new operational/market risks.
-- DO NOT blindly repeat the round 1 evaluation. Update your analysis, switching cost, and verdict specifically in response to what the founder provided.`;
+CRITICAL FOLLOW-UP SCRUTINY INSTRUCTIONS:
+- The founder is directly answering earlier skepticism with specific operational numbers, channel shifts (e.g. WhatsApp instead of Voice calls), or pilot plans (e.g. 5 clinics, 30 days).
+- Scrutinize the defense from your specialized role's lens:
+  - Is the proposed pilot realistic, or is it too small / too optimistic?
+  - Does switching channels resolve the core reluctance or simply move the friction elsewhere?
+  - What new risks or hidden bottlenecks does the founder's proposed plan create?
+- EVOLVE YOUR ANALYSIS: DO NOT repeat your Round 1 output. Explicitly acknowledge the founder's defense, state whether it shifts your verdict, and highlight the next most critical hurdle.`;
   }
 
   return {
@@ -167,15 +170,35 @@ function buildChairpersonPrompt(structuredIdea, agentResults, options = {}) {
   const fc = options.followupContext;
   let chairpersonFollowupText = '';
   if (fc && fc.isFollowup) {
-    chairpersonFollowupText = `\n\n--- FOLLOW-UP ROUND SYNTHESIS (Round ${fc.roundNumber || 2} - Mode: ${fc.followupType || 'FOLLOW_UP'}) ---
-Founder's Arguments for this Round:
-"${fc.followupPrompt || ''}"
-Previous Verdict was: ${fc.previousVerdict || 'N/A'}
+    const prevAssumptionsList = (fc.previousTopAssumptions && fc.previousTopAssumptions.length > 0)
+      ? fc.previousTopAssumptions.map((a, i) => `  ${i + 1}. ${a}`).join('\n')
+      : 'None recorded';
 
-CHAIRPERSON FOLLOW-UP DUTY:
-- Weigh the specialized agents' updated assessments against the founder's defense or proposed pivot.
-- If the founder's arguments and team credentials convincingly addressed the primary risks, update the verdict (e.g. from PIVOT/DO_NOT_BUILD to VALIDATE_FIRST or PROCEED_WITH_CONDITIONS).
-- Update the Truth Board items, reflecting any assumptions that were validated, refuting invalid claims, and logging new decisions or next validation steps.`;
+    chairpersonFollowupText = `\n\n--- FOLLOW-UP ROUND SYNTHESIS (Round ${fc.roundNumber || 2} - Mode: ${fc.followupType || 'FOLLOW_UP'}) ---
+Founder's Arguments & Defense for this Round:
+"${fc.followupPrompt || ''}"
+
+Previous Round Context:
+- Previous Verdict: ${fc.previousVerdict || 'N/A'}
+- Previous Summary: ${fc.previousSummary || 'N/A'}
+- Previous Key Risk / Bottleneck: ${fc.previousWeakestLink || 'N/A'}
+- Previous Top 3 Assumptions:
+${prevAssumptionsList}
+- Previous Critical Question: ${fc.previousCriticalQuestion || 'N/A'}
+
+CHAIRPERSON FOLLOW-UP PROGRESSION MANDATE (STRICT):
+1. DYNAMIC ASSUMPTIONS EVOLUTION (NEVER REPEAT PREVIOUS ROUND VERBATIM):
+   - Review which of the previous assumptions the founder addressed, shifted, or accepted.
+   - If the founder pivoted channel, offered pilot numbers (e.g. 5 clinics, 30 days, WhatsApp first), or refined their focus, DO NOT repeat the old assumptions. Surface the NEXT deeper layer of unproven assumptions that their defense/pilot exposes.
+2. ADVANCE THE CRITICAL QUESTION:
+   - The critical question to settle must evolve. Do not ask the exact same high-level question as Round 1. Ask the sharpest operational or conversion hurdle that the founder must prove during their proposed pilot.
+3. CONCRETE VALIDATION PLAN ALIGNED TO FOUNDER'S PILOT:
+   - In validationPlan, incorporate the founder's specific proposed pilot parameters (e.g. target segment, timeline, pilot size, channel). Critique whether the pilot size and metric are adequate, and define unambiguous pass/fail criteria.
+4. SYNTHESIZE UPDATED COUNCIL CONSENSUS:
+   - Synthesize the opinions of all council members who reviewed this defense.
+   - If the founder's defense or pilot significantly mitigates earlier fatal flaws, upgrade the verdict appropriately (e.g. from PIVOT or DO_NOT_BUILD_YET to VALIDATE_FIRST or PROCEED_WITH_CONDITIONS).
+5. TRUTH BOARD EVOLUTION:
+   - Update truthBoardItems to reflect items that are PARTIALLY_SUPPORTED or REFUTED by the founder's arguments, and add any new operational risks or milestones as new items.`;
   }
 
   return {

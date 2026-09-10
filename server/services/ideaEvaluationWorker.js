@@ -37,6 +37,15 @@ const ALL_COUNCIL_ROLES = [
   'CANDID_CHAMPION',
 ];
 
+function resolveDirectOpenAiModel(model) {
+  if (!model) return 'gpt-4o-mini';
+  const m = String(model).toLowerCase().trim();
+  if (m.includes('5.6') || m.includes('terra')) {
+    return 'gpt-4o';
+  }
+  return model;
+}
+
 const FOLLOWUP_ROLES_MAP = {
   DEFEND: ['COLD_CUSTOMER', 'DEVILS_ADVOCATE', 'CANDID_CHAMPION'],
   PIVOT: ['MARKET_RESEARCHER', 'WEDGE_HUNTER', 'EXECUTION_EXPERT'],
@@ -243,6 +252,9 @@ class IdeaEvaluationWorker {
           previousVerdict: prevReport?.verdict || null,
           previousSummary: prevReport?.executiveSummary || null,
           previousWeakestLink: prevReport?.biggestRisk || null,
+          previousTopAssumptions: Array.isArray(prevReport?.top3Assumptions) ? prevReport.top3Assumptions : [],
+          previousCriticalQuestion: prevReport?.criticalQuestionToSettle || prevReport?.criticalQuestion || null,
+          previousValidationPlan: prevReport?.validationPlan || null,
           truthBoardItems: truthItems,
         };
       }
@@ -254,14 +266,63 @@ class IdeaEvaluationWorker {
       { currentStage: 'ANALYSIS' }
     );
 
-    const targetRoles = run.runType === 'FOLLOW_UP' && run.followupType
-      ? (FOLLOWUP_ROLES_MAP[run.followupType] || ALL_COUNCIL_ROLES)
-      : ALL_COUNCIL_ROLES;
+    // If user explicitly targeted a single critic in follow-up, run that critic; otherwise run ALL 8 council roles!
+    let targetRoles = ALL_COUNCIL_ROLES;
+    const isTargetedSingleCritic = run.runType === 'FOLLOW_UP'
+      && run.targetCritic
+      && run.targetCritic !== 'ALL'
+      && ALL_COUNCIL_ROLES.includes(run.targetCritic);
+
+    if (isTargetedSingleCritic) {
+      targetRoles = [run.targetCritic];
+    }
 
     await IdeaEvaluationRun.updateOne(
       { _id: run._id },
       { 'stageProgress.agentsTotal': targetRoles.length }
     );
+
+    // Carry over previous results for untargeted roles in a single-critic follow-up
+    const carriedOverOutputs = {};
+    if (run.runType === 'FOLLOW_UP' && isTargetedSingleCritic) {
+      const untargetedRoles = ALL_COUNCIL_ROLES.filter((r) => !targetRoles.includes(r));
+      for (const role of untargetedRoles) {
+        try {
+          const prevAgentDoc = await IdeaAgentResult.findOne({
+            ideaId: idea._id,
+            role,
+            status: 'COMPLETED',
+            encryptedOutput: { $ne: null },
+          }).sort({ createdAt: -1 });
+
+          if (prevAgentDoc && prevAgentDoc.encryptedOutput) {
+            const decrypted = decryptIdeaJson(prevAgentDoc.encryptedOutput);
+            if (decrypted) {
+              carriedOverOutputs[role] = decrypted;
+              await IdeaAgentResult.findOneAndUpdate(
+                { runId: run._id, role },
+                {
+                  $setOnInsert: {
+                    ideaId: idea._id,
+                    userId: run.userId,
+                    status: 'COMPLETED',
+                    encryptedInputHash: 'carryover',
+                    encryptedOutput: prevAgentDoc.encryptedOutput,
+                    confidence: prevAgentDoc.confidence,
+                    modelUsed: prevAgentDoc.modelUsed,
+                    providerUsed: prevAgentDoc.providerUsed,
+                    completedAt: new Date(),
+                  },
+                },
+                { upsert: true }
+              );
+            }
+          }
+        } catch (carryErr) {
+          logger.warn('carry_forward_agent_result_failed', { runId: run._id, role, error: carryErr.message });
+        }
+      }
+    }
 
     // Parallel execution with bounded concurrency
     const agentOutputs = {};
@@ -310,6 +371,8 @@ class IdeaEvaluationWorker {
 
     await Promise.all(workerTasks);
 
+    const combinedAgentOutputs = { ...carriedOverOutputs, ...agentOutputs };
+
     // Stage 3: Synthesis & Chairperson
     await IdeaEvaluationRun.updateOne(
       { _id: run._id },
@@ -321,7 +384,7 @@ class IdeaEvaluationWorker {
       idea,
       user,
       structuredIdea,
-      agentOutputs,
+      agentOutputs: combinedAgentOutputs,
       language,
       sources,
       followupContext,
@@ -526,7 +589,7 @@ class IdeaEvaluationWorker {
       followupContext,
     });
 
-    const chairpersonModel = process.env.IDEA_COUNCIL_CHAIRPERSON_MODEL || 'gpt-5.6-terra';
+    const chairpersonModel = process.env.IDEA_COUNCIL_CHAIRPERSON_MODEL || 'gpt-4o';
 
     const llmResult = await this._callLlm({
       user,
@@ -649,10 +712,11 @@ class IdeaEvaluationWorker {
     const apiKey = process.env.OPENAI_API_KEY;
     if (apiKey) {
       const axios = require('axios');
-      const candidateModels = [targetModel];
-      if (targetModel !== 'gpt-4o' && targetModel !== 'gpt-4o-mini') {
+      const resolvedTarget = resolveDirectOpenAiModel(targetModel);
+      const candidateModels = [resolvedTarget];
+      if (resolvedTarget !== 'gpt-4o' && resolvedTarget !== 'gpt-4o-mini') {
         candidateModels.push('gpt-4o', 'gpt-4o-mini');
-      } else if (targetModel === 'gpt-4o') {
+      } else if (resolvedTarget === 'gpt-4o') {
         candidateModels.push('gpt-4o-mini');
       }
 

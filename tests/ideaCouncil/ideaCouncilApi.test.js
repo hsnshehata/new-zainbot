@@ -8,6 +8,8 @@ const mongoose = require('mongoose');
 
 const ideaCouncilRouter = require('../../server/routes/ideaCouncil');
 const IdeaProject = require('../../server/models/IdeaProject');
+const IdeaEvaluationRun = require('../../server/models/IdeaEvaluationRun');
+const IdeaAgentResult = require('../../server/models/IdeaAgentResult');
 const IdeaUsageCounter = require('../../server/models/IdeaUsageCounter');
 const IdeaCouncilConfig = require('../../server/models/IdeaCouncilConfig');
 const { signAccessToken } = require('../../server/utils/authTokens');
@@ -332,5 +334,61 @@ test('ideaCouncil API: getIdeaById returns agents from latest run', async () => 
     IdeaEvaluationRun.findOne = originalFindOneRun;
     IdeaEvaluationRun.find = originalFindRun;
     IdeaAgentResult.find = originalFindAgent;
+  }
+});
+
+test('ideaCouncil API: /follow-up creates follow-up run with targetCritic', async () => {
+  const ideaId = new mongoose.Types.ObjectId();
+  const runId = new mongoose.Types.ObjectId();
+  const originalFindOneProject = IdeaProject.findOne;
+  const originalUpdateProject = IdeaProject.updateOne;
+  const originalFindOneRun = IdeaEvaluationRun.findOne;
+  const originalCreateRun = IdeaEvaluationRun.create;
+
+  let capturedRunArgs = null;
+
+  IdeaProject.findOne = () => Promise.resolve({
+    _id: ideaId,
+    userId,
+    isDeleted: false,
+    followupRoundsUsed: 1,
+    version: 2,
+  });
+
+  IdeaProject.updateOne = () => Promise.resolve({ modifiedCount: 1 });
+
+  IdeaEvaluationRun.findOne = () => Promise.resolve(null);
+
+  IdeaEvaluationRun.create = (args) => {
+    capturedRunArgs = args;
+    return Promise.resolve({
+      _id: runId,
+      status: 'QUEUED',
+      ...args,
+    });
+  };
+
+  try {
+    const res = await supertest(app)
+      .post(`/api/idea-council/ideas/${ideaId}/follow-up`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        followupType: 'DEFEND',
+        targetCritic: 'COLD_CUSTOMER',
+        followupPrompt: 'سنقوم بتجربة لمدة 30 يوماً مع 5 عيادات',
+      });
+
+    assert.equal(res.status, 202);
+    assert.equal(res.body.success, true);
+    assert.equal(String(res.body.runId), String(runId));
+    assert.ok(capturedRunArgs);
+    assert.equal(capturedRunArgs.runType, 'FOLLOW_UP');
+    assert.equal(capturedRunArgs.targetCritic, 'COLD_CUSTOMER');
+    assert.equal(capturedRunArgs.roundNumber, 3);
+  } finally {
+    IdeaProject.findOne = originalFindOneProject;
+    IdeaProject.updateOne = originalUpdateProject;
+    IdeaEvaluationRun.findOne = originalFindOneRun;
+    IdeaEvaluationRun.create = originalCreateRun;
   }
 });

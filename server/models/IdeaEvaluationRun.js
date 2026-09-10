@@ -73,6 +73,10 @@ const ideaEvaluationRunSchema = new mongoose.Schema({
     default: null,
     maxlength: 4000,
   },
+  targetCritic: {
+    type: String,
+    default: 'ALL',
+  },
   status: {
     type: String,
     enum: IDEA_RUN_STATUSES,
