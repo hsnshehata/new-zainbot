@@ -872,6 +872,10 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   color: var(--green);
   font-weight: 600;
 }
+html[dir="rtl"] .bento-live-badge {
+  right: auto;
+  left: 28px;
+}
 .live-dot {
   width: 7px; height: 7px;
   border-radius: 50%;
