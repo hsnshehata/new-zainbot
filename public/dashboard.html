@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ZainBot Dashboard — Premium Console</title>
+  <title>ZainBot Dashboard ΓÇö Premium Console</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,6 +13,20 @@
   
   <style>
     /* Premium Dashboard Specific Styles (Extending style.css) */
+
+    /* ===== Settings sections (reorganized control center) ===== */
+    .settings-section-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:18px; }
+    .settings-section-head h3 { display:flex; align-items:center; gap:10px; margin:0 0 6px; font-size:17px; }
+    .settings-section-desc { font-size:13px; color:var(--text-muted); margin:0; max-width:640px; }
+    .settings-section-number { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:8px; background:var(--glass-2); border:1px solid var(--glass-border); color:var(--cyan); font-weight:700; font-size:13px; }
+    .settings-summary-grid { display:flex; flex-direction:column; gap:10px; }
+    .set-summary-row { display:grid; grid-template-columns: 200px 1fr; gap:12px; align-items:start; padding:10px 14px; border:1px solid var(--glass-border); border-radius:var(--radius-sm); background:var(--surface); }
+    .set-summary-row.set-summary-wrap { grid-template-columns: 200px; }
+    html[dir="rtl"] .set-summary-row { grid-template-columns: 200px 1fr; }
+    .set-summary-label { font-size:12px; color:var(--text-muted); font-weight:600; padding-top:2px; }
+    .set-summary-value { font-size:13px; color:var(--text); }
+    @media (max-width: 720px) { .set-summary-row { grid-template-columns: 1fr; } html[dir="rtl"] .set-summary-row { grid-template-columns: 1fr; } }
+
     body {
       background: #06070f;
       color: var(--text);
@@ -801,10 +815,10 @@
           </button>
           <div id="accountMenu" class="account-menu" role="menu" hidden>
             <div class="account-menu-head">
-              <strong id="accountMenuName">—</strong>
-              <span id="accountMenuEmail">—</span>
+              <strong id="accountMenuName">ΓÇö</strong>
+              <span id="accountMenuEmail">ΓÇö</span>
             </div>
-            <div class="account-menu-quota"><span data-i18n="account_quota_remaining">Messages remaining</span><strong id="accountMenuQuota">—</strong></div>
+            <div class="account-menu-quota"><span data-i18n="account_quota_remaining">Messages remaining</span><strong id="accountMenuQuota">ΓÇö</strong></div>
             <button id="accountSettingsBtn" type="button" role="menuitem"><i class="fas fa-gear"></i><span data-i18n="account_settings">Account settings</span></button>
             <button id="accountLogoutBtn" type="button" role="menuitem" class="account-logout"><i class="fas fa-sign-out-alt"></i><span data-i18n="logout">Logout</span></button>
           </div>
@@ -820,7 +834,7 @@
             <div class="glass-card stat-card">
               <div class="stat-info">
                 <h4 data-i18n="stat_conversations">Conversations</h4>
-                <p id="statConversations">—</p>
+                <p id="statConversations">ΓÇö</p>
               </div>
               <div class="stat-icon bg-purple-gradient"><i class="fas fa-comments"></i></div>
             </div>
@@ -828,7 +842,7 @@
             <div class="glass-card stat-card">
               <div class="stat-info">
                 <h4 data-i18n="stat_messages">Messages handled</h4>
-                <p id="statMessages">—</p>
+                <p id="statMessages">ΓÇö</p>
               </div>
               <div class="stat-icon bg-cyan-gradient"><i class="fas fa-bolt"></i></div>
             </div>
@@ -836,7 +850,7 @@
             <div class="glass-card stat-card">
               <div class="stat-info">
                 <h4 data-i18n="stat_connected_channels">Connected channels</h4>
-                <p id="statConnectedChannels">—</p>
+                <p id="statConnectedChannels">ΓÇö</p>
               </div>
               <div class="stat-icon bg-green-gradient"><i class="fas fa-star"></i></div>
             </div>
@@ -844,7 +858,7 @@
             <div class="glass-card stat-card">
               <div class="stat-info">
                 <h4 data-i18n="stat_training_rules">Training rules</h4>
-                <p id="statTrainingRules">—</p>
+                <p id="statTrainingRules">ΓÇö</p>
               </div>
               <div class="stat-icon bg-blue-gradient"><i class="fas fa-shopping-cart"></i></div>
             </div>
@@ -870,9 +884,9 @@
               <h3 data-i18n="workspace_status_title">Workspace status</h3>
               <p data-i18n="workspace_status_desc">A live summary of the bot currently selected for this workspace.</p>
               <div class="overview-status-grid">
-                <div><span data-i18n="workspace_active_bot">Active bot</span><strong id="overviewActiveBot">—</strong></div>
-                <div><span data-i18n="workspace_auto_reply">AI auto-reply</span><strong id="overviewAutoReply">—</strong></div>
-                <div><span data-i18n="workspace_orders">Orders from chats</span><strong id="overviewOrders">—</strong></div>
+                <div><span data-i18n="workspace_active_bot">Active bot</span><strong id="overviewActiveBot">ΓÇö</strong></div>
+                <div><span data-i18n="workspace_auto_reply">AI auto-reply</span><strong id="overviewAutoReply">ΓÇö</strong></div>
+                <div><span data-i18n="workspace_orders">Orders from chats</span><strong id="overviewOrders">ΓÇö</strong></div>
               </div>
             </div>
 
@@ -1163,7 +1177,7 @@
               <div style="max-width:500px; margin:0 auto 12px auto; height:8px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden;">
                 <div id="ideaSessionProgressBar" style="width:15%; height:100%; background:linear-gradient(90deg, var(--cyan), var(--blue)); transition:width 0.4s ease;"></div>
               </div>
-              <span id="ideaSessionStageText" style="font-size:13px; color:var(--cyan); font-weight:600;">—</span>
+              <span id="ideaSessionStageText" style="font-size:13px; color:var(--cyan); font-weight:600;">ΓÇö</span>
             </div>
 
             <!-- 8 Agents Grid -->
@@ -1224,14 +1238,14 @@
                 <div class="glass-card" style="border-inline-start:4px solid var(--cyan);">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                     <span style="font-size:12px; text-transform:uppercase; color:var(--text-muted);" data-i18n="idea_verdict_label">Executive Verdict</span>
-                    <span id="ideaVerdictBadge" class="badge" style="font-size:14px; padding:6px 14px; border-radius:14px;">—</span>
+                    <span id="ideaVerdictBadge" class="badge" style="font-size:14px; padding:6px 14px; border-radius:14px;">ΓÇö</span>
                   </div>
-                  <h3 id="ideaReportTitle" style="margin-bottom:8px;">—</h3>
-                  <p id="ideaExecSummary" style="color:#fff; font-size:15px; line-height:1.6; margin-bottom:12px;">—</p>
-                  <p id="ideaVerdictExplanation" style="color:var(--text-muted); font-size:13px; margin:0;">—</p>
+                  <h3 id="ideaReportTitle" style="margin-bottom:8px;">ΓÇö</h3>
+                  <p id="ideaExecSummary" style="color:#fff; font-size:15px; line-height:1.6; margin-bottom:12px;">ΓÇö</p>
+                  <p id="ideaVerdictExplanation" style="color:var(--text-muted); font-size:13px; margin:0;">ΓÇö</p>
                   <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--glass-border); display:flex; justify-content:space-between; font-size:13px;">
                     <span data-i18n="idea_seven_day_build_label">7-Day Build Verdict</span>
-                    <strong id="idea7DayVerdictText" style="color:var(--cyan);">—</strong>
+                    <strong id="idea7DayVerdictText" style="color:var(--cyan);">ΓÇö</strong>
                   </div>
                 </div>
 
@@ -1239,11 +1253,11 @@
                 <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                   <div class="glass-card" style="border-inline-start:3px solid var(--green);">
                     <h4 style="font-size:13px; color:var(--green); margin-bottom:6px;" data-i18n="idea_opp_label">Strongest Opportunity</h4>
-                    <p id="ideaStrongestOpportunity" style="font-size:13px; color:var(--text-muted); margin:0;">—</p>
+                    <p id="ideaStrongestOpportunity" style="font-size:13px; color:var(--text-muted); margin:0;">ΓÇö</p>
                   </div>
                   <div class="glass-card" style="border-inline-start:3px solid var(--red);">
                     <h4 style="font-size:13px; color:var(--red); margin-bottom:6px;" data-i18n="idea_risk_label">Biggest Risk</h4>
-                    <p id="ideaBiggestRisk" style="font-size:13px; color:var(--text-muted); margin:0;">—</p>
+                    <p id="ideaBiggestRisk" style="font-size:13px; color:var(--text-muted); margin:0;">ΓÇö</p>
                   </div>
                 </div>
 
@@ -1253,7 +1267,7 @@
                   <ul id="ideaTopAssumptionsList" style="padding-inline-start:20px; font-size:13px; color:var(--text-muted); margin-bottom:16px;"></ul>
 
                   <h4 style="font-size:14px; color:var(--cyan); margin-bottom:6px;" data-i18n="idea_question_label">Critical Question to Settle</h4>
-                  <p id="ideaCriticalQuestion" style="font-size:13px; font-weight:600; color:#fff; margin-bottom:16px;">—</p>
+                  <p id="ideaCriticalQuestion" style="font-size:13px; font-weight:600; color:#fff; margin-bottom:16px;">ΓÇö</p>
 
                   <h4 style="font-size:14px; color:var(--text-muted); margin-bottom:8px;" data-i18n="idea_cut_list_label">Cut / Defer List for V1</h4>
                   <ul id="ideaCutList" style="padding-inline-start:20px; font-size:13px; color:var(--text-muted); margin:0;"></ul>
@@ -1266,12 +1280,12 @@
                     <span data-i18n="idea_validation_plan_title">Adaptive Validation Plan</span>
                   </h4>
                   <div style="display:flex; flex-direction:column; gap:10px; font-size:13px;">
-                    <div><span style="color:var(--text-muted);" data-i18n="idea_val_hypothesis">Hypothesis:</span> <strong id="ideaValHypothesis" style="color:#fff;">—</strong></div>
-                    <div><span style="color:var(--text-muted);" data-i18n="idea_val_audience">Audience:</span> <span id="ideaValAudience">—</span></div>
-                    <div><span style="color:var(--text-muted);" data-i18n="idea_val_channel">Channel:</span> <span id="ideaValChannel">—</span></div>
-                    <div><span style="color:var(--text-muted);" data-i18n="idea_val_duration">Suggested Duration:</span> <strong id="ideaValDuration" style="color:var(--cyan);">—</strong></div>
-                    <div><span style="color:var(--text-muted);" data-i18n="idea_val_metric">Success Metric:</span> <strong id="ideaValMetric" style="color:var(--green);">—</strong></div>
-                    <div><span style="color:var(--text-muted);" data-i18n="idea_val_stop">Stop Condition:</span> <strong id="ideaValStop" style="color:var(--red);">—</strong></div>
+                    <div><span style="color:var(--text-muted);" data-i18n="idea_val_hypothesis">Hypothesis:</span> <strong id="ideaValHypothesis" style="color:#fff;">ΓÇö</strong></div>
+                    <div><span style="color:var(--text-muted);" data-i18n="idea_val_audience">Audience:</span> <span id="ideaValAudience">ΓÇö</span></div>
+                    <div><span style="color:var(--text-muted);" data-i18n="idea_val_channel">Channel:</span> <span id="ideaValChannel">ΓÇö</span></div>
+                    <div><span style="color:var(--text-muted);" data-i18n="idea_val_duration">Suggested Duration:</span> <strong id="ideaValDuration" style="color:var(--cyan);">ΓÇö</strong></div>
+                    <div><span style="color:var(--text-muted);" data-i18n="idea_val_metric">Success Metric:</span> <strong id="ideaValMetric" style="color:var(--green);">ΓÇö</strong></div>
+                    <div><span style="color:var(--text-muted);" data-i18n="idea_val_stop">Stop Condition:</span> <strong id="ideaValStop" style="color:var(--red);">ΓÇö</strong></div>
                   </div>
                 </div>
 
@@ -1283,8 +1297,8 @@
                   </div>
                   <div class="glass-card">
                     <h4 style="font-size:14px; color:var(--cyan); margin-bottom:8px;" data-i18n="idea_wedge_title">Unique Wedge & Value</h4>
-                    <p id="ideaUniqueWedge" style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">—</p>
-                    <p id="ideaFirstMomentOfValue" style="font-size:12px; color:var(--cyan); margin:0;">—</p>
+                    <p id="ideaUniqueWedge" style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">ΓÇö</p>
+                    <p id="ideaFirstMomentOfValue" style="font-size:12px; color:var(--cyan); margin:0;">ΓÇö</p>
                   </div>
                 </div>
 
@@ -1343,22 +1357,22 @@
                   <div class="db-responsive-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:14px;">
                     <div style="background:rgba(255, 255, 255, 0.03); border:1px solid var(--glass-border); border-radius:8px; padding:12px; text-align:center;">
                       <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;" data-i18n="idea_unit_econ_net_contribution">Net Contribution / Order</div>
-                      <div id="ideaCalcNetContribution" style="font-size:16px; font-weight:700; color:var(--green);">—</div>
+                      <div id="ideaCalcNetContribution" style="font-size:16px; font-weight:700; color:var(--green);">ΓÇö</div>
                     </div>
                     <div style="background:rgba(255, 255, 255, 0.03); border:1px solid var(--glass-border); border-radius:8px; padding:12px; text-align:center;">
                       <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;" data-i18n="idea_unit_econ_breakeven_orders">Monthly Breakeven Orders</div>
-                      <div id="ideaCalcBreakevenOrders" style="font-size:16px; font-weight:700; color:var(--cyan);">—</div>
+                      <div id="ideaCalcBreakevenOrders" style="font-size:16px; font-weight:700; color:var(--cyan);">ΓÇö</div>
                     </div>
                     <div style="background:rgba(255, 255, 255, 0.03); border:1px solid var(--glass-border); border-radius:8px; padding:12px; text-align:center;">
                       <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;" data-i18n="idea_unit_econ_daily_orders">Required Daily Orders</div>
-                      <div id="ideaCalcDailyOrders" style="font-size:16px; font-weight:700; color:var(--purple-light);">—</div>
+                      <div id="ideaCalcDailyOrders" style="font-size:16px; font-weight:700; color:var(--purple-light);">ΓÇö</div>
                     </div>
                   </div>
 
                   <!-- Key Financial Risk Flag -->
                   <div id="ideaCalcFinancialRiskBox" style="font-size:12px; padding:10px 14px; border-radius:6px; background:rgba(239, 68, 68, 0.08); border:1px solid rgba(239, 68, 68, 0.2); color:#fca5a5; display:flex; align-items:center; gap:8px;">
                     <i class="fas fa-triangle-exclamation" style="color:var(--red);"></i>
-                    <span id="ideaCalcFinancialRiskText">—</span>
+                    <span id="ideaCalcFinancialRiskText">ΓÇö</span>
                   </div>
                 </div>
 
@@ -1476,7 +1490,7 @@
             </div>
 
 
-            <!-- General agent instructions card (legacy "عامة" rules) -->
+            <!-- General agent instructions card (legacy "╪╣╪º┘à╪⌐" rules) -->
             <div class="glass-card" style="display:flex; flex-direction:column;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                 <h3 data-i18n="training_general_title">General Agent Instructions</h3>
@@ -1706,16 +1720,45 @@
           </div>
         </section>
 
-        <!-- ==================== 6. SETTINGS & BILLING ==================== -->
+        <!-- ==================== 6. SETTINGS & AGENT CONTROL CENTER ==================== -->
+        <!-- ==================== 6. SETTINGS & AGENT CONTROL CENTER (reorganized) ==================== -->
         <section id="page-settings" class="db-page">
-          <h2 data-i18n="settings_billing_title" style="margin-bottom:24px;">Settings & Developer Integrations</h2>
-          
-          <!-- Alert & Notification Recipients Card -->
-          <div class="glass-card" style="margin-bottom:24px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+          <h2 data-i18n="settings_billing_title" style="margin-bottom:8px;">Settings & Developer Integrations</h2>
+          <p style="color:var(--text-muted); font-size:14px; margin-bottom:24px;" data-i18n="settings_intro_desc">All agent and workspace controls in one place, organized into ordered sections: Agent Instructions ΓåÆ Agent Capabilities ΓåÆ Notifications ΓåÆ AI Model ΓåÆ Developer Integrations ΓåÆ Account.</p>
+
+          <!-- ===== Section 1: Agent Instructions & Personality ===== -->
+          <div class="glass-card settings-section" id="settingsSectionInstructions" style="margin-bottom:24px; border-right:3px solid var(--cyan);">
+            <div class="settings-section-head">
               <div>
-                <h3 data-i18n="notification_recipients_title"><i class="fas fa-bell" style="color:var(--cyan);"></i> Multi-Channel Notification Recipients</h3>
-                <p style="font-size:12px; color:var(--text-muted); margin-top:4px;" data-i18n="notification_recipients_desc">Connect multiple WhatsApp numbers and Telegram accounts/channels to receive instant order and appointment notifications.</p>
+                <span class="settings-section-number">1</span>
+                <h3 data-i18n="set_sec_instructions_title"><i class="fas fa-brain" style="color:var(--cyan);"></i> Agent Instructions & Personality</h3>
+                <p class="settings-section-desc" data-i18n="set_sec_instructions_desc">What your agent says and how it behaves: welcome message, persona rules, objectives, and handoff to humans. Applies to the active agent.</p>
+              </div>
+              <button type="button" id="openTrainingFromSettingsBtn" class="btn btn-secondary btn-sm" data-i18n="set_open_training">Open AI Training</button>
+            </div>
+            <div id="settingsInstructionsSummary" class="settings-summary-grid"></div>
+          </div>
+
+          <!-- ===== Section 2: Agent Capabilities (Tools & Skills of active agent) ===== -->
+          <div class="glass-card settings-section" id="settingsSectionCapabilities" style="margin-bottom:24px; border-right:3px solid var(--purple-light);">
+            <div class="settings-section-head">
+              <div>
+                <span class="settings-section-number">2</span>
+                <h3 data-i18n="set_sec_capabilities_title"><i class="fas fa-tools" style="color:var(--purple-light);"></i> Agent Capabilities</h3>
+                <p class="settings-section-desc" data-i18n="set_sec_capabilities_desc">Enable or disable what the active agent can do: bookings, order tracking, notifications, recovery, digests, and upselling. Edit details in the agent card.</p>
+              </div>
+              <button type="button" id="openAgentFromSettingsBtn" class="btn btn-secondary btn-sm" data-i18n="set_open_agents">Edit Active Agent</button>
+            </div>
+            <div id="settingsCapabilitiesSummary" class="settings-summary-grid"></div>
+          </div>
+
+          <!-- ===== Section 3: Notifications & Alerts ===== -->
+          <div class="glass-card settings-section" style="margin-bottom:24px; border-right:3px solid var(--green);">
+            <div class="settings-section-head">
+              <div>
+                <span class="settings-section-number">3</span>
+                <h3 data-i18n="notification_recipients_title"><i class="fas fa-bell" style="color:var(--green);"></i> Multi-Channel Notification Recipients</h3>
+                <p class="settings-section-desc" data-i18n="notification_recipients_desc">Connect multiple WhatsApp numbers and Telegram accounts/channels to receive instant order and appointment notifications.</p>
               </div>
               <button id="addRecipientBtn" class="btn btn-primary btn-sm" type="button"><i class="fas fa-plus"></i> <span data-i18n="btn_add_recipient">Add Notification Channel</span></button>
             </div>
@@ -1745,68 +1788,15 @@
             </div>
           </div>
 
-          <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
-            <!-- Developer API Keys card -->
-            <div class="glass-card" style="display:flex; flex-direction:column;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                <h3 data-i18n="dev_api_keys_title">Developer Access Keys</h3>
-                <button id="generateKeyBtn" class="btn btn-primary btn-sm" style="padding:6px 12px;"><i class="fas fa-plus"></i> <span data-i18n="btn_gen_key">Generate Key</span></button>
-              </div>
-              <div style="flex:1; overflow-y:auto; max-height:220px;" id="apiKeysContainer">
-                <!-- Keys rendered dynamically -->
+          <!-- ===== Section 4: AI Model (primary + backup) ===== -->
+          <div class="glass-card settings-section" style="margin-bottom:24px; border-right:3px solid var(--blue);">
+            <div class="settings-section-head">
+              <div>
+                <span class="settings-section-number">4</span>
+                <h3 data-i18n="model_select_heading"><i class="fas fa-microchip" style="color:var(--blue);"></i> AI Model & Fail-safe</h3>
+                <p class="settings-section-desc" data-i18n="model_select_desc">Choose Auto to let the platform pick the best available model for your plan, or select a specific model from the list enabled for your account.</p>
               </div>
             </div>
-
-            <!-- Outbound Webhooks configuration card -->
-            <div class="glass-card">
-              <h3 data-i18n="dev_webhooks_title" style="margin-bottom:16px;">Outbound Webhooks URL</h3>
-              <form id="webhookConfigForm">
-                <div class="form-group">
-                  <label data-i18n="label_webhook_url">Destination Webhook URL</label>
-                  <input type="url" id="webhookUrlInput" class="form-control" placeholder="https://my-api-server.com/webhook" required />
-                </div>
-                <div class="form-group">
-                  <label data-i18n="label_webhook_secret">Signing Secret Key (HMAC)</label>
-                  <input type="text" id="webhookSecretInput" class="form-control" readonly placeholder="Will generate automatically on save" />
-                </div>
-                <div class="form-group">
-                  <label data-i18n="label_webhook_events">Subscribed Events</label>
-                  <div class="checkbox-group">
-                    <label class="checkbox-item"><input type="checkbox" name="webhookEvents" value="message.received" checked /> message.received</label>
-                    <label class="checkbox-item"><input type="checkbox" name="webhookEvents" value="message.sent" checked /> message.sent</label>
-                    <label class="checkbox-item"><input type="checkbox" name="webhookEvents" value="order.created" checked /> order.created</label>
-                  </div>
-                </div>
-                <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_save_webhook">Save Config</button>
-              </form>
-            </div>
-          </div>
-
-          <!-- Webhook deliveries log table -->
-          <div class="glass-card" style="margin-top:24px;">
-            <h3 data-i18n="webhook_logs_title" style="margin-bottom:16px;">Outgoing Webhook Delivery History</h3>
-            <div class="custom-table-container">
-              <table class="custom-table">
-                <thead>
-                  <tr>
-                    <th data-i18n="th_wh_time">Timestamp</th>
-                    <th data-i18n="th_wh_event">Event</th>
-                    <th data-i18n="th_wh_url">URL</th>
-                    <th data-i18n="th_wh_status">HTTP Status</th>
-                    <th data-i18n="th_wh_actions">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="webhookLogsTableBody">
-                  <!-- Webhook attempts list -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- User Keys & Backup Key (Especially for Growth Plan backup API key) -->
-          <div class="glass-card" id="aiModelSection" style="margin-top:24px;">
-            <h3 data-i18n="model_select_heading" style="margin-bottom:8px;"><i class="fas fa-microchip" style="color:var(--cyan);"></i> AI Model</h3>
-            <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;" data-i18n="model_select_desc">Choose Auto to let the platform pick the best available model for your plan, or select a specific model from the list enabled for your account.</p>
             <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr auto; gap:16px; align-items:end;">
               <div class="form-group" style="margin-bottom:0;">
                 <label for="primaryModelSelect" data-i18n="model_select_label">Model</label>
@@ -1817,40 +1807,108 @@
               <button type="button" id="savePrimaryModelBtn" class="btn btn-primary btn-sm" style="background:var(--cyan); color:#000; border-color:var(--cyan); font-weight:600;" data-i18n="model_select_save">Save model</button>
             </div>
             <span id="modelSaveMsg" style="display:block; margin-top:10px; font-size:13px;"></span>
+
+            <div id="backupKeysSection" style="margin-top:24px; border-top:1px solid var(--glass-border); padding-top:20px;">
+              <h4 data-i18n="backup_keys_heading" style="margin-bottom:8px;">Quota Fail-safe backup API key (Growth plan)</h4>
+              <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;" data-i18n="backup_keys_desc">Input your own API key. If your monthly package quota is depleted, our engine will automatically switch to your key instead of shutting down the bot.</p>
+              <form id="backupKeysForm">
+                <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
+                  <div class="form-group">
+                    <label data-i18n="label_backup_provider">AI Provider</label>
+                    <select id="backupProvider" class="form-control">
+                      <option value="openai">OpenAI</option>
+                      <option value="gemini">Google Gemini</option>
+                      <option value="anthropic">Anthropic (Claude)</option>
+                      <option value="openrouter">OpenRouter</option>
+                      <option value="custom">Custom Endpoint</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="label_backup_key">API Key</label>
+                    <input type="password" id="backupApiKey" class="form-control" placeholder="sk-..." autocomplete="off" />
+                  </div>
+                </div>
+                <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
+                  <div class="form-group">
+                    <label data-i18n="label_backup_model">Default Model</label>
+                    <input type="text" id="backupModel" class="form-control" placeholder="gpt-4o-mini / gemini-1.5-flash" />
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="label_backup_url">Custom Endpoint Base URL</label>
+                    <input type="text" id="backupBaseUrl" class="form-control" placeholder="https://my-proxy.com/v1" />
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_save_backup_settings">Save Key Settings</button>
+              </form>
+            </div>
           </div>
 
-          <div class="glass-card" id="backupKeysSection" style="margin-top:24px;">
-            <h3 data-i18n="backup_keys_heading" style="margin-bottom:16px;">Quota Fail-safe backup API key (Growth plan)</h3>
-            <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;" data-i18n="backup_keys_desc">Input your own API key. If your monthly package quota is depleted, our engine will automatically switch to your key instead of shutting down the bot.</p>
-            <form id="backupKeysForm">
-              <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
-                <div class="form-group">
-                  <label data-i18n="label_backup_provider">AI Provider</label>
-                  <select id="backupProvider" class="form-control">
-                    <option value="openai">OpenAI</option>
-                    <option value="gemini">Google Gemini</option>
-                    <option value="anthropic">Anthropic (Claude)</option>
-                    <option value="openrouter">OpenRouter</option>
-                    <option value="custom">Custom Endpoint</option>
-                  </select>
+          <!-- ===== Section 5: Developer Integrations ===== -->
+          <div class="glass-card settings-section" style="margin-bottom:24px; border-right:3px solid var(--orange);">
+            <div class="settings-section-head">
+              <div>
+                <span class="settings-section-number">5</span>
+                <h3 data-i18n="dev_integrations_title"><i class="fas fa-code" style="color:var(--orange);"></i> Developer Integrations & Webhooks</h3>
+                <p class="settings-section-desc" data-i18n="dev_integrations_desc">Generate access keys for external apps and push platform events to your own systems in real time.</p>
+              </div>
+            </div>
+            <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+              <!-- Developer API Keys card -->
+              <div style="display:flex; flex-direction:column;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                  <h4 data-i18n="dev_api_keys_title">Developer Access Keys</h4>
+                  <button id="generateKeyBtn" class="btn btn-primary btn-sm" style="padding:6px 12px;"><i class="fas fa-plus"></i> <span data-i18n="btn_gen_key">Generate Key</span></button>
                 </div>
-                <div class="form-group">
-                  <label data-i18n="label_backup_key">API Key</label>
-                  <input type="password" id="backupApiKey" class="form-control" placeholder="sk-..." autocomplete="off" />
+                <div style="flex:1; overflow-y:auto; max-height:220px;" id="apiKeysContainer">
+                  <!-- Keys rendered dynamically -->
                 </div>
               </div>
-              <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
-                <div class="form-group">
-                  <label data-i18n="label_backup_model">Default Model</label>
-                  <input type="text" id="backupModel" class="form-control" placeholder="gpt-4o-mini / gemini-1.5-flash" />
-                </div>
-                <div class="form-group">
-                  <label data-i18n="label_backup_url">Custom Endpoint Base URL</label>
-                  <input type="text" id="backupBaseUrl" class="form-control" placeholder="https://my-proxy.com/v1" />
-                </div>
+
+              <!-- Outbound Webhooks configuration card -->
+              <div>
+                <h4 data-i18n="dev_webhooks_title" style="margin-bottom:16px;">Outbound Webhooks URL</h4>
+                <form id="webhookConfigForm">
+                  <div class="form-group">
+                    <label data-i18n="label_webhook_url">Destination Webhook URL</label>
+                    <input type="url" id="webhookUrlInput" class="form-control" placeholder="https://my-api-server.com/webhook" required />
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="label_webhook_secret">Signing Secret Key (HMAC)</label>
+                    <input type="text" id="webhookSecretInput" class="form-control" readonly placeholder="Will generate automatically on save" />
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="label_webhook_events">Subscribed Events</label>
+                    <div class="checkbox-group">
+                      <label class="checkbox-item"><input type="checkbox" name="webhookEvents" value="message.received" checked /> <span data-i18n="wh_event_msg_received">message.received</span></label>
+                      <label class="checkbox-item"><input type="checkbox" name="webhookEvents" value="message.sent" checked /> <span data-i18n="wh_event_msg_sent">message.sent</span></label>
+                      <label class="checkbox-item"><input type="checkbox" name="webhookEvents" value="order.created" checked /> <span data-i18n="wh_event_order_created">order.created</span></label>
+                    </div>
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_save_webhook">Save Config</button>
+                </form>
               </div>
-              <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_save_backup_settings">Save Key Settings</button>
-            </form>
+            </div>
+
+            <!-- Webhook deliveries log table -->
+            <div style="margin-top:24px; border-top:1px solid var(--glass-border); padding-top:20px;">
+              <h4 data-i18n="webhook_logs_title" style="margin-bottom:16px;">Outgoing Webhook Delivery History</h4>
+              <div class="custom-table-container">
+                <table class="custom-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="th_wh_time">Timestamp</th>
+                      <th data-i18n="th_wh_event">Event</th>
+                      <th data-i18n="th_wh_url">URL</th>
+                      <th data-i18n="th_wh_status">HTTP Status</th>
+                      <th data-i18n="th_wh_actions">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="webhookLogsTableBody">
+                    <!-- Webhook attempts list -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -1989,15 +2047,15 @@
           <!-- Section 3: System Overview KPIs -->
           <div id="adminSectionOverview" class="admin-subtab-content" style="display:none;">
             <div class="db-responsive-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:16px;" id="adminOverviewGrid">
-              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_users_total">Total users</div><div id="ovUsersTotal" style="font-size:26px; font-weight:700; color:var(--cyan);">—</div></div>
-              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_users_active">Active users</div><div id="ovUsersActive" style="font-size:26px; font-weight:700; color:var(--green);">—</div></div>
-              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_bots_total">Total agents</div><div id="ovBotsTotal" style="font-size:26px; font-weight:700; color:var(--purple-light);">—</div></div>
-              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_bots_active">Active agents</div><div id="ovBotsActive" style="font-size:26px; font-weight:700; color:var(--green);">—</div></div>
-              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_conversations">Conversations</div><div id="ovConversations" style="font-size:26px; font-weight:700; color:var(--blue);">—</div></div>
-              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_messages">Messages</div><div id="ovMessages" style="font-size:26px; font-weight:700; color:var(--cyan);">—</div></div>
-              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_chat_orders">Chat orders</div><div id="ovChatOrders" style="font-size:26px; font-weight:700; color:var(--orange);">—</div></div>
-              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_active_sessions">Active impersonations</div><div id="ovActiveSessions" style="font-size:26px; font-weight:700; color:var(--red);">—</div></div>
-              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_audit_events">Audit events</div><div id="ovAuditEvents" style="font-size:26px; font-weight:700; color:var(--text-muted);">—</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_users_total">Total users</div><div id="ovUsersTotal" style="font-size:26px; font-weight:700; color:var(--cyan);">ΓÇö</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_users_active">Active users</div><div id="ovUsersActive" style="font-size:26px; font-weight:700; color:var(--green);">ΓÇö</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_bots_total">Total agents</div><div id="ovBotsTotal" style="font-size:26px; font-weight:700; color:var(--purple-light);">ΓÇö</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_bots_active">Active agents</div><div id="ovBotsActive" style="font-size:26px; font-weight:700; color:var(--green);">ΓÇö</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_conversations">Conversations</div><div id="ovConversations" style="font-size:26px; font-weight:700; color:var(--blue);">ΓÇö</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_messages">Messages</div><div id="ovMessages" style="font-size:26px; font-weight:700; color:var(--cyan);">ΓÇö</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_chat_orders">Chat orders</div><div id="ovChatOrders" style="font-size:26px; font-weight:700; color:var(--orange);">ΓÇö</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_active_sessions">Active impersonations</div><div id="ovActiveSessions" style="font-size:26px; font-weight:700; color:var(--red);">ΓÇö</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_audit_events">Audit events</div><div id="ovAuditEvents" style="font-size:26px; font-weight:700; color:var(--text-muted);">ΓÇö</div></div>
             </div>
           </div>
 
@@ -2048,7 +2106,7 @@
                     <tr style="border-bottom:2px solid var(--glass-border); font-size:13px; color:var(--text-muted);">
                       <th style="padding:10px;" data-i18n="th_event_when">When</th>
                       <th style="padding:10px;" data-i18n="th_event_type">Event</th>
-                      <th style="padding:10px;" data-i18n="th_event_actor">Actor → Target</th>
+                      <th style="padding:10px;" data-i18n="th_event_actor">Actor ΓåÆ Target</th>
                       <th style="padding:10px;" data-i18n="th_event_action">Action</th>
                       <th style="padding:10px;" data-i18n="th_event_outcome">Outcome</th>
                     </tr>
@@ -2268,7 +2326,7 @@
                   </div>
                   <div class="form-group" style="margin-bottom:0;">
                     <label style="font-size:12px;" data-i18n="agent_booking_service_label">Default Service / Purpose</label>
-                    <input id="agentBookingDefaultService" class="form-control" placeholder="استشارة / موعد" value="استشارة / موعد" />
+                    <input id="agentBookingDefaultService" class="form-control" placeholder="╪º╪│╪¬╪┤╪º╪▒╪⌐ / ┘à┘ê╪╣╪»" value="╪º╪│╪¬╪┤╪º╪▒╪⌐ / ┘à┘ê╪╣╪»" />
                   </div>
                 </div>
               </div>
@@ -2690,7 +2748,7 @@
               <!-- Suggested Questions -->
               <div class="form-group" style="margin-bottom:14px;">
                 <label data-i18n="label_chat_suggested_questions">Suggested Quick Questions (One per line)</label>
-                <textarea id="chatPageSuggestedQuestions" class="form-control" rows="3" placeholder="ما هي المنتجات والعروض المتوفرة؟&#10;كيف يمكنني حجز موعد؟" oninput="updateLivePreview()"></textarea>
+                <textarea id="chatPageSuggestedQuestions" class="form-control" rows="3" placeholder="┘à╪º ┘ç┘è ╪º┘ä┘à┘å╪¬╪¼╪º╪¬ ┘ê╪º┘ä╪╣╪▒┘ê╪╢ ╪º┘ä┘à╪¬┘ê┘ü╪▒╪⌐╪ƒ&#10;┘â┘è┘ü ┘è┘à┘â┘å┘å┘è ╪¡╪¼╪▓ ┘à┘ê╪╣╪»╪ƒ" oninput="updateLivePreview()"></textarea>
               </div>
 
               <!-- Toggles -->
@@ -2736,7 +2794,7 @@
                   <div style="flex:1; min-width:0;">
                     <div id="previewChatTitle" style="font-weight:700; font-size:13px; color:#ffffff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">ZainBot AI Sales Agent</div>
                     <div style="font-size:10px; color:#10b981; display:flex; align-items:center; gap:4px;">
-                      <span style="width:6px; height:6px; border-radius:50%; background:#10b981; display:inline-block;"></span> <span data-i18n="preview_status_online">Online · AI Sales Ready</span>
+                      <span style="width:6px; height:6px; border-radius:50%; background:#10b981; display:inline-block;"></span> <span data-i18n="preview_status_online">Online ┬╖ AI Sales Ready</span>
                     </div>
                   </div>
                 </div>
@@ -2751,21 +2809,21 @@
                   <!-- Bot Greeting Bubble -->
                   <div style="display:flex; justify-content:flex-start;">
                     <div id="previewBotBubble1" style="max-width:80%; padding:9px 13px; border-radius:12px 12px 12px 0; background:#1E293B; color:#ffffff; font-size:12px; line-height:1.5; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
-                      مرحباً بك! 👋 يسعدني مساعدتك في استعراض منتجاتنا والعروض وتأكيد الحجز فورياً.
+                      ┘à╪▒╪¡╪¿╪º┘ï ╪¿┘â! ≡ƒæï ┘è╪│╪╣╪»┘å┘è ┘à╪│╪º╪╣╪»╪¬┘â ┘ü┘è ╪º╪│╪¬╪╣╪▒╪º╪╢ ┘à┘å╪¬╪¼╪º╪¬┘å╪º ┘ê╪º┘ä╪╣╪▒┘ê╪╢ ┘ê╪¬╪ú┘â┘è╪» ╪º┘ä╪¡╪¼╪▓ ┘ü┘ê╪▒┘è╪º┘ï.
                     </div>
                   </div>
 
                   <!-- User Sample Bubble -->
                   <div style="display:flex; justify-content:flex-end;">
                     <div id="previewUserBubble" style="max-width:80%; padding:9px 13px; border-radius:12px 12px 0 12px; background:#06B6D4; color:#ffffff; font-size:12px; line-height:1.5; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
-                      ما هي أسعار المنتجات المتاحة لديكم اليوم؟
+                      ┘à╪º ┘ç┘è ╪ú╪│╪╣╪º╪▒ ╪º┘ä┘à┘å╪¬╪¼╪º╪¬ ╪º┘ä┘à╪¬╪º╪¡╪⌐ ┘ä╪»┘è┘â┘à ╪º┘ä┘è┘ê┘à╪ƒ
                     </div>
                   </div>
 
                   <!-- Bot Reply Bubble -->
                   <div style="display:flex; justify-content:flex-start;">
                     <div id="previewBotBubble2" style="max-width:80%; padding:9px 13px; border-radius:12px 12px 12px 0; background:#1E293B; color:#ffffff; font-size:12px; line-height:1.5; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
-                      نوفر لك أحدث الباقات والكتالوجات التفاعلية مع إمكانية إتمام الطلب مباشرة من هنا! 🛒
+                      ┘å┘ê┘ü╪▒ ┘ä┘â ╪ú╪¡╪»╪½ ╪º┘ä╪¿╪º┘é╪º╪¬ ┘ê╪º┘ä┘â╪¬╪º┘ä┘ê╪¼╪º╪¬ ╪º┘ä╪¬┘ü╪º╪╣┘ä┘è╪⌐ ┘à╪╣ ╪Ñ┘à┘â╪º┘å┘è╪⌐ ╪Ñ╪¬┘à╪º┘à ╪º┘ä╪╖┘ä╪¿ ┘à╪¿╪º╪┤╪▒╪⌐ ┘à┘å ┘ç┘å╪º! ≡ƒ¢Æ
                     </div>
                   </div>
                 </div>
@@ -2776,7 +2834,7 @@
                     <i class="fas fa-image"></i>
                   </div>
                   <div style="flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:6px 12px; font-size:11px; color:var(--text-muted);" data-i18n="preview_input_placeholder">
-                    اكتب رسالتك هنا...
+                    ╪º┘â╪¬╪¿ ╪▒╪│╪º┘ä╪¬┘â ┘ç┘å╪º...
                   </div>
                   <div id="previewSendBtn" style="width:32px; height:32px; border-radius:50%; background:#06B6D4; color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:12px; box-shadow:0 2px 8px rgba(6,182,212,0.4); transition:0.25s ease;">
                     <i class="fas fa-paper-plane"></i>
@@ -2846,14 +2904,14 @@
         <div>
           <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;" data-i18n="idea_followup_chips_label">Strategic Advantage Angles (Click to toggle)</label>
           <div style="display:flex; flex-wrap:wrap; gap:6px;" id="ideaFollowupChips">
-            <span class="badge idea-strategy-chip" data-chip="pricing" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_pricing">💰 Lower Price / Cost Advantage</span>
-            <span class="badge idea-strategy-chip" data-chip="niche" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_niche">🎯 Underserved Niche Segment</span>
-            <span class="badge idea-strategy-chip" data-chip="distribution" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_distribution">🤝 Existing Distribution / Partners</span>
-            <span class="badge idea-strategy-chip" data-chip="guarantee" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_guarantee">🛡️ Risk-Free Trial / Guarantee</span>
-            <span class="badge idea-strategy-chip" data-chip="speed" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_speed">⚡ Radical Simplification</span>
-            <span class="badge idea-strategy-chip" data-chip="team" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_team">👥 Proven Domain Expert Team</span>
-            <span class="badge idea-strategy-chip" data-chip="offline" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_offline">📍 Prime Physical Location / Foot Traffic</span>
-            <span class="badge idea-strategy-chip" data-chip="inventory" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_inventory">📦 Existing Prototype / Inventory Ready</span>
+            <span class="badge idea-strategy-chip" data-chip="pricing" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_pricing">≡ƒÆ░ Lower Price / Cost Advantage</span>
+            <span class="badge idea-strategy-chip" data-chip="niche" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_niche">≡ƒÄ» Underserved Niche Segment</span>
+            <span class="badge idea-strategy-chip" data-chip="distribution" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_distribution">≡ƒñ¥ Existing Distribution / Partners</span>
+            <span class="badge idea-strategy-chip" data-chip="guarantee" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_guarantee">≡ƒ¢í∩╕Å Risk-Free Trial / Guarantee</span>
+            <span class="badge idea-strategy-chip" data-chip="speed" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_speed">ΓÜí Radical Simplification</span>
+            <span class="badge idea-strategy-chip" data-chip="team" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_team">≡ƒæÑ Proven Domain Expert Team</span>
+            <span class="badge idea-strategy-chip" data-chip="offline" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_offline">≡ƒôì Prime Physical Location / Foot Traffic</span>
+            <span class="badge idea-strategy-chip" data-chip="inventory" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_inventory">≡ƒôª Existing Prototype / Inventory Ready</span>
           </div>
         </div>
 
@@ -2956,6 +3014,7 @@
   <script src="js/utils.js"></script>
   <!-- Loading script for i18n translations & UI logic -->
   <script src="js/dashboard_new.js"></script>
+  <script src="js/settings-summary.js?v=2"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
