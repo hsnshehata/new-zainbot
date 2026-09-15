@@ -93,7 +93,9 @@
   let countersAnimated = false;
 
   function animateCounter(el) {
+    if (!el.dataset.target) return;
     const target = parseFloat(el.dataset.target);
+    if (isNaN(target)) return;
     const suffix = el.dataset.suffix || '';
     const duration = 2000;
     const startTime = performance.now();
@@ -136,32 +138,6 @@
   }, { threshold: 0.3 });
 
   if (counters.length) counterObserver.observe(counters[0].closest('.metrics'));
-
-  /* ===== PRICING TOGGLE ===== */
-  const pricingToggle = document.getElementById('pricingToggle');
-  const monthlyLabel = document.getElementById('monthlyLabel');
-  const yearlyLabel = document.getElementById('yearlyLabel');
-  const prices = {
-    starter: { monthly: 29, yearly: 23 },
-    growth: { monthly: 79, yearly: 63 },
-    scale: { monthly: 199, yearly: 159 }
-  };
-
-  pricingToggle.addEventListener('change', () => {
-    const isYearly = pricingToggle.checked;
-    monthlyLabel.classList.toggle('active', !isYearly);
-    yearlyLabel.classList.toggle('active', isYearly);
-
-    document.querySelectorAll('.price').forEach(el => {
-      const plan = el.dataset.plan;
-      const newPrice = prices[plan][isYearly ? 'yearly' : 'monthly'];
-      el.style.opacity = '0';
-      setTimeout(() => {
-        el.textContent = newPrice;
-        el.style.opacity = '1';
-      }, 150);
-    });
-  });
 
   /* ===== TESTIMONIAL CAROUSEL ===== */
   const track = document.getElementById('testimonialTrack');
@@ -230,12 +206,12 @@
   const aiResponses = [
     {
       triggers: ['where is my order', 'track', 'order status', 'delivery', 'my order', 'shipped', 'package'],
-      response: 'Your order #NX-2847 is on its way! 📦 It left our warehouse this morning and is currently at the local distribution center. Expected delivery: Thursday by 3 PM. Would you like me to share live tracking?',
+      response: 'I can help with order updates. In a connected workspace, the agent checks the information you provide and guides the customer to the next step.',
       confidence: 97
     },
     {
       triggers: ['pricing', 'price', 'cost', 'plan', 'how much', 'subscription', 'billing'],
-      response: "Great question! Here's a quick overview:\n\n• Starter — $29/mo: Perfect for small teams\n• Growth — $79/mo: Most popular, includes all channels\n• Scale — $199/mo: Unlimited everything\n\nAll plans come with a 14-day free trial. Want me to help you pick the right one?",
+      response: 'The current workspace starts on the free plan. Your available quota and any enabled features are always visible from the account menu in the dashboard.',
       confidence: 95
     },
     {
@@ -265,7 +241,39 @@
     confidence: 88
   };
 
+  let demoHistory = [];
+
+  // Real AI answer from the platform. Falls back to canned samples when the
+  // live demo is disabled, rate-limited, or temporarily unavailable.
+  async function requestLiveDemoReply(message) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
+    try {
+      const res = await fetch('/api/landing-demo/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: message,
+          lang: currentLang,
+          history: demoHistory.slice(-8)
+        }),
+        signal: controller.signal
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!data || !data.success || !data.reply) return null;
+      return { reply: data.reply, confidence: data.confidence };
+    } catch (err) {
+      return null;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
   function getAIResponse(message) {
+    if (currentLang === 'ar') {
+      return { response: 'شكرًا لرسالتك. في المنصة الفعلية يستخدم الوكيل تعليماتك وبياناتك المتاحة لمساعدة العميل.', confidence: 0 };
+    }
     const msg = message.toLowerCase().trim();
     for (const item of aiResponses) {
       if (item.triggers.some(trigger => msg.includes(trigger))) {
@@ -326,29 +334,50 @@
   }
 
   function updateConfidence(value) {
+    if (!confidenceFill || !confidenceValue) return;
     confidenceFill.style.width = value + '%';
     confidenceValue.textContent = value + '%';
   }
 
   let isResponding = false;
 
-  function handleUserMessage(message) {
+  async function handleUserMessage(message) {
     if (isResponding || !message.trim()) return;
     isResponding = true;
 
     appendMessage(message, 'in');
-
-    const aiResult = getAIResponse(message);
-
     showTyping();
-    const delay = 1000 + Math.random() * 800;
 
-    setTimeout(() => {
-      removeTyping();
+    const startedAt = Date.now();
+    let liveResult = null;
+    try {
+      liveResult = await requestLiveDemoReply(message);
+    } catch (err) {
+      liveResult = null;
+    }
+
+    // Keep the typing indicator on screen briefly for a natural rhythm.
+    const minDelay = 900;
+    const elapsed = Date.now() - startedAt;
+    if (elapsed < minDelay) {
+      await new Promise(resolve => setTimeout(resolve, minDelay - elapsed));
+    }
+
+    removeTyping();
+
+    if (liveResult && liveResult.reply) {
+      appendMessage(liveResult.reply, 'out');
+      updateConfidence(liveResult.confidence || 96);
+      demoHistory.push({ role: 'user', content: message });
+      demoHistory.push({ role: 'assistant', content: liveResult.reply });
+      if (demoHistory.length > 12) demoHistory = demoHistory.slice(-12);
+    } else {
+      const aiResult = getAIResponse(message);
       appendMessage(aiResult.response, 'out');
       updateConfidence(aiResult.confidence);
-      isResponding = false;
-    }, delay);
+    }
+
+    isResponding = false;
   }
 
   // Prompt chips
@@ -407,7 +436,176 @@
       hero_subtitle: 'Deploy intelligent AI agents that answer, sell, follow up, and learn from every customer conversation — across WhatsApp, Instagram, Messenger, your website, and online store. All from one beautifully simple platform.',
       hero_btn_primary: 'Build your AI agent <i class="fas fa-arrow-right"></i>',
       hero_btn_secondary: '<i class="fas fa-play"></i> Watch demo',
-      hero_proof: 'Trusted by <strong>2,400+</strong> growing teams'
+      hero_proof: 'Start with a workspace built around your team.',
+      hero_chat_status: 'Workspace preview',
+      hero_chat_customer_one: 'Do you have this in size M?',
+      hero_chat_bot: 'Yes, it is available in medium. Would you like me to help you place an order?',
+      hero_chat_customer_two: 'That is great. Yes, please.',
+      hero_chat_input: 'Type a message...',
+      hero_floating_one: 'Follow-up',
+      hero_floating_one_label: 'ready to automate',
+      hero_floating_two: 'Always ready',
+      hero_floating_three: 'Workspace view',
+      hero_floating_three_value: 'Your live data',
+      bento_card2_ready: 'Ready',
+      metric_value_conversations: 'Conversations',
+      metric_value_channels: 'Channels',
+      metric_value_orders: 'Orders',
+      metric_value_quota: 'Quota',
+      metric_stat_value_live: 'Live',
+      metric_stat_value_ready: 'Ready',
+      metric_stat_value_account: 'Account',
+      bento_card2_accuracy: 'Based on your training',
+      bento_card5_convs: 'Conversations',
+      bento_card5_resolved: 'Useful signals',
+      metric_lbl_response: 'See every customer conversation',
+      metric_lbl_leads: 'Check connection status',
+      metric_lbl_sat: 'Track orders and bookings',
+      metric_lbl_coverage: 'Know what is available',
+      metric_stat_lbl_resp: 'Conversations',
+      metric_stat_lbl_res: 'Connections',
+      metric_stat_lbl_sat: 'Usage',
+      cta_desc: 'Build your workspace, connect the channels you use, and start with the free plan. No credit card required.',
+      demo_eyebrow: 'Try it live',
+      demo_title: 'Meet your new <span class="gradient-text">AI teammate</span>',
+      demo_desc: 'Chat with a real AI agent that knows the platform inside out. This demo never uses customer data.',
+      demo_bot_name: 'ZainBot Assistant',
+      demo_bot_status: 'Live AI',
+      demo_conf_label: 'Reply context',
+      demo_welcome_msg: 'Welcome. This is a safe preview of how an agent can guide a customer conversation.',
+      demo_chip1: '<i class="fas fa-box"></i> Ask about an order',
+      demo_chip2: '<i class="fas fa-tag"></i> Ask about pricing',
+      demo_chip3: '<i class="fas fa-calendar-check"></i> Book an appointment',
+      demo_input_placeholder: 'Type your message...',
+      aria_main_navigation: 'Main navigation',
+      aria_toggle_language: 'Change language',
+      aria_toggle_menu: 'Toggle menu',
+      aria_demo_input: 'Type your message',
+      aria_send_message: 'Send message',
+      aria_back_to_top: 'Back to top',
+      bento_eyebrow: 'Platform',
+      bento_title: 'One AI brain. <span class="gradient-text">Every customer channel.</span>',
+      bento_desc: 'Bring customer conversations into one workspace where your team can reply, automate, and follow up.',
+      bento_card1_title: 'Unified inbox',
+      bento_card1_desc: 'Keep incoming messages from your connected channels in one clear place.',
+      bento_card1_msg1: 'Hi! Is the navy blazer still available?',
+      bento_card1_msg2: 'Do you ship to Singapore?',
+      bento_card1_msg3: 'My order arrived — thank you!',
+      bento_card1_visitor: 'Website visitor',
+      bento_card1_msg4: 'What are your business hours?',
+      bento_card2_title: 'Smart AI replies',
+      bento_card2_desc: 'Configure replies with the information and rules that matter to your business.',
+      bento_card2_toggle: 'AI auto-reply',
+      bento_card2_suggested: 'Suggested: “We have it in stock. Would you like help completing your order?”',
+      bento_card3_title: 'Follow-up workflow',
+      bento_card3_desc: 'Organize conversations so your team knows the next useful action.',
+      bento_card3_new: 'New conversations',
+      bento_card3_qualified: 'Needs follow-up',
+      bento_card3_closed: 'Completed',
+      bento_card4_title: 'Human handoff',
+      bento_card4_desc: 'Pass a conversation to your team whenever a human response is needed.',
+      bento_card4_ai: 'AI',
+      bento_card4_agent: 'Team member',
+      bento_card4_status: '<span class="handoff-indicator"></span>Handoff when your team is needed',
+      bento_card5_title: 'Workspace insights',
+      bento_card5_desc: 'Review the conversation and workspace signals that matter to your team.',
+      bento_card5_live: 'Preview',
+      bento_card6_title: 'AI Idea Council & Stress Testing',
+      bento_card6_desc: '8 specialized AI critics simulate skeptical customers, auditors, and competitors to stress-test your business ideas, find fatal flaws, and build a 7-day MVP plan before investing capital or writing code.',
+      bento_card6_badge1: 'Cold Customer',
+      bento_card6_badge2: 'Harsh Auditor',
+      bento_card6_badge3: 'Vicious Competitor',
+      bento_card6_badge4: 'Live Market Research',
+      bento_card6_badge5: 'Dynamic Truth Board',
+      workflow_eyebrow: 'How it works',
+      workflow_title: 'From message to <span class="gradient-text">momentum.</span>',
+      workflow_desc: 'Set up your workspace in clear steps and keep the control in your hands.',
+      workflow_step1_title: 'Connect your channels',
+      workflow_step1_desc: 'Link the channels you use and review their connection status from one place.',
+      workflow_step2_title: 'Train your AI agent',
+      workflow_step2_desc: 'Add your FAQs, product information, and guidance so the agent follows your business context.',
+      workflow_step3_title: 'Review and improve',
+      workflow_step3_desc: 'Test replies, monitor conversations, and hand off to your team when needed.',
+      int_eyebrow: 'Channels',
+      int_title: 'Meet customers where they <span class="gradient-text">already are.</span>',
+      int_desc: 'Choose the channels that suit your business, then connect and monitor each one from your workspace.',
+      int_connected: 'Ready to connect',
+      int_available: 'Available',
+      int_webchat: 'Website chat',
+      metrics_eyebrow: 'Workspace',
+      metrics_title: 'Less waiting. <span class="gradient-text">More clarity.</span>',
+      metrics_desc: 'Keep the conversations, channels, orders, and usage that matter to your team in one clear workspace.',
+      metric_panel_title: 'Workspace overview',
+      metric_panel_live: 'Preview',
+      pricing_eyebrow: 'Pricing',
+      pricing_title: 'Flexible plans that <span class="gradient-text">scale with you.</span>',
+      pricing_desc: 'Start free, upgrade when you need more power, and scale seamlessly as your business grows.',
+      plan_free_title: 'Free',
+      plan_free_price: '0',
+      plan_free_period: 'EGP/mo',
+      plan_free_desc: 'Perfect for testing, personal projects, and small stores starting out.',
+      plan_free_f1: '<i class="fas fa-check"></i> 1 AI agent',
+      plan_free_f2: '<i class="fas fa-check"></i> 25 messages/day (250/mo)',
+      plan_free_f3: '<i class="fas fa-check"></i> Up to 2 Agent Skills & 2 Agent Tools',
+      plan_free_f4: '<i class="fas fa-check"></i> 1 Notification recipient (WhatsApp or Telegram)',
+      plan_free_f5: '<i class="fas fa-check"></i> Basic analytics & order tracking',
+      plan_free_f6: '<i class="fas fa-check"></i> 3 Idea Council evaluations / mo',
+      plan_free_btn: 'Start free',
+      plan_growth_popular: 'Most popular',
+      plan_growth_title: 'Growth',
+      plan_growth_price: '199',
+      plan_growth_period: 'EGP/mo',
+      plan_growth_desc: 'For growing stores and businesses wanting automated customer engagement.',
+      plan_growth_f1: '<i class="fas fa-check"></i> Up to 5 AI agents',
+      plan_growth_f2: '<i class="fas fa-check"></i> 1,000+ monthly cloud messages',
+      plan_growth_f3: '<i class="fas fa-check"></i> Unlimited Agent Tools & Skills (Bookings, Orders, Sales, Classification)',
+      plan_growth_f4: '<i class="fas fa-check"></i> Multi-channel instant alerts (multiple WhatsApp & Telegram)',
+      plan_growth_f5: '<i class="fas fa-check"></i> Fail-safe backup API key failover',
+      plan_growth_f6: '<i class="fas fa-check"></i> Priority customer support',
+      plan_growth_f7: '<i class="fas fa-check"></i> 10 Idea Council evaluations / mo + Live Web Research & 3 Defense Rounds',
+      plan_growth_btn: 'Start free trial',
+      plan_scale_title: 'Enterprise / Scale',
+      plan_scale_price: '999',
+      plan_scale_period: 'EGP/mo',
+      plan_scale_desc: 'For high-volume operations, larger teams, and established brands.',
+      plan_scale_f1: '<i class="fas fa-check"></i> Unlimited AI agents',
+      plan_scale_f2: '<i class="fas fa-check"></i> High-volume conversation capacity',
+      plan_scale_f3: '<i class="fas fa-check"></i> Unlimited Tools, Skills, and Multi-Recipient Alerts',
+      plan_scale_f4: '<i class="fas fa-check"></i> Full API & Webhook integrations',
+      plan_scale_f5: '<i class="fas fa-check"></i> Dedicated account manager & 24/7 VIP support',
+      plan_scale_f6: '<i class="fas fa-check"></i> White-label options & 99.9% uptime SLA',
+      plan_scale_f7: '<i class="fas fa-check"></i> High-volume Idea Council evaluations + Deep Market Research & Custom Personas',
+      plan_scale_btn: 'Get started',
+      cta_title: 'Ready to make every <span class="gradient-text">conversation count?</span>',
+      cta_btn: 'Start building for free <i class="fas fa-arrow-right"></i>',
+      cta_note: 'No credit card required. Start from your workspace.',
+      footer_desc: 'Bring customer conversations into one workspace and give your team a clearer way to respond and follow up.',
+      footer_col_product: 'Product',
+      footer_link_features: 'Features',
+      footer_link_integrations: 'Channels',
+      footer_link_pricing: 'Plan',
+      footer_link_demo: 'Preview',
+      footer_link_changelog: 'Updates',
+      footer_col_solutions: 'Workspace',
+      footer_link_workflow: 'How it works',
+      footer_link_ecommerce: 'E-commerce',
+      footer_link_saas: 'Service teams',
+      footer_link_healthcare: 'Appointments',
+      footer_link_education: 'Education',
+      footer_col_resources: 'Resources',
+      footer_link_docs: 'Guides',
+      footer_link_api: 'Developer tools',
+      footer_link_blog: 'Product notes',
+      footer_link_help: 'Help',
+      footer_link_community: 'Community',
+      footer_col_company: 'ZainBot',
+      footer_link_about: 'About',
+      footer_link_careers: 'Careers',
+      footer_link_contact: 'Contact',
+      footer_link_privacy: 'Privacy',
+      footer_link_terms: 'Terms',
+      footer_rights: '© 2026 ZainBot. All rights reserved.',
+      footer_made: 'Built for teams that value clear customer conversations.'
     },
     ar: {
       nav_product: 'المنتج',
@@ -422,7 +620,176 @@
       hero_subtitle: 'قم بنشر عملاء أذكياء يجيبون، يبيعون، يتابعون، ويتعلمون من كل محادثة مع العميل — عبر واتساب، إنستجرام، مسنجر، موقعك الإلكتروني، ومتجرك الإلكتروني. كل ذلك من منصة واحدة بسيطة وجميلة.',
       hero_btn_primary: 'ابنِ عميلك الذكي <i class="fas fa-arrow-left"></i>',
       hero_btn_secondary: '<i class="fas fa-play"></i> شاهد العرض',
-      hero_proof: 'موضع ثقة أكثر من <strong>2,400</strong> فريق عمل متنامي'
+      hero_proof: 'ابدأ بمساحة عمل مصممة حول احتياجات فريقك.',
+      hero_chat_status: 'نموذج لمساحة العمل',
+      hero_chat_customer_one: 'هل يتوفر هذا المنتج بالمقاس المتوسط؟',
+      hero_chat_bot: 'نعم، المقاس المتوسط متاح. هل ترغب أن أساعدك في إتمام الطلب؟',
+      hero_chat_customer_two: 'ممتاز، نعم من فضلك.',
+      hero_chat_input: 'اكتب رسالة...',
+      hero_floating_one: 'متابعة',
+      hero_floating_one_label: 'جاهزة للأتمتة',
+      hero_floating_two: 'جاهز دائمًا',
+      hero_floating_three: 'عرض مساحة العمل',
+      hero_floating_three_value: 'بياناتك المباشرة',
+      bento_card2_ready: 'جاهز',
+      metric_value_conversations: 'المحادثات',
+      metric_value_channels: 'القنوات',
+      metric_value_orders: 'الطلبات',
+      metric_value_quota: 'الاستهلاك',
+      metric_stat_value_live: 'مباشر',
+      metric_stat_value_ready: 'جاهز',
+      metric_stat_value_account: 'الحساب',
+      bento_card2_accuracy: 'بناءً على تدريبك',
+      bento_card5_convs: 'المحادثات',
+      bento_card5_resolved: 'مؤشرات مفيدة',
+      metric_lbl_response: 'اطّلع على كل محادثات العملاء',
+      metric_lbl_leads: 'تحقق من حالة القنوات',
+      metric_lbl_sat: 'تابع الطلبات والحجوزات',
+      metric_lbl_coverage: 'اعرف المتاح في حسابك',
+      metric_stat_lbl_resp: 'المحادثات',
+      metric_stat_lbl_res: 'القنوات',
+      metric_stat_lbl_sat: 'الاستهلاك',
+      cta_desc: 'أنشئ مساحة عملك واربط القنوات التي تستخدمها وابدأ بالخطة المجانية دون بطاقة دفع.',
+      demo_eyebrow: 'جرّب المثال',
+      demo_title: 'تعرّف على <span class="gradient-text">زميلك الذكي</span>',
+      demo_desc: 'تحدث مع وكيل ذكاء اصطناعي حقيقي يعرف كل تفاصيل المنصة. هذه التجربة لا تستخدم بيانات العملاء.',
+      demo_bot_name: 'مساعد زين بوت',
+      demo_bot_status: 'ذكاء اصطناعي مباشر',
+      demo_conf_label: 'سياق الرد',
+      demo_welcome_msg: 'مرحبًا. هذه معاينة آمنة لكيفية إرشاد الوكيل الذكي لمحادثة العميل.',
+      demo_chip1: '<i class="fas fa-box"></i> اسأل عن طلب',
+      demo_chip2: '<i class="fas fa-tag"></i> اسأل عن الأسعار',
+      demo_chip3: '<i class="fas fa-calendar-check"></i> احجز موعدًا',
+      demo_input_placeholder: 'اكتب رسالتك...',
+      aria_main_navigation: 'التنقل الرئيسي',
+      aria_toggle_language: 'تغيير اللغة',
+      aria_toggle_menu: 'فتح أو إغلاق القائمة',
+      aria_demo_input: 'اكتب رسالتك',
+      aria_send_message: 'إرسال الرسالة',
+      aria_back_to_top: 'العودة إلى أعلى الصفحة',
+      bento_eyebrow: 'المنصة',
+      bento_title: 'عقل واحد للذكاء الاصطناعي. <span class="gradient-text">لكل قنوات عملائك.</span>',
+      bento_desc: 'اجمع محادثات العملاء في مساحة عمل واحدة ليتمكن فريقك من الرد والأتمتة والمتابعة.',
+      bento_card1_title: 'صندوق وارد موحد',
+      bento_card1_desc: 'تابع الرسائل الواردة من قنواتك المرتبطة في مكان واضح واحد.',
+      bento_card1_msg1: 'مرحبًا، هل الجاكيت الكحلي متاح؟',
+      bento_card1_msg2: 'هل توفرون الشحن إلى سنغافورة؟',
+      bento_card1_msg3: 'وصل طلبي، شكرًا لكم!',
+      bento_card1_visitor: 'زائر الموقع',
+      bento_card1_msg4: 'ما مواعيد العمل لديكم؟',
+      bento_card2_title: 'ردود ذكية',
+      bento_card2_desc: 'اضبط الردود بالمعلومات والقواعد التي تهم نشاطك التجاري.',
+      bento_card2_toggle: 'الرد الآلي بالذكاء الاصطناعي',
+      bento_card2_suggested: 'رد مقترح: «المنتج متاح. هل ترغب في المساعدة لإتمام الطلب؟»',
+      bento_card3_title: 'مسار المتابعة',
+      bento_card3_desc: 'نظّم المحادثات ليعرف فريقك الخطوة المفيدة التالية.',
+      bento_card3_new: 'محادثات جديدة',
+      bento_card3_qualified: 'تحتاج متابعة',
+      bento_card3_closed: 'مكتملة',
+      bento_card4_title: 'تحويل إلى فريقك',
+      bento_card4_desc: 'حوّل المحادثة إلى فريقك متى احتاج العميل إلى رد بشري.',
+      bento_card4_ai: 'الذكاء الاصطناعي',
+      bento_card4_agent: 'عضو الفريق',
+      bento_card4_status: '<span class="handoff-indicator"></span>تحويل المحادثة عند حاجة العميل إلى فريقك',
+      bento_card5_title: 'رؤى مساحة العمل',
+      bento_card5_desc: 'راجع إشارات المحادثات ومساحة العمل التي تهم فريقك.',
+      bento_card5_live: 'معاينة',
+      bento_card6_title: 'لجنة الأفكار واختبار الجدوى (Idea Council)',
+      bento_card6_desc: '8 وكلاء ذكاء اصطناعي متخصصين يحاكون العملاء، المدققين الماليين، والمنافسين لاختبار جدوى أفكارك التجارية واكتشاف الثغرات وتصميم خطة إطلاق سريعة (MVP) لـ 7 أيام قبل استثمار رأس المال أو كتابة سطر كود واحد.',
+      bento_card6_badge1: 'العميل البارد',
+      bento_card6_badge2: 'المدقق الصارم',
+      bento_card6_badge3: 'المنافس الشرس',
+      bento_card6_badge4: 'بحث سوقي مباشر',
+      bento_card6_badge5: 'لوحة الحقيقة التفاعلية',
+      workflow_eyebrow: 'طريقة العمل',
+      workflow_title: 'من الرسالة إلى <span class="gradient-text">خطوة واضحة.</span>',
+      workflow_desc: 'جهّز مساحة عملك بخطوات واضحة واحتفظ بالتحكم بين يديك.',
+      workflow_step1_title: 'اربط قنواتك',
+      workflow_step1_desc: 'اربط القنوات التي تستخدمها وراجع حالة كل اتصال من مكان واحد.',
+      workflow_step2_title: 'درّب وكيلك الذكي',
+      workflow_step2_desc: 'أضف الأسئلة الشائعة ومعلومات المنتجات والتوجيهات ليعمل الوكيل ضمن سياق نشاطك.',
+      workflow_step3_title: 'راجع وطوّر',
+      workflow_step3_desc: 'اختبر الردود وتابع المحادثات وحوّلها إلى فريقك عند الحاجة.',
+      int_eyebrow: 'القنوات',
+      int_title: 'قابل عملاءك حيث <span class="gradient-text">يتواجدون.</span>',
+      int_desc: 'اختر القنوات المناسبة لنشاطك ثم اربطها وتابع حالة كل قناة من مساحة عملك.',
+      int_connected: 'جاهز للربط',
+      int_available: 'متاح',
+      int_webchat: 'دردشة الموقع',
+      metrics_eyebrow: 'مساحة العمل',
+      metrics_title: 'انتظار أقل. <span class="gradient-text">وضوح أكبر.</span>',
+      metrics_desc: 'تابع المحادثات والقنوات والطلبات والاستخدام المهم لفريقك في مساحة عمل واحدة واضحة.',
+      metric_panel_title: 'نظرة على مساحة العمل',
+      metric_panel_live: 'معاينة',
+      pricing_eyebrow: 'الأسعار والباقات',
+      pricing_title: 'خطط مرنة وواضحة تناسب <span class="gradient-text">نمو أعمالك.</span>',
+      pricing_desc: 'ابدأ مجانًا، وقم بالترقية عند حاجتك لمزيد من القوة والتوسع مع نمو نشاطك التجاري.',
+      plan_free_title: 'المجانية',
+      plan_free_price: '0',
+      plan_free_period: 'ج.م/شهرياً',
+      plan_free_desc: 'مثالية للتجربة والمشاريع الناشئة والمتاجر في بدايتها.',
+      plan_free_f1: '<i class="fas fa-check"></i> وكيل ذكي واحد (1 AI Agent)',
+      plan_free_f2: '<i class="fas fa-check"></i> 25 رسالة يومياً (250 شهرياً)',
+      plan_free_f3: '<i class="fas fa-check"></i> حتى أداتين ذكيتين ومهارتين للوكيل',
+      plan_free_f4: '<i class="fas fa-check"></i> قناة إشعارات واحدة ومستلم واحد (واتساب أو تيليجرام)',
+      plan_free_f5: '<i class="fas fa-check"></i> لوحة تحكم وتحليلات وإدارة الطلبات',
+      plan_free_f6: '<i class="fas fa-check"></i> 3 جلسات تقييم أفكار شهرياً (Idea Council)',
+      plan_free_btn: 'ابدأ مجاناً',
+      plan_growth_popular: 'الأكثر طلباً',
+      plan_growth_title: 'النمو (Growth)',
+      plan_growth_price: '199',
+      plan_growth_period: 'ج.م/شهرياً',
+      plan_growth_desc: 'للمتاجر والأنشطة المتنامية التي تبحث عن أتمتة كاملة للمحادثات.',
+      plan_growth_f1: '<i class="fas fa-check"></i> حتى 5 وكلاء ذكاء اصطناعي مخصصين',
+      plan_growth_f2: '<i class="fas fa-check"></i> أكثر من 1,000 محادثة سحابية شهرياً',
+      plan_growth_f3: '<i class="fas fa-check"></i> أدوات ومهارات غير محدودة (حجوزات، تتبع طلبات، تصنيف، مبيعات)',
+      plan_growth_f4: '<i class="fas fa-check"></i> إشعارات فورية غير محدودة لقنوات متعددة (واتساب وتيليجرام)',
+      plan_growth_f5: '<i class="fas fa-check"></i> مفتاح احتياطي ذكي لمنع انقطاع الخدمة',
+      plan_growth_f6: '<i class="fas fa-check"></i> دعم فني ذو أولوية',
+      plan_growth_f7: '<i class="fas fa-check"></i> 10 جلسات تقييم أفكار شهرياً + بحث سوقي مباشر و3 جولات دفاع تفاعلية',
+      plan_growth_btn: 'ابدأ التجربة المجانية',
+      plan_scale_title: 'الشركات (Enterprise)',
+      plan_scale_price: '999',
+      plan_scale_period: 'ج.م/شهرياً',
+      plan_scale_desc: 'للشركات الكبرى والعمليات الضخمة والعلامات التجارية الرائدة.',
+      plan_scale_f1: '<i class="fas fa-check"></i> عدد غير محدود من الوكلاء الذكيين',
+      plan_scale_f2: '<i class="fas fa-check"></i> سعة محادثات ضخمة ومخصصة للاستخدام العالي',
+      plan_scale_f3: '<i class="fas fa-check"></i> أدوات ومهارات وقنوات إشعارات غير محدودة',
+      plan_scale_f4: '<i class="fas fa-check"></i> تكامل برمجي كامل عبر API و Webhooks',
+      plan_scale_f5: '<i class="fas fa-check"></i> مدير حساب مخصص ودعم فني VIP على مدار الساعة',
+      plan_scale_f6: '<i class="fas fa-check"></i> تخصيص العلامة التجارية وضمان استقرار SLA 99.9%',
+      plan_scale_f7: '<i class="fas fa-check"></i> تقييم أفكار غير محدود ومخصص للشركات + بحث سوقي عميق ونماذج مخصصة',
+      plan_scale_btn: 'ابدأ الآن',
+      cta_title: 'هل أنت جاهز لجعل كل <span class="gradient-text">محادثة مهمة؟</span>',
+      cta_btn: 'ابدأ مجانًا <i class="fas fa-arrow-left"></i>',
+      cta_note: 'لا تحتاج إلى بطاقة دفع. ابدأ من مساحة عملك.',
+      footer_desc: 'اجمع محادثات العملاء في مساحة عمل واحدة وامنح فريقك طريقة أوضح للرد والمتابعة.',
+      footer_col_product: 'المنتج',
+      footer_link_features: 'المزايا',
+      footer_link_integrations: 'القنوات',
+      footer_link_pricing: 'الخطة',
+      footer_link_demo: 'المعاينة',
+      footer_link_changelog: 'التحديثات',
+      footer_col_solutions: 'مساحة العمل',
+      footer_link_workflow: 'طريقة العمل',
+      footer_link_ecommerce: 'التجارة الإلكترونية',
+      footer_link_saas: 'فرق الخدمات',
+      footer_link_healthcare: 'المواعيد',
+      footer_link_education: 'التعليم',
+      footer_col_resources: 'المصادر',
+      footer_link_docs: 'الأدلة',
+      footer_link_api: 'أدوات المطورين',
+      footer_link_blog: 'ملاحظات المنتج',
+      footer_link_help: 'المساعدة',
+      footer_link_community: 'المجتمع',
+      footer_col_company: 'زين بوت',
+      footer_link_about: 'عن زين بوت',
+      footer_link_careers: 'الوظائف',
+      footer_link_contact: 'تواصل معنا',
+      footer_link_privacy: 'الخصوصية',
+      footer_link_terms: 'الشروط',
+      footer_rights: '© 2026 زين بوت. جميع الحقوق محفوظة.',
+      footer_made: 'صُممت لفرق تهتم بمحادثات عملاء أوضح.'
     }
   };
 
@@ -449,6 +816,14 @@
       if (langTranslations[lang] && langTranslations[lang][key]) {
         el.innerHTML = langTranslations[lang][key];
       }
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (langTranslations[lang] && langTranslations[lang][key]) el.placeholder = langTranslations[lang][key];
+    });
+    document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+      const key = el.getAttribute('data-i18n-aria');
+      if (langTranslations[lang] && langTranslations[lang][key]) el.setAttribute('aria-label', langTranslations[lang][key]);
     });
   }
 

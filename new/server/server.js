@@ -25,6 +25,8 @@ const storesRoutes = require('./routes/stores');
 const productsRoutes = require('./routes/products');
 const integrationsRoutes = require('./routes/integrations');
 const adminKeysRoutes = require('./routes/adminKeys');
+const landingDemoRoutes = require('./routes/landingDemo');
+const adminLandingDemoRoutes = require('./routes/adminLandingDemo');
 const {
   createAdminImpersonationRouter,
 } = require('./routes/adminImpersonation');
@@ -42,21 +44,34 @@ const ordersRoutes = require('./routes/orders');
 const expensesRoutes = require('./routes/expenses');
 const chatOrdersRoutes = require('./routes/chatOrders');
 const chatCustomersRoutes = require('./routes/chatCustomers');
+const bookingsRoutes = require('./routes/bookings');
 const telegramRoutes = require('./routes/telegram');
 const whatsappRoutes = require('./routes/whatsapp');
+const ideaCouncilRoutes = require('./routes/ideaCouncil');
+const {
+  startIdeaEvaluationWorker,
+} = require('./services/ideaEvaluationWorker');
 const AppError = require('./utils/appError');
 const errorHandler = require('./middleware/errorHandler');
 // removed waRoutes (local WA app)
 const connectDB = require('./db');
 const Conversation = require('./models/Conversation');
 const Bot = require('./models/Bot');
-const User = require('./models/User');
 const Feedback = require('./models/Feedback');
 const Store = require('./models/Store');
 const Category = require('./models/Category'); // إضافة موديل Category
 const logger = require('./logger');
 const promClient = require('prom-client');
-const { checkAutoStopBots, refreshInstagramTokens, cleanupOldLogs } = require('./cronJobs');
+const {
+  checkAutoStopBots,
+  refreshInstagramTokens,
+  refreshFacebookTokens,
+  checkLowStock,
+  recoverAbandonedSalesConversations,
+  sendDailyPerformanceSummary,
+  checkSubscriptionExpiringSoon,
+  cleanupOldLogs,
+} = require('./cronJobs');
 const authenticate = require('./middleware/authenticate');
 const { loadAccessibleBot } = require('./middleware/botAccess');
 const auditMutation = require('./middleware/auditMutation');
@@ -153,7 +168,8 @@ app.use(helmet({
         'data:',
         'https://cdnjs.cloudflare.com',
         'https://fonts.gstatic.com',
-        'https://r2cdn.perplexity.ai'
+        'https://r2cdn.perplexity.ai',
+        'https://frontend-cdn.perplexity.ai'
       ],
       imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
       connectSrc: ["'self'", 'https:', 'wss:'],
@@ -185,6 +201,31 @@ app.use((req, res, next) => {
   next();
 });
 
+// صفحة الشات العامة (/chat/:linkId) مصممة للتضمين في مواقع العملاء عبر
+// الويدجت، لذلك تسمح بأي frame ancestor مع الحفاظ على بقية تقييدات CSP.
+// أي مسار آخر يبقى محصوراً على نفس المصدر كما ضبطه helmet.
+app.use((req, res, next) => {
+  if (req.path.startsWith('/chat/')) {
+    res.removeHeader('X-Frame-Options');
+    res.setHeader(
+      'Content-Security-Policy',
+      [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+        "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com",
+        "font-src 'self' data: https://cdnjs.cloudflare.com https://fonts.gstatic.com https://r2cdn.perplexity.ai https://frontend-cdn.perplexity.ai",
+        "img-src 'self' data: blob: https:",
+        "connect-src 'self' https: wss:",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors *",
+      ].join('; ')
+    );
+  }
+  next();
+});
+
 // إضافة Cross-Origin-Opener-Policy Header
 app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
@@ -213,7 +254,10 @@ app.use((req, res, next) => {
   }
   // إضافة headers لتحسين الأداء والأمان
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  // صفحة الشات العامة مسموح بتضمينها من مواقع العملاء (frame-ancestors *)
+  if (!req.path.startsWith('/chat/')) {
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  }
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   logger.info('request', { requestId: req.requestId, method: req.method, path: req.path, ip: req.ip });
   next();
@@ -298,9 +342,11 @@ const authenticatedPaths = [
   '/api/expenses',
   '/api/chat-orders',
   '/api/chat-customers',
+  '/api/bookings',
   '/api/integrations',
   '/api/admin',
   '/api/upload',
+  '/api/idea-council',
 ];
 app.use(authenticatedPaths, authenticate, accountLimiter);
 
@@ -347,10 +393,15 @@ app.use('/api/orders', ordersRoutes);
 app.use('/api/expenses', expensesRoutes);
 app.use('/api/chat-orders', chatOrdersRoutes);
 app.use('/api/chat-customers', chatCustomersRoutes);
+app.use('/api/bookings', bookingsRoutes);
 app.use('/api/telegram', telegramRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/integrations', integrationsRoutes);
 app.use('/api/admin/keys', adminKeysRoutes);
+app.use('/api/admin/system', require('./routes/adminSystem'));
+app.use('/api/admin/landing-demo', adminLandingDemoRoutes);
+app.use('/api/landing-demo', landingDemoRoutes);
+app.use('/api/ai', require('./routes/aiModels'));
 app.use(
   '/api/admin/impersonation',
   createAdminImpersonationRouter({
@@ -358,6 +409,7 @@ app.use(
   })
 );
 app.use('/api/admin/ai', createAiControlPlaneRouter());
+app.use('/api/idea-council', ideaCouncilRoutes);
 app.use('/', indexRoutes);
 
 // مسار المتركات (حماية اختيارية عبر METRICS_TOKEN)
@@ -602,7 +654,7 @@ app.get('/set-whatsapp', (req, res) => {
   }
 });
 
-app.get('/chat/:linkId', (req, res) => {
+app.get(['/chat', '/chat.html', '/chat/:linkId'], (req, res) => {
   try {
     const filePath = path.join(__dirname, '../public/chat.html');
     logger.info('serve_chat_page', { filePath });
@@ -643,9 +695,9 @@ app.get('/robots.txt', (req, res) => {
   }
 });
 
-// Fix for Chrome DevTools 404 error
-app.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => {
-  res.status(200).json({});
+// Ignore Cloudflare cdn-cgi challenge platform scripts gracefully
+app.use('/cdn-cgi/*', (req, res) => {
+  res.status(204).end();
 });
 
 // مسار غير موجود
@@ -706,7 +758,13 @@ async function startServer() {
   });
   checkAutoStopBots();
   refreshInstagramTokens();
+  refreshFacebookTokens();
+  checkLowStock();
+  recoverAbandonedSalesConversations();
+  sendDailyPerformanceSummary();
+  checkSubscriptionExpiringSoon();
   cleanupOldLogs();
+  startIdeaEvaluationWorker();
 
   const port = process.env.PORT || 5000;
   activeHttpServer = app.listen(port, '0.0.0.0', () => {

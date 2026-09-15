@@ -1,4 +1,5 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const router = express.Router();
 const Conversation = require("../models/Conversation");
 const Bot = require("../models/Bot");
@@ -7,6 +8,53 @@ const axios = require("axios");
 const messagesController = require("../controllers/messagesController");
 const logger = require("../logger");
 const { getBotAccessFilter, loadAccessibleBot } = require("../middleware/botAccess");
+const {
+  getWhatsAppSessionManager,
+} = require("../services/whatsappSessionManager");
+
+// إرسال رد يدوي من موحد الرسائل عبر قناة المحادثة (أفضل جهد ممكن)
+async function deliverManualReply(conversation, text) {
+  const bot = await Bot.findById(conversation.botId).select(
+    "facebookApiKey instagramApiKey"
+  );
+  if (!bot) return false;
+
+  const cleanUserId = String(conversation.userId || "")
+    .replace(/^(facebook_|facebook_comment_|instagram_|instagram_comment_|whatsapp_)/, "")
+    .replace(/^comment_/, "");
+
+  if (conversation.channel === "whatsapp") {
+    const sessionManager = getWhatsAppSessionManager();
+    const chatId = String(conversation.userId || "").includes("@")
+      ? String(conversation.userId)
+      : `${cleanUserId.replace(/\D/g, "")}@c.us`;
+    if (!chatId.replace(/\D/g, "")) return false;
+    await sessionManager.sendMessage(String(conversation.botId), chatId, text);
+    return true;
+  }
+
+  if (!cleanUserId) return false;
+
+  if (conversation.channel === "facebook" && bot.facebookApiKey) {
+    const response = await axios.post(
+      "https://graph.facebook.com/v22.0/me/messages",
+      { recipient: { id: cleanUserId }, message: { text } },
+      { params: { access_token: bot.facebookApiKey }, timeout: 15_000 }
+    );
+    return Boolean(response.data?.recipient_id || response.data?.message_id);
+  }
+
+  if (conversation.channel === "instagram" && bot.instagramApiKey) {
+    const response = await axios.post(
+      "https://graph.instagram.com/v22.0/me/messages",
+      { recipient: { id: cleanUserId }, message: { text } },
+      { params: { access_token: bot.instagramApiKey }, timeout: 15_000 }
+    );
+    return Boolean(response.data?.recipient_id || response.data?.message_id);
+  }
+
+  return false;
+}
 
 // دالة لجلب اسم المستخدم من فيسبوك، إنستجرام، أو واتساب
 async function getSocialUsername(userId, bot, platform) {
@@ -150,11 +198,40 @@ router.get("/conversations", authenticate, loadAccessibleBot, async (req, res) =
     if (!botId) {
       return res.status(400).json({ success: false, message: "botId parameter is required" });
     }
-    // Find conversations
-    const conversations = await Conversation.find({ botId }).lean();
+    
+    // Find conversations matching either ObjectId or String representation
+    const idFilters = mongoose.Types.ObjectId.isValid(botId)
+      ? [{ botId: new mongoose.Types.ObjectId(botId) }, { botId: String(botId) }]
+      : [{ botId: String(botId) }];
+
+    const conversations = await Conversation.find({ $or: idFilters })
+      .sort({ "messages.timestamp": -1, updatedAt: -1, _id: -1 })
+      .lean();
+
+    // Normalize messages to ensure legacy and modern fields (role/sender, content/text) are both present
+    const normalizedData = conversations.map((conv) => {
+      const normalizedMessages = (conv.messages || []).map((m) => {
+        const role = m.role || (m.sender === 'user' ? 'user' : 'assistant');
+        const content = m.content || m.text || m.message || '';
+        return {
+          _id: m._id,
+          messageId: m.messageId,
+          role,
+          sender: role === 'user' ? 'user' : 'bot',
+          content,
+          text: content,
+          timestamp: m.timestamp || m.createdAt || new Date(),
+        };
+      });
+      return {
+        ...conv,
+        messages: normalizedMessages,
+      };
+    });
+
     res.status(200).json({
       success: true,
-      data: conversations
+      data: normalizedData,
     });
   } catch (err) {
     logger.error("Error in get conversations route", { err });
@@ -346,6 +423,54 @@ router.patch("/conversations/:id/handoff", authenticate, async (req, res) => {
   } catch (err) {
     logger.error("Error updating human handoff", { err });
     res.status(500).json({ success: false, message: "خطأ في تعديل حالة المحادثة" });
+  }
+});
+
+// الرد اليدوي من موحد الرسائل (Take-over)
+router.post("/reply", authenticate, async (req, res) => {
+  try {
+    const { conversationId, content } = req.body || {};
+    const text = typeof content === "string" ? content.trim() : "";
+    if (!conversationId || !text) {
+      return res.status(400).json({ success: false, message: "conversationId و content مطلوبان" });
+    }
+    if (text.length > 4000) {
+      return res.status(400).json({ success: false, message: "الرسالة طويلة جداً" });
+    }
+
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ success: false, message: "المحادثة غير موجودة" });
+    }
+    const accessibleBot = await Bot.exists(getBotAccessFilter(req, conversation.botId));
+    if (!accessibleBot) {
+      return res.status(404).json({ success: false, message: "المحادثة غير موجودة" });
+    }
+
+    let delivered = false;
+    try {
+      delivered = await deliverManualReply(conversation, text);
+    } catch (err) {
+      logger.error("manual_reply_delivery_failed", {
+        conversationId,
+        channel: conversation.channel,
+        err: err.message,
+      });
+    }
+
+    conversation.messages.push({
+      role: "assistant",
+      content: text,
+      messageId: `manual_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
+      timestamp: new Date(),
+    });
+    conversation.isHumanHandling = true;
+    await conversation.save();
+
+    return res.status(200).json({ success: true, delivered });
+  } catch (err) {
+    logger.error("manual_reply_error", { err: err.message, stack: err.stack });
+    return res.status(500).json({ success: false, message: "خطأ في إرسال الرد" });
   }
 });
 

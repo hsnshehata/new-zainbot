@@ -6,10 +6,11 @@ const { requireDirectActorRole } = require('../middleware/authorize');
 
 const router = express.Router();
 
+router.use(authenticate);
+
 // إرسال إشعار للجميع (للـ superadmin فقط)
 router.post(
   '/global',
-  authenticate,
   requireDirectActorRole('superadmin'),
   notificationsController.sendGlobalNotification
 );
@@ -17,15 +18,21 @@ router.post(
 // إرسال إشعار لمستخدم واحد
 router.post(
   '/single',
-  authenticate,
   requireDirectActorRole('superadmin'),
   notificationsController.sendNotification
 );
 
-// جلب الإشعارات
-router.get('/', authenticate, notificationsController.getNotifications);
+// قنوات ومستلمي الإشعارات المتعددة (WhatsApp & Telegram Recipients)
+router.get('/recipients', notificationsController.listRecipients);
+router.post('/recipients', notificationsController.createRecipient);
+router.put('/recipients/:id', notificationsController.updateRecipient);
+router.delete('/recipients/:id', notificationsController.deleteRecipient);
+router.post('/recipients/:id/test', notificationsController.testRecipient);
+
+// جلب الإشعارات الداخلية للمنصة
+router.get('/', notificationsController.getNotifications);
 
 // تعليم الإشعار كمقروء
-router.put('/:id/read', authenticate, notificationsController.markAsRead);
+router.put('/:id/read', notificationsController.markAsRead);
 
 module.exports = router;

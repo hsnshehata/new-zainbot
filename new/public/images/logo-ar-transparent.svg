@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 200" width="100%" height="100%">
+  <defs>
+    <linearGradient id="arBrandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06B6D4" />
+      <stop offset="50%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#8B5CF6" />
+    </linearGradient>
+    <filter id="arGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Left Icon Mark -->
+  <g transform="translate(40, 20) scale(0.31)">
+    <rect width="512" height="512" rx="128" fill="#0A0F1D" />
+    <rect width="510" height="510" x="1" y="1" rx="127" fill="none" stroke="url(#arBrandGrad)" stroke-width="3" stroke-opacity="0.5" />
+    <circle cx="256" cy="256" r="180" fill="none" stroke="#22D3EE" stroke-opacity="0.3" stroke-width="8" stroke-linecap="round" stroke-dasharray="240 100" />
+    <g filter="url(#arGlow)">
+      <path d="M 140 160 L 360 160 C 375 160, 385 175, 375 190 L 340 230 L 190 230 C 170 230, 160 215, 170 200 Z" fill="url(#arBrandGrad)" />
+      <path d="M 360 170 L 165 340 C 150 355, 160 380, 180 380 L 372 380 C 388 380, 396 362, 385 350 L 350 310 L 220 310 L 375 180 Z" fill="url(#arBrandGrad)" />
+    </g>
+    <circle cx="360" cy="120" r="28" fill="#22D3EE" filter="url(#arGlow)" />
+    <circle cx="360" cy="120" r="16" fill="#FFFFFF" />
+  </g>
+
+  <!-- Arabic Typography Text -->
+  <text x="240" y="105" font-family="'Cairo', 'Segoe UI', sans-serif" font-size="56" font-weight="900" fill="#FFFFFF" letter-spacing="0">
+    زين<tspan fill="url(#arBrandGrad)">بوت</tspan>
+  </text>
+  <text x="470" y="90" font-family="'Inter', sans-serif" font-size="20" font-weight="800" fill="#06B6D4" letter-spacing="2">
+    AI
+  </text>
+  <text x="240" y="145" font-family="'Cairo', 'Segoe UI', sans-serif" font-size="19" font-weight="600" fill="#94A3B8">
+    منظومة المبيعات الذكية وإدارة الطلبات والمواعيد
+  </text>
+</svg>

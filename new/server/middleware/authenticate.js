@@ -82,7 +82,7 @@ module.exports = async function authenticate(req, res, next) {
       });
     }
 
-    if (user.status !== 'active') {
+    if (user.status && user.status !== 'active') {
       return res.status(403).json({
         success: false,
         error: 'ACCOUNT_SUSPENDED',

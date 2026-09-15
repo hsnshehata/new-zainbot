@@ -1,6 +1,7 @@
 const express = require('express');
 const defaultAuthenticate = require('../middleware/authenticate');
 const defaultLogger = require('../logger');
+const AdminImpersonationSession = require('../models/AdminImpersonationSession');
 const {
   ImpersonationError,
   createImpersonationService,
@@ -151,6 +152,58 @@ function createAdminImpersonationRouter(options = {}) {
       });
     } catch (error) {
       return sendError(res, error, logger, req.requestId);
+    }
+  });
+
+  // List impersonation sessions (most recent first) with pagination and an
+  // optional status filter. Read-only, direct superadmin only.
+  router.get('/sessions', async (req, res) => {
+    try {
+      const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+      const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 50);
+      const status = String(req.query.status || '').trim();
+
+      const query = {};
+      if (['active', 'ended', 'revoked', 'expired'].includes(status)) {
+        query.status = status;
+      }
+
+      const [total, sessions] = await Promise.all([
+        AdminImpersonationSession.countDocuments(query),
+        AdminImpersonationSession.find(query)
+          .sort({ createdAt: -1 })
+          .skip((page - 1) * limit)
+          .limit(limit)
+          .populate('actorUserId', 'username role status')
+          .populate('subjectUserId', 'username role status')
+          .lean(),
+      ]);
+
+      return res.status(200).json({
+        success: true,
+        data: sessions.map((session) => ({
+          ...safeSession(session),
+          actor: session.actorUserId
+            ? safeSubject(session.actorUserId)
+            : null,
+          subject: session.subjectUserId
+            ? safeSubject(session.subjectUserId)
+            : null,
+        })),
+        total,
+        page,
+        totalPages: Math.max(Math.ceil(total / limit), 1),
+      });
+    } catch (error) {
+      logger.error('admin_impersonation_list_failed', {
+        requestId: req.requestId,
+        error: error?.name || 'Error',
+      });
+      return res.status(500).json({
+        success: false,
+        error: 'IMPERSONATION_LIST_FAILED',
+        message: 'The impersonation session list could not be loaded',
+      });
     }
   });
 

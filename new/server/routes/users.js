@@ -26,7 +26,11 @@ const createUserSchema = Joi.object({
   subscriptionType: Joi.string().valid('free', 'monthly', 'yearly').optional(),
   subscriptionTier: Joi.string().valid('free', 'growth_1k', 'growth_10k', 'growth_50k', 'unlimited').optional(),
   status: Joi.string().valid('active', 'suspended').optional(),
-  subscriptionEndDate: Joi.date().allow(null, '').optional()
+  subscriptionEndDate: Joi.date().allow(null, '').optional(),
+  isVerified: Joi.boolean().optional(),
+  dailyMessagesUsed: Joi.number().integer().min(0).max(10_000_000).optional(),
+  monthlyMessagesUsed: Joi.number().integer().min(0).max(10_000_000).optional(),
+  lastUsageReset: Joi.date().allow(null, '').optional()
 });
 
 const updateUserSchema = Joi.object({
@@ -40,7 +44,11 @@ const updateUserSchema = Joi.object({
   subscriptionType: Joi.string().valid('free', 'monthly', 'yearly').optional(),
   subscriptionTier: Joi.string().valid('free', 'growth_1k', 'growth_10k', 'growth_50k', 'unlimited').optional(),
   status: Joi.string().valid('active', 'suspended').optional(),
-  subscriptionEndDate: Joi.date().allow(null, '').optional()
+  subscriptionEndDate: Joi.date().allow(null, '').optional(),
+  isVerified: Joi.boolean().optional(),
+  dailyMessagesUsed: Joi.number().integer().min(0).max(10_000_000).optional(),
+  monthlyMessagesUsed: Joi.number().integer().min(0).max(10_000_000).optional(),
+  lastUsageReset: Joi.date().optional()
 }).custom((obj, helpers) => {
   if (obj.password && !obj.confirmPassword) {
     return helpers.error('any.invalid', { message: 'تأكيد كلمة المرور مطلوب' });
@@ -50,6 +58,38 @@ const updateUserSchema = Joi.object({
   }
   return obj;
 });
+
+const ADMIN_LIST_ROLES = new Set(['user', 'superadmin']);
+const ADMIN_LIST_STATUSES = new Set(['active', 'suspended', 'deleted']);
+const ADMIN_LIST_TIERS = new Set(['free', 'growth_1k', 'growth_10k', 'growth_50k', 'unlimited']);
+
+function boundedInteger(value, fallback, maximum) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+  return Math.min(parsed, maximum);
+}
+
+function escapeRegex(value) {
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildAdminUserFilter(query) {
+  const filter = {};
+  const status = String(query.status || '').trim();
+  const role = String(query.role || '').trim();
+  const tier = String(query.tier || '').trim();
+  const search = String(query.q || '').trim().slice(0, 80);
+
+  if (ADMIN_LIST_STATUSES.has(status)) filter.status = status;
+  else if (query.includeDeleted !== 'true') filter.status = { $ne: 'deleted' };
+  if (ADMIN_LIST_ROLES.has(role)) filter.role = role;
+  if (ADMIN_LIST_TIERS.has(tier)) filter.subscriptionTier = tier;
+  if (search) {
+    const expression = new RegExp(escapeRegex(search), 'i');
+    filter.$or = [{ username: expression }, { email: expression }, { whatsapp: expression }];
+  }
+  return filter;
+}
 
 // Get current user data
 router.get('/me', authenticate, async (req, res) => {
@@ -95,15 +135,55 @@ router.get('/profile', authenticate, async (req, res) => {
 router.get('/', authenticate, requireDirectActorRole('superadmin'), async (req, res) => {
   try {
     const populateBots = req.query.populate === 'bots';
-    const users = await (populateBots
-      ? User.find().populate('bots')
-      : User.find());
-    res.status(200).json(
-      users.map((user) => serializeUser(user, { includeBots: populateBots }))
-    );
+    const paginated = req.query.paginate === 'true';
+    const filter = buildAdminUserFilter(req.query);
+    const query = (populateBots
+      ? User.find(filter).populate('bots')
+      : User.find(filter))
+      .sort({ createdAt: -1, _id: -1 });
+
+    if (!paginated) {
+      const users = await query;
+      return res.status(200).json(
+        users.map((user) => serializeUser(user, { includeBots: populateBots }))
+      );
+    }
+
+    const page = boundedInteger(req.query.page, 1, 100_000);
+    const limit = boundedInteger(req.query.limit, 25, 100);
+    const [users, total] = await Promise.all([
+      query.skip((page - 1) * limit).limit(limit),
+      User.countDocuments(filter),
+    ]);
+    return res.status(200).json({
+      success: true,
+      data: users.map((user) => serializeUser(user, { includeBots: populateBots })),
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.max(1, Math.ceil(total / limit)),
+      },
+    });
   } catch (err) {
     logger.error('Error fetching users', { err });
     res.status(500).json({ message: 'خطأ في السيرفر' });
+  }
+});
+
+router.get('/:id', authenticate, requireDirectActorRole('superadmin'), async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).populate('bots');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
+    }
+    return res.status(200).json({
+      success: true,
+      data: serializeUser(user, { includeBots: true }),
+    });
+  } catch (err) {
+    logger.error('admin_user_detail_failed', { userId: req.params.id, error: err.name });
+    return res.status(500).json({ success: false, message: 'تعذر جلب بيانات المستخدم' });
   }
 });
 
@@ -119,6 +199,10 @@ router.post('/', authenticate, requireDirectActorRole('superadmin'), validateBod
     subscriptionTier,
     status,
     subscriptionEndDate,
+    isVerified,
+    dailyMessagesUsed,
+    monthlyMessagesUsed,
+    lastUsageReset,
   } = req.body;
   try {
     const normalizedUsername = username.toLowerCase(); // تحويل الـ username للحروف الصغيرة
@@ -136,7 +220,10 @@ router.post('/', authenticate, requireDirectActorRole('superadmin'), validateBod
       subscriptionType: subscriptionType || 'free',
       subscriptionTier: subscriptionTier || 'free',
       status: status || 'active',
-      isVerified: true,
+      isVerified: isVerified !== undefined ? isVerified : true,
+      dailyMessagesUsed: dailyMessagesUsed || 0,
+      monthlyMessagesUsed: monthlyMessagesUsed || 0,
+      lastUsageReset: lastUsageReset || undefined,
       subscriptionEndDate: subscriptionEndDate || null
     });
     await user.save();
@@ -164,6 +251,10 @@ router.put('/:id', authenticate, validateBody(updateUserSchema), async (req, res
     subscriptionTier,
     status,
     subscriptionEndDate,
+    isVerified,
+    dailyMessagesUsed,
+    monthlyMessagesUsed,
+    lastUsageReset,
   } = req.body;
 
   const directSuperadmin = isDirectActor(req) && req.auth.actorRole === 'superadmin';
@@ -241,6 +332,10 @@ router.put('/:id', authenticate, validateBody(updateUserSchema), async (req, res
       if (subscriptionEndDate !== undefined) {
         user.subscriptionEndDate = subscriptionEndDate || null;
       }
+      if (isVerified !== undefined) user.isVerified = isVerified;
+      if (dailyMessagesUsed !== undefined) user.dailyMessagesUsed = dailyMessagesUsed;
+      if (monthlyMessagesUsed !== undefined) user.monthlyMessagesUsed = monthlyMessagesUsed;
+      if (lastUsageReset !== undefined) user.lastUsageReset = lastUsageReset;
     }
 
     if (revokeSessions) {

@@ -16,6 +16,64 @@ const botSchema = new mongoose.Schema({
   autoStopDate: { type: Date },
   subscriptionType: { type: String, enum: ['free', 'monthly', 'yearly'], default: 'free' },
   welcomeMessage: { type: String, trim: true },
+  agentType: {
+    type: String,
+    enum: ['customer_support', 'sales', 'lead_qualification', 'custom'],
+    default: 'customer_support',
+  },
+  description: { type: String, trim: true, maxlength: 500, default: '' },
+  customInstructions: { type: String, trim: true, maxlength: 12_000, default: '' },
+  objectives: [{ type: String, trim: true, maxlength: 300 }],
+  handoffKeywords: [{ type: String, trim: true, maxlength: 100 }],
+  autoReplyEnabled: { type: Boolean, default: true },
+
+  // أدوات ومهارات الوكيل الذكي
+  agentTools: {
+    bookingTool: {
+      enabled: { type: Boolean, default: true },
+      autoConfirm: { type: Boolean, default: false },
+      slotDuration: { type: Number, default: 30 },
+      workingHours: { type: String, trim: true, default: '09:00 - 22:00' },
+      defaultService: { type: String, trim: true, default: 'استشارة / موعد' }
+    },
+    orderTrackingTool: {
+      enabled: { type: Boolean, default: true },
+      requirePhone: { type: Boolean, default: true }
+    },
+    whatsappNotificationTool: {
+      enabled: { type: Boolean, default: true },
+      notifyOnOrder: { type: Boolean, default: true },
+      notifyOnBooking: { type: Boolean, default: true }
+    },
+    telegramNotificationTool: {
+      enabled: { type: Boolean, default: true },
+      notifyOnOrder: { type: Boolean, default: true },
+      notifyOnBooking: { type: Boolean, default: true }
+    },
+    messageClassificationTool: {
+      enabled: { type: Boolean, default: true },
+      autoTag: { type: Boolean, default: true }
+    },
+    salesRecoveryTool: {
+      enabled: { type: Boolean, default: true },
+      delayHours: { type: Number, default: 2 },
+      customMessage: { type: String, trim: true, default: '' }
+    },
+    dailyDigestTool: {
+      enabled: { type: Boolean, default: true },
+      preferredChannel: { type: String, enum: ['all', 'telegram', 'whatsapp', 'in_app'], default: 'all' },
+      digestTime: { type: String, trim: true, default: '21:00' }
+    },
+    salesUpsellTool: {
+      enabled: { type: Boolean, default: true },
+      salesTone: { type: String, enum: ['consultative', 'enthusiastic', 'formal'], default: 'consultative' },
+      maxDiscountPercent: { type: Number, default: 0 }
+    }
+  },
+  agentSkills: [{
+    type: String,
+    trim: true,
+  }],
   // إعدادات Webhook لفيسبوك
   messagingOptinsEnabled: { type: Boolean, default: true },
   messageReactionsEnabled: { type: Boolean, default: true },

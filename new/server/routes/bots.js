@@ -10,6 +10,7 @@ const { validateBody, Joi } = require('../middleware/validate');
 const logger = require('../logger');
 const { loadAccessibleBot } = require('../middleware/botAccess');
 const { serializeBot } = require('../utils/serializers');
+const { createMetaLinkValidator } = require('../services/metaLinkValidator');
 
 // Log عشان نتأكد إن الـ router شغال
 logger.info('✅ Initializing bots routes');
@@ -23,8 +24,24 @@ const createBotSchema = Joi.object({
   instagramApiKey: Joi.string().allow('', null),
   instagramPageId: Joi.string().allow('', null),
   subscriptionType: Joi.string().valid('free', 'monthly', 'yearly').default('free'),
-  welcomeMessage: Joi.string().max(500).allow('', null)
+  welcomeMessage: Joi.string().max(500).allow('', null),
+  agentType: Joi.string().valid('customer_support', 'sales', 'lead_qualification', 'custom').default('customer_support'),
+  description: Joi.string().max(500).allow('', null),
+  customInstructions: Joi.string().max(12_000).allow('', null),
+  objectives: Joi.array().items(Joi.string().max(300)).max(20).default([]),
+  handoffKeywords: Joi.array().items(Joi.string().max(100)).max(50).default([]),
+  autoReplyEnabled: Joi.boolean().default(true),
+  agentTools: Joi.object().unknown(true).optional(),
+  agentSkills: Joi.array().items(Joi.alternatives().try(
+    Joi.string().max(100),
+    Joi.object({
+      skillKey: Joi.string().required(),
+      enabled: Joi.boolean().optional()
+    }).unknown(true)
+  )).optional()
 });
+
+const botProviderEnum = ['openai', 'gemini', 'anthropic', 'openrouter', 'custom'];
 
 const updateBotSchema = Joi.object({
   name: Joi.string().min(2).max(80).optional(),
@@ -35,8 +52,30 @@ const updateBotSchema = Joi.object({
   instagramPageId: Joi.string().allow('', null),
   subscriptionType: Joi.string().valid('free', 'monthly', 'yearly').optional(),
   welcomeMessage: Joi.string().max(500).allow('', null),
+  agentType: Joi.string().valid('customer_support', 'sales', 'lead_qualification', 'custom').optional(),
+  description: Joi.string().max(500).allow('', null),
+  customInstructions: Joi.string().max(12_000).allow('', null),
+  objectives: Joi.array().items(Joi.string().max(300)).max(20).optional(),
+  handoffKeywords: Joi.array().items(Joi.string().max(100)).max(50).optional(),
+  autoReplyEnabled: Joi.boolean().optional(),
+  agentTools: Joi.object().unknown(true).optional(),
+  agentSkills: Joi.array().items(Joi.alternatives().try(
+    Joi.string().max(100),
+    Joi.object({
+      skillKey: Joi.string().required(),
+      enabled: Joi.boolean().optional()
+    }).unknown(true)
+  )).optional(),
   isActive: Joi.boolean().optional(),
-  autoStopDate: Joi.date().optional()
+  autoStopDate: Joi.date().optional(),
+  userApiKey: Joi.string().max(500).allow('', null),
+  userProvider: Joi.string().valid(...botProviderEnum).optional(),
+  userModel: Joi.string().max(200).allow('', null),
+  userBaseUrl: Joi.string().uri({ allowRelative: false }).allow('', null),
+  backupApiKey: Joi.string().max(500).allow('', null),
+  backupProvider: Joi.string().valid(...botProviderEnum).optional(),
+  backupModel: Joi.string().max(200).allow('', null),
+  backupBaseUrl: Joi.string().uri({ allowRelative: false }).allow('', null)
 });
 
 const linkSocialSchema = Joi.object({
@@ -65,6 +104,14 @@ const linkSocialSchema = Joi.object({
   }
   return value;
 }, 'Link social validation');
+
+// التحقق من بيانات Meta قبل الحفظ (فيسبوك/إنستجرام) — قابل للاستبدال في الاختبارات
+const defaultMetaLinkValidator = createMetaLinkValidator();
+let metaLinkValidator = defaultMetaLinkValidator;
+
+function _setMetaLinkValidatorForTests(validator) {
+  metaLinkValidator = validator || defaultMetaLinkValidator;
+}
 
 // دالة لتحويل توكن قصير المدى لتوكن طويل المدى
 const convertToLongLivedToken = async (shortLivedToken) => {
@@ -117,10 +164,10 @@ router.get('/:id', authenticate, async (req, res) => {
   try {
     logger.info('جاري جلب البوت', { path: `/api/bots/${req.params.id}`, botId: req.params.id, userId: req.user.userId });
     logger.info('تم جلب البوت بنجاح', { botId: req.params.id });
-    res.status(200).json(serializeBot(req.bot));
+    res.status(200).json({ success: true, data: serializeBot(req.bot) });
   } catch (err) {
     logger.error('❌ خطأ في جلب البوت', { botId: req.params.id, err });
-    res.status(500).json({ message: 'خطأ في السيرفر' });
+    res.status(500).json({ success: false, message: 'خطأ في السيرفر' });
   }
 });
 
@@ -178,6 +225,20 @@ router.post('/:id/link-social', authenticate, validateBody(linkSocialSchema), as
           });
         }
       }
+      // التحقق من التوكن ومعرف الصفحة عبر Graph API قبل الحفظ
+      const facebookValidation = await metaLinkValidator.validateFacebook({
+        accessToken: finalFacebookApiKey,
+        pageId: facebookPageId,
+      });
+      if (!facebookValidation.ok) {
+        logger.warn('social_link_facebook_validation_failed', { botId, errorCode: facebookValidation.errorCode });
+        return res.status(400).json({
+          success: false,
+          error: facebookValidation.errorCode,
+          message: 'تعذر التحقق من بيانات فيسبوك المرسلة',
+        });
+      }
+
       updateData.facebookApiKey = finalFacebookApiKey;
       updateData.facebookPageId = facebookPageId;
       updateData.lastFacebookTokenRefresh = new Date();
@@ -185,6 +246,19 @@ router.post('/:id/link-social', authenticate, validateBody(linkSocialSchema), as
 
     // لو إنستجرام
     if (instagramApiKey && instagramPageId) {
+      const instagramValidation = await metaLinkValidator.validateInstagram({
+        accessToken: instagramApiKey,
+        accountId: instagramPageId,
+      });
+      if (!instagramValidation.ok) {
+        logger.warn('social_link_instagram_validation_failed', { botId, errorCode: instagramValidation.errorCode });
+        return res.status(400).json({
+          success: false,
+          error: instagramValidation.errorCode,
+          message: 'تعذر التحقق من بيانات إنستجرام المرسلة',
+        });
+      }
+
       updateData.instagramApiKey = instagramApiKey;
       updateData.instagramPageId = instagramPageId;
       updateData.lastInstagramTokenRefresh = new Date();
@@ -243,7 +317,36 @@ router.post('/:id/exchange-instagram-code', authenticate, (req, res) => {
   botsController.exchangeInstagramCode(req, res);
 });
 
+// تشغيل الأتمتة وفحص المبيعات يدوياً للبوت
+router.post('/:id/trigger-automation', authenticate, async (req, res) => {
+  try {
+    const { action } = req.body || {};
+    const botId = req.params.id;
+    const { runBotSalesRecovery, runBotDailySummary } = require('../cronJobs');
+
+    if (action === 'daily_digest') {
+      const summary = await runBotDailySummary(botId);
+      return res.json({
+        success: true,
+        message: 'تم توليد وإرسال ملخص المبيعات بنجاح',
+        data: summary,
+      });
+    }
+
+    const result = await runBotSalesRecovery(botId);
+    return res.json({
+      success: true,
+      message: `تم فحص المحادثات: تم استعادة ${result.recovered} محادثة مهتمة بنجاح`,
+      data: result,
+    });
+  } catch (err) {
+    logger.error('error_triggering_automation', { botId: req.params.id, err: err.message });
+    return res.status(500).json({ success: false, message: 'حدث خطأ أثناء تشغيل الأتمتة' });
+  }
+});
+
 // حذف بوت
 router.delete('/:id', authenticate, botsController.deleteBot);
 
 module.exports = router;
+module.exports._setMetaLinkValidatorForTests = _setMetaLinkValidatorForTests;

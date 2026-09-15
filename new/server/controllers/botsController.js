@@ -4,6 +4,20 @@ const Feedback = require('../models/Feedback');
 const axios = require('axios');
 const logger = require('../logger');
 const { serializeBot } = require('../utils/serializers');
+const { canCreateAgent } = require('../services/agentLimits');
+const { invalidateBotCache } = require('../botEngine');
+const AiTierEntitlement = require('../models/AiTierEntitlement');
+const AiUserOverride = require('../models/AiUserOverride');
+const AiModelCatalog = require('../models/AiModelCatalog');
+const {
+  createAiModelAccessService,
+} = require('../services/aiModelAccessService');
+
+const aiModelAccess = createAiModelAccessService({
+  AiTierEntitlement,
+  AiUserOverride,
+  AiModelCatalog,
+});
 
 // جلب كل البوتات
 exports.getBots = async (req, res) => {
@@ -195,7 +209,7 @@ exports.clearFeedbackByType = async (req, res) => {
 
 // إنشاء بوت جديد
 exports.createBot = async (req, res) => {
-  const { name, userId, facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, subscriptionType, welcomeMessage } = req.body;
+  const { name, userId, facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, subscriptionType, welcomeMessage, agentType, description, customInstructions, objectives, handoffKeywords, autoReplyEnabled, agentTools, agentSkills } = req.body;
 
   if (!name) {
     return res.status(400).json({ message: 'اسم البوت مطلوب' });
@@ -224,6 +238,44 @@ exports.createBot = async (req, res) => {
       return res.status(400).json({ message: 'المستخدم غير موجود' });
     }
 
+    // تحقق من قيود الباقة المجانية على الأدوات والمهارات
+    const isFree = !owner || owner.planTier === 'free' || owner.subscriptionType === 'free';
+    const userFacingTools = ['bookingTool', 'orderTrackingTool', 'whatsappNotificationTool', 'telegramNotificationTool'];
+    const activeTools = agentTools && typeof agentTools === 'object'
+      ? userFacingTools.filter((k) => agentTools[k] && agentTools[k].enabled === true)
+      : [];
+    const normalizedSkills = Array.isArray(agentSkills)
+      ? agentSkills.map((s) => (typeof s === 'string' ? s.trim() : (s?.skillKey || '')).trim()).filter(Boolean)
+      : [];
+
+    if (isFree && !isDirectSuperadmin) {
+      if (activeTools.length > 2) {
+        return res.status(400).json({
+          success: false,
+          error: 'FREE_PLAN_TOOLS_LIMIT',
+          message: 'تسمح الباقة المجانية بتفعيل أداتين فقط كحد أقصى للوكيل. يرجى الترقية لتفعيل أدوات غير محدودة.',
+        });
+      }
+      if (normalizedSkills.length > 2) {
+        return res.status(400).json({
+          success: false,
+          error: 'FREE_PLAN_SKILLS_LIMIT',
+          message: 'تسمح الباقة المجانية باختيار مهارتين فقط كحد أقصى للوكيل. يرجى الترقية لفتح كافة المهارات.',
+        });
+      }
+    }
+
+    const activeAgentCount = await Bot.countDocuments({ userId: ownerUserId, archivedAt: null });
+    const agentEntitlement = canCreateAgent(owner.subscriptionTier, activeAgentCount);
+    if (!agentEntitlement.allowed) {
+      return res.status(409).json({
+        success: false,
+        error: 'AGENT_LIMIT_REACHED',
+        message: 'Agent limit reached for this account tier',
+        data: agentEntitlement,
+      });
+    }
+
     const bot = new Bot({
       name,
       userId: ownerUserId,
@@ -232,9 +284,18 @@ exports.createBot = async (req, res) => {
       instagramApiKey,
       instagramPageId,
       subscriptionType: isDirectSuperadmin ? (subscriptionType || 'free') : 'free',
-      welcomeMessage
+      welcomeMessage,
+      agentType,
+      description,
+      customInstructions,
+      objectives,
+      handoffKeywords,
+      autoReplyEnabled,
+      agentTools,
+      agentSkills: normalizedSkills,
     });
     await bot.save();
+    invalidateBotCache(bot._id);
 
     await User.findByIdAndUpdate(ownerUserId, { $addToSet: { bots: bot._id } });
 
@@ -247,7 +308,7 @@ exports.createBot = async (req, res) => {
 
 // تعديل بوت
 exports.updateBot = async (req, res) => {
-  const { name, userId, facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, isActive, autoStopDate, subscriptionType, welcomeMessage } = req.body;
+  const { name, userId, facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, isActive, autoStopDate, subscriptionType, welcomeMessage, agentType, description, customInstructions, objectives, handoffKeywords, autoReplyEnabled, userApiKey, userProvider, userModel, userBaseUrl, backupApiKey, backupProvider, backupModel, backupBaseUrl, agentTools, agentSkills } = req.body;
 
   try {
     logger.info('bot_update_attempt', { botId: req.params.id, userId: req.user.userId, payloadKeys: Object.keys(req.body || {}) });
@@ -272,6 +333,34 @@ exports.updateBot = async (req, res) => {
       }
     }
 
+    // تحقق من قيود الباقة المجانية على الأدوات والمهارات عند التعديل
+    const currentOwner = await User.findById(bot.userId).select('planTier subscriptionType');
+    const isFree = !currentOwner || currentOwner.planTier === 'free' || currentOwner.subscriptionType === 'free';
+    const userFacingTools = ['bookingTool', 'orderTrackingTool', 'whatsappNotificationTool', 'telegramNotificationTool'];
+    const activeTools = agentTools && typeof agentTools === 'object'
+      ? userFacingTools.filter((k) => agentTools[k] && agentTools[k].enabled === true)
+      : [];
+    const normalizedSkills = Array.isArray(agentSkills)
+      ? agentSkills.map((s) => (typeof s === 'string' ? s.trim() : (s?.skillKey || '')).trim()).filter(Boolean)
+      : [];
+
+    if (isFree && !isDirectSuperadmin) {
+      if (activeTools.length > 2) {
+        return res.status(400).json({
+          success: false,
+          error: 'FREE_PLAN_TOOLS_LIMIT',
+          message: 'تسمح الباقة المجانية بتفعيل أداتين فقط كحد أقصى للوكيل. يرجى الترقية لتفعيل أدوات غير محدودة.',
+        });
+      }
+      if (normalizedSkills.length > 2) {
+        return res.status(400).json({
+          success: false,
+          error: 'FREE_PLAN_SKILLS_LIMIT',
+          message: 'تسمح الباقة المجانية باختيار مهارتين فقط كحد أقصى للوكيل. يرجى الترقية لفتح كافة المهارات.',
+        });
+      }
+    }
+
     if (facebookApiKey && !(facebookPageId || bot.facebookPageId)) {
       logger.warn('bot_update_missing_facebook_page', { botId: bot._id });
       return res.status(400).json({ message: 'معرف صفحة الفيسبوك مطلوب عند إدخال رقم API' });
@@ -282,6 +371,33 @@ exports.updateBot = async (req, res) => {
       return res.status(400).json({ message: 'معرف صفحة الإنستجرام مطلوب عند إدخال رقم API' });
     }
 
+    // Manual model selection must respect the user's tier entitlement once the
+    // admin has curated the model catalog. Clearing userModel returns to Auto.
+    const nextUserModel = userModel !== undefined ? String(userModel || '').trim() : bot.userModel;
+    const nextUserProvider = userProvider !== undefined ? String(userProvider || '').trim() : bot.userProvider;
+    if (nextUserModel) {
+      const decision = await aiModelAccess.isModelAllowedForUser(
+        req.user,
+        nextUserProvider,
+        nextUserModel,
+        { bypass: isDirectSuperadmin }
+      );
+      if (!decision.allowed) {
+        logger.warn('bot_update_model_not_entitled', {
+          botId: bot._id,
+          actorUserId: req.auth?.actorUserId,
+          provider: nextUserProvider,
+          model: nextUserModel,
+          reason: decision.reason,
+        });
+        return res.status(403).json({
+          success: false,
+          error: 'AI_MODEL_NOT_ENTITLED',
+          message: 'هذا النموذج غير متاح في باقتك الحالية',
+        });
+      }
+    }
+
     bot.name = name ?? bot.name;
     bot.facebookApiKey = facebookApiKey !== undefined ? facebookApiKey : bot.facebookApiKey;
     bot.facebookPageId = facebookPageId !== undefined ? facebookPageId : bot.facebookPageId;
@@ -290,6 +406,22 @@ exports.updateBot = async (req, res) => {
     bot.isActive = isActive !== undefined ? isActive : bot.isActive;
     bot.autoStopDate = autoStopDate !== undefined ? autoStopDate : bot.autoStopDate;
     bot.welcomeMessage = welcomeMessage !== undefined ? welcomeMessage : bot.welcomeMessage;
+    bot.agentType = agentType !== undefined ? agentType : bot.agentType;
+    bot.description = description !== undefined ? description : bot.description;
+    bot.customInstructions = customInstructions !== undefined ? customInstructions : bot.customInstructions;
+    bot.objectives = objectives !== undefined ? objectives : bot.objectives;
+    bot.handoffKeywords = handoffKeywords !== undefined ? handoffKeywords : bot.handoffKeywords;
+    bot.autoReplyEnabled = autoReplyEnabled !== undefined ? autoReplyEnabled : bot.autoReplyEnabled;
+    bot.userApiKey = userApiKey !== undefined ? userApiKey : bot.userApiKey;
+    bot.userProvider = userProvider !== undefined ? userProvider : bot.userProvider;
+    bot.userModel = userModel !== undefined ? userModel : bot.userModel;
+    bot.userBaseUrl = userBaseUrl !== undefined ? userBaseUrl : bot.userBaseUrl;
+    bot.backupApiKey = backupApiKey !== undefined ? backupApiKey : bot.backupApiKey;
+    bot.backupProvider = backupProvider !== undefined ? backupProvider : bot.backupProvider;
+    bot.backupModel = backupModel !== undefined ? backupModel : bot.backupModel;
+    bot.backupBaseUrl = backupBaseUrl !== undefined ? backupBaseUrl : bot.backupBaseUrl;
+    if (agentTools !== undefined) bot.agentTools = agentTools;
+    if (agentSkills !== undefined) bot.agentSkills = normalizedSkills;
     if (isDirectSuperadmin && subscriptionType) {
       bot.subscriptionType = subscriptionType;
     }
@@ -308,9 +440,10 @@ exports.updateBot = async (req, res) => {
 
     logger.info('bot_save_attempt', { botId: bot._id });
     await bot.save();
+    invalidateBotCache(bot._id);
     logger.info('bot_save_success', { botId: bot._id });
 
-    res.status(200).json(serializeBot(bot));
+    res.status(200).json({ success: true, data: serializeBot(bot) });
   } catch (err) {
     logger.error('bot_update_error', { botId: req.params.id, err: err.message, stack: err.stack });
     res.status(500).json({ message: 'خطأ في السيرفر', error: err.message });

@@ -77,7 +77,9 @@ exports.getRules = async (req, res) => {
 
     logger.info('rules_fetch_success', { userId: req.user.userId, botId: botId || 'N/A', count: rules.length });
     res.status(200).json({
-      rules,
+      success: true,
+      data: rules,
+      total: totalRules,
       totalPages: Math.ceil(totalRules / limit),
       currentPage: page,
     });
@@ -148,7 +150,7 @@ exports.createRule = async (req, res) => {
     const rule = new Rule({ botId: type !== 'global' ? botId : undefined, type, content });
     await rule.save();
     logger.info('rules_create_success', { userId: req.user.userId, botId: botId || 'N/A', ruleId: rule._id });
-    res.status(201).json(rule);
+    res.status(201).json({ success: true, data: rule });
   } catch (err) {
     logger.error('rules_create_error', { userId: req.user.userId, botId: botId || 'N/A', err: err.message, stack: err.stack });
     res.status(500).json({ message: 'خطأ في السيرفر أثناء إنشاء القاعدة', error: err.message });
@@ -211,7 +213,7 @@ exports.updateRule = async (req, res) => {
 
     await rule.save();
     logger.info('rules_update_success', { userId: req.user.userId, ruleId: rule._id, botId: rule.botId || 'N/A' });
-    res.status(200).json(rule);
+    res.status(200).json({ success: true, data: rule });
   } catch (err) {
     logger.error('rules_update_error', { userId: req.user?.userId || 'N/A', ruleId: req.params.id, err: err.message, stack: err.stack });
     res.status(500).json({ message: 'خطأ في السيرفر أثناء تعديل القاعدة', error: err.message });
@@ -228,7 +230,7 @@ exports.deleteRule = async (req, res) => {
 
     await Rule.deleteOne({ _id: req.params.id });
     logger.info('rules_delete_success', { userId: req.user.userId, ruleId: req.params.id, botId: rule.botId || 'N/A' });
-    res.status(200).json({ message: 'تم حذف القاعدة بنجاح' });
+    res.status(200).json({ success: true, message: 'تم حذف القاعدة بنجاح' });
   } catch (err) {
     logger.error('rules_delete_error', { userId: req.user?.userId || 'N/A', ruleId: req.params.id, err: err.message, stack: err.stack });
     res.status(500).json({ message: 'خطأ في السيرفر أثناء حذف القاعدة', error: err.message });

@@ -12,6 +12,9 @@ const {
   buildCredentialContext,
   encryptCredentialSecret,
 } = require('../services/AiCredentialCrypto');
+const {
+  createAiCredentialHealthService,
+} = require('../services/aiCredentialHealthService');
 
 const CREDENTIAL_PRIVATE_FIELDS = Object.freeze([
   'secret',
@@ -240,6 +243,8 @@ function createAiControlPlaneRouter(options = {}) {
     || encryptCredentialSecret;
   const emitAudit = createAuditEmitter(options.audit);
   const environment = options.environment || process.env;
+  const healthService = options.healthService
+    || createAiCredentialHealthService({ environment });
 
   if (typeof authenticate !== 'function') {
     throw new TypeError('createAiControlPlaneRouter requires authenticate middleware');
@@ -369,6 +374,65 @@ function createAiControlPlaneRouter(options = {}) {
     return res.json({
       success: true,
       credential: safeCredential(credential),
+    });
+  }));
+
+  router.post('/credentials/:id/test', asyncRoute(async (req, res) => {
+    const credential = await Models.AiCredential
+      .findById(req.params.id)
+      .select('+secretCiphertext +secretIv +secretAuthTag +encryptionKeyId');
+    if (!credential) {
+      return res.status(404).json({
+        success: false,
+        error: 'AI_CREDENTIAL_NOT_FOUND',
+      });
+    }
+
+    const outcome = await healthService.testCredential(credential);
+    const testedAt = new Date();
+    if (outcome.healthy) {
+      await Models.AiCredential.findByIdAndUpdate(
+        req.params.id,
+        {
+          $set: {
+            status: 'active',
+            lastValidatedAt: testedAt,
+            lastErrorCode: '',
+          },
+        },
+        { new: true, runValidators: true }
+      );
+    } else {
+      await Models.AiCredential.findByIdAndUpdate(
+        req.params.id,
+        {
+          $set: {
+            status: 'error',
+            lastFailureAt: testedAt,
+            lastErrorCode: String(outcome.errorCode || '').slice(0, 100),
+          },
+          $inc: { failureCount: 1 },
+        },
+        { new: true, runValidators: true }
+      );
+    }
+    await emitAudit(req, 'ai.credential.tested', {
+      resourceType: 'AiCredential',
+      resourceId: credential._id,
+      changedFields: outcome.healthy
+        ? ['status', 'lastValidatedAt']
+        : ['status', 'lastFailureAt'],
+    });
+    return res.json({
+      success: true,
+      data: {
+        healthy: outcome.healthy,
+        errorCode: outcome.errorCode || '',
+        latencyMs: outcome.latencyMs,
+        ...(outcome.modelsCount === undefined
+          ? {}
+          : { modelsCount: outcome.modelsCount }),
+      },
     });
   }));
 

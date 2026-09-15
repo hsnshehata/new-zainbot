@@ -13,6 +13,20 @@
   
   <style>
     /* Premium Dashboard Specific Styles (Extending style.css) */
+
+    /* ===== Settings sections (reorganized control center) ===== */
+    .settings-section-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:18px; }
+    .settings-section-head h3 { display:flex; align-items:center; gap:10px; margin:0 0 6px; font-size:17px; }
+    .settings-section-desc { font-size:13px; color:var(--text-muted); margin:0; max-width:640px; }
+    .settings-section-number { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:8px; background:var(--glass-2); border:1px solid var(--glass-border); color:var(--cyan); font-weight:700; font-size:13px; }
+    .settings-summary-grid { display:flex; flex-direction:column; gap:10px; }
+    .set-summary-row { display:grid; grid-template-columns: 200px 1fr; gap:12px; align-items:start; padding:10px 14px; border:1px solid var(--glass-border); border-radius:var(--radius-sm); background:var(--surface); }
+    .set-summary-row.set-summary-wrap { grid-template-columns: 200px; }
+    html[dir="rtl"] .set-summary-row { grid-template-columns: 200px 1fr; }
+    .set-summary-label { font-size:12px; color:var(--text-muted); font-weight:600; padding-top:2px; }
+    .set-summary-value { font-size:13px; color:var(--text); }
+    @media (max-width: 720px) { .set-summary-row { grid-template-columns: 1fr; } html[dir="rtl"] .set-summary-row { grid-template-columns: 1fr; } }
+
     body {
       background: #06070f;
       color: var(--text);
@@ -173,6 +187,25 @@
       font-size: 14px;
     }
 
+    .user-menu-toggle { color: var(--text); cursor: pointer; font: inherit; }
+    .user-menu-toggle:hover, .user-menu-toggle:focus-visible { border-color: var(--cyan); outline: none; }
+    .user-menu-chevron { color: var(--text-muted); font-size: 10px; transition: transform .2s ease; }
+    .user-menu-toggle[aria-expanded="true"] .user-menu-chevron { transform: rotate(180deg); }
+    .account-menu { position: absolute; top: 58px; inset-inline-end: 0; width: min(300px, calc(100vw - 32px)); padding: 10px; border: 1px solid var(--glass-border); border-radius: 16px; background: #111425; box-shadow: 0 20px 48px rgba(0,0,0,.42); z-index: 120; }
+    .account-menu[hidden] { display: none; }
+    .account-menu-head { display: grid; gap: 3px; padding: 10px 12px 14px; border-bottom: 1px solid var(--glass-border); }
+    .account-menu-head span { color: var(--text-muted); font-size: 12px; overflow-wrap: anywhere; }
+    .account-menu-quota { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 4px; padding: 10px; border-radius: 10px; color: var(--text-muted); background: rgba(59,130,246,.08); font-size: 12px; }
+    .account-menu-quota strong { color: var(--text); font-size: 13px; }
+    .account-menu button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 11px 12px; border: 0; border-radius: 10px; color: var(--text); background: transparent; font: inherit; font-size: 13px; cursor: pointer; text-align: start; }
+    .account-menu button:hover { background: rgba(255,255,255,.06); }
+    .account-menu .account-logout { color: var(--red); }
+    .overview-workspace-card p { margin: 8px 0 20px; color: var(--text-muted); font-size: 14px; }
+    .overview-status-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .overview-status-grid div { display: grid; gap: 7px; padding: 14px; border: 1px solid var(--glass-border); border-radius: 12px; background: rgba(255,255,255,.025); }
+    .overview-status-grid span { color: var(--text-muted); font-size: 12px; }
+    .overview-status-grid strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
     .user-avatar {
       width: 24px;
       height: 24px;
@@ -327,6 +360,23 @@
       outline: none;
       border-color: var(--cyan);
       background: rgba(255,255,255,0.06);
+    }
+    select.form-control {
+      appearance: none;
+      color-scheme: dark;
+      cursor: pointer;
+      padding-inline-end: 42px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='8' viewBox='0 0 14 8'%3E%3Cpath d='m1 1 6 6 6-6' fill='none' stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2'/%3E%3C/svg%3E");
+      background-position: right 16px center;
+      background-repeat: no-repeat;
+      background-size: 14px 8px;
+    }
+    html[dir="rtl"] select.form-control {
+      background-position: left 16px center;
+    }
+    select.form-control option {
+      background: #111425;
+      color: #f8fafc;
     }
     .checkbox-group {
       display: flex;
@@ -659,6 +709,7 @@
       .glass-card {
         padding: 18px;
       }
+      .overview-status-grid { grid-template-columns: 1fr; }
       .chat-area {
         min-height: 480px;
       }
@@ -702,6 +753,14 @@
         <div class="menu-item active" data-target="page-overview">
           <i class="fas fa-chart-pie"></i>
           <span data-i18n="menu_overview">Overview</span>
+        </div>
+        <div class="menu-item" data-target="page-agents">
+          <i class="fas fa-robot"></i>
+          <span data-i18n="menu_agents">AI Agents</span>
+        </div>
+        <div class="menu-item" data-target="page-idea-council">
+          <i class="fas fa-lightbulb"></i>
+          <span data-i18n="menu_idea_council">Idea Council</span>
         </div>
         <div class="menu-item" data-target="page-inbox">
           <i class="fas fa-inbox"></i>
@@ -749,9 +808,19 @@
           <!-- i18n Language toggle -->
           <button id="dashboardLangToggle" class="btn btn-secondary btn-sm" style="background:var(--surface); border:1px solid var(--glass-border); padding:6px 12px; font-weight:600;">AR</button>
           
-          <div class="user-badge">
+          <button id="accountMenuToggle" class="user-badge user-menu-toggle" type="button" aria-haspopup="menu" aria-expanded="false">
             <span class="user-avatar" id="headerUserAvatar">U</span>
             <span id="headerUsername">Loading...</span>
+            <i class="fas fa-chevron-down user-menu-chevron" aria-hidden="true"></i>
+          </button>
+          <div id="accountMenu" class="account-menu" role="menu" hidden>
+            <div class="account-menu-head">
+              <strong id="accountMenuName">—</strong>
+              <span id="accountMenuEmail">—</span>
+            </div>
+            <div class="account-menu-quota"><span data-i18n="account_quota_remaining">Messages remaining</span><strong id="accountMenuQuota">—</strong></div>
+            <button id="accountSettingsBtn" type="button" role="menuitem"><i class="fas fa-gear"></i><span data-i18n="account_settings">Account settings</span></button>
+            <button id="accountLogoutBtn" type="button" role="menuitem" class="account-logout"><i class="fas fa-sign-out-alt"></i><span data-i18n="logout">Logout</span></button>
           </div>
         </div>
       </header>
@@ -764,32 +833,32 @@
           <div class="stats-grid">
             <div class="glass-card stat-card">
               <div class="stat-info">
-                <h4 data-i18n="stat_active_chats">Active Chats</h4>
-                <p id="statActiveChats">0</p>
+                <h4 data-i18n="stat_conversations">Conversations</h4>
+                <p id="statConversations">—</p>
               </div>
               <div class="stat-icon bg-purple-gradient"><i class="fas fa-comments"></i></div>
             </div>
             
             <div class="glass-card stat-card">
               <div class="stat-info">
-                <h4 data-i18n="stat_response_speed">Avg Response Speed</h4>
-                <p id="statResponseSpeed">0.8s</p>
+                <h4 data-i18n="stat_messages">Messages handled</h4>
+                <p id="statMessages">—</p>
               </div>
               <div class="stat-icon bg-cyan-gradient"><i class="fas fa-bolt"></i></div>
             </div>
             
             <div class="glass-card stat-card">
               <div class="stat-info">
-                <h4 data-i18n="stat_satisfaction">Customer Satisfaction</h4>
-                <p id="statSatisfaction">4.9/5</p>
+                <h4 data-i18n="stat_connected_channels">Connected channels</h4>
+                <p id="statConnectedChannels">—</p>
               </div>
               <div class="stat-icon bg-green-gradient"><i class="fas fa-star"></i></div>
             </div>
 
             <div class="glass-card stat-card">
               <div class="stat-info">
-                <h4 data-i18n="stat_orders_count">Completed Orders</h4>
-                <p id="statOrdersCount">0</p>
+                <h4 data-i18n="stat_training_rules">Training rules</h4>
+                <p id="statTrainingRules">—</p>
               </div>
               <div class="stat-icon bg-blue-gradient"><i class="fas fa-shopping-cart"></i></div>
             </div>
@@ -811,39 +880,13 @@
           </div>
 
           <div class="db-responsive-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
-            <!-- Performance Chart -->
-            <div class="glass-card">
-              <h3 data-i18n="performance_chart_title" style="margin-bottom:20px;">Conversation Volume Trend</h3>
-              <div style="height:280px; display:flex; align-items:flex-end; justify-content:space-between; padding-top:20px;">
-                <!-- Simulated CSS bar chart -->
-                <div style="display:flex; flex-direction:column; align-items:center; width:12%; height:100%; justify-content:flex-end;">
-                  <div style="background:var(--gradient); width:100%; height:40%; border-radius:4px 4px 0 0; opacity:0.8;"></div>
-                  <span style="font-size:11px; margin-top:8px; color:var(--text-muted);">Mon</span>
-                </div>
-                <div style="display:flex; flex-direction:column; align-items:center; width:12%; height:100%; justify-content:flex-end;">
-                  <div style="background:var(--gradient); width:100%; height:65%; border-radius:4px 4px 0 0; opacity:0.8;"></div>
-                  <span style="font-size:11px; margin-top:8px; color:var(--text-muted);">Tue</span>
-                </div>
-                <div style="display:flex; flex-direction:column; align-items:center; width:12%; height:100%; justify-content:flex-end;">
-                  <div style="background:var(--gradient); width:100%; height:50%; border-radius:4px 4px 0 0; opacity:0.8;"></div>
-                  <span style="font-size:11px; margin-top:8px; color:var(--text-muted);">Wed</span>
-                </div>
-                <div style="display:flex; flex-direction:column; align-items:center; width:12%; height:100%; justify-content:flex-end;">
-                  <div style="background:var(--gradient); width:100%; height:85%; border-radius:4px 4px 0 0; opacity:0.8;"></div>
-                  <span style="font-size:11px; margin-top:8px; color:var(--text-muted);">Thu</span>
-                </div>
-                <div style="display:flex; flex-direction:column; align-items:center; width:12%; height:100%; justify-content:flex-end;">
-                  <div style="background:var(--gradient); width:100%; height:70%; border-radius:4px 4px 0 0; opacity:0.8;"></div>
-                  <span style="font-size:11px; margin-top:8px; color:var(--text-muted);">Fri</span>
-                </div>
-                <div style="display:flex; flex-direction:column; align-items:center; width:12%; height:100%; justify-content:flex-end;">
-                  <div style="background:var(--gradient); width:100%; height:95%; border-radius:4px 4px 0 0; opacity:0.8;"></div>
-                  <span style="font-size:11px; margin-top:8px; color:var(--text-muted);">Sat</span>
-                </div>
-                <div style="display:flex; flex-direction:column; align-items:center; width:12%; height:100%; justify-content:flex-end;">
-                  <div style="background:var(--gradient); width:100%; height:60%; border-radius:4px 4px 0 0; opacity:0.8;"></div>
-                  <span style="font-size:11px; margin-top:8px; color:var(--text-muted);">Sun</span>
-                </div>
+            <div class="glass-card overview-workspace-card">
+              <h3 data-i18n="workspace_status_title">Workspace status</h3>
+              <p data-i18n="workspace_status_desc">A live summary of the bot currently selected for this workspace.</p>
+              <div class="overview-status-grid">
+                <div><span data-i18n="workspace_active_bot">Active bot</span><strong id="overviewActiveBot">—</strong></div>
+                <div><span data-i18n="workspace_auto_reply">AI auto-reply</span><strong id="overviewAutoReply">—</strong></div>
+                <div><span data-i18n="workspace_orders">Orders from chats</span><strong id="overviewOrders">—</strong></div>
               </div>
             </div>
 
@@ -878,6 +921,500 @@
                   </div>
                   <div style="height:8px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden;">
                     <div id="funnelClosedFill" style="width:0%; height:100%; background:linear-gradient(90deg,#06b6d4,#10b981);"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="page-agents" class="db-page">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:24px;">
+            <div><h2 style="margin-bottom:8px;"><i class="fas fa-robot" style="color:var(--cyan);"></i> <span data-i18n="agents_title">AI Agents</span></h2><p style="color:var(--text-muted);" data-i18n="agents_desc">Build distinct agents for support, sales, and lead qualification. Choose one active agent for the workspace.</p></div>
+            <button id="createAgentBtn" class="btn btn-primary" type="button"><i class="fas fa-plus"></i> <span data-i18n="agents_create">Create agent</span></button>
+          </div>
+          <!-- AI Sales & Automation Center Card -->
+          <div class="glass-card" style="margin-bottom:24px; padding:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
+              <div>
+                <h3 style="margin-bottom:6px; display:flex; align-items:center; gap:8px;">
+                  <i class="fas fa-magic" style="color:var(--purple-light);"></i>
+                  <span data-i18n="automation_center_title">AI Sales Automation Center</span>
+                </h3>
+                <p style="color:var(--text-muted); font-size:13px; margin:0;" data-i18n="automation_center_desc">Manage autonomous background tasks: abandoned lead recovery, sales digests, and urgent triage.</p>
+              </div>
+              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button id="triggerRecoveryBtn" class="btn btn-secondary btn-sm" type="button">
+                  <i class="fas fa-rotate"></i> <span data-i18n="btn_trigger_recovery">Recover Lost Leads Now</span>
+                </button>
+                <button id="triggerDigestBtn" class="btn btn-secondary btn-sm" type="button">
+                  <i class="fas fa-paper-plane"></i> <span data-i18n="btn_trigger_digest">Send Sales Digest Now</span>
+                </button>
+              </div>
+            </div>
+
+            <div id="automationFeedbackBox" style="display:none; margin-bottom:14px; padding:10px 14px; border-radius:8px; font-size:13px;"></div>
+
+            <!-- Automation Grid Cards -->
+            <div class="db-responsive-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <strong style="font-size:13px;" data-i18n="card_recovery_title">Abandoned Sales Recovery</strong>
+                  <span class="badge" style="background:rgba(16,185,129,0.15); color:var(--green); font-size:11px;" data-i18n="badge_active">Active</span>
+                </div>
+                <p style="font-size:12px; color:var(--text-muted); margin:0;" data-i18n="card_recovery_desc">Automatically re-engages leads who showed buying intent but stopped responding.</p>
+              </div>
+
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <strong style="font-size:13px;" data-i18n="card_digest_title">Daily Performance Digest</strong>
+                  <span class="badge" style="background:rgba(6,182,212,0.15); color:var(--cyan); font-size:11px;" data-i18n="badge_scheduled">Daily at 21:00</span>
+                </div>
+                <p style="font-size:12px; color:var(--text-muted); margin:0;" data-i18n="card_digest_desc">Summarizes today's orders, revenue, and active chats to your Telegram or WhatsApp.</p>
+              </div>
+
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <strong style="font-size:13px;" data-i18n="card_stock_title">Low Stock Alerts</strong>
+                  <span class="badge" style="background:rgba(245,158,11,0.15); color:var(--orange); font-size:11px;" data-i18n="badge_monitoring">Auto Monitoring</span>
+                </div>
+                <p style="font-size:12px; color:var(--text-muted); margin:0;" data-i18n="card_stock_desc">Instantly alerts you when product quantities fall below the safe limit.</p>
+              </div>
+
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <strong style="font-size:13px;" data-i18n="card_complaints_title">Urgent Complaint Triage</strong>
+                  <span class="badge" style="background:rgba(239,68,68,0.15); color:var(--red); font-size:11px;" data-i18n="badge_instant">Instant Alert</span>
+                </div>
+                <p style="font-size:12px; color:var(--text-muted); margin:0;" data-i18n="card_complaints_desc">Dispatches immediate alerts to your phone if a customer files a complaint.</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="agentsEntitlement" class="glass-card" style="margin-bottom:20px; padding:14px 18px; color:var(--text-muted);"></div>
+          <div id="agentsList" class="db-responsive-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:18px;"></div>
+        </section>
+
+        <!-- ==================== IDEA COUNCIL ==================== -->
+        <section id="page-idea-council" class="db-page">
+          <!-- Header and Quota Banner -->
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:24px;">
+            <div>
+              <h2 style="margin-bottom:8px;"><i class="fas fa-lightbulb" style="color:var(--cyan);"></i> <span data-i18n="menu_idea_council">Idea Council</span></h2>
+              <p style="color:var(--text-muted);" data-i18n="idea_council_desc">AI-powered strategic validation panel and decision pipeline for founders</p>
+            </div>
+            <div style="display:flex; gap:12px; align-items:center;">
+              <button id="ideaNewBtn" class="btn btn-primary" type="button"><i class="fas fa-plus"></i> <span data-i18n="idea_btn_new">New Idea</span></button>
+            </div>
+          </div>
+
+          <!-- Quota Banner -->
+          <div class="glass-card" style="margin-bottom:24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+            <div>
+              <span style="font-size:13px; color:var(--text-muted);" data-i18n="idea_quota_label">Monthly Idea Quota</span>
+              <h3 id="ideaQuotaDisplay" style="margin-top:4px; font-family:'Space Grotesk', sans-serif;"><span id="ideaQuotaRemaining">3</span> / <span id="ideaQuotaLimit">3</span> <span style="font-size:14px; font-weight:normal; color:var(--text-muted);" data-i18n="idea_quota_text">ideas available this month</span></h3>
+            </div>
+            <div style="font-size:12px; color:var(--text-muted); max-width:400px;" data-i18n="idea_privacy_notice">
+              Confidentiality guarantee: Your idea and reports are private to your account and never used to train general AI models.
+            </div>
+          </div>
+
+          <!-- 1. IDEAS LIST VIEW -->
+          <div id="ideaListView">
+            <!-- Filter Bar -->
+            <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
+              <button class="btn btn-secondary btn-sm idea-filter-btn active" data-status="ALL" type="button"><span data-i18n="idea_filter_all">All</span></button>
+              <button class="btn btn-secondary btn-sm idea-filter-btn" data-status="DRAFT" type="button"><span data-i18n="idea_filter_drafts">Drafts</span></button>
+              <button class="btn btn-secondary btn-sm idea-filter-btn" data-status="RUNNING" type="button"><span data-i18n="idea_filter_running">In Progress</span></button>
+              <button class="btn btn-secondary btn-sm idea-filter-btn" data-status="COMPLETED" type="button"><span data-i18n="idea_filter_completed">Completed</span></button>
+            </div>
+
+            <!-- Ideas Grid -->
+            <div id="ideasListContainer" class="db-responsive-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:20px;">
+              <!-- Dynamic Idea Cards Loaded Here -->
+            </div>
+            <div id="ideaListEmpty" style="display:none; padding:40px; text-align:center; color:var(--text-muted);" data-i18n="idea_list_empty">
+              No ideas submitted yet. Click New Idea to start.
+            </div>
+          </div>
+
+          <!-- 2. NEW IDEA FORM / WIZARD VIEW -->
+          <div id="ideaInputView" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+              <h3 data-i18n="idea_input_title">Describe Your Project Idea</h3>
+              <button id="ideaCancelInputBtn" class="btn btn-secondary btn-sm" type="button"><i class="fas fa-arrow-left"></i> <span data-i18n="idea_btn_back_list">Back to Ideas</span></button>
+            </div>
+
+            <div class="glass-card" style="margin-bottom:24px;">
+              <form id="ideaCreateForm">
+                <div class="form-group" style="margin-bottom:16px;">
+                  <label for="ideaRawText" data-i18n="idea_input_desc_label">Raw Idea Description (100 - 8,000 characters)</label>
+                  <textarea id="ideaRawText" class="form-control" rows="7" required data-i18n-placeholder="idea_input_desc_placeholder" placeholder="Describe what you want to build..."></textarea>
+                  <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:12px; color:var(--text-muted);">
+                    <span id="ideaCharCount">0 / 8,000</span>
+                    <span id="ideaAutoSaveStatus"></span>
+                  </div>
+                </div>
+
+                <div class="db-responsive-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px; margin-bottom:16px;">
+                  <div class="form-group">
+                    <label for="ideaTargetMarket" data-i18n="idea_input_market_label">Target Market / Geography (Optional)</label>
+                    <input type="text" id="ideaTargetMarket" class="form-control" data-i18n-placeholder="idea_input_market_placeholder" placeholder="e.g. Saudi Arabia, GCC, Global SaaS" />
+                  </div>
+                  <div class="form-group">
+                    <label for="ideaTargetAudience" data-i18n="idea_input_audience_label">Target Audience / Customer Profile (Optional)</label>
+                    <input type="text" id="ideaTargetAudience" class="form-control" data-i18n-placeholder="idea_input_audience_placeholder" placeholder="e.g. B2B Founders, Independent Cafes" />
+                  </div>
+                  <div class="form-group">
+                    <label for="ideaPrimaryConcern" data-i18n="idea_input_concern_label">Primary Concern to Evaluate (Optional)</label>
+                    <input type="text" id="ideaPrimaryConcern" class="form-control" data-i18n-placeholder="idea_input_concern_placeholder" placeholder="e.g. Will customers actually pay?" />
+                  </div>
+                  <div class="form-group">
+                    <label for="ideaOutputLang" data-i18n="idea_lang_label">Report Language</label>
+                    <select id="ideaOutputLang" class="form-control">
+                      <option value="ar" data-i18n="idea_lang_ar">Arabic</option>
+                      <option value="en" data-i18n="idea_lang_en">English</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Guiding prompts -->
+                <div style="background:rgba(255,255,255,0.03); border:1px dashed var(--glass-border); border-radius:var(--radius-sm); padding:16px; margin-bottom:20px;">
+                  <h4 style="font-size:13px; color:var(--cyan); margin-bottom:8px;" data-i18n="idea_guiding_questions_title">Guiding Questions</h4>
+                  <ul style="font-size:12px; color:var(--text-muted); margin:0; padding-inline-start:18px;">
+                    <li data-i18n="idea_gq_one">What is the core problem and who suffers from it?</li>
+                    <li data-i18n="idea_gq_two">What are they currently doing instead?</li>
+                    <li data-i18n="idea_gq_three">Why would they change their daily habit to switch to you?</li>
+                  </ul>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:12px;">
+                  <button type="button" id="ideaSaveDraftBtn" class="btn btn-secondary"><span data-i18n="idea_btn_save_draft">Save Draft</span></button>
+                  <button type="submit" id="ideaSubmitStructureBtn" class="btn btn-primary"><span data-i18n="idea_btn_structure">Structure Idea Card</span></button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- 3. STRUCTURED IDEA CARD REVIEW VIEW -->
+          <div id="ideaCardView" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+              <div>
+                <h3 data-i18n="idea_card_title">Structured Idea Card</h3>
+                <p style="font-size:13px; color:var(--text-muted); margin:0;" data-i18n="idea_card_desc">Review and adjust how the Council understands your idea before analysis begins.</p>
+              </div>
+              <button id="ideaCardBackBtn" class="btn btn-secondary btn-sm" type="button"><i class="fas fa-arrow-left"></i> <span data-i18n="idea_btn_back_list">Back to Ideas</span></button>
+            </div>
+
+            <div class="glass-card" style="margin-bottom:24px;">
+              <form id="ideaCardEditForm">
+                <div class="form-group" style="margin-bottom:14px;">
+                  <label for="ideaCardFldTitle" data-i18n="idea_fld_title">Suggested Title</label>
+                  <input type="text" id="ideaCardFldTitle" class="form-control" required />
+                </div>
+                <div class="form-group" style="margin-bottom:14px;">
+                  <label for="ideaCardFldPitch" data-i18n="idea_fld_pitch">Elevator Pitch</label>
+                  <input type="text" id="ideaCardFldPitch" class="form-control" required />
+                </div>
+                <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:14px;">
+                  <div class="form-group">
+                    <label for="ideaCardFldCustomer" data-i18n="idea_fld_customer">Target Customer</label>
+                    <input type="text" id="ideaCardFldCustomer" class="form-control" required />
+                  </div>
+                  <div class="form-group">
+                    <label for="ideaCardFldRevenue" data-i18n="idea_fld_revenue">Revenue Model</label>
+                    <input type="text" id="ideaCardFldRevenue" class="form-control" />
+                  </div>
+                </div>
+                <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:14px;">
+                  <div class="form-group">
+                    <label for="ideaCardFldProblem" data-i18n="idea_fld_problem">Core Problem</label>
+                    <textarea id="ideaCardFldProblem" class="form-control" rows="3" required></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label for="ideaCardFldSolution" data-i18n="idea_fld_solution">Proposed Solution</label>
+                    <textarea id="ideaCardFldSolution" class="form-control" rows="3" required></textarea>
+                  </div>
+                </div>
+                <div class="form-group" style="margin-bottom:14px;">
+                  <label for="ideaCardFldValue" data-i18n="idea_fld_value">Value Proposition</label>
+                  <input type="text" id="ideaCardFldValue" class="form-control" required />
+                </div>
+                <div class="form-group" style="margin-bottom:14px;">
+                  <label for="ideaCardFldAlternatives" data-i18n="idea_fld_alternatives">Current Alternatives</label>
+                  <input type="text" id="ideaCardFldAlternatives" class="form-control" />
+                </div>
+                <div class="form-group" style="margin-bottom:14px;">
+                  <label for="ideaCardFldCoreQuestion" data-i18n="idea_fld_core_question">Core Evaluation Question</label>
+                  <input type="text" id="ideaCardFldCoreQuestion" class="form-control" required />
+                </div>
+
+                <div style="background:rgba(6, 182, 212, 0.08); border:1px solid rgba(6, 182, 212, 0.2); border-radius:var(--radius-sm); padding:16px; margin-top:20px; display:flex; align-items:center; gap:12px;">
+                  <input type="checkbox" id="ideaConfirmCheckbox" required style="width:18px; height:18px; cursor:pointer;" />
+                  <label for="ideaConfirmCheckbox" style="margin:0; cursor:pointer; font-size:14px; font-weight:500;" data-i18n="idea_confirm_card_text">
+                    I confirm this structured card accurately represents my idea.
+                  </label>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px;">
+                  <button type="button" id="ideaSaveCardBtn" class="btn btn-secondary"><span data-i18n="idea_btn_save_draft">Save Draft</span></button>
+                  <button type="submit" id="ideaStartCouncilBtn" class="btn btn-primary"><i class="fas fa-play"></i> <span data-i18n="idea_btn_start_council">Convene Idea Council</span></button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- 4. COUNCIL SESSION PROGRESS VIEW -->
+          <div id="ideaSessionView" style="display:none;">
+            <div class="glass-card" style="margin-bottom:24px; text-align:center; padding:32px 20px;">
+              <div style="display:inline-block; width:56px; height:56px; border-radius:50%; background:rgba(6,182,212,0.15); color:var(--cyan); line-height:56px; font-size:24px; margin-bottom:16px;">
+                <i class="fas fa-brain fa-spin"></i>
+              </div>
+              <h3 data-i18n="idea_session_progress_title" style="margin-bottom:8px;">Council Session in Progress</h3>
+              <p style="color:var(--text-muted); max-width:600px; margin:0 auto 20px auto; font-size:14px;" data-i18n="idea_session_progress_desc">
+                The council runs in the background. You can safely leave this page and come back anytime.
+              </p>
+              <div style="max-width:500px; margin:0 auto 12px auto; height:8px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden;">
+                <div id="ideaSessionProgressBar" style="width:15%; height:100%; background:linear-gradient(90deg, var(--cyan), var(--blue)); transition:width 0.4s ease;"></div>
+              </div>
+              <span id="ideaSessionStageText" style="font-size:13px; color:var(--cyan); font-weight:600;">—</span>
+            </div>
+
+            <!-- 8 Agents Grid -->
+            <div id="ideaAgentsGrid" class="db-responsive-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:16px;">
+              <!-- 8 Member Cards Rendered Dynamically -->
+            </div>
+          </div>
+
+          <!-- 5. FINAL REPORT & TRUTH BOARD VIEW -->
+          <div id="ideaReportView" style="display:none;">
+            <!-- Top Controls -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+              <button id="ideaReportBackBtn" class="btn btn-secondary btn-sm" type="button"><i class="fas fa-arrow-left"></i> <span data-i18n="idea_btn_back_list">Back to Ideas</span></button>
+              <div style="display:flex; gap:8px;">
+                <button id="ideaExportMdBtn" class="btn btn-secondary btn-sm" type="button"><i class="fas fa-download"></i> <span data-i18n="idea_btn_export_md">Export Markdown</span></button>
+                <button id="ideaExportPdfBtn" class="btn btn-secondary btn-sm" type="button"><i class="fas fa-print"></i> <span data-i18n="idea_btn_export_pdf">Print / PDF</span></button>
+              </div>
+            </div>
+
+            <!-- Rounds History Bar -->
+            <div id="ideaRoundsHistoryBar" class="glass-card" style="margin-bottom:16px; padding:12px 20px; display:none; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; background:rgba(6, 182, 212, 0.05); border:1px solid rgba(6, 182, 212, 0.2);">
+              <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <span style="font-size:13px; font-weight:600; color:var(--cyan); display:flex; align-items:center; gap:6px;">
+                  <i class="fas fa-history"></i>
+                  <span data-i18n="idea_rounds_history_title">Evaluation History:</span>
+                </span>
+                <div id="ideaRunsButtons" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+                <button id="ideaCompareRoundsBtn" class="btn btn-secondary btn-sm" type="button" style="display:none; padding:4px 10px; font-size:11px; margin-inline-start:6px;">
+                  <i class="fas fa-code-compare" style="margin-inline-end:4px;"></i><span data-i18n="idea_btn_compare_rounds">Compare Rounds</span>
+                </button>
+              </div>
+              <div id="ideaCurrentRoundBanner" style="font-size:12px; color:var(--text-muted); font-weight:500;"></div>
+            </div>
+
+            <!-- Follow-up Rounds Bar -->
+            <div class="glass-card" style="margin-bottom:24px; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+              <div>
+                <strong data-i18n="idea_followup_title">Follow-up Rounds (3 per idea)</strong>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                  <span data-i18n="idea_followup_remaining">Rounds remaining:</span> <strong id="ideaFollowupCountText" style="color:var(--cyan);">3</strong>
+                </div>
+              </div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;" id="ideaFollowupActions">
+                <button class="btn btn-secondary btn-sm idea-followup-btn" data-type="DEFEND" type="button"><span data-i18n="idea_btn_defend">Defend Idea</span></button>
+                <button class="btn btn-secondary btn-sm idea-followup-btn" data-type="PIVOT" type="button"><span data-i18n="idea_btn_pivot">Propose Pivot</span></button>
+                <button class="btn btn-secondary btn-sm idea-followup-btn" data-type="VALIDATION_PLAN" type="button"><span data-i18n="idea_btn_val_plan">Small Test Plan</span></button>
+                <button class="btn btn-secondary btn-sm idea-followup-btn" data-type="VOTE" type="button"><span data-i18n="idea_btn_vote">Council Vote</span></button>
+                <button class="btn btn-secondary btn-sm idea-followup-btn" data-type="COMPARE" type="button"><span data-i18n="idea_btn_compare">Compare Competitor</span></button>
+                <button class="btn btn-secondary btn-sm idea-followup-btn" data-type="MVP" type="button"><span data-i18n="idea_btn_mvp">7-Day MVP Plan</span></button>
+              </div>
+            </div>
+
+            <!-- Main Layout: Report (Left) + Truth Board (Right) -->
+            <div class="db-responsive-grid" style="display:grid; grid-template-columns:1.8fr 1.2fr; gap:24px; align-items:start;">
+              <!-- Left Column: Synthesis Report -->
+              <div style="display:flex; flex-direction:column; gap:20px;">
+                <!-- Verdict Header Card -->
+                <div class="glass-card" style="border-inline-start:4px solid var(--cyan);">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <span style="font-size:12px; text-transform:uppercase; color:var(--text-muted);" data-i18n="idea_verdict_label">Executive Verdict</span>
+                    <span id="ideaVerdictBadge" class="badge" style="font-size:14px; padding:6px 14px; border-radius:14px;">—</span>
+                  </div>
+                  <h3 id="ideaReportTitle" style="margin-bottom:8px;">—</h3>
+                  <p id="ideaExecSummary" style="color:#fff; font-size:15px; line-height:1.6; margin-bottom:12px;">—</p>
+                  <p id="ideaVerdictExplanation" style="color:var(--text-muted); font-size:13px; margin:0;">—</p>
+                  <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--glass-border); display:flex; justify-content:space-between; font-size:13px;">
+                    <span data-i18n="idea_seven_day_build_label">7-Day Build Verdict</span>
+                    <strong id="idea7DayVerdictText" style="color:var(--cyan);">—</strong>
+                  </div>
+                </div>
+
+                <!-- Opportunities & Risks -->
+                <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                  <div class="glass-card" style="border-inline-start:3px solid var(--green);">
+                    <h4 style="font-size:13px; color:var(--green); margin-bottom:6px;" data-i18n="idea_opp_label">Strongest Opportunity</h4>
+                    <p id="ideaStrongestOpportunity" style="font-size:13px; color:var(--text-muted); margin:0;">—</p>
+                  </div>
+                  <div class="glass-card" style="border-inline-start:3px solid var(--red);">
+                    <h4 style="font-size:13px; color:var(--red); margin-bottom:6px;" data-i18n="idea_risk_label">Biggest Risk</h4>
+                    <p id="ideaBiggestRisk" style="font-size:13px; color:var(--text-muted); margin:0;">—</p>
+                  </div>
+                </div>
+
+                <!-- Top 3 Assumptions & Critical Question -->
+                <div class="glass-card">
+                  <h4 style="font-size:14px; color:var(--orange); margin-bottom:8px;" data-i18n="idea_assumptions_label">Top 3 Unproven Assumptions</h4>
+                  <ul id="ideaTopAssumptionsList" style="padding-inline-start:20px; font-size:13px; color:var(--text-muted); margin-bottom:16px;"></ul>
+
+                  <h4 style="font-size:14px; color:var(--cyan); margin-bottom:6px;" data-i18n="idea_question_label">Critical Question to Settle</h4>
+                  <p id="ideaCriticalQuestion" style="font-size:13px; font-weight:600; color:#fff; margin-bottom:16px;">—</p>
+
+                  <h4 style="font-size:14px; color:var(--text-muted); margin-bottom:8px;" data-i18n="idea_cut_list_label">Cut / Defer List for V1</h4>
+                  <ul id="ideaCutList" style="padding-inline-start:20px; font-size:13px; color:var(--text-muted); margin:0;"></ul>
+                </div>
+
+                <!-- Adaptive Validation Plan Card -->
+                <div class="glass-card">
+                  <h4 style="font-size:15px; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-clipboard-check" style="color:var(--cyan);"></i>
+                    <span data-i18n="idea_validation_plan_title">Adaptive Validation Plan</span>
+                  </h4>
+                  <div style="display:flex; flex-direction:column; gap:10px; font-size:13px;">
+                    <div><span style="color:var(--text-muted);" data-i18n="idea_val_hypothesis">Hypothesis:</span> <strong id="ideaValHypothesis" style="color:#fff;">—</strong></div>
+                    <div><span style="color:var(--text-muted);" data-i18n="idea_val_audience">Audience:</span> <span id="ideaValAudience">—</span></div>
+                    <div><span style="color:var(--text-muted);" data-i18n="idea_val_channel">Channel:</span> <span id="ideaValChannel">—</span></div>
+                    <div><span style="color:var(--text-muted);" data-i18n="idea_val_duration">Suggested Duration:</span> <strong id="ideaValDuration" style="color:var(--cyan);">—</strong></div>
+                    <div><span style="color:var(--text-muted);" data-i18n="idea_val_metric">Success Metric:</span> <strong id="ideaValMetric" style="color:var(--green);">—</strong></div>
+                    <div><span style="color:var(--text-muted);" data-i18n="idea_val_stop">Stop Condition:</span> <strong id="ideaValStop" style="color:var(--red);">—</strong></div>
+                  </div>
+                </div>
+
+                <!-- MVP Scope & Wedge -->
+                <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                  <div class="glass-card">
+                    <h4 style="font-size:14px; color:var(--purple-light); margin-bottom:8px;" data-i18n="idea_mvp_title">7-Day MVP Scope</h4>
+                    <ul id="ideaMvpScopeList" style="padding-inline-start:18px; font-size:13px; color:var(--text-muted); margin:0;"></ul>
+                  </div>
+                  <div class="glass-card">
+                    <h4 style="font-size:14px; color:var(--cyan); margin-bottom:8px;" data-i18n="idea_wedge_title">Unique Wedge & Value</h4>
+                    <p id="ideaUniqueWedge" style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">—</p>
+                    <p id="ideaFirstMomentOfValue" style="font-size:12px; color:var(--cyan); margin:0;">—</p>
+                  </div>
+                </div>
+
+                <!-- Interactive Unit Economics Calculator -->
+                <div id="ideaUnitEconomicsCard" class="glass-card" style="border-inline-start:4px solid var(--green);">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+                    <h4 style="font-size:15px; margin:0; display:flex; align-items:center; gap:8px; color:#fff;">
+                      <i class="fas fa-calculator" style="color:var(--green);"></i>
+                      <span data-i18n="idea_unit_econ_title">Interactive Unit Economics Calculator</span>
+                    </h4>
+                    <span id="ideaUnitEconCurrencyBadge" class="badge" style="background:rgba(16, 185, 129, 0.15); color:var(--green); font-size:12px; font-weight:600;">EGP</span>
+                  </div>
+                  <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;" data-i18n="idea_unit_econ_subtitle">
+                    Simulate margins, order volume, and breakeven thresholds. Adjust sliders to test stress levels.
+                  </p>
+
+                  <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                    <!-- Input 1: Average Order Value (AOV) -->
+                    <div>
+                      <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;">
+                        <span data-i18n="idea_unit_econ_aov">Average Order Value (AOV):</span>
+                        <strong id="ideaCalcValAov" style="color:var(--cyan);">0</strong>
+                      </div>
+                      <input id="ideaCalcRangeAov" type="range" min="10" max="5000" step="5" value="100" class="form-range" style="width:100%;">
+                    </div>
+
+                    <!-- Input 2: Take Rate / Margin % -->
+                    <div>
+                      <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;">
+                        <span data-i18n="idea_unit_econ_margin">Take Rate / Margin %:</span>
+                        <strong id="ideaCalcValMargin" style="color:var(--cyan);">15%</strong>
+                      </div>
+                      <input id="ideaCalcRangeMargin" type="range" min="1" max="100" step="1" value="15" class="form-range" style="width:100%;">
+                    </div>
+
+                    <!-- Input 3: Direct per-order costs -->
+                    <div>
+                      <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;">
+                        <span data-i18n="idea_unit_econ_direct_costs">Direct Per-Order Costs:</span>
+                        <strong id="ideaCalcValDirectCosts" style="color:var(--orange);">0</strong>
+                      </div>
+                      <input id="ideaCalcRangeDirectCosts" type="range" min="0" max="1000" step="1" value="5" class="form-range" style="width:100%;">
+                    </div>
+
+                    <!-- Input 4: Monthly Fixed Costs -->
+                    <div>
+                      <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;">
+                        <span data-i18n="idea_unit_econ_fixed_costs">Monthly Fixed Costs:</span>
+                        <strong id="ideaCalcValFixedCosts" style="color:var(--orange);">0</strong>
+                      </div>
+                      <input id="ideaCalcRangeFixedCosts" type="range" min="500" max="200000" step="500" value="15000" class="form-range" style="width:100%;">
+                    </div>
+                  </div>
+
+                  <!-- Output Metrics -->
+                  <div class="db-responsive-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:14px;">
+                    <div style="background:rgba(255, 255, 255, 0.03); border:1px solid var(--glass-border); border-radius:8px; padding:12px; text-align:center;">
+                      <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;" data-i18n="idea_unit_econ_net_contribution">Net Contribution / Order</div>
+                      <div id="ideaCalcNetContribution" style="font-size:16px; font-weight:700; color:var(--green);">—</div>
+                    </div>
+                    <div style="background:rgba(255, 255, 255, 0.03); border:1px solid var(--glass-border); border-radius:8px; padding:12px; text-align:center;">
+                      <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;" data-i18n="idea_unit_econ_breakeven_orders">Monthly Breakeven Orders</div>
+                      <div id="ideaCalcBreakevenOrders" style="font-size:16px; font-weight:700; color:var(--cyan);">—</div>
+                    </div>
+                    <div style="background:rgba(255, 255, 255, 0.03); border:1px solid var(--glass-border); border-radius:8px; padding:12px; text-align:center;">
+                      <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;" data-i18n="idea_unit_econ_daily_orders">Required Daily Orders</div>
+                      <div id="ideaCalcDailyOrders" style="font-size:16px; font-weight:700; color:var(--purple-light);">—</div>
+                    </div>
+                  </div>
+
+                  <!-- Key Financial Risk Flag -->
+                  <div id="ideaCalcFinancialRiskBox" style="font-size:12px; padding:10px 14px; border-radius:6px; background:rgba(239, 68, 68, 0.08); border:1px solid rgba(239, 68, 68, 0.2); color:#fca5a5; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-triangle-exclamation" style="color:var(--red);"></i>
+                    <span id="ideaCalcFinancialRiskText">—</span>
+                  </div>
+                </div>
+
+                <!-- Council Critics Breakdown -->
+                <div class="glass-card">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+                    <h4 style="font-size:15px; margin:0; display:flex; align-items:center; gap:8px;">
+                      <i class="fas fa-users-viewfinder" style="color:var(--cyan);"></i>
+                      <span data-i18n="idea_critics_title">Council Members Detailed Critiques</span>
+                    </h4>
+                    <span style="font-size:12px; color:var(--text-muted);" data-i18n="idea_critics_subtitle">8 specialized angles on viability, execution, and risks</span>
+                  </div>
+                  <div id="ideaCriticsBreakdownList" style="display:flex; flex-direction:column; gap:16px;"></div>
+                </div>
+
+                <!-- Sources -->
+                <div class="glass-card">
+                  <h4 style="font-size:14px; margin-bottom:10px;" data-i18n="idea_sources_title">Verified Market Sources</h4>
+                  <div id="ideaSourcesList" style="display:flex; flex-direction:column; gap:8px;"></div>
+                </div>
+
+                <!-- Legal Disclaimer -->
+                <div style="font-size:11px; color:var(--text-muted); text-align:center; padding:10px 0;" data-i18n="idea_disclaimer">
+                  Disclaimer: This report is an AI-generated decision-support tool, not certified legal or financial advice.
+                </div>
+              </div>
+
+              <!-- Right Column: Truth Board -->
+              <div style="display:flex; flex-direction:column; gap:16px;">
+                <div class="glass-card" style="position:sticky; top:80px;">
+                  <div style="margin-bottom:14px;">
+                    <h3 style="font-size:16px; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
+                      <i class="fas fa-layer-group" style="color:var(--cyan);"></i>
+                      <span data-i18n="idea_truth_board_title">Dynamic Truth Board</span>
+                    </h3>
+                    <p style="font-size:12px; color:var(--text-muted); margin:0;" data-i18n="idea_truth_board_desc">
+                      Track key assumptions, risks, and validation steps in real time without consuming AI quotas.
+                    </p>
+                  </div>
+
+                  <div id="truthBoardItemsList" style="display:flex; flex-direction:column; gap:12px; max-height:75vh; overflow-y:auto; padding-inline-end:4px;">
+                    <!-- Truth Items Rendered Dynamically -->
                   </div>
                 </div>
               </div>
@@ -924,7 +1461,7 @@
 
               <!-- Reply box -->
               <div class="chat-area-footer">
-                <input type="text" id="chatReplyInput" class="form-control" placeholder="Type a message to take over..." disabled />
+                <input type="text" id="chatReplyInput" class="form-control" data-i18n-placeholder="chat_reply_placeholder" placeholder="Type a message to take over..." disabled />
                 <button id="chatSendBtn" class="btn btn-primary" style="padding:12px 20px;" disabled><i class="fas fa-paper-plane"></i></button>
               </div>
             </div>
@@ -942,14 +1479,27 @@
               <form id="promptTrainingForm">
                 <div class="form-group">
                   <label data-i18n="label_welcome_message">Welcome Message</label>
-                  <textarea id="botWelcomeMessage" class="form-control" rows="3" placeholder="Enter standard greeting message..."></textarea>
+                  <textarea id="botWelcomeMessage" class="form-control" rows="3" data-i18n-placeholder="training_welcome_placeholder" placeholder="Enter a standard greeting message..."></textarea>
                 </div>
                 <div class="form-group">
                   <label data-i18n="label_custom_instructions">Custom Persona Instructions</label>
-                  <textarea id="botCustomPrompt" class="form-control" rows="8" placeholder="E.g., You are a friendly customer agent at Brewlab. Speak in a professional tone, offer tea suggestions, and ask for their email address to qualify leads."></textarea>
+                  <textarea id="botCustomPrompt" class="form-control" rows="8" data-i18n-placeholder="training_persona_placeholder" placeholder="For example, describe the bot's tone, responsibilities, and escalation rules."></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary btn-sm" data-i18n="save_guidelines_btn">Save Settings</button>
               </form>
+            </div>
+
+
+            <!-- General agent instructions card (legacy "عامة" rules) -->
+            <div class="glass-card" style="display:flex; flex-direction:column;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h3 data-i18n="training_general_title">General Agent Instructions</h3>
+                <button id="addInstructionBtn" class="btn btn-primary btn-sm" style="padding:6px 12px;"><i class="fas fa-plus"></i> <span data-i18n="btn_add_instruction">Add Instruction</span></button>
+              </div>
+              <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;" data-i18n="training_general_desc">Standing directives that define your agent's identity and behavior. These carry over from the previous platform and are injected into every reply.</p>
+              <div style="flex:1; overflow-y:auto; max-height:340px; display:flex; flex-direction:column; gap:12px;" id="instructionListContainer">
+                <!-- General instructions inserted dynamically -->
+              </div>
             </div>
 
             <!-- FAQs Rules training card -->
@@ -1001,6 +1551,17 @@
               <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;" data-i18n="chan_desc_tg">Integrate custom Telegram chatbot.</p>
               <button class="btn btn-secondary btn-sm" onclick="configureChannel('telegram')"><span data-i18n="btn_configure">Configure</span></button>
             </div>
+
+            <!-- Dedicated Web Chat Page -->
+            <div class="glass-card channel-card" id="channel-card-webchat" style="border:1px solid rgba(6,182,212,0.3);">
+              <i class="fas fa-comments" style="color:var(--cyan);"></i>
+              <h3 data-i18n="chan_webchat_title">Dedicated Chat Page</h3>
+              <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;" data-i18n="chan_desc_webchat">Standalone customized chat page and live bot tester.</p>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button type="button" class="btn btn-primary btn-sm" onclick="openChatPageModal()"><i class="fas fa-palette"></i> <span data-i18n="btn_customize_chat">Customize & Test</span></button>
+                <a id="btnDirectWebChat" href="#" target="_blank" class="btn btn-secondary btn-sm" onclick="window.openDirectChatPage(); return false;"><i class="fas fa-external-link-alt"></i> <span data-i18n="btn_open_chat">Open</span></a>
+              </div>
+            </div>
           </div>
 
           <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
@@ -1008,7 +1569,7 @@
             <div class="glass-card">
               <h3 data-i18n="website_widget_title" style="margin-bottom:12px;">Website Chat Widget</h3>
               <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;" data-i18n="website_widget_desc">Copy this script tag and insert it before the closing body tag of your HTML to display the chat icon.</p>
-              <pre style="background:rgba(0,0,0,0.2); padding:16px; border-radius:8px; overflow-x:auto; font-size:12px; color:var(--cyan); border: 1px solid var(--glass-border);"><code id="widgetSnippetCode">&lt;script src="https://zainbot.com/widget.js" data-bot-id="loading..."&gt;&lt;/script&gt;</code></pre>
+              <pre style="background:rgba(0,0,0,0.2); padding:16px; border-radius:8px; overflow-x:auto; font-size:12px; color:var(--cyan); border: 1px solid var(--glass-border);"><code id="widgetSnippetCode">&lt;script src="/widget.js" data-bot-id="loading..."&gt;&lt;/script&gt;</code></pre>
             </div>
 
             <!-- Shopify / WooCommerce integrations -->
@@ -1025,9 +1586,10 @@
                 </div>
                 <div class="form-group">
                   <label data-i18n="label_store_url">Store URL</label>
-                  <input type="text" id="storeUrl" class="form-control" placeholder="https://my-store.myshopify.com" />
+                  <input type="text" id="storeUrl" class="form-control" data-i18n-placeholder="placeholder_store_url" placeholder="https://my-store.myshopify.com" />
                 </div>
                 <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_sync_catalog">Save & Sync Catalog</button>
+                <div id="storeConnectorFeedback" style="display:none; margin-top:12px; padding:10px 14px; border-radius:8px; font-size:12px;"></div>
               </form>
             </div>
           </div>
@@ -1035,11 +1597,108 @@
 
         <!-- ==================== 5. ORDERS & BOOKINGS CENTER ==================== -->
         <section id="page-orders" class="db-page">
-          <h2 data-i18n="orders_bookings_title" style="margin-bottom:24px;">Orders & Appointments Center</h2>
-          
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:24px;">
+            <div>
+              <h2 data-i18n="orders_bookings_title" style="margin-bottom:6px;">Orders & Appointments Center</h2>
+              <p style="color:var(--text-muted); font-size:13px;" data-i18n="orders_bookings_subtitle">Manage orders created from live chats and schedule, modify, and track customer appointments in real time.</p>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button id="createBookingBtn" class="btn btn-primary btn-sm" type="button"><i class="fas fa-calendar-plus"></i> <span data-i18n="btn_new_booking">New Appointment</span></button>
+              <button id="createOrderBtn" class="btn btn-secondary btn-sm" type="button"><i class="fas fa-cart-plus"></i> <span data-i18n="btn_new_order">New Order</span></button>
+              <button id="refreshOrdersBtn" class="btn btn-secondary btn-sm" type="button"><i class="fas fa-sync-alt"></i> <span data-i18n="btn_refresh">Refresh</span></button>
+            </div>
+          </div>
+
+          <!-- Quick KPIs for Orders and Bookings -->
+          <div class="stats-grid" style="margin-bottom:24px;">
+            <div class="glass-card stat-card" style="padding:16px;">
+              <div class="stat-info">
+                <h4 data-i18n="stat_orders_total">Total Orders</h4>
+                <p id="statOrdersTotal">0</p>
+              </div>
+              <div class="stat-icon bg-blue-gradient"><i class="fas fa-shopping-bag"></i></div>
+            </div>
+            <div class="glass-card stat-card" style="padding:16px;">
+              <div class="stat-info">
+                <h4 data-i18n="stat_orders_pending">Pending Orders</h4>
+                <p id="statOrdersPending" style="color:var(--orange);">0</p>
+              </div>
+              <div class="stat-icon bg-purple-gradient"><i class="fas fa-clock"></i></div>
+            </div>
+            <div class="glass-card stat-card" style="padding:16px;">
+              <div class="stat-info">
+                <h4 data-i18n="stat_bookings_total">Total Appointments</h4>
+                <p id="statBookingsTotal">0</p>
+              </div>
+              <div class="stat-icon bg-cyan-gradient"><i class="fas fa-calendar-check"></i></div>
+            </div>
+            <div class="glass-card stat-card" style="padding:16px;">
+              <div class="stat-info">
+                <h4 data-i18n="stat_bookings_confirmed">Confirmed Bookings</h4>
+                <p id="statBookingsConfirmed" style="color:var(--green);">0</p>
+              </div>
+              <div class="stat-icon bg-green-gradient"><i class="fas fa-user-check"></i></div>
+            </div>
+          </div>
+
+          <!-- Search & Filter Controls -->
+          <div class="glass-card" style="margin-bottom:24px; padding:16px;">
+            <div class="db-responsive-grid" style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:14px; align-items:center;">
+              <div class="form-group" style="margin-bottom:0;">
+                <input type="text" id="ordersSearchInput" class="form-control" data-i18n-placeholder="orders_search_placeholder" placeholder="Search by customer name, phone, or service..." />
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <select id="ordersStatusFilter" class="form-control" aria-label="Filter status" data-i18n-aria="orders_status_filter">
+                  <option value="" data-i18n="filter_all_statuses">All Statuses</option>
+                  <option value="pending" data-i18n="status_pending">Pending</option>
+                  <option value="processing" data-i18n="status_processing">Processing</option>
+                  <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
+                  <option value="completed" data-i18n="status_completed">Completed</option>
+                  <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <select id="ordersTypeFilter" class="form-control" aria-label="Filter view" data-i18n-aria="orders_type_filter">
+                  <option value="all" data-i18n="filter_view_all">All Records</option>
+                  <option value="orders" data-i18n="filter_view_orders">Orders Only</option>
+                  <option value="bookings" data-i18n="filter_view_bookings">Appointments Only</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Appointments list -->
+          <div class="glass-card" id="appointmentsCardContainer" style="margin-bottom:32px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+              <h3 data-i18n="appointments_list_title"><i class="fas fa-calendar-alt" style="color:var(--cyan);"></i> AI Booked Appointments Calendar</h3>
+              <span id="bookingsCountBadge" class="badge badge-info" style="font-size:12px;">0 Appointments</span>
+            </div>
+            <div class="custom-table-container">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th data-i18n="th_booking_id">Booking ID</th>
+                    <th data-i18n="th_booking_customer">Customer</th>
+                    <th data-i18n="th_booking_phone">Phone</th>
+                    <th data-i18n="th_booking_service">Service / Purpose</th>
+                    <th data-i18n="th_booking_time">Date & Time</th>
+                    <th data-i18n="th_booking_status">Status</th>
+                    <th data-i18n="th_booking_actions" style="text-align:center;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="bookingsTableBody">
+                  <!-- Generated dynamic booking rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <!-- Orders Table list -->
-          <div class="glass-card" style="margin-bottom:32px;">
-            <h3 data-i18n="chat_orders_list_title" style="margin-bottom:16px;">Orders Automatically Generated by AI</h3>
+          <div class="glass-card" id="ordersCardContainer" style="margin-bottom:32px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+              <h3 data-i18n="chat_orders_list_title"><i class="fas fa-box-open" style="color:var(--purple-light);"></i> Orders Automatically Generated by AI</h3>
+              <span id="ordersCountBadge" class="badge badge-info" style="font-size:12px;">0 Orders</span>
+            </div>
             <div class="custom-table-container">
               <table class="custom-table">
                 <thead>
@@ -1050,6 +1709,7 @@
                     <th data-i18n="th_items">Items</th>
                     <th data-i18n="th_total">Total</th>
                     <th data-i18n="th_status">Status</th>
+                    <th data-i18n="th_order_actions" style="text-align:center;">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="ordersTableBody">
@@ -1058,185 +1718,493 @@
               </table>
             </div>
           </div>
+        </section>
 
-          <!-- Appointments list -->
-          <div class="glass-card">
-            <h3 data-i18n="appointments_list_title" style="margin-bottom:16px;">AI Booked Appointments Calendar</h3>
+        <!-- ==================== 6. SETTINGS & AGENT CONTROL CENTER ==================== -->
+        <!-- ==================== 6. SETTINGS & AGENT CONTROL CENTER (reorganized) ==================== -->
+        <section id="page-settings" class="db-page">
+          <h2 data-i18n="settings_billing_title" style="margin-bottom:8px;">Settings & Developer Integrations</h2>
+          <p style="color:var(--text-muted); font-size:14px; margin-bottom:24px;" data-i18n="settings_intro_desc">All agent and workspace controls in one place, organized into ordered sections: Agent Instructions → Agent Capabilities → Notifications → AI Model → Developer Integrations → Account.</p>
+
+          <!-- ===== Section 1: Agent Instructions & Personality ===== -->
+          <div class="glass-card settings-section" id="settingsSectionInstructions" style="margin-bottom:24px; border-right:3px solid var(--cyan);">
+            <div class="settings-section-head">
+              <div>
+                <span class="settings-section-number">1</span>
+                <h3 data-i18n="set_sec_instructions_title"><i class="fas fa-brain" style="color:var(--cyan);"></i> Agent Instructions & Personality</h3>
+                <p class="settings-section-desc" data-i18n="set_sec_instructions_desc">What your agent says and how it behaves: welcome message, persona rules, objectives, and handoff to humans. Applies to the active agent.</p>
+              </div>
+              <button type="button" id="openTrainingFromSettingsBtn" class="btn btn-secondary btn-sm" data-i18n="set_open_training">Open AI Training</button>
+            </div>
+            <div id="settingsInstructionsSummary" class="settings-summary-grid"></div>
+          </div>
+
+          <!-- ===== Section 2: Agent Capabilities (Tools & Skills of active agent) ===== -->
+          <div class="glass-card settings-section" id="settingsSectionCapabilities" style="margin-bottom:24px; border-right:3px solid var(--purple-light);">
+            <div class="settings-section-head">
+              <div>
+                <span class="settings-section-number">2</span>
+                <h3 data-i18n="set_sec_capabilities_title"><i class="fas fa-tools" style="color:var(--purple-light);"></i> Agent Capabilities</h3>
+                <p class="settings-section-desc" data-i18n="set_sec_capabilities_desc">Enable or disable what the active agent can do: bookings, order tracking, notifications, recovery, digests, and upselling. Edit details in the agent card.</p>
+              </div>
+              <button type="button" id="openAgentFromSettingsBtn" class="btn btn-secondary btn-sm" data-i18n="set_open_agents">Edit Active Agent</button>
+            </div>
+            <div id="settingsCapabilitiesSummary" class="settings-summary-grid"></div>
+          </div>
+
+          <!-- ===== Section 3: Notifications & Alerts ===== -->
+          <div class="glass-card settings-section" style="margin-bottom:24px; border-right:3px solid var(--green);">
+            <div class="settings-section-head">
+              <div>
+                <span class="settings-section-number">3</span>
+                <h3 data-i18n="notification_recipients_title"><i class="fas fa-bell" style="color:var(--green);"></i> Multi-Channel Notification Recipients</h3>
+                <p class="settings-section-desc" data-i18n="notification_recipients_desc">Connect multiple WhatsApp numbers and Telegram accounts/channels to receive instant order and appointment notifications.</p>
+              </div>
+              <button id="addRecipientBtn" class="btn btn-primary btn-sm" type="button"><i class="fas fa-plus"></i> <span data-i18n="btn_add_recipient">Add Notification Channel</span></button>
+            </div>
+
+            <!-- Tier limit alert banner -->
+            <div id="recipientTierLimitBanner" style="background:rgba(6, 182, 212, 0.1); border:1px solid rgba(6, 182, 212, 0.3); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:16px; font-size:13px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+              <span id="recipientTierLimitText" data-i18n="recipient_tier_free_hint"><i class="fas fa-info-circle" style="color:var(--cyan);"></i> Free plan allows 1 notification recipient channel. Upgrade to Growth for unlimited channels.</span>
+              <a href="/#pricing" class="badge badge-warning" style="text-decoration:none; font-size:11px;" data-i18n="upgrade_plan_link">Upgrade Plan</a>
+            </div>
+
             <div class="custom-table-container">
               <table class="custom-table">
                 <thead>
                   <tr>
-                    <th data-i18n="th_booking_customer">Customer</th>
-                    <th data-i18n="th_booking_phone">Phone</th>
-                    <th data-i18n="th_booking_time">Date & Time</th>
-                    <th data-i18n="th_booking_notes">AI Summary / Notes</th>
+                    <th data-i18n="th_rec_channel">Channel</th>
+                    <th data-i18n="th_rec_target">Target / Destination</th>
+                    <th data-i18n="th_rec_label">Label / Description</th>
+                    <th data-i18n="th_rec_events">Subscribed Events</th>
+                    <th data-i18n="th_rec_status">Status</th>
+                    <th data-i18n="th_rec_actions" style="text-align:center;">Actions</th>
                   </tr>
                 </thead>
-                <tbody id="bookingsTableBody">
-                  <!-- Generated dynamic booking rows -->
+                <tbody id="notificationRecipientsTableBody">
+                  <!-- Loaded dynamically -->
                 </tbody>
               </table>
             </div>
           </div>
-        </section>
 
-        <!-- ==================== 6. SETTINGS & BILLING ==================== -->
-        <section id="page-settings" class="db-page">
-          <h2 data-i18n="settings_billing_title" style="margin-bottom:24px;">Settings & Developer Integrations</h2>
-          
-          <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
-            <!-- Developer API Keys card -->
-            <div class="glass-card" style="display:flex; flex-direction:column;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                <h3 data-i18n="dev_api_keys_title">Developer Access Keys</h3>
-                <button id="generateKeyBtn" class="btn btn-primary btn-sm" style="padding:6px 12px;"><i class="fas fa-plus"></i> <span data-i18n="btn_gen_key">Generate Key</span></button>
-              </div>
-              <div style="flex:1; overflow-y:auto; max-height:220px;" id="apiKeysContainer">
-                <!-- Keys rendered dynamically -->
+          <!-- ===== Section 4: AI Model (primary + backup) ===== -->
+          <div class="glass-card settings-section" style="margin-bottom:24px; border-right:3px solid var(--blue);">
+            <div class="settings-section-head">
+              <div>
+                <span class="settings-section-number">4</span>
+                <h3 data-i18n="model_select_heading"><i class="fas fa-microchip" style="color:var(--blue);"></i> AI Model & Fail-safe</h3>
+                <p class="settings-section-desc" data-i18n="model_select_desc">Choose Auto to let the platform pick the best available model for your plan, or select a specific model from the list enabled for your account.</p>
               </div>
             </div>
+            <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr auto; gap:16px; align-items:end;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="primaryModelSelect" data-i18n="model_select_label">Model</label>
+                <select id="primaryModelSelect" class="form-control">
+                  <option value="" data-i18n="model_select_auto">Auto (recommended)</option>
+                </select>
+              </div>
+              <button type="button" id="savePrimaryModelBtn" class="btn btn-primary btn-sm" style="background:var(--cyan); color:#000; border-color:var(--cyan); font-weight:600;" data-i18n="model_select_save">Save model</button>
+            </div>
+            <span id="modelSaveMsg" style="display:block; margin-top:10px; font-size:13px;"></span>
 
-            <!-- Outbound Webhooks configuration card -->
-            <div class="glass-card">
-              <h3 data-i18n="dev_webhooks_title" style="margin-bottom:16px;">Outbound Webhooks URL</h3>
-              <form id="webhookConfigForm">
-                <div class="form-group">
-                  <label data-i18n="label_webhook_url">Destination Webhook URL</label>
-                  <input type="url" id="webhookUrlInput" class="form-control" placeholder="https://my-api-server.com/webhook" required />
-                </div>
-                <div class="form-group">
-                  <label data-i18n="label_webhook_secret">Signing Secret Key (HMAC)</label>
-                  <input type="text" id="webhookSecretInput" class="form-control" readonly placeholder="Will generate automatically on save" />
-                </div>
-                <div class="form-group">
-                  <label data-i18n="label_webhook_events">Subscribed Events</label>
-                  <div class="checkbox-group">
-                    <label class="checkbox-item"><input type="checkbox" name="webhookEvents" value="message.received" checked /> message.received</label>
-                    <label class="checkbox-item"><input type="checkbox" name="webhookEvents" value="message.sent" checked /> message.sent</label>
-                    <label class="checkbox-item"><input type="checkbox" name="webhookEvents" value="order.created" checked /> order.created</label>
+            <div id="backupKeysSection" style="margin-top:24px; border-top:1px solid var(--glass-border); padding-top:20px;">
+              <h4 data-i18n="backup_keys_heading" style="margin-bottom:8px;">Quota Fail-safe backup API key (Growth plan)</h4>
+              <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;" data-i18n="backup_keys_desc">Input your own API key. If your monthly package quota is depleted, our engine will automatically switch to your key instead of shutting down the bot.</p>
+              <form id="backupKeysForm">
+                <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
+                  <div class="form-group">
+                    <label data-i18n="label_backup_provider">AI Provider</label>
+                    <select id="backupProvider" class="form-control">
+                      <option value="openai">OpenAI</option>
+                      <option value="gemini">Google Gemini</option>
+                      <option value="anthropic">Anthropic (Claude)</option>
+                      <option value="openrouter">OpenRouter</option>
+                      <option value="custom">Custom Endpoint</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="label_backup_key">API Key</label>
+                    <input type="password" id="backupApiKey" class="form-control" placeholder="sk-..." autocomplete="off" />
                   </div>
                 </div>
-                <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_save_webhook">Save Config</button>
+                <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
+                  <div class="form-group">
+                    <label data-i18n="label_backup_model">Default Model</label>
+                    <input type="text" id="backupModel" class="form-control" placeholder="gpt-4o-mini / gemini-1.5-flash" />
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="label_backup_url">Custom Endpoint Base URL</label>
+                    <input type="text" id="backupBaseUrl" class="form-control" placeholder="https://my-proxy.com/v1" />
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_save_backup_settings">Save Key Settings</button>
               </form>
             </div>
           </div>
 
-          <!-- Webhook deliveries log table -->
-          <div class="glass-card" style="margin-top:24px;">
-            <h3 data-i18n="webhook_logs_title" style="margin-bottom:16px;">Outgoing Webhook Delivery History</h3>
-            <div class="custom-table-container">
-              <table class="custom-table">
-                <thead>
-                  <tr>
-                    <th data-i18n="th_wh_time">Timestamp</th>
-                    <th data-i18n="th_wh_event">Event</th>
-                    <th data-i18n="th_wh_url">URL</th>
-                    <th data-i18n="th_wh_status">HTTP Status</th>
-                    <th data-i18n="th_wh_actions">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="webhookLogsTableBody">
-                  <!-- Webhook attempts list -->
-                </tbody>
-              </table>
+          <!-- ===== Section 5: Developer Integrations ===== -->
+          <div class="glass-card settings-section" style="margin-bottom:24px; border-right:3px solid var(--orange);">
+            <div class="settings-section-head">
+              <div>
+                <span class="settings-section-number">5</span>
+                <h3 data-i18n="dev_integrations_title"><i class="fas fa-code" style="color:var(--orange);"></i> Developer Integrations & Webhooks</h3>
+                <p class="settings-section-desc" data-i18n="dev_integrations_desc">Generate access keys for external apps and push platform events to your own systems in real time.</p>
+              </div>
             </div>
-          </div>
+            <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+              <!-- Developer API Keys card -->
+              <div style="display:flex; flex-direction:column;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                  <h4 data-i18n="dev_api_keys_title">Developer Access Keys</h4>
+                  <button id="generateKeyBtn" class="btn btn-primary btn-sm" style="padding:6px 12px;"><i class="fas fa-plus"></i> <span data-i18n="btn_gen_key">Generate Key</span></button>
+                </div>
+                <div style="flex:1; overflow-y:auto; max-height:220px;" id="apiKeysContainer">
+                  <!-- Keys rendered dynamically -->
+                </div>
+              </div>
 
-          <!-- User Keys & Backup Key (Especially for Growth Plan backup API key) -->
-          <div class="glass-card" id="backupKeysSection" style="margin-top:24px;">
-            <h3 data-i18n="backup_keys_heading" style="margin-bottom:16px;">Quota Fail-safe backup API key (Growth plan)</h3>
-            <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;" data-i18n="backup_keys_desc">Input your own API key. If your monthly package quota is depleted, our engine will automatically switch to your key instead of shutting down the bot.</p>
-            <form id="backupKeysForm">
-              <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
-                <div class="form-group">
-                  <label data-i18n="label_backup_provider">AI Provider</label>
-                  <select id="backupProvider" class="form-control">
-                    <option value="openai">OpenAI</option>
-                    <option value="gemini">Google Gemini</option>
-                    <option value="anthropic">Anthropic (Claude)</option>
-                    <option value="openrouter">OpenRouter</option>
-                    <option value="custom">Custom Endpoint</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label data-i18n="label_backup_key">API Key</label>
-                  <input type="password" id="backupApiKey" class="form-control" placeholder="sk-..." />
-                </div>
+              <!-- Outbound Webhooks configuration card -->
+              <div>
+                <h4 data-i18n="dev_webhooks_title" style="margin-bottom:16px;">Outbound Webhooks URL</h4>
+                <form id="webhookConfigForm">
+                  <div class="form-group">
+                    <label data-i18n="label_webhook_url">Destination Webhook URL</label>
+                    <input type="url" id="webhookUrlInput" class="form-control" placeholder="https://my-api-server.com/webhook" required />
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="label_webhook_secret">Signing Secret Key (HMAC)</label>
+                    <input type="text" id="webhookSecretInput" class="form-control" readonly placeholder="Will generate automatically on save" />
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="label_webhook_events">Subscribed Events</label>
+                    <div class="checkbox-group">
+                      <label class="checkbox-item"><input type="checkbox" name="webhookEvents" value="message.received" checked /> <span data-i18n="wh_event_msg_received">message.received</span></label>
+                      <label class="checkbox-item"><input type="checkbox" name="webhookEvents" value="message.sent" checked /> <span data-i18n="wh_event_msg_sent">message.sent</span></label>
+                      <label class="checkbox-item"><input type="checkbox" name="webhookEvents" value="order.created" checked /> <span data-i18n="wh_event_order_created">order.created</span></label>
+                    </div>
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_save_webhook">Save Config</button>
+                </form>
               </div>
-              <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
-                <div class="form-group">
-                  <label data-i18n="label_backup_model">Default Model</label>
-                  <input type="text" id="backupModel" class="form-control" placeholder="gpt-4o-mini / gemini-1.5-flash" />
-                </div>
-                <div class="form-group">
-                  <label data-i18n="label_backup_url">Custom Endpoint Base URL</label>
-                  <input type="text" id="backupBaseUrl" class="form-control" placeholder="https://my-proxy.com/v1" />
-                </div>
+            </div>
+
+            <!-- Webhook deliveries log table -->
+            <div style="margin-top:24px; border-top:1px solid var(--glass-border); padding-top:20px;">
+              <h4 data-i18n="webhook_logs_title" style="margin-bottom:16px;">Outgoing Webhook Delivery History</h4>
+              <div class="custom-table-container">
+                <table class="custom-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="th_wh_time">Timestamp</th>
+                      <th data-i18n="th_wh_event">Event</th>
+                      <th data-i18n="th_wh_url">URL</th>
+                      <th data-i18n="th_wh_status">HTTP Status</th>
+                      <th data-i18n="th_wh_actions">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="webhookLogsTableBody">
+                    <!-- Webhook attempts list -->
+                  </tbody>
+                </table>
               </div>
-              <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_save_backup_settings">Save Key Settings</button>
-            </form>
+            </div>
           </div>
         </section>
 
-        <!-- ==================== 7. ADMIN KEYS FAILOVER PANEL ==================== -->
+        <!-- ==================== 7. SUPER ADMIN CONTROL CENTER ==================== -->
         <section id="page-admin" class="db-page">
-          <h2 style="color:var(--orange); margin-bottom:8px;"><i class="fas fa-shield-alt"></i> <span data-i18n="admin_title">ZainBot Global AI Failover & Keys</span></h2>
-          <p style="color:var(--text-muted); font-size:14px; margin-bottom:24px;" data-i18n="admin_desc">Super Admin panel. Add global API keys, assign priority ranks, and manage auto-switch sequences to prevent system-wide model failures.</p>
+          <h2 style="color:var(--orange); margin-bottom:8px;"><i class="fas fa-user-shield"></i> <span data-i18n="admin_title">Super Admin Control Center</span></h2>
+          <p style="color:var(--text-muted); font-size:14px; margin-bottom:20px;" data-i18n="admin_desc">Full system management: users, merchants, roles, direct impersonation, and global AI failover provider keys.</p>
 
-          <div class="db-responsive-grid" style="display:grid; grid-template-columns: 2fr 1fr; gap:24px;">
-            <!-- Registered server keys list with failover status -->
-            <div class="glass-card" style="display:flex; flex-direction:column;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                <h3 data-i18n="admin_active_keys">Active Global API Keys & Priority Order</h3>
-                <button id="adminResetKeysBtn" class="btn btn-primary btn-sm" style="background:var(--orange); border-color:var(--orange); color:#000;"><i class="fas fa-redo"></i> <span data-i18n="admin_btn_reset">Reset Failed Keys</span></button>
+          <!-- Admin Sub-Navigation Tabs -->
+          <div style="display:flex; gap:12px; margin-bottom:24px; border-bottom:1px solid var(--glass-border); padding-bottom:12px; flex-wrap:wrap;">
+            <button id="adminTabUsersBtn" class="btn btn-secondary btn-sm admin-subtab-btn active" style="background:var(--orange); color:#000; border-color:var(--orange); font-weight:600;"><i class="fas fa-users-cog"></i> <span data-i18n="admin_subtab_users">Users & Merchants Control</span></button>
+            <button id="adminTabKeysBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-key"></i> <span data-i18n="admin_subtab_keys">AI Failover Servers & Keys</span></button>
+            <button id="adminTabOverviewBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-chart-line"></i> <span data-i18n="admin_subtab_overview">System Overview</span></button>
+            <button id="adminTabAuditBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-clipboard-list"></i> <span data-i18n="admin_subtab_audit">Audit & Sessions</span></button>
+            <button id="adminTabNotifyBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-bullhorn"></i> <span data-i18n="admin_subtab_notify">Notifications</span></button>
+            <button id="adminTabLandingDemoBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-robot"></i> <span data-i18n="admin_subtab_landing_demo">Landing Demo Bot</span></button>
+          </div>
+
+          <!-- Section 1: Users & Agents Management -->
+          <div id="adminSectionUsers" class="admin-subtab-content">
+            <div class="glass-card" style="margin-bottom:24px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+                <div>
+                  <h3 style="font-size:18px; font-weight:700;"><i class="fas fa-users" style="color:var(--cyan);"></i> <span data-i18n="admin_users_title">Registered Users & Merchants</span></h3>
+                  <span style="font-size:12px; color:var(--text-muted);" data-i18n="admin_users_desc">Manage roles, subscriptions, suspend accounts, and impersonate users.</span>
+                </div>
+                <button id="adminAddUserBtn" class="btn btn-primary btn-sm" style="background:var(--cyan); border-color:var(--cyan); color:#000; font-weight:600;"><i class="fas fa-user-plus"></i> <span data-i18n="admin_btn_add_user">Add New User / Merchant</span></button>
               </div>
-              <div id="adminKeysListContainer" style="display:flex; flex-direction:column; border:1px solid var(--glass-border); border-radius:var(--radius-sm); overflow:hidden;">
-                <!-- Key rows rendered dynamically -->
+
+              <form id="adminUserFilters" style="display:grid; grid-template-columns:minmax(180px, 2fr) repeat(3, minmax(120px, 1fr)) auto; gap:10px; margin-bottom:16px;">
+                <input id="adminUserSearch" class="form-control" type="search" placeholder="Search username, email, or WhatsApp" data-i18n-placeholder="admin_search_placeholder" aria-label="Search users" />
+                <select id="adminUserRoleFilter" class="form-control" aria-label="Filter by role" data-i18n-aria="admin_filter_role">
+                  <option value="" data-i18n="admin_all_roles">All roles</option>
+                  <option value="user" data-i18n="admin_user">User</option>
+                  <option value="superadmin" data-i18n="admin_superadmin">Super admin</option>
+                </select>
+                <select id="adminUserStatusFilter" class="form-control" aria-label="Filter by status" data-i18n-aria="admin_filter_status">
+                  <option value="" data-i18n="admin_visible_accounts">Visible accounts</option>
+                  <option value="active">Active</option>
+                  <option value="suspended">Suspended</option>
+                  <option value="deleted">Deleted</option>
+                </select>
+                <select id="adminUserTierFilter" class="form-control" aria-label="Filter by plan tier" data-i18n-aria="admin_filter_tier">
+                  <option value="" data-i18n="admin_all_tiers">All tiers</option>
+                  <option value="free">Free</option>
+                  <option value="growth_1k">Growth 1K</option>
+                  <option value="growth_10k">Growth 10K</option>
+                  <option value="growth_50k">Growth 50K</option>
+                  <option value="unlimited">Unlimited</option>
+                </select>
+                <button class="btn btn-secondary btn-sm" type="submit"><i class="fas fa-filter"></i> <span data-i18n="admin_apply">Apply</span></button>
+              </form>
+
+              <div style="overflow-x:auto;">
+                <table class="db-table" style="width:100%; border-collapse:collapse; text-align:right;">
+                  <thead>
+                    <tr style="border-bottom:2px solid var(--glass-border); font-size:13px; color:var(--text-muted);">
+                      <th style="padding:12px;" data-i18n="th_user_username">Username</th>
+                      <th style="padding:12px;" data-i18n="th_user_email">Email</th>
+                      <th style="padding:12px;" data-i18n="th_user_role">Role</th>
+                      <th style="padding:12px;" data-i18n="th_user_tier">Plan Tier</th>
+                      <th style="padding:12px;" data-i18n="th_user_status">Status</th>
+                      <th style="padding:12px;" data-i18n="th_user_bots">Bots</th>
+                      <th style="padding:12px; text-align:center;" data-i18n="th_user_actions">Quick Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminUsersTableBody">
+                    <!-- Loaded dynamically via dashboard_new.js -->
+                    <tr><td colspan="7" style="padding:24px; text-align:center; color:var(--text-muted);" data-i18n="admin_loading_users">Loading users list...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:14px;">
+                <span id="adminUsersPaginationInfo" style="font-size:12px; color:var(--text-muted);"></span>
+                <div style="display:flex; gap:8px;">
+                  <button id="adminUsersPrevBtn" class="btn btn-secondary btn-sm" type="button" data-i18n="admin_previous">Previous</button>
+                  <button id="adminUsersNextBtn" class="btn btn-secondary btn-sm" type="button" data-i18n="admin_next">Next</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Registered server keys list with failover status -->
+          <div id="adminSectionKeys" class="admin-subtab-content" style="display:none;">
+            <div class="db-responsive-grid" style="display:grid; grid-template-columns: 2fr 1fr; gap:24px;">
+              <div class="glass-card" style="display:flex; flex-direction:column;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                  <h3 data-i18n="admin_active_keys">Active Global API Keys & Priority Order</h3>
+                  <button id="adminResetKeysBtn" class="btn btn-primary btn-sm" style="background:var(--orange); border-color:var(--orange); color:#000;"><i class="fas fa-redo"></i> <span data-i18n="admin_btn_reset">Reset Failed Keys</span></button>
+                </div>
+                <div id="adminKeysListContainer" style="display:flex; flex-direction:column; border:1px solid var(--glass-border); border-radius:var(--radius-sm); overflow:hidden;">
+                  <!-- Key rows rendered dynamically -->
+                </div>
+              </div>
+
+              <!-- Create new global server key -->
+              <div class="glass-card">
+                <h3 data-i18n="admin_register_key">Register Global Provider Key</h3>
+                <form id="adminKeyAddForm" style="margin-top:16px;">
+                  <div class="form-group">
+                    <label data-i18n="admin_label_name">Key Name / Description</label>
+                    <input type="text" id="adminKeyName" class="form-control" placeholder="Primary OpenAI" required />
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="admin_label_provider">AI Provider</label>
+                    <select id="adminKeyProvider" class="form-control">
+                      <option value="openai">OpenAI</option>
+                      <option value="gemini">Google Gemini</option>
+                      <option value="anthropic">Anthropic (Claude)</option>
+                      <option value="openrouter">OpenRouter</option>
+                      <option value="custom">Custom Endpoint</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="admin_label_key">API Key</label>
+                    <input type="password" id="adminKeySecret" class="form-control" placeholder="sk-..." required autocomplete="off" />
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="admin_label_model">Default Model</label>
+                    <input type="text" id="adminKeyModel" class="form-control" placeholder="gpt-4o-mini / gemini-1.5-flash" required />
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="admin_label_priority">Priority Rank (1 = Highest)</label>
+                    <input type="number" id="adminKeyPriority" class="form-control" value="1" min="1" required />
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="admin_label_base_url">Base URL (Optional)</label>
+                    <input type="text" id="adminKeyBaseUrl" class="form-control" placeholder="https://api.openai.com/v1" />
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-sm btn-block" style="background:var(--orange); color:#000; border-color:var(--orange)" data-i18n="admin_btn_register">Register Server Key</button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: System Overview KPIs -->
+          <div id="adminSectionOverview" class="admin-subtab-content" style="display:none;">
+            <div class="db-responsive-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:16px;" id="adminOverviewGrid">
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_users_total">Total users</div><div id="ovUsersTotal" style="font-size:26px; font-weight:700; color:var(--cyan);">—</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_users_active">Active users</div><div id="ovUsersActive" style="font-size:26px; font-weight:700; color:var(--green);">—</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_bots_total">Total agents</div><div id="ovBotsTotal" style="font-size:26px; font-weight:700; color:var(--purple-light);">—</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_bots_active">Active agents</div><div id="ovBotsActive" style="font-size:26px; font-weight:700; color:var(--green);">—</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_conversations">Conversations</div><div id="ovConversations" style="font-size:26px; font-weight:700; color:var(--blue);">—</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_messages">Messages</div><div id="ovMessages" style="font-size:26px; font-weight:700; color:var(--cyan);">—</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_chat_orders">Chat orders</div><div id="ovChatOrders" style="font-size:26px; font-weight:700; color:var(--orange);">—</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_active_sessions">Active impersonations</div><div id="ovActiveSessions" style="font-size:26px; font-weight:700; color:var(--red);">—</div></div>
+              <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_audit_events">Audit events</div><div id="ovAuditEvents" style="font-size:26px; font-weight:700; color:var(--text-muted);">—</div></div>
+            </div>
+          </div>
+
+          <!-- Section 4: Audit log & impersonation sessions -->
+          <div id="adminSectionAudit" class="admin-subtab-content" style="display:none;">
+            <div class="glass-card" style="margin-bottom:24px;">
+              <h3 style="font-size:18px; font-weight:700; margin-bottom:6px;"><i class="fas fa-user-secret" style="color:var(--orange);"></i> <span data-i18n="audit_sessions_title">Impersonation Sessions</span></h3>
+              <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;" data-i18n="audit_sessions_desc">Every admin impersonation session with its reason, status, and lifetime.</p>
+              <div style="overflow-x:auto;">
+                <table class="db-table" style="width:100%; border-collapse:collapse; text-align:right;">
+                  <thead>
+                    <tr style="border-bottom:2px solid var(--glass-border); font-size:13px; color:var(--text-muted);">
+                      <th style="padding:10px;" data-i18n="th_session_actor">Admin</th>
+                      <th style="padding:10px;" data-i18n="th_session_subject">Target user</th>
+                      <th style="padding:10px;" data-i18n="th_session_reason">Reason</th>
+                      <th style="padding:10px;" data-i18n="th_session_status">Status</th>
+                      <th style="padding:10px;" data-i18n="th_session_started">Started</th>
+                      <th style="padding:10px;" data-i18n="th_session_expires">Expires</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminSessionsTableBody">
+                    <tr><td colspan="6" style="padding:20px; text-align:center; color:var(--text-muted);" data-i18n="admin_loading_sessions">Loading sessions...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
+                <button id="adminSessionsPrevBtn" class="btn btn-secondary btn-sm" type="button" data-i18n="admin_previous">Previous</button>
+                <button id="adminSessionsNextBtn" class="btn btn-secondary btn-sm" type="button" data-i18n="admin_next">Next</button>
               </div>
             </div>
 
-            <!-- Create new global server key -->
             <div class="glass-card">
-              <h3 data-i18n="admin_register_key">Register Global Provider Key</h3>
-              <form id="adminKeyAddForm" style="margin-top:16px;">
-                <div class="form-group">
-                  <label data-i18n="admin_label_name">Key Name / Description</label>
-                  <input type="text" id="adminKeyName" class="form-control" placeholder="Primary OpenAI" required />
+              <h3 style="font-size:18px; font-weight:700; margin-bottom:6px;"><i class="fas fa-clipboard-list" style="color:var(--cyan);"></i> <span data-i18n="audit_events_title">Audit Log</span></h3>
+              <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;" data-i18n="audit_events_desc">Redacted record of every admin and impersonated mutation.</p>
+              <form id="adminAuditFilters" style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
+                <select id="adminAuditTypeFilter" class="form-control" style="max-width:260px;" aria-label="Filter by event type" data-i18n-aria="audit_filter_type">
+                  <option value="" data-i18n="audit_filter_all">All events</option>
+                  <option value="impersonation.started" data-i18n="audit_type_started">Impersonation started</option>
+                  <option value="impersonation.ended" data-i18n="audit_type_ended">Impersonation ended</option>
+                  <option value="impersonated.write" data-i18n="audit_type_imp_write">Impersonated write</option>
+                  <option value="admin.write" data-i18n="audit_type_admin_write">Admin write</option>
+                </select>
+                <button class="btn btn-secondary btn-sm" type="submit"><i class="fas fa-filter"></i> <span data-i18n="admin_apply">Apply</span></button>
+              </form>
+              <div style="overflow-x:auto;">
+                <table class="db-table" style="width:100%; border-collapse:collapse; text-align:right;">
+                  <thead>
+                    <tr style="border-bottom:2px solid var(--glass-border); font-size:13px; color:var(--text-muted);">
+                      <th style="padding:10px;" data-i18n="th_event_when">When</th>
+                      <th style="padding:10px;" data-i18n="th_event_type">Event</th>
+                      <th style="padding:10px;" data-i18n="th_event_actor">Actor → Target</th>
+                      <th style="padding:10px;" data-i18n="th_event_action">Action</th>
+                      <th style="padding:10px;" data-i18n="th_event_outcome">Outcome</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminAuditTableBody">
+                    <tr><td colspan="5" style="padding:20px; text-align:center; color:var(--text-muted);" data-i18n="admin_loading_events">Loading audit log...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:12px;">
+                <span id="adminAuditPaginationInfo" style="font-size:12px; color:var(--text-muted);"></span>
+                <div style="display:flex; gap:8px;">
+                  <button id="adminAuditPrevBtn" class="btn btn-secondary btn-sm" type="button" data-i18n="admin_previous">Previous</button>
+                  <button id="adminAuditNextBtn" class="btn btn-secondary btn-sm" type="button" data-i18n="admin_next">Next</button>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 5: Broadcast notifications -->
+          <div id="adminSectionNotify" class="admin-subtab-content" style="display:none;">
+            <div class="glass-card" style="max-width:720px;">
+              <h3 style="font-size:18px; font-weight:700; margin-bottom:6px;"><i class="fas fa-bullhorn" style="color:var(--orange);"></i> <span data-i18n="notify_title">Send Platform Notification</span></h3>
+              <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;" data-i18n="notify_desc">Deliver an in-app notification to every account or to one specific user.</p>
+              <form id="adminNotifyForm">
                 <div class="form-group">
-                  <label data-i18n="admin_label_provider">AI Provider</label>
-                  <select id="adminKeyProvider" class="form-control">
-                    <option value="openai">OpenAI</option>
-                    <option value="gemini">Google Gemini</option>
-                    <option value="anthropic">Anthropic (Claude)</option>
-                    <option value="openrouter">OpenRouter</option>
-                    <option value="custom">Custom Endpoint</option>
+                  <label data-i18n="notify_target">Target</label>
+                  <select id="notifyTargetSelect" class="form-control">
+                    <option value="all" data-i18n="notify_target_all">All users</option>
+                    <option value="single" data-i18n="notify_target_single">Specific user (by username)</option>
                   </select>
                 </div>
-                <div class="form-group">
-                  <label data-i18n="admin_label_key">API Key</label>
-                  <input type="password" id="adminKeySecret" class="form-control" placeholder="sk-..." required />
+                <div class="form-group" id="notifyUsernameGroup" style="display:none;">
+                  <label data-i18n="notify_username_label">Username</label>
+                  <input type="text" id="notifyUsernameInput" class="form-control" autocomplete="off" />
                 </div>
                 <div class="form-group">
-                  <label data-i18n="admin_label_model">Default Model</label>
-                  <input type="text" id="adminKeyModel" class="form-control" placeholder="gpt-4o-mini / gemini-1.5-flash" required />
+                  <label data-i18n="notify_title_label">Title</label>
+                  <input type="text" id="notifyTitleInput" class="form-control" maxlength="120" required />
                 </div>
                 <div class="form-group">
-                  <label data-i18n="admin_label_priority">Priority Rank (1 = Highest)</label>
-                  <input type="number" id="adminKeyPriority" class="form-control" value="1" min="1" required />
+                  <label data-i18n="notify_body_label">Message</label>
+                  <textarea id="notifyBodyInput" class="form-control" rows="4" maxlength="1000" required></textarea>
                 </div>
-                <div class="form-group">
-                  <label data-i18n="admin_label_base_url">Base URL (Optional)</label>
-                  <input type="text" id="adminKeyBaseUrl" class="form-control" placeholder="https://api.openai.com/v1" />
-                </div>
-                <button type="submit" class="btn btn-primary btn-sm btn-block" style="background:var(--orange); color:#000; border-color:var(--orange)" data-i18n="admin_btn_register">Register Server Key</button>
+                <button type="submit" class="btn btn-primary btn-sm" style="background:var(--orange); color:#000; border-color:var(--orange);" data-i18n="notify_send_btn">Send notification</button>
+                <span id="notifyResultMsg" style="margin-inline-start:12px; font-size:13px;"></span>
               </form>
+            </div>
+          </div>
+
+          <!-- Section 6: Landing page demo agent instructions -->
+          <div id="adminSectionLandingDemo" class="admin-subtab-content" style="display:none;">
+            <div class="glass-card" style="max-width:760px;">
+              <h3 style="font-size:18px; font-weight:700; margin-bottom:6px;"><i class="fas fa-robot" style="color:var(--orange);"></i> <span data-i18n="landing_demo_title">Landing Page Demo Agent</span></h3>
+              <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;" data-i18n="landing_demo_desc">Controls the real AI agent answering visitor questions inside the "Try it live" chat on the marketing landing page.</p>
+              <label style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+                <input id="landingDemoEnabled" type="checkbox" checked />
+                <span data-i18n="landing_demo_enable_label">Live AI demo enabled</span>
+              </label>
+              <div class="form-group">
+                <label data-i18n="landing_demo_instructions_label">Agent instructions</label>
+                <textarea id="landingDemoInstructions" class="form-control" rows="12" maxlength="12000" data-i18n-placeholder="landing_demo_instructions_placeholder" placeholder="Extra tone, boundaries, offers, or knowledge the demo agent must follow."></textarea>
+                <small style="color:var(--text-muted);" data-i18n="landing_demo_instructions_hint">These instructions are added on top of the built-in platform knowledge base.</small>
+              </div>
+              <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                <button id="landingDemoSaveBtn" class="btn btn-primary btn-sm" style="background:var(--orange); color:#000; border-color:var(--orange);" data-i18n="landing_demo_save_btn">Save settings</button>
+                <span id="landingDemoUpdatedAt" style="font-size:12px; color:var(--text-muted);"></span>
+                <span id="landingDemoStatusMsg" style="font-size:13px;"></span>
+              </div>
             </div>
           </div>
         </section>
 
       </div>
     </main>
+  </div>
+
+  <!-- General Instruction Modal Form -->
+  <div class="db-modal" id="instructionModal">
+    <div class="db-modal-content">
+      <div class="db-modal-header">
+        <h3 id="instructionModalTitle">Add General Instruction</h3>
+        <button class="btn btn-secondary btn-sm modal-close-btn" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="db-modal-body">
+        <form id="instructionForm">
+          <input type="hidden" id="instructionIdInput" />
+          <div class="form-group">
+            <label data-i18n="label_instruction_content">Instruction</label>
+            <textarea id="instructionContentInput" class="form-control" rows="5" data-i18n-placeholder="instruction_content_placeholder" placeholder="For example, always greet customers in Egyptian Arabic and never quote prices outside the catalog." required></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="db-modal-footer">
+        <button class="btn btn-secondary btn-sm modal-close-btn" data-i18n="btn_cancel">Cancel</button>
+        <button type="submit" form="instructionForm" class="btn btn-primary btn-sm" data-i18n="btn_save">Save Rule</button>
+      </div>
+    </div>
   </div>
 
   <!-- FAQ Modal Form -->
@@ -1251,11 +2219,11 @@
           <input type="hidden" id="faqIdInput" />
           <div class="form-group">
             <label data-i18n="label_faq_question">Question / Keywords</label>
-            <input type="text" id="faqQuestionInput" class="form-control" placeholder="E.g., Delivery times" required />
+            <input type="text" id="faqQuestionInput" class="form-control" data-i18n-placeholder="faq_question_placeholder" placeholder="For example, delivery times" required />
           </div>
           <div class="form-group">
             <label data-i18n="label_faq_answer">Expected Answer</label>
-            <textarea id="faqAnswerInput" class="form-control" rows="4" placeholder="E.g., We deliver within 3 business days across Cairo." required></textarea>
+            <textarea id="faqAnswerInput" class="form-control" rows="4" data-i18n-placeholder="faq_answer_placeholder" placeholder="For example, we deliver within three business days across Cairo." required></textarea>
           </div>
         </form>
       </div>
@@ -1278,8 +2246,783 @@
     </div>
   </div>
 
+  <div class="db-modal" id="adminUserModal">
+    <div class="db-modal-content" style="max-width:720px;">
+      <div class="db-modal-header">
+        <h3 id="adminUserModalTitle" data-i18n="admin_user_modal">Manage user</h3>
+        <button class="btn btn-secondary btn-sm admin-user-modal-close" type="button" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="adminUserForm">
+        <div class="db-modal-body">
+          <input id="adminUserId" type="hidden" />
+          <input id="adminUserMode" type="hidden" value="edit" />
+          <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="form-group"><label data-i18n="admin_username">Username</label><input id="adminUserUsername" class="form-control" required minlength="3" maxlength="20" /></div>
+            <div class="form-group"><label data-i18n="admin_email">Email</label><input id="adminUserEmail" class="form-control" required type="email" /></div>
+            <div class="form-group"><label data-i18n="admin_whatsapp">WhatsApp</label><input id="adminUserWhatsapp" class="form-control" autocomplete="tel" /></div>
+            <div class="form-group"><label data-i18n="admin_role">Role</label><select id="adminUserRole" class="form-control"><option value="user" data-i18n="admin_user">User</option><option value="superadmin" data-i18n="admin_superadmin">Super admin</option></select></div>
+            <div class="form-group"><label data-i18n="admin_subscription">Subscription</label><select id="adminUserSubscriptionType" class="form-control"><option value="free" data-i18n="admin_free">Free</option><option value="monthly" data-i18n="admin_monthly">Monthly</option><option value="yearly" data-i18n="admin_yearly">Yearly</option></select></div>
+            <div class="form-group"><label data-i18n="admin_plan_tier">Plan tier</label><select id="adminUserTier" class="form-control"><option value="free" data-i18n="admin_free">Free</option><option value="growth_1k">Growth 1K</option><option value="growth_10k">Growth 10K</option><option value="growth_50k">Growth 50K</option><option value="unlimited">Unlimited</option></select></div>
+            <div class="form-group"><label data-i18n="th_user_status">Status</label><select id="adminUserStatus" class="form-control"><option value="active" data-i18n="admin_active">Active</option><option value="suspended" data-i18n="admin_suspended">Suspended</option></select></div>
+            <div class="form-group"><label data-i18n="admin_verification">Verification</label><select id="adminUserVerified" class="form-control"><option value="true" data-i18n="admin_verified">Verified</option><option value="false" data-i18n="admin_not_verified">Not verified</option></select></div>
+            <div class="form-group"><label data-i18n="admin_daily_usage">Daily messages used</label><input id="adminUserDailyUsage" class="form-control" type="number" min="0" value="0" /></div>
+            <div class="form-group"><label data-i18n="admin_monthly_usage">Monthly messages used</label><input id="adminUserMonthlyUsage" class="form-control" type="number" min="0" value="0" /></div>
+            <div class="form-group" id="adminUserPasswordGroup"><label data-i18n="admin_temporary_password">Temporary password</label><input id="adminUserPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" /><small style="color:var(--text-muted);" data-i18n="admin_password_help">Leave empty to keep the existing password.</small></div>
+            <div class="form-group" id="adminUserConfirmPasswordGroup"><label data-i18n="admin_confirm_password">Confirm password</label><input id="adminUserConfirmPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" /></div>
+          </div>
+        </div>
+        <div class="db-modal-footer">
+          <button class="btn btn-secondary btn-sm admin-user-modal-close" type="button" data-i18n="btn_cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm" data-i18n="admin_save_user">Save user</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="db-modal" id="impersonationModal">
+    <div class="db-modal-content" style="max-width:520px;">
+      <div class="db-modal-header"><h3 data-i18n="impersonation_title">Start audited access</h3><button class="btn btn-secondary btn-sm impersonation-modal-close" type="button"><i class="fas fa-times"></i></button></div>
+      <form id="impersonationForm">
+        <div class="db-modal-body">
+          <input id="impersonationSubjectId" type="hidden" />
+          <p style="color:var(--text-muted); font-size:13px;" data-i18n="impersonation_desc">This starts a temporary, audited session. Enter the reason for access.</p>
+          <div class="form-group"><label data-i18n="impersonation_reason">Reason</label><textarea id="impersonationReason" class="form-control" rows="3" minlength="3" maxlength="500" required></textarea></div>
+        </div>
+        <div class="db-modal-footer"><button class="btn btn-secondary btn-sm impersonation-modal-close" type="button" data-i18n="btn_cancel">Cancel</button><button type="submit" class="btn btn-primary btn-sm" data-i18n="impersonation_continue">Continue</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="db-modal" id="agentModal">
+    <div class="db-modal-content" style="max-width:720px; max-height:90vh; overflow:auto;">
+      <div class="db-modal-header"><h3 id="agentModalTitle" data-i18n="agents_create">Create agent</h3><button class="btn btn-secondary btn-sm agent-modal-close" type="button"><i class="fas fa-times"></i></button></div>
+      <form id="agentForm">
+        <div class="db-modal-body">
+          <input id="agentId" type="hidden" />
+          <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="form-group"><label data-i18n="agent_name">Agent name</label><input id="agentName" class="form-control" required minlength="2" maxlength="80" /></div>
+            <div class="form-group"><label data-i18n="agent_role">Agent role</label><select id="agentType" class="form-control"><option value="customer_support" data-i18n="agent_role_support">Customer support</option><option value="sales" data-i18n="agent_role_sales">Sales</option><option value="lead_qualification" data-i18n="agent_role_leads">Lead qualification</option><option value="custom" data-i18n="agent_role_custom">Custom</option></select></div>
+          </div>
+          <div class="form-group"><label data-i18n="agent_description">Description</label><input id="agentDescription" class="form-control" maxlength="500" placeholder="What this agent is responsible for" data-i18n-placeholder="agent_description_placeholder" /></div>
+          <div class="form-group"><label data-i18n="agent_welcome_message">Welcome message</label><textarea id="agentWelcomeMessage" class="form-control" rows="2" maxlength="500"></textarea></div>
+          <div class="form-group"><label data-i18n="agent_instructions">Instructions</label><textarea id="agentInstructions" class="form-control" rows="7" maxlength="12000" placeholder="Tone, source of truth, do-not-do rules, and escalation behavior" data-i18n-placeholder="agent_instructions_placeholder"></textarea></div>
+          <div class="form-group"><label data-i18n="agent_objectives">Objectives</label><textarea id="agentObjectives" class="form-control" rows="3" placeholder="One objective per line" data-i18n-placeholder="agent_objectives_placeholder"></textarea></div>
+          <div class="form-group"><label data-i18n="agent_handoff_keywords">Human handoff keywords</label><input id="agentHandoffKeywords" class="form-control" placeholder="human, manager, complaint" data-i18n-placeholder="agent_handoff_placeholder" /></div>
+          
+          <!-- Agent Tools Section -->
+          <div style="border-top:1px solid var(--glass-border); padding-top:16px; margin-top:16px;">
+            <h4 style="margin-bottom:12px; font-size:15px; color:var(--cyan);" data-i18n="agent_tools_section_title"><i class="fas fa-tools"></i> Agent Tools</h4>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+              <!-- Booking Tool -->
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                  <input id="agentToolBooking" type="checkbox" checked />
+                  <span data-i18n="agent_tool_booking_title">Appointment & Booking Scheduling Tool</span>
+                </label>
+                <div id="bookingToolSettingsGroup" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:12px;" data-i18n="agent_booking_hours_label">Working Hours</label>
+                    <input id="agentBookingWorkingHours" class="form-control" placeholder="09:00 - 22:00" value="09:00 - 22:00" />
+                  </div>
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:12px;" data-i18n="agent_booking_service_label">Default Service / Purpose</label>
+                    <input id="agentBookingDefaultService" class="form-control" placeholder="استشارة / موعد" value="استشارة / موعد" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Order Tracking Tool -->
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                  <input id="agentToolOrders" type="checkbox" checked />
+                  <span data-i18n="agent_tool_orders_title">Order Tracking & Management Tool</span>
+                </label>
+              </div>
+
+              <!-- WhatsApp Alerts Tool -->
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                  <input id="agentToolWhatsapp" type="checkbox" checked />
+                  <span data-i18n="agent_tool_wa_title">Instant WhatsApp Notifications Tool</span>
+                </label>
+              </div>
+
+              <!-- Telegram Alerts Tool -->
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                  <input id="agentToolTelegram" type="checkbox" checked />
+                  <span data-i18n="agent_tool_tg_title">Instant Telegram Notifications Tool</span>
+                </label>
+              </div>
+
+              <!-- Sales Recovery Tool -->
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                  <input id="agentToolSalesRecovery" type="checkbox" checked />
+                  <span data-i18n="agent_tool_recovery_title">Automated Abandoned Sales & Inquiries Recovery</span>
+                </label>
+                <div id="salesRecoverySettingsGroup" style="display:grid; grid-template-columns:1fr 2fr; gap:12px; margin-top:12px;">
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:12px;" data-i18n="agent_recovery_delay_label">Follow-up After</label>
+                    <select id="agentSalesRecoveryDelay" class="form-control">
+                      <option value="2" data-i18n="delay_2h">2 Hours</option>
+                      <option value="4" data-i18n="delay_4h">4 Hours</option>
+                      <option value="12" data-i18n="delay_12h">12 Hours</option>
+                      <option value="24" data-i18n="delay_24h">24 Hours</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:12px;" data-i18n="agent_recovery_msg_label">Custom Follow-up Message</label>
+                    <input id="agentSalesRecoveryMsg" class="form-control" placeholder="Leave empty for automatic friendly recovery message" data-i18n-placeholder="agent_recovery_msg_placeholder" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Daily Performance Digest Tool -->
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                  <input id="agentToolDailyDigest" type="checkbox" checked />
+                  <span data-i18n="agent_tool_digest_title">Daily Performance & Sales Digest</span>
+                </label>
+                <div id="dailyDigestSettingsGroup" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:12px;" data-i18n="agent_digest_channel_label">Notification Channel</label>
+                    <select id="agentDailyDigestChannel" class="form-control">
+                      <option value="all" data-i18n="channel_all">Telegram, WhatsApp & Dashboard</option>
+                      <option value="telegram">Telegram Only</option>
+                      <option value="whatsapp">WhatsApp Only</option>
+                      <option value="in_app" data-i18n="channel_inapp">Dashboard Notifications Only</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:12px;" data-i18n="agent_digest_time_label">Delivery Time</label>
+                    <input id="agentDailyDigestTime" type="time" class="form-control" value="21:00" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Smart Upsell & Persona Tool -->
+              <div class="glass-card" style="padding:14px; background:rgba(255,255,255,0.02);">
+                <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                  <input id="agentToolSalesUpsell" type="checkbox" checked />
+                  <span data-i18n="agent_tool_upsell_title">Smart Catalog Upselling & Closing Strategy</span>
+                </label>
+                <div id="salesUpsellSettingsGroup" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:12px;" data-i18n="agent_sales_tone_label">Sales Persona Tone</label>
+                    <select id="agentSalesTone" class="form-control">
+                      <option value="consultative" data-i18n="tone_consultative">Consultative & Helpful</option>
+                      <option value="enthusiastic" data-i18n="tone_enthusiastic">Enthusiastic & Promotional</option>
+                      <option value="formal" data-i18n="tone_formal">Direct & Formal</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label style="font-size:12px;" data-i18n="agent_max_discount_label">Closing Incentive Discount</label>
+                    <select id="agentMaxDiscount" class="form-control">
+                      <option value="0" data-i18n="discount_none">No discounts (0%)</option>
+                      <option value="5">Up to 5% discount</option>
+                      <option value="10">Up to 10% discount</option>
+                      <option value="15">Up to 15% discount</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Agent Skills Section -->
+          <div style="border-top:1px solid var(--glass-border); padding-top:16px; margin-top:16px;">
+            <h4 style="margin-bottom:12px; font-size:15px; color:var(--purple-light);" data-i18n="agent_skills_section_title"><i class="fas fa-brain"></i> Agent Skills</h4>
+            <div class="checkbox-group" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <label class="checkbox-item"><input type="checkbox" name="agentSkill" value="sales_consultant" checked /> <span data-i18n="skill_sales">Smart Sales Consultant</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="agentSkill" value="appointment_scheduler" checked /> <span data-i18n="skill_appointments">Appointment Coordinator</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="agentSkill" value="order_manager" checked /> <span data-i18n="skill_orders">Order & Delivery Manager</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="agentSkill" value="support_specialist" checked /> <span data-i18n="skill_support">Support & Complaints Specialist</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="agentSkill" value="winback_agent" checked /> <span data-i18n="skill_winback">Customer Retention & Win-back</span></label>
+            </div>
+          </div>
+
+          <label style="display:flex; align-items:center; gap:8px; margin-top:16px;"><input id="agentAutoReplyEnabled" type="checkbox" checked /> <span data-i18n="agent_auto_reply">AI auto-reply enabled</span></label>
+        </div>
+        <div class="db-modal-footer"><button class="btn btn-secondary btn-sm agent-modal-close" type="button" data-i18n="btn_cancel">Cancel</button><button class="btn btn-primary btn-sm" type="submit" data-i18n="agent_save">Save agent</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Booking Modal Form (Create / Edit Appointment) -->
+  <div class="db-modal" id="bookingModal">
+    <div class="db-modal-content" style="max-width:600px;">
+      <div class="db-modal-header">
+        <h3 id="bookingModalTitle" data-i18n="booking_modal_title"><i class="fas fa-calendar-alt"></i> Manage Appointment</h3>
+        <button class="btn btn-secondary btn-sm modal-close-btn booking-modal-close" type="button" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="bookingForm">
+        <div class="db-modal-body">
+          <input type="hidden" id="bookingIdInput" />
+          <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="form-group">
+              <label data-i18n="label_customer_name">Customer Name</label>
+              <input type="text" id="bookingCustomerName" class="form-control" required data-i18n-placeholder="placeholder_customer_name" placeholder="Full Name" />
+            </div>
+            <div class="form-group">
+              <label data-i18n="label_customer_phone">Phone Number</label>
+              <input type="text" id="bookingCustomerPhone" class="form-control" data-i18n-placeholder="placeholder_customer_phone" placeholder="01xxxxxxxxx" />
+            </div>
+          </div>
+          <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="form-group">
+              <label data-i18n="label_service_type">Service / Purpose</label>
+              <input type="text" id="bookingServiceType" class="form-control" placeholder="Consultation / Review" data-i18n-placeholder="placeholder_service_type" />
+            </div>
+            <div class="form-group">
+              <label data-i18n="label_booking_status">Status</label>
+              <select id="bookingStatusSelect" class="form-control">
+                <option value="pending" data-i18n="status_pending">Pending</option>
+                <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
+                <option value="completed" data-i18n="status_completed">Completed</option>
+                <option value="rescheduled" data-i18n="status_rescheduled">Rescheduled</option>
+                <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+          <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="form-group">
+              <label data-i18n="label_booking_date">Date & Time</label>
+              <input type="datetime-local" id="bookingDateTime" class="form-control" required />
+            </div>
+            <div class="form-group">
+              <label data-i18n="label_slot_duration">Duration (Minutes)</label>
+              <input type="number" id="bookingDuration" class="form-control" value="30" min="5" step="5" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_booking_notes">Notes / AI Summary</label>
+            <textarea id="bookingNotes" class="form-control" rows="3" data-i18n-placeholder="placeholder_booking_notes" placeholder="Additional details, requests, or notes..."></textarea>
+          </div>
+        </div>
+        <div class="db-modal-footer">
+          <button class="btn btn-secondary btn-sm booking-modal-close" type="button" data-i18n="btn_cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_save_booking">Save Appointment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Chat Order Modal Form (Create / Edit Order) -->
+  <div class="db-modal" id="chatOrderModal">
+    <div class="db-modal-content" style="max-width:650px;">
+      <div class="db-modal-header">
+        <h3 id="chatOrderModalTitle" data-i18n="chat_order_modal_title"><i class="fas fa-shopping-cart"></i> Manage Chat Order</h3>
+        <button class="btn btn-secondary btn-sm modal-close-btn order-modal-close" type="button" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="chatOrderForm">
+        <div class="db-modal-body">
+          <input type="hidden" id="chatOrderIdInput" />
+          <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="form-group">
+              <label data-i18n="label_customer_name">Customer Name</label>
+              <input type="text" id="orderCustomerName" class="form-control" required />
+            </div>
+            <div class="form-group">
+              <label data-i18n="label_customer_phone">Phone Number</label>
+              <input type="text" id="orderCustomerPhone" class="form-control" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_customer_address">Delivery Address</label>
+            <input type="text" id="orderCustomerAddress" class="form-control" required />
+          </div>
+          <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;">
+            <div class="form-group">
+              <label data-i18n="label_order_items">Items Summary</label>
+              <input type="text" id="orderItemsSummary" class="form-control" placeholder="Product name x1" data-i18n-placeholder="placeholder_order_items" />
+            </div>
+            <div class="form-group">
+              <label data-i18n="label_total_amount">Total Amount (EGP)</label>
+              <input type="number" id="orderTotalAmount" class="form-control" min="0" step="1" required />
+            </div>
+            <div class="form-group">
+              <label data-i18n="label_order_status">Status</label>
+              <select id="orderStatusSelect" class="form-control">
+                <option value="pending" data-i18n="status_pending">Pending</option>
+                <option value="processing" data-i18n="status_processing">Processing</option>
+                <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
+                <option value="shipped" data-i18n="status_shipped">Shipped</option>
+                <option value="delivered" data-i18n="status_delivered">Delivered</option>
+                <option value="cancelled" data-i18n="status_cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_order_note">Order Note</label>
+            <textarea id="orderCustomerNote" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="db-modal-footer">
+          <button class="btn btn-secondary btn-sm order-modal-close" type="button" data-i18n="btn_cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_save_order">Save Order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notification Recipient Modal Form -->
+  <div class="db-modal" id="recipientModal">
+    <div class="db-modal-content" style="max-width:540px;">
+      <div class="db-modal-header">
+        <h3 id="recipientModalTitle" data-i18n="recipient_modal_title"><i class="fas fa-bell"></i> Add Notification Channel</h3>
+        <button class="btn btn-secondary btn-sm modal-close-btn recipient-modal-close" type="button" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="recipientForm">
+        <div class="db-modal-body">
+          <input type="hidden" id="recipientIdInput" />
+          <div class="form-group">
+            <label data-i18n="label_rec_channel">Notification Channel</label>
+            <select id="recipientChannelSelect" class="form-control" required>
+              <option value="whatsapp" data-i18n="channel_whatsapp">WhatsApp Number</option>
+              <option value="telegram" data-i18n="channel_telegram">Telegram Account / Channel ID</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_rec_target">Target Destination</label>
+            <input type="text" id="recipientTargetInput" class="form-control" placeholder="01xxxxxxxxx or Telegram Chat ID" data-i18n-placeholder="placeholder_rec_target" required />
+            <small style="color:var(--text-muted);" data-i18n="hint_rec_target">For WhatsApp: 01xxxxxxxxx or +201xxxxxxxxx. For Telegram: Chat ID (e.g. 123456789) or group/channel ID.</small>
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_rec_label">Label / Team Description</label>
+            <input type="text" id="recipientLabelInput" class="form-control" placeholder="Sales Manager, Kitchen, Operations..." data-i18n-placeholder="placeholder_rec_label" />
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_rec_events">Subscribed Alert Events</label>
+            <div class="checkbox-group">
+              <label class="checkbox-item"><input type="checkbox" name="recipientEvents" value="order_created" checked /> <span data-i18n="ev_order_created">New Orders</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="recipientEvents" value="order_status" checked /> <span data-i18n="ev_order_status">Order Status Updates</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="recipientEvents" value="booking_created" checked /> <span data-i18n="ev_booking_created">New Appointments</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="recipientEvents" value="booking_rescheduled" checked /> <span data-i18n="ev_booking_rescheduled">Rescheduled Bookings</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="recipientEvents" value="booking_cancelled" checked /> <span data-i18n="ev_booking_cancelled">Cancelled Bookings</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="db-modal-footer">
+          <button class="btn btn-secondary btn-sm recipient-modal-close" type="button" data-i18n="btn_cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_save_recipient">Save Notification Channel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Dedicated Web Chat Page & Customizer Modal with Live Preview -->
+  <div class="db-modal" id="chatPageModal">
+    <div class="db-modal-content" style="max-width:1120px; width:95%; max-height:92vh; overflow-y:auto;">
+      <div class="db-modal-header">
+        <h3 id="chatPageModalTitle" data-i18n="chat_page_customizer_title"><i class="fas fa-palette"></i> Customize Dedicated Web Chat Page</h3>
+        <button class="btn btn-secondary btn-sm modal-close-btn chat-page-modal-close" type="button" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
+      </div>
+      
+      <div style="background:rgba(6,182,212,0.08); border:1px solid rgba(6,182,212,0.25); border-radius:8px; padding:12px 16px; margin:16px 20px 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div style="flex:1; min-width:240px;">
+          <span style="font-size:12px; color:var(--text-muted); display:block;" data-i18n="chat_page_share_link">Direct Chat Page URL</span>
+          <a id="chatPageLiveLink" href="#" target="_blank" style="color:var(--cyan); font-weight:700; font-size:13px; text-decoration:underline; word-break:break-all;">https://zainbot.com/chat/...</a>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" id="copyChatPageLinkBtn" class="btn btn-secondary btn-sm" onclick="copyChatPageDirectLink()"><i class="fas fa-copy"></i> <span data-i18n="btn_copy_link">Copy Link</span></button>
+          <a id="openChatPageBtn" href="#" target="_blank" class="btn btn-primary btn-sm"><i class="fas fa-external-link-alt"></i> <span data-i18n="btn_open_chat">Open Chat</span></a>
+        </div>
+      </div>
+
+      <form id="chatPageForm">
+        <div class="db-modal-body" style="padding-top:16px;">
+          <input type="hidden" id="chatPageId" />
+          <input type="hidden" id="chatPageBotId" />
+
+          <!-- Two Column Customizer Grid: Controls (Left) & Live Preview (Right) -->
+          <div class="chat-customizer-grid" style="display:grid; grid-template-columns: minmax(0, 1.15fr) minmax(340px, 400px); gap:24px; align-items:start;">
+            
+            <!-- Column 1: Controls & Settings -->
+            <div class="customizer-controls">
+              
+              <!-- 3 Carefully Crafted Preset Themes -->
+              <div style="margin-bottom:18px;">
+                <label style="font-weight:700; margin-bottom:10px; display:block;" data-i18n="label_preset_themes">Choose Default Theme</label>
+                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
+                  <!-- Preset 1: Cyber Dark -->
+                  <div class="theme-preset-card active" data-preset="cyber_dark" onclick="applyThemePreset('cyber_dark')" style="border:2px solid var(--cyan); border-radius:10px; padding:10px; background:rgba(10,15,29,0.8); cursor:pointer; text-align:center; transition:0.2s ease;">
+                    <div style="display:flex; justify-content:center; gap:4px; margin-bottom:6px;">
+                      <span style="width:12px; height:12px; border-radius:50%; background:#0F172A; border:1px solid #fff;"></span>
+                      <span style="width:12px; height:12px; border-radius:50%; background:#06B6D4;"></span>
+                      <span style="width:12px; height:12px; border-radius:50%; background:#1E293B;"></span>
+                    </div>
+                    <div style="font-size:12px; font-weight:700; color:#fff;" data-i18n="preset_cyber_dark">Cyber Dark</div>
+                    <div style="font-size:10px; color:var(--cyan);" data-i18n="preset_cyber_dark_desc">Neon Modern</div>
+                  </div>
+
+                  <!-- Preset 2: Emerald Clean -->
+                  <div class="theme-preset-card" data-preset="emerald_clean" onclick="applyThemePreset('emerald_clean')" style="border:1px solid var(--glass-border); border-radius:10px; padding:10px; background:rgba(255,255,255,0.04); cursor:pointer; text-align:center; transition:0.2s ease;">
+                    <div style="display:flex; justify-content:center; gap:4px; margin-bottom:6px;">
+                      <span style="width:12px; height:12px; border-radius:50%; background:#065F46;"></span>
+                      <span style="width:12px; height:12px; border-radius:50%; background:#10B981;"></span>
+                      <span style="width:12px; height:12px; border-radius:50%; background:#F8FAFC; border:1px solid #999;"></span>
+                    </div>
+                    <div style="font-size:12px; font-weight:700; color:#fff;" data-i18n="preset_emerald_clean">Emerald Clean</div>
+                    <div style="font-size:10px; color:var(--text-muted);" data-i18n="preset_emerald_clean_desc">Luxury Light</div>
+                  </div>
+
+                  <!-- Preset 3: Royal Purple -->
+                  <div class="theme-preset-card" data-preset="royal_purple" onclick="applyThemePreset('royal_purple')" style="border:1px solid var(--glass-border); border-radius:10px; padding:10px; background:rgba(255,255,255,0.04); cursor:pointer; text-align:center; transition:0.2s ease;">
+                    <div style="display:flex; justify-content:center; gap:4px; margin-bottom:6px;">
+                      <span style="width:12px; height:12px; border-radius:50%; background:#1E1145;"></span>
+                      <span style="width:12px; height:12px; border-radius:50%; background:#8B5CF6;"></span>
+                      <span style="width:12px; height:12px; border-radius:50%; background:#A855F7;"></span>
+                    </div>
+                    <div style="font-size:12px; font-weight:700; color:#fff;" data-i18n="preset_royal_purple">Royal Violet</div>
+                    <div style="font-size:10px; color:var(--text-muted);" data-i18n="preset_royal_purple_desc">Velvet Dark</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chat Page Logo / Avatar Upload Section -->
+              <div style="background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+                <label style="font-weight:700; font-size:12px; margin-bottom:8px; display:block;" data-i18n="label_chat_page_logo">Chat Page Logo / Avatar</label>
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                  <div id="chatPageLogoPreviewContainer" style="width:42px; height:42px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid var(--cyan); display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; flex-shrink:0;">
+                    <img id="chatPageLogoImg" src="" alt="Avatar" style="width:100%; height:100%; object-fit:cover; display:none;" />
+                    <i id="chatPageDefaultLogoIcon" class="fas fa-robot" style="color:var(--cyan); font-size:18px;"></i>
+                  </div>
+                  <div style="flex:1; min-width:180px;">
+                    <div style="display:flex; gap:8px; align-items:center;">
+                      <label class="btn btn-secondary btn-sm" style="cursor:pointer; margin:0; font-size:11px; padding:4px 10px;">
+                        <i class="fas fa-upload"></i> <span data-i18n="btn_upload_logo">Upload Logo</span>
+                        <input type="file" id="chatPageLogoInput" accept="image/png,image/jpeg,image/webp" style="display:none;" onchange="handleChatLogoChange(event)" />
+                      </label>
+                      <button type="button" id="removeChatLogoBtn" class="btn btn-secondary btn-sm" style="color:#ef4444; display:none; font-size:11px; padding:4px 10px;" onclick="removeChatLogo()"><i class="fas fa-trash"></i> <span data-i18n="btn_remove_logo">Remove</span></button>
+                    </div>
+                    <small style="font-size:10px; color:var(--text-muted); display:block; margin-top:3px;" data-i18n="hint_logo_format">PNG or JPG up to 2MB</small>
+                  </div>
+                </div>
+              </div>
+
+              <!-- General Info -->
+              <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+                <div class="form-group">
+                  <label data-i18n="label_chat_page_title">Chat Page Title</label>
+                  <input type="text" id="chatPageTitleInput" class="form-control" placeholder="ZainBot AI Sales Agent" required oninput="updateLivePreview()" />
+                </div>
+                <div class="form-group">
+                  <label data-i18n="label_chat_page_slug">Custom Link ID / Slug</label>
+                  <input type="text" id="chatPageSlugInput" class="form-control" placeholder="my-bot" />
+                </div>
+              </div>
+
+              <!-- Theme Color Pickers (Can be customized freely) -->
+              <h4 style="margin:16px 0 10px; font-size:13px; color:var(--cyan); display:flex; justify-content:space-between; align-items:center;">
+                <span data-i18n="chat_page_theme_colors"><i class="fas fa-sliders-h"></i> Custom Colors</span>
+                <small style="font-size:11px; color:var(--text-muted);" data-i18n="hint_customize_colors">Fully Customizable</small>
+              </h4>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:10px; margin-bottom:16px;">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label style="font-size:11px;" data-i18n="label_color_header">Header</label>
+                  <input type="color" id="chatColorHeader" class="form-control" value="#0f172a" style="height:36px; padding:2px; cursor:pointer;" oninput="updateLivePreview()" />
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label style="font-size:11px;" data-i18n="label_color_bg">Background</label>
+                  <input type="color" id="chatColorBg" class="form-control" value="#0a0f1d" style="height:36px; padding:2px; cursor:pointer;" oninput="updateLivePreview()" />
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label style="font-size:11px;" data-i18n="label_color_bot_bubble">Bot Bubble</label>
+                  <input type="color" id="chatColorBotBubble" class="form-control" value="#1e293b" style="height:36px; padding:2px; cursor:pointer;" oninput="updateLivePreview()" />
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label style="font-size:11px;" data-i18n="label_color_user_bubble">User Bubble</label>
+                  <input type="color" id="chatColorUserBubble" class="form-control" value="#06b6d4" style="height:36px; padding:2px; cursor:pointer;" oninput="updateLivePreview()" />
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label style="font-size:11px;" data-i18n="label_color_button">Send Button</label>
+                  <input type="color" id="chatColorButton" class="form-control" value="#06b6d4" style="height:36px; padding:2px; cursor:pointer;" oninput="updateLivePreview()" />
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label style="font-size:11px;" data-i18n="label_color_title">Title Color</label>
+                  <input type="color" id="chatColorTitle" class="form-control" value="#ffffff" style="height:36px; padding:2px; cursor:pointer;" oninput="updateLivePreview()" />
+                </div>
+              </div>
+
+              <!-- Suggested Questions -->
+              <div class="form-group" style="margin-bottom:14px;">
+                <label data-i18n="label_chat_suggested_questions">Suggested Quick Questions (One per line)</label>
+                <textarea id="chatPageSuggestedQuestions" class="form-control" rows="3" placeholder="ما هي المنتجات والعروض المتوفرة؟&#10;كيف يمكنني حجز موعد؟" oninput="updateLivePreview()"></textarea>
+              </div>
+
+              <!-- Toggles -->
+              <div style="display:flex; gap:18px; margin-bottom:14px; flex-wrap:wrap;">
+                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                  <input type="checkbox" id="chatPageSuggestedEnabled" checked onchange="updateLivePreview()" />
+                  <span style="font-size:13px;" data-i18n="chk_enable_suggested_questions">Enable Suggested Questions</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                  <input type="checkbox" id="chatPageImageUploadEnabled" checked onchange="updateLivePreview()" />
+                  <span style="font-size:13px;" data-i18n="chk_enable_image_upload">Enable Image Upload</span>
+                </label>
+              </div>
+
+              <!-- Embed Widget Snippet -->
+              <div class="form-group" style="margin-bottom:0;">
+                <label data-i18n="label_embed_widget_code">Website Embed Code (Widget)</label>
+                <div style="display:flex; gap:8px;">
+                  <input type="text" id="chatPageWidgetCode" class="form-control" readonly style="font-family:monospace; font-size:12px; color:var(--cyan);" />
+                  <button type="button" id="copyWidgetCodeBtn" class="btn btn-secondary btn-sm" onclick="copyWidgetEmbedCode()"><i class="fas fa-copy"></i> <span data-i18n="btn_copy_code">Copy</span></button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Column 2: Live Realtime Preview (Mockup) -->
+            <div class="customizer-preview-pane" style="position:sticky; top:0;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:12px; font-weight:700; color:var(--cyan); display:flex; align-items:center; gap:6px;">
+                  <i class="fas fa-eye"></i> <span data-i18n="preview_live_title">Live Interactive Preview</span>
+                </span>
+                <span class="badge" style="font-size:10px; background:rgba(16,185,129,0.15); color:var(--green); border:1px solid rgba(16,185,129,0.3);" data-i18n="badge_realtime">Real-time</span>
+              </div>
+
+              <!-- Smartphone Chat Mockup Wrapper -->
+              <div id="livePreviewContainer" style="border-radius:18px; overflow:hidden; border:2px solid rgba(255,255,255,0.12); box-shadow:0 16px 36px rgba(0,0,0,0.5); background:#0A0F1D; display:flex; flex-direction:column; height:490px; transition:0.25s ease;">
+                
+                <!-- Mockup Header -->
+                <div id="previewHeader" style="padding:12px 16px; background:#0F172A; display:flex; align-items:center; gap:10px; border-bottom:1px solid rgba(255,255,255,0.08); transition:0.25s ease;">
+                  <div id="previewAvatarContainer" style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#06b6d4,#3b82f6); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; box-shadow:0 2px 8px rgba(6,182,212,0.4); overflow:hidden; flex-shrink:0;">
+                    <img id="previewLogoImg" src="" alt="Avatar" style="width:100%; height:100%; object-fit:cover; display:none;" />
+                    <i id="previewDefaultIcon" class="fas fa-robot"></i>
+                  </div>
+                  <div style="flex:1; min-width:0;">
+                    <div id="previewChatTitle" style="font-weight:700; font-size:13px; color:#ffffff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">ZainBot AI Sales Agent</div>
+                    <div style="font-size:10px; color:#10b981; display:flex; align-items:center; gap:4px;">
+                      <span style="width:6px; height:6px; border-radius:50%; background:#10b981; display:inline-block;"></span> <span data-i18n="preview_status_online">Online · AI Sales Ready</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Mockup Suggested Questions Bar -->
+                <div id="previewQuestionsBar" style="padding:8px 12px; background:rgba(0,0,0,0.2); display:flex; gap:6px; overflow-x:auto; border-bottom:1px solid rgba(255,255,255,0.04);">
+                  <!-- Chips dynamically injected -->
+                </div>
+
+                <!-- Mockup Chat Message Area -->
+                <div id="previewChatArea" style="flex:1; padding:14px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; background:#0B1329; transition:0.25s ease;">
+                  <!-- Bot Greeting Bubble -->
+                  <div style="display:flex; justify-content:flex-start;">
+                    <div id="previewBotBubble1" style="max-width:80%; padding:9px 13px; border-radius:12px 12px 12px 0; background:#1E293B; color:#ffffff; font-size:12px; line-height:1.5; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
+                      مرحباً بك! 👋 يسعدني مساعدتك في استعراض منتجاتنا والعروض وتأكيد الحجز فورياً.
+                    </div>
+                  </div>
+
+                  <!-- User Sample Bubble -->
+                  <div style="display:flex; justify-content:flex-end;">
+                    <div id="previewUserBubble" style="max-width:80%; padding:9px 13px; border-radius:12px 12px 0 12px; background:#06B6D4; color:#ffffff; font-size:12px; line-height:1.5; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
+                      ما هي أسعار المنتجات المتاحة لديكم اليوم؟
+                    </div>
+                  </div>
+
+                  <!-- Bot Reply Bubble -->
+                  <div style="display:flex; justify-content:flex-start;">
+                    <div id="previewBotBubble2" style="max-width:80%; padding:9px 13px; border-radius:12px 12px 12px 0; background:#1E293B; color:#ffffff; font-size:12px; line-height:1.5; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
+                      نوفر لك أحدث الباقات والكتالوجات التفاعلية مع إمكانية إتمام الطلب مباشرة من هنا! 🛒
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Mockup Input Footer -->
+                <div id="previewInputFooter" style="padding:10px 12px; background:#0F172A; border-top:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; gap:8px; transition:0.25s ease;">
+                  <div id="previewImageBtn" style="color:var(--text-muted); font-size:14px; padding:4px 6px; cursor:pointer;">
+                    <i class="fas fa-image"></i>
+                  </div>
+                  <div style="flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:6px 12px; font-size:11px; color:var(--text-muted);" data-i18n="preview_input_placeholder">
+                    اكتب رسالتك هنا...
+                  </div>
+                  <div id="previewSendBtn" style="width:32px; height:32px; border-radius:50%; background:#06B6D4; color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:12px; box-shadow:0 2px 8px rgba(6,182,212,0.4); transition:0.25s ease;">
+                    <i class="fas fa-paper-plane"></i>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="db-modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm chat-page-modal-close" data-i18n="btn_cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_save_chat_page">Save Settings</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Idea Council Dedicated Follow-up & Defense Modal -->
+  <div class="db-modal" id="ideaFollowupModal">
+    <div class="db-modal-content" style="max-width: 680px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="db-modal-header" style="background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(6, 182, 212, 0.15)); border-bottom: 1px solid var(--glass-border);">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:36px; height:36px; border-radius:10px; background:rgba(124, 58, 237, 0.2); border:1px solid rgba(124, 58, 237, 0.4); display:flex; align-items:center; justify-content:center; color:var(--cyan); font-size:16px;">
+            <i id="ideaFollowupModalIcon" class="fas fa-shield-halved"></i>
+          </div>
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <h3 id="ideaFollowupModalTitle" style="margin:0; font-size:16px; font-weight:700;" data-i18n="idea_followup_modal_title">Council Follow-up & Defense</h3>
+              <span id="ideaFollowupRoundBadge" class="badge" style="background:rgba(6,182,212,0.15); color:var(--cyan); border:1px solid rgba(6,182,212,0.3); font-size:11px;">Round 2</span>
+            </div>
+            <p style="font-size:12px; color:var(--text-muted); margin:2px 0 0 0;" data-i18n="idea_followup_modal_subtitle">Present new arguments, strategic angles, and evidence to challenge council skepticism.</p>
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-sm idea-followup-modal-close" type="button" style="padding:6px 10px;"><i class="fas fa-times"></i></button>
+      </div>
+
+      <div class="db-modal-body" style="overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:18px;">
+        <!-- 1. Action Type Selector -->
+        <div>
+          <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;" data-i18n="idea_followup_action_label">Round Goal & Action Type</label>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px;" id="ideaFollowupTypeGrid">
+            <button type="button" class="btn btn-secondary btn-sm idea-fup-type-btn active" data-type="DEFEND" style="justify-content:center; padding:8px; font-size:12px;">
+              <i class="fas fa-shield-halved" style="color:var(--cyan); margin-inline-end:5px;"></i><span data-i18n="idea_btn_defend">Defend Idea</span>
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm idea-fup-type-btn" data-type="PIVOT" style="justify-content:center; padding:8px; font-size:12px;">
+              <i class="fas fa-shuffle" style="color:var(--orange); margin-inline-end:5px;"></i><span data-i18n="idea_btn_pivot">Propose Pivot</span>
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm idea-fup-type-btn" data-type="VALIDATION_PLAN" style="justify-content:center; padding:8px; font-size:12px;">
+              <i class="fas fa-vial" style="color:var(--green); margin-inline-end:5px;"></i><span data-i18n="idea_btn_val_plan">Small Test Plan</span>
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm idea-fup-type-btn" data-type="VOTE" style="justify-content:center; padding:8px; font-size:12px;">
+              <i class="fas fa-check-to-slot" style="color:#a855f7; margin-inline-end:5px;"></i><span data-i18n="idea_btn_vote">Council Vote</span>
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm idea-fup-type-btn" data-type="COMPARE" style="justify-content:center; padding:8px; font-size:12px;">
+              <i class="fas fa-code-compare" style="color:#ef4444; margin-inline-end:5px;"></i><span data-i18n="idea_btn_compare">Compare Competitor</span>
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm idea-fup-type-btn" data-type="MVP" style="justify-content:center; padding:8px; font-size:12px;">
+              <i class="fas fa-rocket" style="color:#38bdf8; margin-inline-end:5px;"></i><span data-i18n="idea_btn_mvp">7-Day MVP Plan</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Strategic Angles / Chips -->
+        <div>
+          <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;" data-i18n="idea_followup_chips_label">Strategic Advantage Angles (Click to toggle)</label>
+          <div style="display:flex; flex-wrap:wrap; gap:6px;" id="ideaFollowupChips">
+            <span class="badge idea-strategy-chip" data-chip="pricing" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_pricing">💰 Lower Price / Cost Advantage</span>
+            <span class="badge idea-strategy-chip" data-chip="niche" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_niche">🎯 Underserved Niche Segment</span>
+            <span class="badge idea-strategy-chip" data-chip="distribution" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_distribution">🤝 Existing Distribution / Partners</span>
+            <span class="badge idea-strategy-chip" data-chip="guarantee" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_guarantee">🛡️ Risk-Free Trial / Guarantee</span>
+            <span class="badge idea-strategy-chip" data-chip="speed" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_speed">⚡ Radical Simplification</span>
+            <span class="badge idea-strategy-chip" data-chip="team" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_team">👥 Proven Domain Expert Team</span>
+            <span class="badge idea-strategy-chip" data-chip="offline" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_offline">📍 Prime Physical Location / Foot Traffic</span>
+            <span class="badge idea-strategy-chip" data-chip="inventory" style="cursor:pointer; font-size:11px; padding:6px 12px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); transition:0.2s;" data-i18n="idea_chip_inventory">📦 Existing Prototype / Inventory Ready</span>
+          </div>
+        </div>
+
+        <!-- 3. Target Critic Selector & Review Tone -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;" data-i18n="idea_followup_target_critic_label">Primary Critic to Address</label>
+            <select id="ideaFollowupTargetCritic" class="form-control" style="font-size:12px; height:38px;">
+              <option value="ALL" data-i18n="idea_critic_opt_all">Entire Council (All Members)</option>
+              <option value="COLD_CUSTOMER" data-i18n="idea_critic_opt_customer">Cold Customer (Hesitation & Switching Cost)</option>
+              <option value="HARSH_AUDITOR" data-i18n="idea_critic_opt_auditor">Harsh Auditor (Financials & Unit Economics)</option>
+              <option value="VICIOUS_COMPETITOR" data-i18n="idea_critic_opt_competitor">Vicious Competitor (Differentiation & Moat)</option>
+              <option value="OPERATIONS" data-i18n="idea_critic_opt_ops">Operations & Feasibility Expert</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;" data-i18n="idea_followup_review_mode_label">Council Review Tone</label>
+            <select id="ideaFollowupReviewMode" class="form-control" style="font-size:12px; height:38px;">
+              <option value="BALANCED" data-i18n="idea_mode_opt_balanced">Constructive & Pragmatic</option>
+              <option value="STRICT" data-i18n="idea_mode_opt_strict">High-Stress Skeptical</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 4. Detailed Defense Input -->
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin:0;" data-i18n="idea_followup_defense_label">Your Defense, Answers & Strategic Evidence</label>
+            <span style="font-size:11px; color:var(--text-muted);"><span id="ideaFollowupCharCount">0</span> chars</span>
+          </div>
+          <textarea id="ideaFollowupPromptInput" class="form-control" rows="5" style="resize:vertical; font-size:13px; line-height:1.5;" placeholder="Enter your defense arguments, proposed pivot direction, or specific question..." data-i18n-placeholder="idea_followup_prompt_placeholder"></textarea>
+        </div>
+
+        <!-- 5. Optional Extra Proof / Competitor Reference -->
+        <div>
+          <label style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;" data-i18n="idea_followup_evidence_label">Extra Proof, Numbers, or Competitor Reference (Optional)</label>
+          <input type="text" id="ideaFollowupEvidenceInput" class="form-control" style="font-size:12px; height:38px;" placeholder="e.g. 150 pre-orders, link to alternative, supplier agreement..." data-i18n-placeholder="idea_followup_evidence_placeholder" />
+        </div>
+      </div>
+
+      <div class="db-modal-footer" style="background:rgba(255,255,255,0.02); border-top:1px solid var(--glass-border); display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-size:12px; color:var(--text-muted);">
+          <span data-i18n="idea_followup_remaining">Rounds remaining:</span> <strong id="ideaFollowupModalRoundsLeft" style="color:var(--cyan);">3</strong>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button type="button" class="btn btn-secondary btn-sm idea-followup-modal-close" data-i18n="btn_cancel">Cancel</button>
+          <button type="button" id="ideaFollowupSubmitBtn" class="btn btn-primary btn-sm" style="display:flex; align-items:center; gap:6px;">
+            <i class="fas fa-paper-plane"></i>
+            <span data-i18n="idea_followup_submit_btn">Submit & Launch Round</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Idea Council Rounds Comparison (Round Delta) Modal -->
+  <div class="db-modal" id="ideaRoundsComparisonModal">
+    <div class="db-modal-content" style="max-width: 850px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="db-modal-header" style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(16, 185, 129, 0.15)); border-bottom: 1px solid var(--glass-border);">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:36px; height:36px; border-radius:10px; background:rgba(6, 182, 212, 0.2); border:1px solid rgba(6, 182, 212, 0.4); display:flex; align-items:center; justify-content:center; color:var(--cyan); font-size:16px;">
+            <i class="fas fa-code-compare"></i>
+          </div>
+          <div>
+            <h3 style="margin:0; font-size:16px; font-weight:700;" data-i18n="idea_compare_modal_title">Evaluation Rounds Comparison (Round Delta)</h3>
+            <p style="font-size:12px; color:var(--text-muted); margin:2px 0 0 0;" data-i18n="idea_compare_modal_subtitle">Track how the council's verdict, assumptions, and validation plan evolved after your defense.</p>
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-sm idea-compare-modal-close" type="button" style="padding:6px 10px;"><i class="fas fa-times"></i></button>
+      </div>
+
+      <div class="db-modal-body" style="overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:18px;">
+        <!-- Round Selection Selectors -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; padding:12px 16px; background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px;">
+          <div>
+            <label style="font-size:12px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:6px;" data-i18n="idea_compare_round_a">Base Round:</label>
+            <select id="ideaCompareSelectA" class="form-control" style="font-size:12px; height:36px;"></select>
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:6px;" data-i18n="idea_compare_round_b">Comparison Round:</label>
+            <select id="ideaCompareSelectB" class="form-control" style="font-size:12px; height:36px;"></select>
+          </div>
+        </div>
+
+        <!-- Delta Container Content rendered by JS -->
+        <div id="ideaCompareDeltaContent" style="display:flex; flex-direction:column; gap:16px;"></div>
+      </div>
+
+      <div class="db-modal-footer" style="background:rgba(255,255,255,0.02); border-top:1px solid var(--glass-border); display:flex; justify-content:flex-end;">
+        <button type="button" class="btn btn-secondary btn-sm idea-compare-modal-close" data-i18n="btn_cancel">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="impersonationBanner" style="display:none; position:fixed; inset:0 0 auto; z-index:5000; background:#d97706; color:#111827; padding:10px 18px; font-weight:700; text-align:center; box-shadow:0 2px 12px rgba(0,0,0,.28);">
+    <span id="impersonationBannerText">You are viewing a user account in a temporary audited session.</span>
+    <button id="exitImpersonationBtn" class="btn btn-sm" type="button" style="margin-inline-start:12px; background:#111827; border-color:#111827; color:#fff;">Exit and return to admin</button>
+  </div>
+
   <script src="js/utils.js"></script>
   <!-- Loading script for i18n translations & UI logic -->
   <script src="js/dashboard_new.js"></script>
+  <script src="js/settings-summary.js?v=2"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js').catch((err) => {
+          console.warn('Service worker registration failed:', err);
+        });
+      });
+    }
+  </script>
 </body>
 </html>

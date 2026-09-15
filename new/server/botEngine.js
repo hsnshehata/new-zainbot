@@ -15,12 +15,15 @@ const Store = require('./models/Store');
 const Product = require('./models/Product');
 const ChatOrder = require('./models/ChatOrder');
 const ChatCustomer = require('./models/ChatCustomer');
+const Booking = require('./models/Booking');
 const { createOrUpdateFromExtraction } = require('./controllers/chatOrdersController');
 const { upsertChatCustomerProfile } = require('./controllers/chatCustomersController');
+const bookingsController = require('./controllers/bookingsController');
 const logger = require('./logger');
 const { getAiCompletion } = require('./services/aiFailover');
-const { checkPlanLimitsAndIncrement } = require('./services/billingLimits');
+const { checkPlanLimitsAndIncrement, settleMessageQuota } = require('./services/billingLimits');
 const { dispatchWebhook } = require('./services/webhookDispatcher');
+const { dispatchMultiChannelNotification } = require('./services/notificationDispatcher');
 
 // معرف المساعد الداخلي لتخطي هوكات الطلبات
 const ASSISTANT_BOT_ID = process.env.ASSISTANT_BOT_ID || '688ebdc24f6bd5cf70cb071d';
@@ -579,6 +582,128 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
   }
 }
 
+const isBookingQuery = (text = '') => /(حجز|احجز|موعد|ميعاد|جلسة|استشارة|معاينة|تأجيل|إلغاء الحجز|الغاء الحجز|book|appointment|schedule|reschedule)/i.test(text);
+
+async function extractBookingIntent({ bot, channel, userMessageContent, conversationId, sourceUserId, sourceUsername, transcript = [] }) {
+  try {
+    if (!userMessageContent || typeof userMessageContent !== 'string') return null;
+    if (!isBookingQuery(userMessageContent)) return null;
+
+    const transcriptText = Array.isArray(transcript)
+      ? transcript.slice(-15).map((m) => `${m.role === 'assistant' ? 'البوت' : 'العميل'}: ${m.content || ''}`).join('\n')
+      : '';
+
+    const prompt = `أنت مساعد ذكي متخصص في استخلاص بيانات حجز المواعيد والاستشارات من محادثة.
+اعتمد على المحادثة والرسالة الأخيرة.
+أعد دائماً JSON فقط دون أي نص آخر بالمفاتيح التالية:
+- isBooking: ضع true إذا كان هناك طلب أو رغبة لحجز موعد أو استشارة أو تعديله أو إلغائه، وإلا false.
+- customerName: اسم العميل إن وجد أو تم ذكره.
+- customerPhone: رقم الهاتف إن وجد (01xxxxxxxxx).
+- customerEmail: البريد إن وجد.
+- serviceType: نوع الخدمة أو الموعد المطلوب (مثلاً: استشارة، موعد كشف، معاينة، اجتماع).
+- bookingDate: تاريخ ووقت الموعد بتنسيق ISO 8601 (مثل: 2026-09-05T14:00:00Z) إذا تم تحديده، وإلا اترك فارغاً.
+- isReschedule: true إذا طلب العميل تعديل أو تأجيل موعد سابق.
+- isCancel: true إذا طلب العميل إلغاء موعد سابق.
+- notes: أي ملاحظات أو تفاصيل إضافية عن الموعد.`;
+
+    const response = await withTimeout(
+      getAiCompletion({
+        model: 'gpt-4o-mini',
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: prompt },
+          { role: 'user', content: `المحادثة:\n${transcriptText}\n---\nآخر رسالة: ${userMessageContent.slice(0, 1000)}` }
+        ],
+        max_tokens: 300,
+      }, bot),
+      10000
+    );
+
+    const parsed = JSON.parse(response.choices?.[0]?.message?.content || '{}');
+    if (!parsed.isBooking) return null;
+
+    if (parsed.bookingDate || parsed.isCancel || parsed.customerName || parsed.customerPhone) {
+      const parsedDate = parsed.bookingDate ? new Date(parsed.bookingDate) : new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const safeDate = isNaN(parsedDate.getTime()) ? new Date(Date.now() + 24 * 60 * 60 * 1000) : parsedDate;
+
+      const booking = await bookingsController.createOrUpdateFromExtraction({
+        botId: bot._id,
+        channel,
+        conversationId,
+        sourceUserId,
+        sourceUsername,
+        customerName: parsed.customerName || sourceUsername || 'عميل المحادثة',
+        customerPhone: parsed.customerPhone || '',
+        customerEmail: parsed.customerEmail || '',
+        serviceType: parsed.serviceType || bot?.agentTools?.bookingTool?.defaultService || 'General Appointment',
+        bookingDate: safeDate,
+        notes: parsed.notes || userMessageContent,
+        isReschedule: Boolean(parsed.isReschedule),
+        isCancel: Boolean(parsed.isCancel),
+      });
+
+      return booking;
+    }
+    return null;
+  } catch (err) {
+    logger.warn('booking_intent_extraction_error', { err: err.message });
+    return null;
+  }
+}
+
+async function autoClassifyConversation({ bot, conversation, userMessageContent }) {
+  try {
+    if (!userMessageContent || typeof userMessageContent !== 'string') return;
+    if (bot?.agentTools?.messageClassificationTool?.enabled === false) return;
+
+    let category = 'استفسار عام 💬';
+    let color = '#10b981';
+
+    const text = userMessageContent.toLowerCase();
+
+    if (/(حجز|موعد|ميعاد|جلسة|استشارة|معاينة|book|appointment)/i.test(text)) {
+      category = 'طلب حجز 📅';
+      color = '#06b6d4';
+    } else if (/(شراء|اشترى|اشتري|عايز اطلب|أطلب|طلب جديد|عايز اشتري|order|buy)/i.test(text)) {
+      category = 'مهتم بشدة 🔥';
+      color = '#f59e0b';
+    } else if (/(سعر|اسعار|أسعار|بكام|تكلفة|price|cost|how much)/i.test(text)) {
+      category = 'طلب أسعار 💰';
+      color = '#3b82f6';
+    } else if (/(مشكلة|شكوى|زعلان|تاخر|تأخر|نصب|سيء|سيء جدا|مدير|complaint|bad)/i.test(text)) {
+      category = 'شكوى عاجلة ⚠️';
+      color = '#ef4444';
+    } else if (/(استرجاع|الغاء|إلغاء|refund|cancel)/i.test(text)) {
+      category = 'طلب إلغاء 🔄';
+      color = '#ec4899';
+    }
+
+    conversation.category = category;
+    if (!Array.isArray(conversation.labels)) conversation.labels = [];
+    const exists = conversation.labels.some((l) => l.name === category);
+    if (!exists) {
+      conversation.labels.push({ name: category, color, timestamp: new Date() });
+    }
+    await conversation.save();
+
+    if (category === 'شكوى عاجلة ⚠️' && bot?.userId) {
+      dispatchMultiChannelNotification({
+        userId: bot.userId,
+        botId: bot._id,
+        event: 'urgent_complaint',
+        data: {
+          customerName: conversation.sourceUsername || 'عميل',
+          customerPhone: conversation.userId,
+          userMessageContent,
+          conversationId: conversation._id,
+        },
+      }).catch((err) => logger.warn('complaint_alert_dispatch_failed', { err: err.message }));
+    }
+  } catch (err) {
+    logger.warn('auto_classify_conversation_error', { err: err.message });
+  }
+}
+
 async function processMessage(botId, userId, message, isImage = false, isVoice = false, messageId = null, channel = 'web', mediaUrl = null) {
   try {
     logger.info('📢 Raw userId received', { userId, type: typeof userId });
@@ -683,6 +808,64 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
     const bot = await getBotWithCache(botId);
     let useBackup = false;
     if (bot && !isAssistantBotId) {
+      if (bot.autoReplyEnabled === false) {
+        logger.info('bot_auto_reply_disabled', { botId, conversationId: conversation._id });
+        return null;
+      }
+      const handoffRequested = typeof message === 'string'
+        && Array.isArray(bot.handoffKeywords)
+        && bot.handoffKeywords.some((keyword) => keyword && message.toLowerCase().includes(String(keyword).toLowerCase()));
+      if (handoffRequested) {
+        conversation.isHumanHandling = true;
+        await conversation.save();
+        logger.info('bot_handoff_keyword_matched', { botId, conversationId: conversation._id });
+
+        dispatchMultiChannelNotification({
+          userId: bot.userId,
+          botId: bot._id,
+          event: 'human_handoff',
+          data: {
+            customerName: finalUsername || conversation.sourceUsername || 'عميل',
+            customerPhone: finalUserId,
+            userMessageContent: message,
+            conversationId: conversation._id,
+          },
+        }).catch((err) => logger.warn('handoff_alert_dispatch_failed', { err: err.message }));
+
+        return null;
+      }
+      if (bot.agentType || bot.description || bot.customInstructions || bot.objectives?.length || bot.agentSkills?.length || bot.agentTools) {
+        systemPrompt += `\nAgent profile: ${bot.agentType || 'customer_support'}.\n`;
+
+        if (bot.agentType === 'sales') {
+          systemPrompt += `\n[توجيه وكيل المبيعات والتسويق الذكي]:\n` +
+            `- هدفك الرئيسي: مساعدة العميل، ترشيح المنتجات الأنسب لاحتياجاته، زيادة المبيعات، وتشجيعه على إتمام الشراء بلباقة واحترافية.\n` +
+            `- اذكر ميزات المنتجات وسعرها بدقة بناءً على بيانات المتجر والقواعد فقط.\n` +
+            `- اقترح منتجات مكملة أو عروض جذابة عند السؤال عن المنتجات.\n` +
+            `- عند رغبة العميل في الشراء أو الطلب، رحب به فوراً واطلب منه بلطف بيانات التوصيل (الاسم، رقم الهاتف، العنوان) لتأكيد وتجهيز الطلب.\n`;
+        } else if (bot.agentType === 'lead_qualification') {
+          systemPrompt += `\n[توجيه وكيل تأهيل واستقطاب العملاء]:\n` +
+            `- هدفك الرئيسي: فهم احتياجات العميل بعناية، تقييم مدى ملاءمته، وجمع بيانات التواصل المطلوبة لتسهيل المتابعة.\n` +
+            `- اطرح أسئلة استشارية محددة وودودة لتحديد متطلبات العميل.\n`;
+        } else if (bot.agentType === 'customer_support') {
+          systemPrompt += `\n[توجيه وكيل خدمة العملاء والدعم الفني]:\n` +
+            `- هدفك الرئيسي: الاستماع باهتمام، تقديم حلول سريعة وموثوقة، والإجابة الدقيقة على استفسارات العميل.\n` +
+            `- تعامل بود واحترافية والتزم بالقواعد وسياسات المتجر.\n`;
+        }
+
+        if (bot.description) systemPrompt += `Agent responsibility: ${bot.description}\n`;
+        if (Array.isArray(bot.objectives) && bot.objectives.length) systemPrompt += `Agent objectives:\n${bot.objectives.map((objective) => `- ${objective}`).join('\n')}\n`;
+        if (Array.isArray(bot.agentSkills) && bot.agentSkills.length) systemPrompt += `Active agent skills: ${bot.agentSkills.join(', ')}.\n`;
+        if (bot.agentTools) {
+          if (bot.agentTools.bookingTool?.enabled !== false) {
+            systemPrompt += `[أداة حجز المواعيد مفعلة]: ساعات العمل: ${bot.agentTools.bookingTool?.workingHours || '09:00 - 22:00'}. الخدمة الافتراضية: ${bot.agentTools.bookingTool?.defaultService || 'استشارة / موعد'}. يمكنك مساعدة العميل في حجز موعد جديد أو تعديله أو إلغائه، واطلب منه الاسم ورقم الهاتف وتاريخ ووقت الموعد.\n`;
+          }
+          if (bot.agentTools.orderTrackingTool?.enabled !== false) {
+            systemPrompt += `[أداة تتبع الطلبات مفعلة]: يمكنك متابعة وتأكيد أو تعديل أو إلغاء الطلبات للعملاء وإبلاغهم بحالتها.\n`;
+          }
+        }
+        if (bot.customInstructions) systemPrompt += `Owner-configured agent instructions:\n${bot.customInstructions}\n`;
+      }
       const limitResult = await checkPlanLimitsAndIncrement(bot);
       if (!limitResult.allowed) {
         logger.warn('🚫 Subscription limits hit, blocking bot message', { botId, userId: finalUserId });
@@ -823,8 +1006,30 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
       if (extractionResult?.chatOrder) {
         logger.info('✅ Chat order auto-saved after message processing', { orderId: extractionResult.chatOrder._id });
       }
+
+      // استخراج بيانات المواعيد والحجوزات إن وجدت
+      const bookingResult = await extractBookingIntent({
+        bot,
+        channel: finalChannel,
+        userMessageContent,
+        conversationId: conversation._id,
+        sourceUserId: finalUserId,
+        sourceUsername: finalUsername,
+        transcript: updatedTranscript,
+      });
+
+      if (bookingResult) {
+        logger.info('📅 Booking auto-extracted/updated after message processing', { bookingId: bookingResult._id });
+      }
+
+      // تصنيف المحادثة التلقائي وإضافة الشارات والبادجات
+      await autoClassifyConversation({
+        bot,
+        conversation,
+        userMessageContent,
+      });
     } catch (e) {
-      logger.warn('⚠️ Failed to extract order during message processing:', { err: e });
+      logger.warn('⚠️ Failed to extract order/booking/classification during message processing:', { err: e });
       // لا نرجع error هنا، نستمر في معالجة الرسالة
     }
 
@@ -897,6 +1102,9 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
           logger.info('🖼️ Image processed', { reply });
         } catch (err) {
           logger.error('❌ Error processing image with OpenAI', { err });
+          // Quota is reserved before generation (checkPlanLimitsAndIncrement above);
+          // refund the reservation once when the billable completion itself fails.
+          if (bot && !isAssistantBotId) await settleMessageQuota({ userId: bot.userId });
           return 'عذرًا، لم أتمكن من تحليل الصورة. حاول مرة أخرى أو أرسل صورة أخرى.';
         }
       } else {
@@ -919,6 +1127,9 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
           logger.info('💬 Assistant reply', { reply });
         } catch (err) {
           logger.error('❌ Error calling OpenAI:', { err });
+          // Quota is reserved before generation (checkPlanLimitsAndIncrement above);
+          // refund the reservation once when the billable completion itself fails.
+          if (bot && !isAssistantBotId) await settleMessageQuota({ userId: bot.userId });
           return 'عذرًا، حدث خطأ أثناء معالجة طلبك. حاول مرة أخرى.';
         }
       }
@@ -1016,4 +1227,14 @@ async function processFeedback(botId, userId, messageId, feedback) {
   }
 }
 
-module.exports = { processMessage, processFeedback };
+function invalidateBotCache(botId) {
+  botDataCache.del(`bot_${botId}`);
+}
+
+module.exports = {
+  processMessage,
+  processFeedback,
+  invalidateBotCache,
+  extractBookingIntent,
+  autoClassifyConversation,
+};

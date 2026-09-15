@@ -1,50 +1,34 @@
 // public/service-worker.js
+// Canonical service worker. It must live at the site root so its default
+// scope is "/" and it can control every page.
 
-const CACHE_NAME = 'zain-ai-v0.0008'; // bump: تفريغ الكاش القديم + تطبيق سياسة عدم كاش للصور والروابط الخارجية
+const CACHE_NAME = 'zain-ai-v0.0012'; // canonical asset consolidation release
+// Pre-cache only real, actively-loaded app shell assets. addAll() is atomic:
+// one missing URL aborts the whole precache, so every entry must exist.
 const urlsToCache = [
   '/',
   '/index.html',
   '/login.html',
-  '/dashboard_new.html',
+  '/register.html',
+  '/dashboard',
+  '/style.css',
   '/css/common.css',
-  '/css/landing-base.css',
-  '/css/index.css',
-  '/css/login.css',
-  '/css/bots.css',
-  '/css/rules.css',
-  '/css/analytics.css',
-  '/css/feedback.css',
-  '/css/facebook.css',
-  '/css/messages.css',
-  '/css/assistantBot.css',
   '/css/dashboard.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
+  '/css/login.css',
   '/js/utils.js',
-  '/js/store-landing.js',
-  '/js/store-router.js',
+  '/js/script.js',
   '/js/auth.js',
   '/js/dashboard_new.js',
-  '/js/bots.js',
-  '/js/rules.js',
-  '/js/chatPage.js',
-  '/js/analytics.js',
-  '/js/feedback.js',
-  '/js/facebook.js',
-  '/js/messages.js',
-  '/js/assistantBot.js',
-  '/js/instagram.js',
-  '/js/whatsapp.js',
   '/manifest.json',
   '/favicon.ico',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  // ملاحظـة: تم إزالة أي روابط خارجية من الـ pre-cache لتجنّب الكاش للموارد الخارجية
+  '/icon-192.png',
+  '/icon-512.png',
 ];
 
 self.addEventListener('install', (event) => {
   console.log('Service Worker: Installing...');
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    self.skipWaiting().then(() => caches.open(CACHE_NAME))
       .then((cache) => {
         console.log('Service Worker: Caching app shell');
         return cache.addAll(urlsToCache)
@@ -69,7 +53,7 @@ self.addEventListener('activate', (event) => {
             return caches.delete(cacheName);
           }
         })
-      );
+      ).then(() => self.clients.claim());
     })
   );
   return self.clients.claim();
@@ -156,26 +140,30 @@ self.addEventListener('fetch', (event) => {
               return new Response('Resource not found', { status: 404 });
             });
         })
-        .catch(() => {
+        .catch(async () => {
           // If network fails (offline), fall back to cache
           console.log(`Service Worker: Network failed, falling back to cache for ${event.request.url}`);
-          return caches.match(event.request)
-            .then((cacheResponse) => {
-              if (cacheResponse) {
-                return cacheResponse;
-              }
-              console.error(`Service Worker: Offline and no cache for ${event.request.url}`);
-              return caches.match('/index.html'); // Fallback to index.html
-            });
+          const cacheResponse = await caches.match(event.request);
+          if (cacheResponse) {
+            return cacheResponse;
+          }
+          if (event.request.mode === 'navigate') {
+            const indexHtml = await caches.match('/index.html');
+            if (indexHtml) return indexHtml;
+          }
+          return new Response('Resource unavailable offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
         })
     );
   } else {
     // Network-first for API calls or non-cached resources
     event.respondWith(
       fetch(event.request)
-        .catch(() => {
-          console.log(`Service Worker: Network failed for non-cached resource ${pathname}, falling back to index.html`);
-          return caches.match('/index.html');
+        .catch(async () => {
+          if (event.request.mode === 'navigate') {
+            const indexHtml = await caches.match('/index.html');
+            if (indexHtml) return indexHtml;
+          }
+          return new Response('Network request failed', { status: 503, headers: { 'Content-Type': 'text/plain' } });
         })
     );
   }

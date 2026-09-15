@@ -45,7 +45,8 @@ router.post('/connect-qr', loadAccessibleBot, async (req, res) => {
       botId: req.bot._id,
       userId: req.bot.userId,
     });
-    return res.status(202).json({ success: true, data });
+    const status = await manager.waitForQrOrReady(req.bot._id);
+    return res.status(status.qrCode ? 200 : 202).json({ success: true, data: status });
   } catch (error) {
     return sendManagerError(res, error, req.requestId);
   }

@@ -4,6 +4,7 @@ const Bot = require('../models/Bot');
 const Notification = require('../models/Notification');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { serializeBot } = require('../utils/serializers');
 
 // إنشاء مستخدم جديد
 exports.createUser = async (req, res) => {
@@ -83,6 +84,15 @@ exports.getAllUsers = async (req, res) => {
     let users;
     if (populateFields.includes('bots')) {
       users = await User.find().populate('bots');
+      // Populated bot docs carry channel credentials; strip them exactly like
+      // the bots endpoints do (never expose secrets in admin listings).
+      users = users.map((user) => {
+        const plain = user.toJSON();
+        if (Array.isArray(plain.bots)) {
+          plain.bots = plain.bots.map((bot) => serializeBot(bot));
+        }
+        return plain;
+      });
     } else {
       users = await User.find();
     }

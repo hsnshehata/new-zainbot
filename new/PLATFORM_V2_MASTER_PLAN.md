@@ -140,6 +140,40 @@ Fallback is allowed only for retryable failures such as timeouts, rate limits,
 network errors, and provider server errors. Invalid requests, entitlement
 failures, and safety refusals are not blindly retried across every provider.
 
+### Message triage and notification routing
+
+Every incoming message is classified before the agent replies. The platform
+owner defines, per agent, where each classified message type is delivered.
+
+Classification categories:
+
+```text
+complaint      (شكوى)
+sales_intent   (طلب / نية شراء)
+suggestion     (اقتراح)
+inquiry        (استفسار عادي - AI replies, no alert)
+spam           (سبام - silently ignored or muted)
+```
+
+Routing destinations per category:
+
+```text
+whatsapp       any phone number chosen by the owner (sent from the bot session)
+telegram       linked chat
+inbox          in-app notification (always recorded)
+```
+
+Rules:
+
+1. Classification starts deterministic (keyword and pattern rules), with an
+   optional cheap-model AI pass only for ambiguous messages.
+2. Destinations are a configurable list; one event may notify several numbers.
+3. WhatsApp sends are rate-limited (per-message delay and hourly cap) and
+   repeated events are coalesced into digest notifications to avoid bans.
+4. Telegram remains the primary trusted channel; WhatsApp alerts degrade
+   gracefully when the bot session is down.
+5. Quiet hours and per-category enable flags are enforced server-side.
+
 ### Channel control plane
 
 All channel state is represented by:
@@ -264,10 +298,10 @@ Exit criteria:
 
 ### Phase 3 - Super-admin and impersonation
 
-- [x] Add admin user search, filters, pagination, and safe detail responses.
-- [x] Add subscription, quota, status, verification, and bot administration.
-- [x] Add short-lived impersonation sessions with start/end APIs.
-- [x] Add a persistent impersonation banner and immediate exit.
+- [ ] Add admin user search, filters, pagination, and safe detail responses.
+- [ ] Add subscription, quota, status, verification, and bot administration.
+- [ ] Add short-lived impersonation sessions with start/end APIs.
+- [ ] Add a persistent impersonation banner and immediate exit.
 - [x] Add redacted, queryable audit events for all admin and impersonated
       mutations.
 
@@ -277,12 +311,16 @@ Exit criteria:
 - Expired or revoked impersonation tokens fail immediately.
 - Direct admin actions and impersonated user actions are distinguishable.
 
+Status: search/filters, subscription/status administration, impersonation
+sessions with banner, and remote agent start/stop are implemented.
+
 ### Phase 4 - AI model and key control plane
 
 - [x] Encrypt platform and user AI credentials.
 - [x] Add model catalog and health-tested credential pools.
-- [x] Add draft/published versioned routing policies.
-- [x] Add tier entitlements and user/bot overrides.
+- [ ] Add draft/published versioned routing policies.
+- [x] Add tier entitlements and user/bot overrides. (Per-user overrides ship
+      with the entitlements; bot-level overrides remain open.)
 - [x] Expose only `Auto` and permitted manual models to each user.
 - [x] Add retry classification, circuit breaking, cooldown, and bounded
       attempts.
@@ -299,14 +337,16 @@ Exit criteria:
 
 ### Phase 5 - Durable channels
 
-- [x] Implement real WhatsApp QR and pairing-code flows.
-- [x] Persist WhatsApp sessions through `RemoteAuth` and restore after restart.
-- [x] Prevent duplicate workers for the same bot.
+- [ ] Implement real WhatsApp QR and pairing-code flows.
+- [ ] Persist WhatsApp sessions through `RemoteAuth` and restore after restart.
+- [ ] Prevent duplicate workers for the same bot.
 - [x] Add Facebook and Instagram manual setup validation and webhook
-      subscription.
-- [x] Add Instagram Login as the preferred future approval-backed path.
-- [x] Secure and align Telegram linking.
-- [x] Add Website Chat with a real widget artifact and authenticated bot scope.
+      subscription. (Graph validation of page/account + token is enforced on
+      link-social; automatic webhook app-subscription remains open and is also
+      available through the legacy admin flow.)
+- [ ] Add Instagram Login as the preferred future approval-backed path.
+- [ ] Secure and align Telegram linking.
+- [ ] Add Website Chat with a real widget artifact and authenticated bot scope.
 
 Exit criteria:
 
@@ -316,13 +356,13 @@ Exit criteria:
 
 ### Phase 6 - Product workflows
 
-- [x] Align analytics response contracts and remove fixed dashboard metrics.
-- [x] Complete unified inbox reply and human-handoff flows.
-- [x] Align FAQ/training contracts and persist agent instructions.
-- [x] Align orders/bookings contracts.
-- [x] Implement Shopify and WooCommerce only when real connectors are ready;
+- [ ] Align analytics response contracts and remove fixed dashboard metrics.
+- [ ] Complete unified inbox reply and human-handoff flows.
+- [ ] Align FAQ/training contracts and persist agent instructions.
+- [ ] Align orders/bookings contracts.
+- [ ] Implement Shopify and WooCommerce only when real connectors are ready;
       otherwise label them accurately as planned integrations.
-- [x] Replace placeholder links, testimonials, counters, and connection status
+- [ ] Replace placeholder links, testimonials, counters, and connection status
       with verified content or clearly marked examples.
 
 Exit criteria:
@@ -331,14 +371,34 @@ Exit criteria:
   state.
 - The landing page makes no unverified production claims.
 
+### Phase 6b - Message triage and notification routing
+
+- [ ] Add deterministic message classification (complaint, sales_intent,
+      suggestion, inquiry, spam) in the bot engine pipeline.
+- [ ] Add optional AI-assisted classification for ambiguous messages using a
+      cheap routed model.
+- [ ] Add per-agent routing configuration: category -> destinations list
+      (whatsapp numbers, telegram chat, inbox).
+- [ ] Implement WhatsApp outbound owner alerts through the existing session
+      manager with per-message delay, hourly cap, and digest coalescing.
+- [ ] Enforce quiet hours, per-category toggles, and server-side rate limits.
+- [ ] Ship bilingual agent settings UI for filters and notification routes.
+
+Exit criteria:
+
+- A complaint-classified message reaches the configured WhatsApp number once,
+  not repeatedly, and is always visible in the inbox.
+- Spam never triggers outbound notifications.
+- Rate limits hold under burst traffic without WhatsApp session bans.
+
 ### Phase 7 - Release
 
-- [x] Desktop and mobile browser smoke tests in Arabic and English.
-- [x] API contract, tenancy, migration, failover, and session-restoration tests.
-- [x] Dependency and secret scans.
-- [x] Production-like staging migration.
-- [x] Backup and rollback rehearsal.
-- [x] Deploy, verify health/readiness, then run live smoke tests.
+- [ ] Desktop and mobile browser smoke tests in Arabic and English.
+- [ ] API contract, tenancy, migration, failover, and session-restoration tests.
+- [ ] Dependency and secret scans.
+- [ ] Production-like staging migration.
+- [ ] Backup and rollback rehearsal.
+- [ ] Deploy, verify health/readiness, then run live smoke tests.
 
 ## Decisions still required
 

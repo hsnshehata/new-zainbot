@@ -3,6 +3,7 @@ const router = express.Router();
 const { getSettings, updateSettings, getWhatsAppSettings, updateWhatsAppSettings } = require('../controllers/botController');
 const authenticate = require('../middleware/authenticate');
 const Conversation = require('../models/Conversation');
+const Bot = require('../models/Bot');
 const botEngine = require('../botEngine');
 const NodeCache = require('node-cache');
 const logger = require('../logger');
@@ -19,8 +20,8 @@ router.patch('/:id/settings', authenticate, loadAccessibleBot, updateSettings);
 router.get('/:botId/whatsapp-settings', authenticate, loadAccessibleBot, getWhatsAppSettings);
 router.patch('/:botId/whatsapp-settings', authenticate, loadAccessibleBot, updateWhatsAppSettings);
 
-// معالجة رسايل الدردشة
-router.post('/', authenticate, loadAccessibleBot, async (req, res) => {
+// معالجة رسايل الدردشة (مسار عام لدردشة الويب والويدجت)
+router.post('/', async (req, res) => {
   try {
     const { botId, message, userId, isImage, isVoice, channel, mediaUrl } = req.body;
     logger.info('📥 Raw request body', { path: '/api/bot', bodyKeys: Object.keys(req.body || {}) });
@@ -37,8 +38,12 @@ router.post('/', authenticate, loadAccessibleBot, async (req, res) => {
       return res.status(400).json({ message: 'Image URL is required for image messages' });
     }
 
-    // التحقق من حالة البوت
-    const bot = req.bot;
+    // جلب البوت والتحقق من حالته
+    const bot = await Bot.findById(botId);
+    if (!bot) {
+      logger.warn('البوت غير موجود', { botId });
+      return res.status(404).json({ message: 'البوت غير موجود' });
+    }
     if (!bot.isActive) {
       logger.warn('البوت غير نشط، تخطي المعالجة', { botId, botName: bot.name });
       return res.status(400).json({ message: 'البوت متوقف حاليًا ولا يمكنه استقبال الرسائل' });

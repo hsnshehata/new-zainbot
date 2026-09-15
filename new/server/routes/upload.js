@@ -19,7 +19,7 @@ const upload = multer({
 });
 
 // Endpoint لرفع الصورة
-router.post('/', authenticate, upload.single('image'), async (req, res) => {
+router.post('/', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'لم يتم رفع أي صورة' });

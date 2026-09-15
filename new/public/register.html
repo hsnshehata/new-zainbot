@@ -3,56 +3,235 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="إنشاء حساب جديد في Zain AI مجاناً. ابدأ إدارة بوتاتك الذكية وحسّن تجربة عملائك الآن.">
-  <meta name="keywords" content="Zain AI, تسجيل جديد, إنشاء حساب, بوتات ذكية, بدء مجاني, تسجيل عضوية">
-  <meta name="author" content="Zain AI">
+  <meta name="description" content="Create your free ZainBot AI workspace. Deploy intelligent customer support agents across WhatsApp, Instagram, Messenger, and web.">
   <meta name="robots" content="noindex, follow">
-  <meta name="theme-color" content="#00C4B4">
-  <link rel="canonical" href="https://zaináitro.com/register">
-  <title>إنشاء حساب جديد | Zain AI - بدء مجاني</title>
-  <link rel="stylesheet" href="/css/common.css">
-  <link rel="stylesheet" href="/css/register.css">
-  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#070915">
+  <title>إنشاء حساب جديد | ZainBot AI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/login.css">
+  <link rel="manifest" href="/manifest.json">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
-<body class="dark-mode">
-  <div class="login-container">
-    <h1>تسجيل جديد</h1>
-    <div id="success" style="display: none; color: green;">تم إرسال رابط تفعيل إلى بريدك الإلكتروني</div>
-    <p class="gmail-warning">ملاحظة: إذا كنت تستخدم بريد Gmail، يرجى التسجيل باستخدام زر جوجل من <a href="/login.html">صفحة تسجيل الدخول</a>.</p>
-    <form id="registerForm">
-      <div class="form-group">
-        <input type="text" id="username" name="username" pattern="[a-z0-9_-]+" required placeholder=" " aria-label="اسم المستخدم">
-        <label for="username">اسم المستخدم (حروف إنجليزية، أرقام، _ أو - فقط)</label>
-      </div>
-      <div class="form-group">
-        <input type="password" id="password" name="password" required placeholder=" " aria-label="كلمة المرور">
-        <label for="password">كلمة المرور</label>
-      </div>
-      <div class="form-group">
-        <input type="password" id="confirmPassword" name="confirmPassword" required placeholder=" " aria-label="تأكيد كلمة المرور">
-        <label for="confirmPassword">تأكيد كلمة المرور</label>
-      </div>
-      <div class="form-group">
-        <input type="text" id="botName" name="botName" required placeholder=" " aria-label="اسم البوت">
-        <label for="botName">اسم البوت</label>
-      </div>
-      <div class="form-group">
-        <input type="text" id="whatsapp" name="whatsapp" placeholder=" " aria-label="رقم الواتساب (اختياري)">
-        <label for="whatsapp">رقم الواتساب (اختياري)</label>
-      </div>
-      <div class="form-group">
-        <input type="email" id="email" name="email" required placeholder=" " aria-label="البريد الإلكتروني">
-        <label for="email">البريد الإلكتروني</label>
-      </div>
-      <div id="error" style="display: none; color: red;"></div>
-      <button type="submit" aria-label="إنشاء عضو">إنشاء عضو</button>
-    </form>
-    <p class="login-link">لديك حساب بالفعل؟ <a href="/login.html">تسجيل الدخول</a></p>
-  </div>
-  <script src="/js/auth.js"></script>
-  <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93b61bb9fc74dd1a',t:'MTc0NjUwOTY2NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<body class="login-page">
+  <main class="login-shell">
+    <div class="login-orb login-orb-one" aria-hidden="true"></div>
+    <div class="login-orb login-orb-two" aria-hidden="true"></div>
+
+    <header class="login-header">
+      <a class="login-brand" href="/" aria-label="ZainBot AI">
+        <span class="brand-mark"><i class="fas fa-sparkles"></i></span>
+        <span>ZainBot <b>AI</b></span>
+      </a>
+      <button class="language-toggle" id="registerLanguageToggle" type="button" aria-label="Change language">EN</button>
+    </header>
+
+    <section class="login-layout register-layout" aria-labelledby="registerTitle">
+      <aside class="login-intro">
+        <span class="intro-kicker" data-register-i18n="intro_kicker">منصة خدمة العملاء الذكية</span>
+        <h1 data-register-i18n="intro_title">ابدأ الآن مع فريق الذكاء الاصطناعي.</h1>
+        <p data-register-i18n="intro_description">أنشئ مساحة عملك في دقائق، اربط قنواتك وابدأ في تحويل كل محادثة إلى نمو حقيقي.</p>
+        <div class="intro-points">
+          <div><i class="fas fa-check"></i><span data-register-i18n="intro_point_one">باقة مجانية للبدء فوراً بدون بطاقة دفع</span></div>
+          <div><i class="fas fa-check"></i><span data-register-i18n="intro_point_two">ربط فوري مع واتساب، مسنجر، إنستجرام وموقعك</span></div>
+          <div><i class="fas fa-check"></i><span data-register-i18n="intro_point_three">تدريب مخصص للوكيل الذكي وإدارة سهلة للطلبات</span></div>
+        </div>
+      </aside>
+
+      <section class="login-card" aria-labelledby="registerTitle">
+        <div class="login-card-icon"><i class="fas fa-user-plus"></i></div>
+        <span class="login-card-eyebrow" data-register-i18n="card_eyebrow">حساب جديد</span>
+        <h2 id="registerTitle" data-register-i18n="card_title">أنشئ مساحة عملك</h2>
+        <p class="login-card-description" data-register-i18n="card_description">أدخل بياناتك لإنشاء حسابك والبدء مجاناً.</p>
+
+        <p id="success" class="login-success" role="status" aria-live="polite"></p>
+        <p id="error" class="login-error" role="alert" aria-live="polite"></p>
+
+        <form id="registerForm" novalidate>
+          <div class="register-fields-grid">
+            <div class="login-field">
+              <label for="username" data-register-i18n="username_label">اسم المستخدم</label>
+              <div class="input-wrap">
+                <i class="fas fa-user" aria-hidden="true"></i>
+                <input type="text" id="username" name="username" pattern="[a-z0-9_-]+" required data-register-placeholder="username_placeholder" placeholder="اكتب اسم المستخدم" data-register-aria="username_label" aria-label="اسم المستخدم" autocomplete="username">
+              </div>
+            </div>
+
+            <div class="login-field">
+              <label for="email" data-register-i18n="email_label">البريد الإلكتروني</label>
+              <div class="input-wrap">
+                <i class="fas fa-envelope" aria-hidden="true"></i>
+                <input type="email" id="email" name="email" required data-register-placeholder="email_placeholder" placeholder="name@example.com" data-register-aria="email_label" aria-label="البريد الإلكتروني" autocomplete="email">
+              </div>
+            </div>
+          </div>
+
+          <div class="register-fields-grid">
+            <div class="login-field">
+              <label for="password" data-register-i18n="password_label">كلمة المرور</label>
+              <div class="input-wrap">
+                <i class="fas fa-lock" aria-hidden="true"></i>
+                <input type="password" id="password" name="password" required data-register-placeholder="password_placeholder" placeholder="8 أحرف على الأقل" data-register-aria="password_label" aria-label="كلمة المرور" autocomplete="new-password">
+              </div>
+            </div>
+
+            <div class="login-field">
+              <label for="confirmPassword" data-register-i18n="confirm_password_label">تأكيد كلمة المرور</label>
+              <div class="input-wrap">
+                <i class="fas fa-shield-halved" aria-hidden="true"></i>
+                <input type="password" id="confirmPassword" name="confirmPassword" required data-register-placeholder="confirm_password_placeholder" placeholder="أعد كتابة كلمة المرور" data-register-aria="confirm_password_label" aria-label="تأكيد كلمة المرور" autocomplete="new-password">
+              </div>
+            </div>
+          </div>
+
+          <div class="register-fields-grid">
+            <div class="login-field">
+              <label for="botName" data-register-i18n="bot_name_label">اسم الوكيل الذكي الأول</label>
+              <div class="input-wrap">
+                <i class="fas fa-robot" aria-hidden="true"></i>
+                <input type="text" id="botName" name="botName" required data-register-placeholder="bot_name_placeholder" placeholder="مثال: مساعد المبيعات" data-register-aria="bot_name_label" aria-label="اسم الوكيل الذكي الأول">
+              </div>
+            </div>
+
+            <div class="login-field">
+              <label for="whatsapp" data-register-i18n="whatsapp_label">رقم الواتساب (اختياري)</label>
+              <div class="input-wrap">
+                <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+                <input type="tel" id="whatsapp" name="whatsapp" data-register-placeholder="whatsapp_placeholder" placeholder="مثال: 201000000000" data-register-aria="whatsapp_label" aria-label="رقم الواتساب (اختياري)" autocomplete="tel">
+              </div>
+            </div>
+          </div>
+
+          <button class="login-submit" type="submit">
+            <span data-register-i18n="submit_label">إنشاء الحساب والبدء مجاناً</span>
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+          </button>
+        </form>
+
+        <div class="login-divider"><span data-register-i18n="or_continue">أو تابع باستخدام</span></div>
+        <div class="google-signin-container"><div id="googleSignInButton"></div></div>
+
+        <p class="register-prompt">
+          <span data-register-i18n="already_have_account">لديك حساب بالفعل؟</span>
+          <a href="/login.html" data-register-i18n="signin_link">تسجيل الدخول</a>
+        </p>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const copy = {
+        ar: {
+          document_title: 'إنشاء حساب جديد | ZainBot AI',
+          intro_kicker: 'منصة خدمة العملاء الذكية',
+          intro_title: 'ابدأ الآن مع فريق الذكاء الاصطناعي.',
+          intro_description: 'أنشئ مساحة عملك في دقائق، اربط قنواتك وابدأ في تحويل كل محادثة إلى نمو حقيقي.',
+          intro_point_one: 'باقة مجانية للبدء فوراً بدون بطاقة دفع',
+          intro_point_two: 'ربط فوري مع واتساب، مسنجر، إنستجرام وموقعك',
+          intro_point_three: 'تدريب مخصص للوكيل الذكي وإدارة سهلة للطلبات',
+          card_eyebrow: 'حساب جديد',
+          card_title: 'أنشئ مساحة عملك',
+          card_description: 'أدخل بياناتك لإنشاء حسابك والبدء مجاناً.',
+          username_label: 'اسم المستخدم',
+          username_placeholder: 'اكتب اسم المستخدم',
+          email_label: 'البريد الإلكتروني',
+          email_placeholder: 'name@example.com',
+          password_label: 'كلمة المرور',
+          password_placeholder: '8 أحرف على الأقل',
+          confirm_password_label: 'تأكيد كلمة المرور',
+          confirm_password_placeholder: 'أعد كتابة كلمة المرور',
+          bot_name_label: 'اسم الوكيل الذكي الأول',
+          bot_name_placeholder: 'مثال: مساعد المبيعات',
+          whatsapp_label: 'رقم الواتساب (اختياري)',
+          whatsapp_placeholder: 'مثال: 201000000000',
+          submit_label: 'إنشاء الحساب والبدء مجاناً',
+          or_continue: 'أو تابع باستخدام',
+          already_have_account: 'لديك حساب بالفعل؟',
+          signin_link: 'تسجيل الدخول',
+          change_language: 'تغيير اللغة'
+        },
+        en: {
+          document_title: 'Create Account | ZainBot AI',
+          intro_kicker: 'AI customer operations platform',
+          intro_title: 'Start building with AI agents today.',
+          intro_description: 'Create your workspace in minutes, connect your channels, and turn every conversation into growth.',
+          intro_point_one: 'Start free with no credit card required',
+          intro_point_two: 'Instant connection to WhatsApp, Messenger, Instagram & Web',
+          intro_point_three: 'Customizable AI training & easy order tracking',
+          card_eyebrow: 'Get started',
+          card_title: 'Create your workspace',
+          card_description: 'Enter your details to create your free account.',
+          username_label: 'Username',
+          username_placeholder: 'Enter username',
+          email_label: 'Email address',
+          email_placeholder: 'name@example.com',
+          password_label: 'Password',
+          password_placeholder: 'Min 8 characters',
+          confirm_password_label: 'Confirm password',
+          confirm_password_placeholder: 'Re-enter your password',
+          bot_name_label: 'First AI Agent Name',
+          bot_name_placeholder: 'e.g. Sales Assistant',
+          whatsapp_label: 'WhatsApp number (optional)',
+          whatsapp_placeholder: 'e.g. 201000000000',
+          submit_label: 'Create account & start free',
+          or_continue: 'or continue with',
+          already_have_account: 'Already have an account?',
+          signin_link: 'Sign in',
+          change_language: 'Change language'
+        }
+      };
+      const toggle = document.getElementById('registerLanguageToggle');
+      const language = () => localStorage.getItem('zainbot_lang') === 'en' ? 'en' : 'ar';
+
+      function applyRegisterLanguage(nextLanguage) {
+        const strings = copy[nextLanguage];
+        document.documentElement.lang = nextLanguage;
+        document.documentElement.dir = nextLanguage === 'ar' ? 'rtl' : 'ltr';
+        document.title = strings.document_title;
+        document.querySelectorAll('[data-register-i18n]').forEach((element) => {
+          element.textContent = strings[element.dataset.registerI18n];
+        });
+        document.querySelectorAll('[data-register-placeholder]').forEach((element) => {
+          element.placeholder = strings[element.dataset.registerPlaceholder];
+        });
+        document.querySelectorAll('[data-register-aria]').forEach((element) => {
+          element.setAttribute('aria-label', strings[element.dataset.registerAria]);
+        });
+        toggle.textContent = nextLanguage === 'ar' ? 'EN' : 'AR';
+        toggle.setAttribute('aria-label', strings.change_language);
+        document.dispatchEvent(new CustomEvent('zainbot:languagechange', { detail: { language: nextLanguage } }));
+      }
+
+      toggle.addEventListener('click', () => {
+        const nextLanguage = language() === 'ar' ? 'en' : 'ar';
+        localStorage.setItem('zainbot_lang', nextLanguage);
+        applyRegisterLanguage(nextLanguage);
+      });
+      applyRegisterLanguage(language());
+
+      window.addEventListener('load', async () => {
+        try {
+          const response = await fetch('/api/config');
+          const config = await response.json();
+          if (!config.googleClientId || !window.google?.accounts?.id) return;
+          google.accounts.id.initialize({
+            client_id: config.googleClientId,
+            callback: (credential) => window.handleGoogleSignIn?.(credential)
+          });
+          google.accounts.id.renderButton(document.getElementById('googleSignInButton'), {
+            type: 'standard', theme: 'outline', size: 'large', text: 'signup_with', shape: 'pill', width: 400,
+            locale: language() === 'ar' ? 'ar' : 'en'
+          });
+        } catch (_) {
+          // The manual form remains available when Google is not configured.
+        }
+      });
+    })();
+  </script>
+  <script defer src="/js/utils.js"></script>
+  <script defer src="/js/auth.js"></script>
 </body>
 </html>

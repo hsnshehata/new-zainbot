@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { createChatPage, updateChatPage, getChatPageByLinkId, getChatPageByBotId, submitFeedback } = require('../controllers/chatPageController');
+const { createChatPage, updateChatPage, getChatPageByLinkId, getChatPageByBotId, getPublicLinkIdByBot, submitFeedback } = require('../controllers/chatPageController');
 const authenticate = require('../middleware/authenticate');
 
 const storage = multer.memoryStorage();
@@ -20,8 +20,9 @@ const upload = multer({
 // Routes
 router.post('/', authenticate, createChatPage);
 router.put('/:id', authenticate, upload.single('logo'), updateChatPage);
-router.get('/:linkId', getChatPageByLinkId);
+router.get('/public/bot/:botId', getPublicLinkIdByBot);
 router.get('/bot/:botId', authenticate, getChatPageByBotId);
 router.post('/feedback', submitFeedback);
+router.get('/:linkId', getChatPageByLinkId);
 
 module.exports = router;

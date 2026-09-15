@@ -1,7 +1,9 @@
 // server/controllers/chatPageController.js
 
 const { v4: uuidv4 } = require('uuid');
+const mongoose = require('mongoose');
 const ChatPage = require('../models/ChatPage');
+const Bot = require('../models/Bot');
 const Feedback = require('../models/Feedback');
 const axios = require('axios');
 const FormData = require('form-data');
@@ -123,44 +125,70 @@ exports.updateChatPage = async (req, res) => {
       return res.status(404).json({ message: 'Chat page not found' });
     }
 
-    const title = req.body.title || chatPage.title;
-    const titleColor = req.body.titleColor || chatPage.titleColor;
-    let colors = chatPage.colors;
+    const title = req.body.title !== undefined ? req.body.title : chatPage.title;
+    const titleColor = req.body.titleColor !== undefined ? req.body.titleColor : chatPage.titleColor;
+    
+    let colors = chatPage.colors || {};
     if (req.body.colors) {
-      try {
-        colors = JSON.parse(req.body.colors);
-      } catch (e) {
-        logger.warn('chat_page_parse_colors_error', { err: e.message });
-        return res.status(400).json({ message: 'Invalid colors format' });
+      if (typeof req.body.colors === 'object') {
+        colors = { ...colors, ...req.body.colors };
+      } else {
+        try {
+          colors = { ...colors, ...JSON.parse(req.body.colors) };
+        } catch (e) {
+          logger.warn('chat_page_parse_colors_error', { err: e.message });
+        }
       }
     }
-    const suggestedQuestionsEnabled = req.body.suggestedQuestionsEnabled === 'true' ? true : req.body.suggestedQuestionsEnabled === 'false' ? false : chatPage.suggestedQuestionsEnabled;
-    let suggestedQuestions = chatPage.suggestedQuestions;
-    if (req.body.suggestedQuestions) {
-      try {
-        suggestedQuestions = JSON.parse(req.body.suggestedQuestions);
-      } catch (e) {
-        logger.warn('chat_page_parse_suggested_questions_error', { err: e.message });
-        return res.status(400).json({ message: 'Invalid suggestedQuestions format' });
-      }
-    }
-    const imageUploadEnabled = req.body.imageUploadEnabled === 'true' ? true : req.body.imageUploadEnabled === 'false' ? false : chatPage.imageUploadEnabled;
-    const headerHidden = req.body.headerHidden === 'true' ? true : req.body.headerHidden === 'false' ? false : chatPage.headerHidden;
-    let linkId = chatPage.linkId;
 
-    // التحقق إذا كان المستخدم بيحاول يعدل الرابط
-    if (req.body.linkId && req.body.linkId !== chatPage.linkId) {
-      const newLinkId = req.body.linkId;
-      // التحقق إذا كان الرابط الجديد مستخدم بالفعل
-      const linkExists = await ChatPage.findOne({ linkId: newLinkId });
-      if (linkExists) {
-        return res.status(400).json({ message: 'الرابط مستخدم بالفعل، يرجى اختيار رابط آخر' });
+    let suggestedQuestionsEnabled = chatPage.suggestedQuestionsEnabled;
+    if (req.body.suggestedQuestionsEnabled !== undefined) {
+      suggestedQuestionsEnabled = req.body.suggestedQuestionsEnabled === true || req.body.suggestedQuestionsEnabled === 'true';
+    }
+
+    let suggestedQuestions = chatPage.suggestedQuestions || [];
+    if (req.body.suggestedQuestions !== undefined) {
+      if (Array.isArray(req.body.suggestedQuestions)) {
+        suggestedQuestions = req.body.suggestedQuestions;
+      } else if (typeof req.body.suggestedQuestions === 'string') {
+        try {
+          const parsed = JSON.parse(req.body.suggestedQuestions);
+          if (Array.isArray(parsed)) suggestedQuestions = parsed;
+          else suggestedQuestions = req.body.suggestedQuestions.split('\n').map(s => s.trim()).filter(Boolean);
+        } catch (e) {
+          suggestedQuestions = req.body.suggestedQuestions.split('\n').map(s => s.trim()).filter(Boolean);
+        }
       }
-      linkId = newLinkId;
+    }
+
+    let imageUploadEnabled = chatPage.imageUploadEnabled;
+    if (req.body.imageUploadEnabled !== undefined) {
+      imageUploadEnabled = req.body.imageUploadEnabled === true || req.body.imageUploadEnabled === 'true';
+    }
+
+    let headerHidden = chatPage.headerHidden;
+    if (req.body.headerHidden !== undefined) {
+      headerHidden = req.body.headerHidden === true || req.body.headerHidden === 'true';
+    }
+
+    let linkId = chatPage.linkId;
+    if (req.body.linkId && req.body.linkId !== chatPage.linkId) {
+      const newLinkId = req.body.linkId.toString().trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+      if (newLinkId.length >= 3) {
+        const linkExists = await ChatPage.findOne({ linkId: newLinkId, _id: { $ne: chatPage._id } });
+        if (linkExists) {
+          return res.status(400).json({ message: 'الرابط مستخدم بالفعل، يرجى اختيار رابط آخر' });
+        }
+        linkId = newLinkId;
+      }
     }
 
     let logoUrl = chatPage.logoUrl;
     let logoDeleteUrl = chatPage.logoDeleteUrl;
+
+    if (req.body.logoUrl !== undefined) {
+      logoUrl = req.body.logoUrl ? String(req.body.logoUrl).trim() : '';
+    }
 
     if (req.file) {
       try {
@@ -192,11 +220,19 @@ exports.updateChatPage = async (req, res) => {
     const updatedChatLink = `${process.env.APP_URL || 'https://zainbot.com'}/chat/${linkId}`;
 
     res.status(200).json({
-      message: 'Chat page settings updated successfully',
+      success: true,
+      message: 'تم تحديث إعدادات صفحة الدردشة بنجاح',
       logoUrl: chatPage.logoUrl,
       colors: chatPage.colors,
       headerHidden: chatPage.headerHidden,
       link: updatedChatLink,
+      linkId: chatPage.linkId,
+      chatPageId: chatPage._id,
+      title: chatPage.title,
+      titleColor: chatPage.titleColor,
+      suggestedQuestionsEnabled: chatPage.suggestedQuestionsEnabled,
+      suggestedQuestions: chatPage.suggestedQuestions,
+      imageUploadEnabled: chatPage.imageUploadEnabled,
     });
   } catch (err) {
     logger.error('chat_page_update_error', { chatPageId: req.params.id, err: err.message, stack: err.stack });
@@ -208,7 +244,10 @@ exports.updateChatPage = async (req, res) => {
 exports.getChatPageByLinkId = async (req, res) => {
   try {
     const { linkId } = req.params;
-    const chatPage = await ChatPage.findOne({ linkId }).populate('botId');
+    let chatPage = await ChatPage.findOne({ linkId }).populate('botId');
+    if (!chatPage && mongoose.Types.ObjectId.isValid(linkId)) {
+      chatPage = await ChatPage.findOne({ botId: linkId }).populate('botId') || await ChatPage.findById(linkId).populate('botId');
+    }
     if (!chatPage) {
       return res.status(404).json({ message: 'Chat page not found' });
     }
@@ -221,7 +260,8 @@ exports.getChatPageByLinkId = async (req, res) => {
       suggestedQuestions: chatPage.suggestedQuestions,
       imageUploadEnabled: chatPage.imageUploadEnabled,
       headerHidden: chatPage.headerHidden,
-      botId: chatPage.botId._id,
+      botId: chatPage.botId?._id || chatPage.botId,
+      linkId: chatPage.linkId,
     });
   } catch (err) {
     logger.error('chat_page_fetch_error', { linkId: req.params.linkId, err: err.message, stack: err.stack });
@@ -233,13 +273,56 @@ exports.getChatPageByLinkId = async (req, res) => {
 exports.getChatPageByBotId = async (req, res) => {
   try {
     const { botId } = req.params;
-    const chatPage = await ChatPage.findOne({ botId });
+    let chatPage = await ChatPage.findOne({ botId });
+    
+    // Auto provision chat page if not existing yet for this bot
     if (!chatPage) {
-      return res.status(404).json({ message: 'No chat page found for this bot' });
+      const bot = await Bot.findById(botId);
+      if (!bot) {
+        return res.status(404).json({ message: 'Bot not found' });
+      }
+
+      const rawUuid = uuidv4().replace(/-/g, '');
+      const linkId = rawUuid.substring(0, 10);
+
+      chatPage = new ChatPage({
+        userId: bot.userId,
+        botId: bot._id,
+        linkId,
+        title: bot.name || 'محادثة المبيعات الذكية',
+        titleColor: '#ffffff',
+        colors: {
+          header: '#0F172A',
+          titleColor: '#ffffff',
+          outerBackgroundColor: '#0A0F1D',
+          containerBackgroundColor: '#0F172A',
+          chatAreaBackground: '#0B1329',
+          userMessageBackground: '#06B6D4',
+          userMessageTextColor: '#ffffff',
+          botMessageBackground: '#1E293B',
+          botMessageTextColor: '#F8FAFC',
+          sendButtonColor: '#06B6D4',
+          button: '#06B6D4',
+          inputTextColor: '#ffffff',
+        },
+        suggestedQuestionsEnabled: true,
+        suggestedQuestions: [
+          'ما هي المنتجات والعروض المتوفرة؟',
+          'كيف يمكنني تأكيد موعد أو طلب؟',
+          'ما هي طرق الدفع والتوصيل المتاحة؟',
+        ],
+        imageUploadEnabled: true,
+        headerHidden: false,
+      });
+
+      await chatPage.save();
     }
+
     const chatLink = `${process.env.APP_URL || 'https://zainbot.com'}/chat/${chatPage.linkId}`;
     res.status(200).json({
+      success: true,
       link: chatLink,
+      linkId: chatPage.linkId,
       chatPageId: chatPage._id,
       title: chatPage.title,
       titleColor: chatPage.titleColor,
@@ -253,6 +336,26 @@ exports.getChatPageByBotId = async (req, res) => {
   } catch (err) {
     logger.error('chat_page_fetch_by_bot_error', { botId: req.params.botId, err: err.message, stack: err.stack });
     res.status(500).json({ message: 'خطأ في جلب إعدادات صفحة الدردشة' });
+  }
+};
+
+// Public endpoint for the website widget: resolve a bot's chat link id only.
+// Returns no configuration and no secrets - the same payload is already
+// public through /api/chat-page/:linkId.
+exports.getPublicLinkIdByBot = async (req, res) => {
+  try {
+    const { botId } = req.params;
+    if (!botId || !mongoose.Types.ObjectId.isValid(botId)) {
+      return res.status(400).json({ success: false, message: 'معرف البوت غير صالح' });
+    }
+    const chatPage = await ChatPage.findOne({ botId }).select('linkId').lean();
+    if (!chatPage) {
+      return res.status(404).json({ success: false, message: 'لا توجد صفحة دردشة لهذا البوت' });
+    }
+    res.status(200).json({ success: true, linkId: chatPage.linkId });
+  } catch (err) {
+    logger.error('chat_page_public_link_error', { botId: req.params?.botId, err: err.message, stack: err.stack });
+    res.status(500).json({ success: false, message: 'خطأ في جلب رابط الدردشة' });
   }
 };
 

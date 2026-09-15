@@ -239,7 +239,15 @@ function createWhatsAppSessionManager(options = {}) {
       'health.lastErrorAt': now(),
       'health.errorCode': safeErrorCode(error),
     }).catch(() => {});
+    notifyStatusWaiters(runtime);
     await stopRuntime(runtime.botId, { logout: false, release: true });
+  }
+
+  function notifyStatusWaiters(runtime) {
+    if (!runtime?.statusWaiters?.size) return;
+    const waiters = [...runtime.statusWaiters];
+    runtime.statusWaiters.clear();
+    for (const resolve of waiters) resolve();
   }
 
   function bindClientEvents(runtime) {
@@ -260,6 +268,7 @@ function createWhatsAppSessionManager(options = {}) {
           qrExpiresAt: runtime.qrExpiresAt,
           'health.errorCode': '',
         });
+        notifyStatusWaiters(runtime);
       } catch (error) {
         await failRuntime(runtime, error);
       }
@@ -274,6 +283,7 @@ function createWhatsAppSessionManager(options = {}) {
         qrExpiresAt: null,
         'health.errorCode': '',
       }).catch(() => {});
+      notifyStatusWaiters(runtime);
     });
 
     client.on('ready', async () => {
@@ -291,6 +301,7 @@ function createWhatsAppSessionManager(options = {}) {
         'health.lastSuccessAt': readyAt,
         'health.errorCode': '',
       }).catch(() => {});
+      notifyStatusWaiters(runtime);
       log.info('whatsapp_runtime_ready', { botId });
     });
 
@@ -316,6 +327,7 @@ function createWhatsAppSessionManager(options = {}) {
         'health.lastErrorAt': now(),
         'health.errorCode': safeErrorCode({ code: reason }, 'DISCONNECTED'),
       }).catch(() => {});
+      notifyStatusWaiters(runtime);
       await stopRuntime(botId, { logout: false, release: true });
     });
 
@@ -393,6 +405,7 @@ function createWhatsAppSessionManager(options = {}) {
         qrCode: null,
         qrExpiresAt: null,
         leaseTimer: null,
+        statusWaiters: new Set(),
       };
       runtimes.set(normalizedBotId, runtime);
       bindClientEvents(runtime);
@@ -447,6 +460,40 @@ function createWhatsAppSessionManager(options = {}) {
       runtime.qrCode = null;
     }
     return serializeConnection(connection, runtime);
+  }
+
+  async function waitForQrOrReady(botId, timeoutMs = 25_000) {
+    const normalizedBotId = String(botId);
+    const deadline = Date.now() + Math.max(0, timeoutMs);
+
+    while (true) {
+      const status = await getStatus(normalizedBotId);
+      if (
+        status.qrCode
+        || ['connected', 'error', 'relink_required', 'degraded', 'disconnected'].includes(status.status)
+      ) {
+        return status;
+      }
+
+      const runtime = runtimes.get(normalizedBotId);
+      const remainingMs = deadline - Date.now();
+      if (!runtime || remainingMs <= 0) return status;
+
+      await new Promise((resolve) => {
+        const timer = setTimeout(() => {
+          runtime.statusWaiters.delete(onStatusChange);
+          resolve();
+        }, remainingMs);
+        timer.unref?.();
+
+        function onStatusChange() {
+          clearTimeout(timer);
+          resolve();
+        }
+
+        runtime.statusWaiters.add(onStatusChange);
+      });
+    }
   }
 
   async function disconnect(botId) {
@@ -530,6 +577,7 @@ function createWhatsAppSessionManager(options = {}) {
     connect,
     disconnect,
     getStatus,
+    waitForQrOrReady,
     sendMessage,
     restorePersistedSessions,
     shutdown,

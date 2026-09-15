@@ -5,7 +5,12 @@ try {
   document.addEventListener('DOMContentLoaded', async () => {
     console.log('📢 DOMContentLoaded event triggered at', new Date().toISOString());
 
-    const linkId = window.location.pathname.split('/').pop();
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const lastSegment = pathParts.length > 0 ? pathParts[pathParts.length - 1] : '';
+    const urlParams = new URLSearchParams(window.location.search);
+    const linkId = (lastSegment && lastSegment !== 'chat' && lastSegment !== 'chat.html')
+      ? lastSegment
+      : (urlParams.get('linkId') || urlParams.get('slug') || urlParams.get('botId') || urlParams.get('id') || '');
     const chatMessages = document.getElementById('chatMessages');
     const messageInput = document.getElementById('messageInput');
     const imageInput = document.getElementById('imageInput');
@@ -59,145 +64,130 @@ try {
       botId = settings.botId;
 
       console.log('🔍 Settings loaded:', settings);
-      console.log('🎨 Title color:', settings.titleColor);
 
-      // عنوان الصفحة قد يأتي كحقل مستقل أو داخل كائن colors
       const resolvedTitleColor = settings.titleColor || settings.colors?.titleColor || '#ffffff';
+      const resolvedHeaderBg = settings?.colors?.header || '#0F172A';
+      const userCustomBg = settings?.colors?.outerBackgroundColor || settings?.colors?.chatAreaBackground || settings?.colors?.containerBackgroundColor || '#0A0F1D';
+      const resolvedChatAreaBg = settings?.colors?.chatAreaBackground || userCustomBg;
+      const resolvedContainerBg = settings?.colors?.containerBackgroundColor || userCustomBg;
+      const resolvedOuterBg = settings?.colors?.outerBackgroundColor || userCustomBg;
+      const resolvedButtonBg = settings?.colors?.sendButtonColor || settings?.colors?.button || '#06B6D4';
+      const resolvedUserBg = settings?.colors?.userMessageBackground || '#06B6D4';
+      const resolvedUserText = settings?.colors?.userMessageTextColor || '#ffffff';
+      const resolvedBotBg = settings?.colors?.botMessageBackground || '#1E293B';
+      const resolvedBotText = settings?.colors?.botMessageTextColor || '#ffffff';
+      const resolvedInputText = settings?.colors?.inputTextColor || '#ffffff';
 
-      chatTitle.textContent = settings.title || 'صفحة الدردشة';
+      chatTitle.textContent = settings.title || 'ZainBot AI Sales Agent';
       chatTitle.style.color = resolvedTitleColor;
+
+      const chatDefaultIcon = document.getElementById('chatDefaultIcon');
       if (settings.logoUrl) {
         chatLogo.src = settings.logoUrl;
         chatLogo.style.display = 'block';
+        if (chatDefaultIcon) chatDefaultIcon.style.display = 'none';
       } else {
         chatLogo.style.display = 'none';
+        if (chatDefaultIcon) chatDefaultIcon.style.display = 'block';
       }
 
       if (settings.headerHidden) {
         chatHeader.style.display = 'none';
+      } else {
+        chatHeader.style.display = 'flex';
       }
 
       customStyles.textContent = `
         body {
-          background-color: ${settings?.colors?.outerBackgroundColor || '#000000'};
+          background-color: ${resolvedOuterBg};
         }
         .chat-container {
-          background-color: ${settings?.colors?.containerBackgroundColor || '#ffffff'};
+          background-color: ${resolvedContainerBg};
         }
         #chatHeader {
-          background-color: ${settings?.colors?.header || '#2D3436'};
+          background-color: ${resolvedHeaderBg};
         }
         #chatTitle {
           color: ${resolvedTitleColor};
         }
         #chatMessages {
-          background-color: ${settings?.colors?.chatAreaBackground || '#3B4A4E'};
+          background-color: ${resolvedChatAreaBg};
         }
         #sendMessageBtn {
-          background-color: ${settings?.colors?.sendButtonColor || '#6AB04C'};
+          background-color: ${resolvedButtonBg};
         }
         .suggested-question {
-          background-color: ${settings?.colors?.button || '#6AB04C'};
-          color: #ffffff;
+          border-color: ${resolvedButtonBg};
+        }
+        .suggested-question:hover {
+          background-color: ${resolvedButtonBg}33;
         }
         .user-message {
-          background-color: ${settings?.colors?.userMessageBackground || '#6AB04C'};
-          color: ${settings?.colors?.userMessageTextColor || '#ffffff'};
+          background-color: ${resolvedUserBg};
+          color: ${resolvedUserText};
         }
         .bot-message {
-          background-color: ${settings?.colors?.botMessageBackground || '#2D3436'};
-          color: ${settings?.colors?.botMessageTextColor || '#ffffff'};
+          background-color: ${resolvedBotBg};
+          color: ${resolvedBotText};
         }
-        .chat-input {
-          background-color: ${settings?.colors?.containerBackgroundColor || '#ffffff'};
+        .chat-input-wrapper {
+          background-color: ${resolvedContainerBg};
         }
         #messageInput {
-          color: ${settings?.colors?.inputTextColor || '#ffffff'};
+          color: ${resolvedInputText};
         }
-        #imageInputBtn {
-          background-color: ${settings?.colors?.sendButtonColor || '#6AB04C'};
-        }
-        .feedback-buttons {
-          margin-top: 5px;
-          display: flex;
-          gap: 10px;
-        }
-        .feedback-btn {
-          background: none;
-          border: none;
-          font-size: 1.2em;
-          cursor: pointer;
-        }
-        .link-button {
-          display: inline-block;
-          background-color: #6AB04C;
-          color: #ffffff;
-          padding: 5px 10px;
-          border-radius: 4px;
-          text-decoration: none;
-          margin: 5px 0;
-        }
-        .link-button i {
-          margin-left: 5px;
+        .image-input-btn:hover {
+          color: ${resolvedButtonBg};
         }
       `;
 
-      if (settings.suggestedQuestionsEnabled && settings.suggestedQuestions?.length > 1) {
-        suggestedQuestions.style.display = 'block';
-        
-        const shuffleArray = (array) => {
-          for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-          }
-          return array;
-        };
+      const questionsList = Array.isArray(settings.suggestedQuestions)
+        ? settings.suggestedQuestions.map(q => typeof q === 'string' ? q.trim() : '').filter(Boolean)
+        : [];
 
-        let questions = shuffleArray([...settings.suggestedQuestions]);
-        let currentIndex = 0;
+      if (settings.suggestedQuestionsEnabled && questionsList.length > 0) {
+        suggestedQuestions.innerHTML = '';
+        suggestedQuestions.style.display = 'flex';
 
-        const displayNextQuestion = () => {
-          suggestedQuestions.innerHTML = '';
-          if (questions.length === 0) return;
-
-          const question = questions[currentIndex];
-          const button = document.createElement('button');
-          button.className = 'suggested-question';
-          button.style.textAlign = 'center';
-          button.style.margin = '0 auto';
-          button.style.display = 'block';
-          button.textContent = question;
-          button.addEventListener('click', () => sendMessage(question));
-          suggestedQuestions.appendChild(button);
-
-          currentIndex = (currentIndex + 1) % questions.length;
-        };
-
-        displayNextQuestion();
-        setInterval(displayNextQuestion, 3000);
+        // Render questions sequentially with staggered animation
+        questionsList.forEach((q, idx) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'suggested-question';
+          btn.textContent = q;
+          btn.style.animationDelay = `${(idx * 0.12).toFixed(2)}s`;
+          btn.addEventListener('click', () => {
+            messageInput.value = q;
+            sendMessage(q);
+            messageInput.value = '';
+          });
+          suggestedQuestions.appendChild(btn);
+        });
       } else {
         suggestedQuestions.style.display = 'none';
       }
 
-      if (settings.imageUploadEnabled) {
-        imageInput.parentElement.style.display = 'block';
-      } else {
-        imageInput.parentElement.style.display = 'none';
+      const imageInputBtn = document.getElementById('imageInputBtn');
+      if (imageInputBtn) {
+        imageInputBtn.style.display = settings.imageUploadEnabled ? 'flex' : 'none';
       }
     };
 
     try {
       const cachePageKey = 'publicChatPage';
-      const cachedSettings = window.readPageCache ? window.readPageCache(cachePageKey, linkId, 5 * 60 * 1000) : null;
-      const fetchSettings = () => window.handleApiRequest(`/api/chat-page/${linkId}`);
+      const cachedSettings = window.readPageCache ? window.readPageCache(cachePageKey, linkId, 60 * 1000) : null;
+      const fetchSettings = () => window.handleApiRequest(`/api/chat-page/${linkId}?_t=${Date.now()}`);
 
       if (cachedSettings) {
         console.log('⚡ استخدام الكاش لإعدادات صفحة الدردشة');
         applySettings(cachedSettings);
         fetchSettings()
           .then((fresh) => {
-            if (fresh && window.writePageCache) {
-              window.writePageCache(cachePageKey, linkId, fresh);
+            if (fresh) {
+              applySettings(fresh);
+              if (window.writePageCache) {
+                window.writePageCache(cachePageKey, linkId, fresh);
+              }
             }
           })
           .catch((err) => {
@@ -294,6 +284,12 @@ try {
         userMessageDiv.appendChild(document.createTextNode(message));
       }
       chatMessages.appendChild(userMessageDiv);
+
+      const typingIndicator = document.createElement('div');
+      typingIndicator.id = 'typingIndicator';
+      typingIndicator.className = 'message bot-message typing-indicator';
+      typingIndicator.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+      chatMessages.appendChild(typingIndicator);
       chatMessages.scrollTop = chatMessages.scrollHeight;
 
       try {
@@ -315,6 +311,8 @@ try {
           },
           body: JSON.stringify(requestBody),
         });
+
+        typingIndicator.remove();
 
         console.log('📥 Received response:', response);
 
@@ -361,6 +359,7 @@ try {
           });
         });
       } catch (err) {
+        typingIndicator.remove();
         console.error('❌ خطأ في إرسال الرسالة:', err);
         const errorMessageDiv = document.createElement('div');
         errorMessageDiv.className = 'message bot-message';
