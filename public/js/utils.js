@@ -134,6 +134,16 @@ function ensureValidSession() {
   return validToken;
 }
 
+
+// HTML-escape helper used across dashboard renderers (inbox feed, orders,
+// bookings, notification recipients). Defined globally once here.
+function escapeHtml(value) {
+  return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+  });
+}
+window.escapeHtml = escapeHtml;
+
 window.saveAuthSession = saveAuthSession;
 window.getAuthToken = getAuthToken;
 window.clearAuthSession = clearAuthSession;
