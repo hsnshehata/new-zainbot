@@ -292,7 +292,7 @@
       audit_type_admin_write: 'Admin write',
       th_event_when: 'When',
       th_event_type: 'Event',
-      th_event_actor: 'Actor ΓåÆ Target',
+      th_event_actor: 'Actor → Target',
       th_event_action: 'Action',
       th_event_outcome: 'Outcome',
       admin_loading_events: 'Loading audit log...',
@@ -480,7 +480,7 @@
       hint_customize_colors: 'Fully Customizable',
       preview_live_title: 'Live Interactive Preview',
       badge_realtime: 'Real-time',
-      preview_status_online: 'Online ┬╖ AI Sales Ready',
+      preview_status_online: 'Online · AI Sales Ready',
       preview_input_placeholder: 'Type your message here...',
       free_plan_tools_limit_badge: '(Free Plan Limit: 2 tools max)',
       free_plan_skills_limit_badge: '(Free Plan Limit: 2 skills max)',
@@ -665,14 +665,14 @@
       idea_followup_modal_subtitle: 'Present new arguments, strategic angles, and evidence to challenge council skepticism.',
       idea_followup_action_label: 'Round Goal & Action Type',
       idea_followup_chips_label: 'Strategic Advantage Angles (Click to toggle)',
-      idea_chip_pricing: '≡ƒÆ░ Lower Price / Cost Advantage',
-      idea_chip_niche: '≡ƒÄ» Underserved Niche Segment',
-      idea_chip_distribution: '≡ƒñ¥ Existing Distribution / Partners',
-      idea_chip_guarantee: '≡ƒ¢í∩╕Å Risk-Free Trial / Guarantee',
-      idea_chip_speed: 'ΓÜí Radical Simplification',
-      idea_chip_team: '≡ƒæÑ Proven Domain Expert Team',
-      idea_chip_offline: '≡ƒôì Prime Physical Location / Foot Traffic',
-      idea_chip_inventory: '≡ƒôª Existing Prototype / Inventory Ready',
+      idea_chip_pricing: '💰 Lower Price / Cost Advantage',
+      idea_chip_niche: '🎯 Underserved Niche Segment',
+      idea_chip_distribution: '🤝 Existing Distribution / Partners',
+      idea_chip_guarantee: '🛡️ Risk-Free Trial / Guarantee',
+      idea_chip_speed: '⚡ Radical Simplification',
+      idea_chip_team: '👥 Proven Domain Expert Team',
+      idea_chip_offline: '📍 Prime Physical Location / Foot Traffic',
+      idea_chip_inventory: '📦 Existing Prototype / Inventory Ready',
       idea_followup_target_critic_label: 'Primary Critic to Address',
       idea_critic_opt_all: 'Entire Council (All Members)',
       idea_critic_opt_customer: 'Cold Customer (Hesitation & Switching Cost)',
@@ -728,705 +728,705 @@
       idea_status_failed: 'Failed'
     },
     ar: {
-      menu_overview: '┘å╪╕╪▒╪⌐ ╪╣╪º┘à╪⌐',
-      menu_inbox: '╪╡┘å╪»┘ê┘é ╪º┘ä┘ê╪º╪▒╪» ╪º┘ä┘à┘ê╪¡╪»',
-      menu_training: '╪¬╪»╪▒┘è╪¿ ╪º┘ä╪░┘â╪º╪í ╪º┘ä╪º╪╡╪╖┘å╪º╪╣┘è',
-      menu_channels: '╪▒╪¿╪╖ ╪º┘ä┘é┘å┘ê╪º╪¬',
-      menu_orders: '╪º┘ä╪╖┘ä╪¿╪º╪¬ ┘ê╪º┘ä╪¡╪¼┘ê╪▓╪º╪¬',
-      menu_settings: '╪º┘ä╪Ñ╪╣╪»╪º╪»╪º╪¬ ┘ê╪º┘ä╪º╪┤╪¬╪▒╪º┘â',
-      menu_admin: '┘ä┘ê╪¡╪⌐ ╪¬╪¡┘â┘à ╪º┘ä╪ú╪»┘à┘å',
-      menu_agents: '╪º┘ä┘ê┘â┘ä╪º╪í ╪º┘ä╪░┘â┘è┘ê┘å',
-      agents_title: '╪º┘ä┘ê┘â┘ä╪º╪í ╪º┘ä╪░┘â┘è┘ê┘å',
-      agents_desc: '╪ú┘å╪┤╪ª ┘ê┘â┘ä╪º╪í ┘à┘å┘ü╪╡┘ä┘è┘å ┘ä┘ä╪»╪╣┘à ┘ê╪º┘ä┘à╪¿┘è╪╣╪º╪¬ ┘ê╪¬╪ú┘ç┘è┘ä ╪º┘ä╪╣┘à┘ä╪º╪í╪î ╪½┘à ╪º╪«╪¬╪▒ ╪º┘ä┘ê┘â┘è┘ä ╪º┘ä┘å╪┤╪╖ ┘ä┘à╪│╪º╪¡╪⌐ ╪º┘ä╪╣┘à┘ä.',
-      agents_create: '╪Ñ┘å╪┤╪º╪í ┘ê┘â┘è┘ä',
-      agent_name: '╪º╪│┘à ╪º┘ä┘ê┘â┘è┘ä',
-      agent_role: '╪»┘ê╪▒ ╪º┘ä┘ê┘â┘è┘ä',
-      agent_role_support: '╪»╪╣┘à ╪º┘ä╪╣┘à┘ä╪º╪í',
-      agent_role_sales: '┘à╪¿┘è╪╣╪º╪¬',
-      agent_role_leads: '╪¬╪ú┘ç┘è┘ä ╪º┘ä╪╣┘à┘ä╪º╪í',
-      agent_role_custom: '┘à╪«╪╡╪╡',
-      agent_description: '╪º┘ä┘ê╪╡┘ü',
-      agent_welcome_message: '╪▒╪│╪º┘ä╪⌐ ╪º┘ä╪¬╪▒╪¡┘è╪¿',
-      agent_description_placeholder: '┘à╪│╪ñ┘ê┘ä┘è╪º╪¬ ┘ç╪░╪º ╪º┘ä┘ê┘â┘è┘ä',
-      agent_instructions: '╪º┘ä╪¬╪╣┘ä┘è┘à╪º╪¬',
-      agent_instructions_placeholder: '╪º┘ä┘å╪¿╪▒╪⌐ ┘ê┘à╪╡╪º╪»╪▒ ╪º┘ä┘à╪╣┘ä┘ê┘à╪⌐ ┘ê╪º┘ä┘é┘ê╪º╪╣╪» ╪º┘ä┘à┘à┘å┘ê╪╣╪⌐ ┘ê╪«╪╖┘ê╪º╪¬ ╪º┘ä╪¬╪╡╪╣┘è╪»',
-      agent_objectives: '╪º┘ä╪ú┘ç╪»╪º┘ü',
-      agent_objectives_placeholder: '╪º┘â╪¬╪¿ ┘ç╪»┘ü┘ï╪º ┘ü┘è ┘â┘ä ╪│╪╖╪▒',
-      agent_handoff_keywords: '┘â┘ä┘à╪º╪¬ ╪º┘ä╪¬╪¡┘ê┘è┘ä ┘ä┘à┘ê╪╕┘ü',
-      agent_handoff_placeholder: '┘à┘ê╪╕┘ü╪î ┘à╪»┘è╪▒╪î ╪┤┘â┘ê┘ë',
-      agent_auto_reply: '╪¬┘ü╪╣┘è┘ä ╪º┘ä╪▒╪» ╪º┘ä╪¬┘ä┘é╪º╪ª┘è ┘ä┘ä┘ê┘â┘è┘ä',
-      agent_save: '╪¡┘ü╪╕ ╪º┘ä┘ê┘â┘è┘ä',
+      menu_overview: 'نظرة عامة',
+      menu_inbox: 'صندوق الوارد الموحد',
+      menu_training: 'تدريب الذكاء الاصطناعي',
+      menu_channels: 'ربط القنوات',
+      menu_orders: 'الطلبات والحجوزات',
+      menu_settings: 'الإعدادات والاشتراك',
+      menu_admin: 'لوحة تحكم الأدمن',
+      menu_agents: 'الوكلاء الذكيون',
+      agents_title: 'الوكلاء الذكيون',
+      agents_desc: 'أنشئ وكلاء منفصلين للدعم والمبيعات وتأهيل العملاء، ثم اختر الوكيل النشط لمساحة العمل.',
+      agents_create: 'إنشاء وكيل',
+      agent_name: 'اسم الوكيل',
+      agent_role: 'دور الوكيل',
+      agent_role_support: 'دعم العملاء',
+      agent_role_sales: 'مبيعات',
+      agent_role_leads: 'تأهيل العملاء',
+      agent_role_custom: 'مخصص',
+      agent_description: 'الوصف',
+      agent_welcome_message: 'رسالة الترحيب',
+      agent_description_placeholder: 'مسؤوليات هذا الوكيل',
+      agent_instructions: 'التعليمات',
+      agent_instructions_placeholder: 'النبرة ومصادر المعلومة والقواعد الممنوعة وخطوات التصعيد',
+      agent_objectives: 'الأهداف',
+      agent_objectives_placeholder: 'اكتب هدفًا في كل سطر',
+      agent_handoff_keywords: 'كلمات التحويل لموظف',
+      agent_handoff_placeholder: 'موظف، مدير، شكوى',
+      agent_auto_reply: 'تفعيل الرد التلقائي للوكيل',
+      agent_save: 'حفظ الوكيل',
 
-      // ┘à╪▒┘â╪▓ ╪º┘ä╪¬╪¡┘â┘à ╪¿╪º┘ä╪Ñ╪╣╪»╪º╪»╪º╪¬ (┘à┘å╪╕┘à)
-      settings_intro_desc: '┘â┘ä ╪ú╪»┘ê╪º╪¬ ╪º┘ä╪¬╪¡┘â┘à ┘ü┘è ╪º┘ä┘ê┘â┘è┘ä ┘ê┘à╪│╪º╪¡╪⌐ ╪º┘ä╪╣┘à┘ä ┘ü┘è ┘à┘â╪º┘å ┘ê╪º╪¡╪»╪î ┘à┘é╪│┘à╪⌐ ┘ä╪ú┘é╪│╪º┘à ┘à╪▒╪¬╪¿╪⌐: ╪¬╪╣┘ä┘è┘à╪º╪¬ ╪º┘ä┘ê┘â┘è┘ä╪î ┘é╪»╪▒╪º╪¬┘ç╪î ╪º┘ä╪¬┘å╪¿┘è┘ç╪º╪¬╪î ┘å┘à┘ê╪░╪¼ ╪º┘ä╪░┘â╪º╪í ╪º┘ä╪º╪╡╪╖┘å╪º╪╣┘è╪î ┘ê╪¬┘â╪º┘à┘ä╪º╪¬ ╪º┘ä┘à╪╖┘ê╪▒┘è┘å.',
-      set_sec_instructions_title: '╪¬╪╣┘ä┘è┘à╪º╪¬ ╪º┘ä┘ê┘â┘è┘ä ┘ê╪┤╪«╪╡┘è╪¬┘ç',
-      set_sec_instructions_desc: '┘à╪º╪░╪º ┘è┘é┘ê┘ä ╪º┘ä┘ê┘â┘è┘ä ┘ê┘â┘è┘ü ┘è╪¬╪╡╪▒┘ü: ╪▒╪│╪º┘ä╪⌐ ╪º┘ä╪¬╪▒╪¡┘è╪¿╪î ┘é┘ê╪º╪╣╪» ╪º┘ä╪┤╪«╪╡┘è╪⌐╪î ╪º┘ä╪ú┘ç╪»╪º┘ü╪î ┘ê╪¬╪¡┘ê┘è┘ä ╪º┘ä┘à╪¡╪º╪»╪½╪º╪¬ ┘ä┘ä┘à┘ê╪╕┘ü┘è┘å. ╪¬┘Å╪╖╪¿┘é ╪╣┘ä┘ë ╪º┘ä┘ê┘â┘è┘ä ╪º┘ä┘å╪┤╪╖.',
-      set_open_training: '┘ü╪¬╪¡ ╪¬╪»╪▒┘è╪¿ ╪º┘ä╪░┘â╪º╪í ╪º┘ä╪º╪╡╪╖┘å╪º╪╣┘è',
-      set_sec_capabilities_title: '┘é╪»╪▒╪º╪¬ ╪º┘ä┘ê┘â┘è┘ä',
-      set_sec_capabilities_desc: '╪¬╪┤╪║┘è┘ä ╪ú┘ê ╪Ñ┘è┘é╪º┘ü ┘à╪º ┘è╪│╪¬╪╖┘è╪╣ ╪º┘ä┘ê┘â┘è┘ä ╪º┘ä┘å╪┤╪╖ ┘ü╪╣┘ä┘ç: ╪º┘ä╪¡╪¼┘ê╪▓╪º╪¬╪î ╪¬╪¬╪¿╪╣ ╪º┘ä╪╖┘ä╪¿╪º╪¬╪î ╪º┘ä╪¬┘å╪¿┘è┘ç╪º╪¬╪î ╪º╪│╪¬╪╣╪º╪»╪⌐ ╪º┘ä╪╣┘à┘ä╪º╪í╪î ╪º┘ä╪¬┘é╪º╪▒┘è╪▒ ╪º┘ä┘è┘ê┘à┘è╪⌐╪î ┘ê╪º┘ä╪¿┘è╪╣ ╪º┘ä╪░┘â┘è. ╪╣╪»┘æ┘ä ╪º┘ä╪¬┘ü╪º╪╡┘è┘ä ┘à┘å ╪¿╪╖╪º┘é╪⌐ ╪º┘ä┘ê┘â┘è┘ä.',
-      set_open_agents: '╪¬╪╣╪»┘è┘ä ╪º┘ä┘ê┘â┘è┘ä ╪º┘ä┘å╪┤╪╖',
-      dev_integrations_title: '╪¬┘â╪º┘à┘ä╪º╪¬ ╪º┘ä┘à╪╖┘ê╪▒┘è┘å ┘ê╪º┘ä┘ê┘è╪¿ ┘ç┘ê┘â',
-      dev_integrations_desc: '╪ú┘å╪┤╪ª ┘à┘ü╪º╪¬┘è╪¡ ┘ê╪╡┘ê┘ä ┘ä┘ä╪¬╪╖╪¿┘è┘é╪º╪¬ ╪º┘ä╪«╪º╪▒╪¼┘è╪⌐ ┘ê╪ú╪▒╪│┘ä ╪ú╪¡╪»╪º╪½ ╪º┘ä┘à┘å╪╡╪⌐ ╪Ñ┘ä┘ë ╪ú┘å╪╕┘à╪¬┘â ┘ü┘è ╪º┘ä┘ê┘é╪¬ ╪º┘ä┘ü╪╣┘ä┘è.',
+      // مركز التحكم بالإعدادات (منظم)
+      settings_intro_desc: 'كل أدوات التحكم في الوكيل ومساحة العمل في مكان واحد، مقسمة لأقسام مرتبة: تعليمات الوكيل، قدراته، التنبيهات، نموذج الذكاء الاصطناعي، وتكاملات المطورين.',
+      set_sec_instructions_title: 'تعليمات الوكيل وشخصيته',
+      set_sec_instructions_desc: 'ماذا يقول الوكيل وكيف يتصرف: رسالة الترحيب، قواعد الشخصية، الأهداف، وتحويل المحادثات للموظفين. تُطبق على الوكيل النشط.',
+      set_open_training: 'فتح تدريب الذكاء الاصطناعي',
+      set_sec_capabilities_title: 'قدرات الوكيل',
+      set_sec_capabilities_desc: 'تشغيل أو إيقاف ما يستطيع الوكيل النشط فعله: الحجوزات، تتبع الطلبات، التنبيهات، استعادة العملاء، التقارير اليومية، والبيع الذكي. عدّل التفاصيل من بطاقة الوكيل.',
+      set_open_agents: 'تعديل الوكيل النشط',
+      dev_integrations_title: 'تكاملات المطورين والويب هوك',
+      dev_integrations_desc: 'أنشئ مفاتيح وصول للتطبيقات الخارجية وأرسل أحداث المنصة إلى أنظمتك في الوقت الفعلي.',
       wh_event_msg_received: 'message.received',
       wh_event_msg_sent: 'message.sent',
       wh_event_order_created: 'order.created',
-      set_no_agent: '┘ä╪º ┘è┘ê╪¼╪» ┘ê┘â┘è┘ä ┘å╪┤╪╖ ╪¿╪╣╪». ╪ú┘å╪┤╪ª ┘ê┘â┘è┘ä╪º┘ï ╪ú┘ê ╪º╪«╪¬╪▒ ┘ê╪º╪¡╪»╪º┘ï ┘à┘å ╪╡┘ü╪¡╪⌐ ╪º┘ä┘ê┘â┘ä╪º╪í.',
-      set_state_enabled: '┘à┘ü╪╣┘ä',
-      set_state_disabled: '┘à╪¬┘ê┘é┘ü',
-      set_value_not_set: '╪║┘è╪▒ ┘à╪¡╪»╪»',
-      set_label_welcome: '╪▒╪│╪º┘ä╪⌐ ╪º┘ä╪¬╪▒╪¡┘è╪¿',
-      set_label_persona_rules: '╪¬╪╣┘ä┘è┘à╪º╪¬ ╪º┘ä╪┤╪«╪╡┘è╪⌐',
-      set_unit_lines: '╪│╪╖╪▒',
-      set_label_objectives: '╪º┘ä╪ú┘ç╪»╪º┘ü',
-      set_label_handoff: '┘â┘ä┘à╪º╪¬ ╪º┘ä╪¬╪¡┘ê┘è┘ä ┘ä┘ä┘à┘ê╪╕┘ü',
-      set_label_auto_reply: '╪º┘ä╪▒╪» ╪º┘ä╪¬┘ä┘é╪º╪ª┘è',
-      set_label_tools: '╪º┘ä╪ú╪»┘ê╪º╪¬',
-      set_label_skills: '╪º┘ä┘à┘ç╪º╪▒╪º╪¬',
-      set_tool_booking: '╪º┘ä╪¡╪¼┘ê╪▓╪º╪¬ ┘ê╪º┘ä┘à┘ê╪º╪╣┘è╪»',
-      set_tool_orders: '╪¬╪¬╪¿╪╣ ╪º┘ä╪╖┘ä╪¿╪º╪¬',
-      set_tool_wa: '╪¬┘å╪¿┘è┘ç╪º╪¬ ┘ê╪º╪¬╪│╪º╪¿',
-      set_tool_tg: '╪¬┘å╪¿┘è┘ç╪º╪¬ ╪¬┘ä┘è╪¼╪▒╪º┘à',
-      set_tool_recovery: '╪º╪│╪¬╪╣╪º╪»╪⌐ ╪º┘ä┘à╪¿┘è╪╣╪º╪¬ ╪º┘ä┘à╪¬╪▒┘ê┘â╪⌐',
-      set_tool_digest: '╪º┘ä╪¬┘é╪▒┘è╪▒ ╪º┘ä┘è┘ê┘à┘è',
-      set_tool_upsell: '╪º┘ä╪¿┘è╪╣ ╪º┘ä╪░┘â┘è',
-      admin_search_placeholder: '╪º╪¿╪¡╪½ ╪¿╪º┘ä╪º╪│┘à ╪ú┘ê ╪º┘ä╪¿╪▒┘è╪» ╪ú┘ê ┘ê╪º╪¬╪│╪º╪¿',
-      admin_filter_role: '╪¬╪╡┘ü┘è╪⌐ ╪¡╪│╪¿ ╪º┘ä╪»┘ê╪▒',
-      admin_filter_status: '╪¬╪╡┘ü┘è╪⌐ ╪¡╪│╪¿ ╪º┘ä╪¡╪º┘ä╪⌐',
-      admin_filter_tier: '╪¬╪╡┘ü┘è╪⌐ ╪¡╪│╪¿ ╪º┘ä╪¿╪º┘é╪⌐',
-      admin_all_roles: '┘â┘ä ╪º┘ä╪ú╪»┘ê╪º╪▒',
-      admin_visible_accounts: '╪º┘ä╪¡╪│╪º╪¿╪º╪¬ ╪º┘ä╪╕╪º┘ç╪▒╪⌐',
-      admin_all_tiers: '┘â┘ä ╪º┘ä╪¿╪º┘é╪º╪¬',
-      admin_apply: '╪¬╪╖╪¿┘è┘é',
-      admin_previous: '╪º┘ä╪│╪º╪¿┘é',
-      admin_next: '╪º┘ä╪¬╪º┘ä┘è',
-      admin_user_modal: '╪Ñ╪»╪º╪▒╪⌐ ╪º┘ä╪¡╪│╪º╪¿',
-      admin_username: '╪º╪│┘à ╪º┘ä┘à╪│╪¬╪«╪»┘à',
-      admin_email: '╪º┘ä╪¿╪▒┘è╪» ╪º┘ä╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è',
-      admin_whatsapp: '┘ê╪º╪¬╪│╪º╪¿',
-      admin_role: '╪º┘ä╪»┘ê╪▒',
-      admin_user: '┘à╪│╪¬╪«╪»┘à',
-      admin_superadmin: '┘à╪»┘è╪▒ ╪╣╪º┘à',
-      admin_subscription: '┘å┘ê╪╣ ╪º┘ä╪º╪┤╪¬╪▒╪º┘â',
-      admin_plan_tier: '╪º┘ä╪¿╪º┘é╪⌐',
-      admin_free: '┘à╪¼╪º┘å┘è',
-      admin_monthly: '╪┤┘ç╪▒┘è',
-      admin_yearly: '╪│┘å┘ê┘è',
-      admin_active: '┘å╪┤╪╖',
-      admin_suspended: '┘à┘ê┘é┘ê┘ü',
-      admin_verification: '╪º┘ä╪¬┘ê╪½┘è┘é',
-      admin_verified: '┘à┘ê╪½┘é',
-      admin_not_verified: '╪║┘è╪▒ ┘à┘ê╪½┘é',
-      admin_daily_usage: '╪º┘ä╪▒╪│╪º╪ª┘ä ╪º┘ä┘à╪│╪¬╪«╪»┘à╪⌐ ╪º┘ä┘è┘ê┘à',
-      admin_monthly_usage: '╪º┘ä╪▒╪│╪º╪ª┘ä ╪º┘ä┘à╪│╪¬╪«╪»┘à╪⌐ ╪┤┘ç╪▒┘è┘ï╪º',
-      admin_temporary_password: '┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ┘à╪ñ┘é╪¬╪⌐',
-      admin_password_help: '╪º╪¬╪▒┘â┘ç╪º ┘ü╪º╪▒╪║╪⌐ ┘ä┘ä╪Ñ╪¿┘é╪º╪í ╪╣┘ä┘ë ┘â┘ä┘à╪⌐ ╪º┘ä┘à╪▒┘ê╪▒ ╪º┘ä╪¡╪º┘ä┘è╪⌐.',
-      admin_confirm_password: '╪¬╪ú┘â┘è╪» ┘â┘ä┘à╪⌐ ╪º┘ä┘à╪▒┘ê╪▒',
-      admin_save_user: '╪¡┘ü╪╕ ╪º┘ä╪¡╪│╪º╪¿',
-      impersonation_title: '╪¿╪»╪í ╪»╪«┘ê┘ä ┘à╪ñ┘é╪¬ ┘à╪│╪¼┘ä',
-      impersonation_desc: '╪│┘è╪¿╪»╪ú ┘ç╪░╪º ╪»╪«┘ê┘ä┘ï╪º ┘à╪ñ┘é╪¬┘ï╪º ┘ê┘à╪│╪¼┘ä┘ï╪º. ╪º┘â╪¬╪¿ ╪│╪¿╪¿ ╪º┘ä╪»╪«┘ê┘ä.',
-      impersonation_reason: '╪│╪¿╪¿ ╪º┘ä╪»╪«┘ê┘ä',
-      impersonation_continue: '┘à╪¬╪º╪¿╪╣╪⌐',
-      logout: '╪¬╪│╪¼┘è┘ä ╪º┘ä╪«╪▒┘ê╪¼',
-      account_quota_remaining: '╪º┘ä╪▒╪│╪º╪ª┘ä ╪º┘ä┘à╪¬╪¿┘é┘è╪⌐',
-      account_settings: '╪Ñ╪╣╪»╪º╪»╪º╪¬ ╪º┘ä╪¡╪│╪º╪¿',
-      stat_conversations: '╪º┘ä┘à╪¡╪º╪»╪½╪º╪¬',
-      stat_messages: '╪º┘ä╪▒╪│╪º╪ª┘ä ╪º┘ä╪¬┘è ╪¬┘à╪¬ ┘à╪╣╪º┘ä╪¼╪¬┘ç╪º',
-      stat_connected_channels: '╪º┘ä┘é┘å┘ê╪º╪¬ ╪º┘ä┘à╪▒╪¬╪¿╪╖╪⌐',
-      stat_training_rules: '┘é┘ê╪º╪╣╪» ╪º┘ä╪¬╪»╪▒┘è╪¿',
-      workspace_status_title: '╪¡╪º┘ä╪⌐ ┘à╪│╪º╪¡╪⌐ ╪º┘ä╪╣┘à┘ä',
-      workspace_status_desc: '┘à┘ä╪«╪╡ ┘à╪¿╪º╪┤╪▒ ┘ä┘ä╪¿┘ê╪¬ ╪º┘ä┘à╪¡╪»╪» ╪¡╪º┘ä┘è┘ï╪º ┘ü┘è ┘à╪│╪º╪¡╪⌐ ╪º┘ä╪╣┘à┘ä.',
-      workspace_active_bot: '╪º┘ä╪¿┘ê╪¬ ╪º┘ä┘å╪┤╪╖',
-      workspace_auto_reply: '╪º┘ä╪▒╪» ╪º┘ä╪¬┘ä┘é╪º╪ª┘è ╪¿╪º┘ä╪░┘â╪º╪í ╪º┘ä╪º╪╡╪╖┘å╪º╪╣┘è',
-      workspace_orders: '╪╖┘ä╪¿╪º╪¬ ┘à┘å ╪º┘ä┘à╪¡╪º╪»╪½╪º╪¬',
-      status_enabled: '┘à┘ü╪╣┘æ┘ä',
-      status_disabled: '┘à╪¬┘ê┘é┘ü',
-      quota_unlimited: '╪║┘è╪▒ ┘à╪¡╪»┘ê╪»',
-      stat_active_chats: '╪º┘ä┘à╪¡╪º╪»╪½╪º╪¬ ╪º┘ä┘å╪┤╪╖╪⌐',
-      stat_response_speed: '╪│╪▒╪╣╪⌐ ╪º┘ä╪º╪│╪¬╪¼╪º╪¿╪⌐',
-      stat_satisfaction: '╪▒╪╢╪º ╪º┘ä╪╣┘à┘ä╪º╪í',
-      stat_orders_count: '╪º┘ä╪╖┘ä╪¿╪º╪¬ ╪º┘ä┘à┘â╪¬┘à┘ä╪⌐',
-      usage_summary_title: '╪º┘ä╪«╪╖╪⌐ ╪º┘ä╪┤┘ç╪▒┘è╪⌐ ┘ê╪º┘ä╪º╪│╪¬┘ç┘ä╪º┘â',
-      current_plan_label: '╪º┘ä╪¿╪º┘é╪⌐ ╪º┘ä╪¡╪º┘ä┘è╪⌐:',
-      conversations_used_label: '╪º┘ä┘à╪¡╪º╪»╪½╪º╪¬ ╪º┘ä┘à╪│╪¬┘ç┘ä┘â╪⌐',
-      performance_chart_title: '┘à╪╣╪»┘ä ╪¡╪¼┘à ╪º┘ä┘à╪¡╪º╪»╪½╪º╪¬ ╪º┘ä┘è┘ê┘à┘è',
-      funnel_title: '┘é┘à╪╣ ╪º┘ä┘à╪¿┘è╪╣╪º╪¬',
-      funnel_leads: '╪º┘ä╪╣┘à┘ä╪º╪í ╪º┘ä┘à╪¡╪¬┘à┘ä┘è┘å ╪º┘ä╪¼╪»╪»',
-      funnel_qualified: '╪º┘ä╪╣┘à┘ä╪º╪í ╪º┘ä┘à╪ñ┘ç┘ä┘è┘å',
-      funnel_closed: '╪º┘ä╪╖┘ä╪¿╪º╪¬ ╪º┘ä┘à┘â╪¬┘à┘ä╪⌐',
-      inbox_chat_list_title: '╪«┘ä╪º╪╡╪⌐ ╪º┘ä┘à╪¡╪º╪»╪½╪º╪¬',
-      inbox_empty: '┘ä╪º ╪¬┘ê╪¼╪» ┘à╪¡╪º╪»╪½╪º╪¬ ┘å╪┤╪╖╪⌐.',
-      auto_reply_toggle_label: '╪º┘ä╪▒╪» ╪º┘ä╪¬┘ä┘é╪º╪ª┘è ┘ä┘ä╪¿┘ê╪¬',
-      select_chat_instructions: '╪º╪«╪¬╪▒ ┘à╪¡╪º╪»╪½╪⌐ ┘à┘å ╪º┘ä┘é╪º╪ª┘à╪⌐ ╪º┘ä╪¼╪º┘å╪¿┘è╪⌐ ┘ä╪╣╪▒╪╢ ╪º┘ä╪│╪¼┘ä ┘ê╪º┘ä╪¬┘ü╪º╪╣┘ä ╪º┘ä╪¿╪┤╪▒┘è ╪º┘ä┘à╪¿╪º╪┤╪▒.',
-      chat_reply_placeholder: '╪º┘â╪¬╪¿ ╪▒╪│╪º┘ä╪⌐ ┘ä┘ä╪¬╪»╪«┘ä ┘ü┘è ╪º┘ä┘à╪¡╪º╪»╪½╪⌐...',
-      training_title: '┘à╪▒┘â╪▓ ╪¬╪»╪▒┘è╪¿ ╪º┘ä╪¿┘ê╪¬',
-      training_brand_guidelines_title: '╪Ñ╪▒╪┤╪º╪»╪º╪¬ ╪º┘ä┘ç┘ê┘è╪⌐ ┘ê╪º┘ä╪¬┘ê╪¼┘è┘ç',
-      label_welcome_message: '╪▒╪│╪º┘ä╪⌐ ╪º┘ä╪¬╪▒╪¡┘è╪¿',
-      label_custom_instructions: '╪¬╪╣┘ä┘è┘à╪º╪¬ ╪┤╪«╪╡┘è╪⌐ ╪º┘ä╪¿┘ê╪¬',
-      training_welcome_placeholder: '╪º┘â╪¬╪¿ ╪▒╪│╪º┘ä╪⌐ ╪º┘ä╪¬╪▒╪¡┘è╪¿ ╪º┘ä╪¬┘è ┘è╪▒╪º┘ç╪º ╪º┘ä╪╣┘à┘è┘ä...',
-      training_persona_placeholder: '┘à╪½╪º┘ä: ╪º╪┤╪▒╪¡ ┘å╪¿╪▒╪⌐ ╪º┘ä╪¿┘ê╪¬ ┘ê┘à╪│╪ñ┘ê┘ä┘è╪º╪¬┘ç ┘ê┘é┘ê╪º╪╣╪» ╪¬╪¡┘ê┘è┘ä ╪º┘ä┘à╪¡╪º╪»╪½╪⌐ ┘ä┘à┘ê╪╕┘ü.',
-      training_empty_faqs: '┘ä╪º ╪¬┘ê╪¼╪» ╪ú╪│╪ª┘ä╪⌐ ╪┤╪º╪ª╪╣╪⌐ ╪¿╪╣╪». ╪ú╪╢┘ü ╪ú┘ê┘ä ╪│╪ñ╪º┘ä ┘ê╪¼┘ê╪º╪¿.',
-      save_guidelines_btn: '╪¡┘ü╪╕ ╪º┘ä╪Ñ╪╣╪»╪º╪»╪º╪¬',
-      training_faqs_title: '┘é╪º╪ª┘à╪⌐ ╪º┘ä╪ú╪│╪ª┘ä╪⌐ ╪º┘ä╪┤╪º╪ª╪╣╪⌐ ┘ê╪º┘ä╪ú╪¼┘ê╪¿╪⌐',
-      btn_add_faq: '╪Ñ╪╢╪º┘ü╪⌐ ╪│╪ñ╪º┘ä ┘ê╪¼┘ê╪º╪¿',
-      channels_title: '╪▒╪¿╪╖ ┘ê╪¬┘ü╪╣┘è┘ä ┘é┘å┘ê╪º╪¬ ╪º┘ä╪¿┘ê╪¬',
-      chan_desc_wa: '╪▒╪¿╪╖ ┘ê╪º╪¼┘ç╪⌐ Cloud API ╪º┘ä╪▒╪│┘à┘è╪⌐ ┘ä┘ê╪º╪¬╪│╪º╪¿.',
-      chan_desc_fb: '╪ú╪¬┘à╪¬╪⌐ ╪º┘ä╪▒╪»┘ê╪» ╪╣┘ä┘ë ╪╡┘ü╪¡╪º╪¬ ┘ü┘è╪│╪¿┘ê┘â ┘à╪│┘å╪¼╪▒.',
-      chan_desc_ig: '╪º┘ä╪▒╪» ╪º┘ä╪¬┘ä┘é╪º╪ª┘è ╪╣┘ä┘ë ╪▒╪│╪º╪ª┘ä ┘ê╪¬╪╣┘ä┘è┘é╪º╪¬ ╪Ñ┘å╪│╪¬╪¼╪▒╪º┘à.',
-      chan_desc_tg: '╪▒╪¿╪╖ ┘ê╪¬┘ü╪╣┘è┘ä ╪¿┘ê╪¬ ╪¬┘è┘ä┘è╪¼╪▒╪º┘à ┘à╪«╪╡╪╡.',
-      btn_configure: '╪Ñ╪╣╪»╪º╪» ┘ê╪¬┘ü╪╣┘è┘ä',
-      website_widget_title: '╪»╪▒╪»╪┤╪⌐ ╪º┘ä┘à┘ê┘é╪╣ ╪º┘ä╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è',
-      website_widget_desc: '╪º┘å╪│╪« ┘â┘ê╪» ╪º┘ä╪¿╪▒┘à╪¼╪⌐ ╪º┘ä╪¬╪º┘ä┘è ┘ê╪╢╪╣┘ç ┘é╪¿┘ä ┘ê╪│┘à ╪º┘ä╪Ñ╪║┘ä╪º┘é body ┘ü┘è ┘à┘ê┘é╪╣┘â ┘ä╪╣╪▒╪╢ ╪»╪▒╪»╪┤╪⌐ ╪▓┘è┘å ╪¿┘ê╪¬.',
-      ecommerce_sync_title: '╪▒╪¿╪╖ ┘ê┘à╪▓╪º┘à┘å╪⌐ ┘à╪¬╪¼╪▒┘â ╪º┘ä╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è',
-      label_store_provider: '┘à┘å╪╡╪⌐ ╪º┘ä┘à╪¬╪¼╪▒',
-      store_none: '╪║┘è╪▒ ┘à╪¬╪╡┘ä',
-      label_store_url: '╪▒╪º╪¿╪╖ ╪º┘ä┘à╪¬╪¼╪▒',
-      btn_sync_catalog: '╪¡┘ü╪╕ ┘ê┘à╪▓╪º┘à┘å╪⌐ ╪º┘ä┘â╪¬╪º┘ä┘ê╪¼',
-      orders_bookings_title: '┘ä┘ê╪¡╪⌐ ╪Ñ╪»╪º╪▒╪⌐ ╪º┘ä╪╖┘ä╪¿╪º╪¬ ┘ê╪º┘ä┘à┘ê╪º╪╣┘è╪»',
-      chat_orders_list_title: '╪º┘ä╪╖┘ä╪¿╪º╪¬ ╪º┘ä┘à╪│╪¬╪«┘ä╪╡╪⌐ ╪¬┘ä┘é╪º╪ª┘è╪º┘ï ╪╣╪¿╪▒ ╪º┘ä╪¿┘ê╪¬',
-      th_order_id: '┘à╪╣╪▒┘ü ╪º┘ä╪╖┘ä╪¿',
-      th_customer: '╪º╪│┘à ╪º┘ä╪╣┘à┘è┘ä',
-      th_phone: '╪º┘ä┘ç╪º╪¬┘ü',
-      th_items: '╪º┘ä┘à┘å╪¬╪¼╪º╪¬',
-      th_total: '╪º┘ä╪Ñ╪¼┘à╪º┘ä┘è',
-      th_status: '╪º┘ä╪¡╪º┘ä╪⌐',
-      appointments_list_title: '┘à┘ê╪º╪╣┘è╪» ╪º┘ä╪╣┘à┘ä╪º╪í ╪º┘ä┘à╪ñ┘â╪»╪⌐ ╪╣╪¿╪▒ ╪º┘ä╪¿┘ê╪¬',
-      th_booking_customer: '╪º┘ä╪╣┘à┘è┘ä',
-      th_booking_phone: '╪º┘ä┘ç╪º╪¬┘ü',
-      th_booking_time: '╪º┘ä╪¬╪º╪▒┘è╪« ┘ê╪º┘ä┘ê┘é╪¬',
-      th_booking_notes: '┘à┘ä╪«╪╡ ╪º┘ä╪¡╪¼╪▓ / ┘à┘ä╪º╪¡╪╕╪º╪¬ ╪º┘ä╪¿┘ê╪¬',
-      settings_billing_title: '╪º┘ä╪Ñ╪╣╪»╪º╪»╪º╪¬ ╪º┘ä╪╣╪º┘à╪⌐ ┘ê╪º┘ä╪▒╪¿╪╖ ╪º┘ä╪¿╪▒┘à╪¼┘è ┘ä┘ä┘à╪╖┘ê╪▒┘è┘å',
-      dev_api_keys_title: '┘à┘ü╪º╪¬┘è╪¡ ╪º┘ä┘ê╪╡┘ê┘ä ╪º┘ä╪«╪º╪╡╪⌐ ╪¿╪º┘ä┘à╪╖┘ê╪▒┘è┘å',
-      btn_gen_key: '╪Ñ┘å╪┤╪º╪í ┘à┘ü╪¬╪º╪¡ ╪¼╪»┘è╪»',
-      dev_webhooks_title: '╪Ñ╪╣╪»╪º╪»╪º╪¬ ╪º┘ä┘ê┘è╪¿ ┘ç┘ê┘â ╪º┘ä╪╡╪º╪»╪▒',
-      label_webhook_url: '╪▒╪º╪¿╪╖ ╪º╪│╪¬┘é╪¿╪º┘ä ╪º┘ä┘ê┘è╪¿ ┘ç┘ê┘â ╪º┘ä╪«╪º╪╡ ╪¿┘â',
-      label_webhook_secret: '┘à┘ü╪¬╪º╪¡ ╪¬┘ê┘é┘è╪╣ HMAC ╪º┘ä╪│╪▒┘è',
-      label_webhook_events: '╪º┘ä╪ú╪¡╪»╪º╪½ ╪º┘ä┘à╪┤╪¬╪▒┘â ╪¿┘ç╪º',
-      btn_save_webhook: '╪¡┘ü╪╕ ╪º┘ä┘ê┘è╪¿ ┘ç┘ê┘â',
-      webhook_logs_title: '╪│╪¼┘ä ╪¬╪│┘ä┘è┘à ╪º┘ä┘ê┘è╪¿ ┘ç┘ê┘â ╪º┘ä╪╡╪º╪»╪▒',
-      th_wh_time: '╪º┘ä┘ê┘é╪¬ ┘ê╪º┘ä╪¬╪º╪▒┘è╪«',
-      th_wh_event: '╪º┘ä╪¡╪»╪½',
-      th_wh_url: '╪º┘ä╪▒╪º╪¿╪╖',
-      th_wh_status: '╪▒┘à╪▓ ╪º╪│╪¬╪¼╪º╪¿╪⌐ HTTP',
-      th_wh_actions: '╪º┘ä╪╣┘à┘ä┘è╪º╪¬',
-      backup_keys_heading: '╪º┘ä┘à┘ü╪¬╪º╪¡ ╪º┘ä╪º╪¡╪¬┘è╪º╪╖┘è ┘ä┘ä╪╖┘ê╪º╪▒╪ª (┘ä╪¿╪º┘é╪⌐ Growth)',
-      backup_keys_desc: '╪Ñ╪»╪«╪º┘ä ┘à┘ü╪¬╪º╪¡ API ╪º┘ä╪«╪º╪╡ ╪¿┘â. ╪╣┘å╪» ┘å┘ü╪º╪░ ╪▒╪╡┘è╪» ╪¿╪º┘é╪¬┘â ╪º┘ä╪┤┘ç╪▒┘è╪î ╪│┘è┘é┘ê┘à ╪º┘ä┘å╪╕╪º┘à ╪¿╪º┘ä╪¬╪¡┘ê┘ä ╪¬┘ä┘é╪º╪ª┘è╪º┘ï ┘ä╪º╪│╪¬┘ç┘ä╪º┘â ┘à┘ü╪¬╪º╪¡┘â ┘ä┘à┘å╪╣ ╪¬┘ê┘é┘ü ╪º┘ä╪¿┘ê╪¬.',
-      label_backup_provider: '┘à╪▓┘ê╪» ╪º┘ä╪«╪»┘à╪⌐',
-      label_backup_key: '┘à┘ü╪¬╪º╪¡ ╪º┘ä┘Ç API',
-      label_backup_model: '╪º┘ä┘å┘à┘ê╪░╪¼ ╪º┘ä╪º┘ü╪¬╪▒╪º╪╢┘è',
-      label_backup_url: '╪▒╪º╪¿╪╖ Endpoint ┘à╪«╪╡╪╡',
-      btn_save_backup_settings: '╪¡┘ü╪╕ ┘à┘ü╪¬╪º╪¡ ╪º┘ä╪╖┘ê╪º╪▒╪ª',
-      btn_cancel: '╪Ñ┘ä╪║╪º╪í',
-      btn_save: '╪¡┘ü╪╕ ╪º┘ä┘é╪º╪╣╪»╪⌐',
-      label_faq_question: '╪º┘ä╪│╪ñ╪º┘ä / ╪º┘ä┘â┘ä┘à╪º╪¬ ╪º┘ä┘à┘ü╪¬╪º╪¡┘è╪⌐',
-      label_faq_answer: '╪º┘ä╪Ñ╪¼╪º╪¿╪⌐ ╪º┘ä┘à╪¬┘ê┘é╪╣╪⌐',
-      faq_question_placeholder: '┘à╪½╪º┘ä: ┘à┘ê╪º╪╣┘è╪» ╪º┘ä╪¬┘ê╪╡┘è┘ä',
-      faq_answer_placeholder: '┘à╪½╪º┘ä: ┘å┘ê╪╡┘ä ╪«┘ä╪º┘ä ╪½┘ä╪º╪½╪⌐ ╪ú┘è╪º┘à ╪╣┘à┘ä ╪»╪º╪«┘ä ╪º┘ä┘é╪º┘ç╪▒╪⌐.',
-      orders_empty: '┘ä╪º ╪¬┘ê╪¼╪» ╪╖┘ä╪¿╪º╪¬ ╪ú┘å╪┤╪ú┘ç╪º ╪º┘ä╪¿┘ê╪¬ ╪¿╪╣╪».',
-      bookings_empty: '┘ä╪º ╪¬┘ê╪¼╪» ┘à┘ê╪º╪╣┘è╪» ┘à╪¡╪¼┘ê╪▓╪⌐ ╪¿╪╣╪».',
-      api_keys_empty: '┘ä╪º ╪¬┘ê╪¼╪» ┘à┘ü╪º╪¬┘è╪¡ ┘ê╪╡┘ê┘ä ┘à┘å╪┤╪ú╪⌐ ╪¿╪╣╪».',
-      webhook_history_empty: '┘ä╪º ┘è┘ê╪¼╪» ╪│╪¼┘ä ┘ä╪¬╪│┘ä┘è┘à╪º╪¬ ╪º┘ä╪▒╪¿╪╖ ╪º┘ä╪¿╪▒┘à╪¼┘è ╪¿╪╣╪».',
-      admin_title: '┘ä┘ê╪¡╪⌐ ╪¬╪¡┘â┘à ┘à╪»┘è╪▒ ╪º┘ä┘å╪╕╪º┘à ╪º┘ä╪┤╪º┘à┘ä╪⌐',
-      admin_desc: '╪º┘ä╪¬╪¡┘â┘à ╪º┘ä┘â╪º┘à┘ä ┘ü┘è ╪º┘ä┘à╪│╪¬╪«╪»┘à┘è┘å╪î ╪º┘ä╪¬╪¼╪º╪▒╪î ╪º┘ä╪╡┘ä╪º╪¡┘è╪º╪¬╪î ╪º┘ä╪º┘å╪¬╪¡╪º┘ä ╪º┘ä┘à╪¿╪º╪┤╪▒ (Impersonation)╪î ┘ê╪Ñ╪»╪º╪▒╪⌐ ┘à┘ü╪º╪¬┘è╪¡ ╪º┘ä╪░┘â╪º╪í ╪º┘ä╪º╪╡╪╖┘å╪º╪╣┘è ╪º┘ä┘Ç Failover.',
-      admin_subtab_users: '╪Ñ╪»╪º╪▒╪⌐ ╪º┘ä┘à╪│╪¬╪«╪»┘à┘è┘å ┘ê╪º┘ä╪¬╪¼╪º╪▒',
-      admin_subtab_keys: '╪│┘è╪▒┘ü╪▒╪º╪¬ AI & Failover',
-      admin_users_title: '┘é╪º╪ª┘à╪⌐ ╪º┘ä┘à╪│╪¬╪«╪»┘à┘è┘å ┘ê╪º┘ä╪¬╪¼╪º╪▒ ╪º┘ä┘à╪│╪¼┘ä┘è┘å',
-      admin_users_desc: '╪Ñ╪»╪º╪▒╪⌐ ╪º┘ä╪ú╪»┘ê╪º╪▒╪î ╪º┘ä╪º╪┤╪¬╪▒╪º┘â╪º╪¬╪î ╪¬╪╣┘ä┘è┘é ╪º┘ä╪¡╪│╪º╪¿╪º╪¬╪î ┘ê╪º┘ä╪»╪«┘ê┘ä ╪º┘ä┘à╪¿╪º╪┤╪▒ ┘â┘Ç ┘à╪│╪¬╪«╪»┘à.',
-      admin_btn_add_user: '╪Ñ╪╢╪º┘ü╪⌐ ┘à╪│╪¬╪«╪»┘à / ╪¬╪º╪¼╪▒ ╪¼╪»┘è╪»',
-      th_user_username: '╪º╪│┘à ╪º┘ä┘à╪│╪¬╪«╪»┘à',
-      th_user_email: '╪º┘ä╪¿╪▒┘è╪» ╪º┘ä╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è',
-      th_user_role: '╪º┘ä╪»┘ê╪▒ (Role)',
-      th_user_tier: '╪¿╪º┘é╪⌐ ╪º┘ä╪º╪┤╪¬╪▒╪º┘â',
-      th_user_status: '╪º┘ä╪¡╪º┘ä╪⌐',
-      th_user_bots: '╪º┘ä╪¿┘ê╪¬╪º╪¬',
-      th_user_actions: '╪º┘ä╪Ñ╪¼╪▒╪º╪í╪º╪¬ ╪º┘ä╪│╪▒┘è╪╣╪⌐',
-      admin_loading_users: '╪¼╪º╪▒┘è ╪¬╪¡┘à┘è┘ä ┘é╪º╪ª┘à╪⌐ ╪º┘ä┘à╪│╪¬╪«╪»┘à┘è┘å...',
-      admin_active_keys: '┘à┘ü╪º╪¬┘è╪¡ ╪º┘ä┘ê╪╡┘ê┘ä ╪º┘ä╪╣╪º┘à╪⌐ ╪º┘ä┘å╪┤╪╖╪⌐ ┘ê╪¬╪▒╪¬┘è╪¿ ╪º┘ä╪ú┘ê┘ä┘ê┘è╪⌐',
-      admin_btn_reset: '╪Ñ╪╣╪º╪»╪⌐ ╪¬┘ç┘è╪ª╪⌐ ╪º┘ä┘à┘ü╪º╪¬┘è╪¡ ╪º┘ä┘à╪╣╪╖┘ä╪⌐',
-      admin_register_key: '╪¬╪│╪¼┘è┘ä ┘à┘ü╪¬╪º╪¡ ┘å╪╕╪º┘à ╪╣╪º┘à ╪¼╪»┘è╪»',
-      admin_label_name: '╪º╪│┘à ╪º┘ä┘à┘ü╪¬╪º╪¡ / ╪º┘ä┘ê╪╡┘ü',
-      admin_label_provider: '┘à╪▓┘ê╪» ╪º┘ä╪░┘â╪º╪í ╪º┘ä╪º╪╡╪╖┘å╪º╪╣┘è',
-      admin_label_key: '┘à┘ü╪¬╪º╪¡ ╪º┘ä┘Ç API',
-      admin_label_model: '╪º┘ä┘å┘à┘ê╪░╪¼ ╪º┘ä╪º┘ü╪¬╪▒╪º╪╢┘è',
-      admin_label_priority: '┘à╪│╪¬┘ê┘ë ╪º┘ä╪ú┘ê┘ä┘ê┘è╪⌐ (1 = ╪º┘ä╪ú╪╣┘ä┘ë)',
-      admin_label_base_url: '╪▒╪º╪¿╪╖ Endpoint ┘à╪«╪╡╪╡ (╪º╪«╪¬┘è╪º╪▒┘è)',
-      admin_btn_register: '╪¬╪│╪¼┘è┘ä ┘à┘ü╪¬╪º╪¡ ╪º┘ä┘å╪╕╪º┘à',
-      admin_no_keys: '┘ä╪º ╪¬┘ê╪¼╪» ┘à┘ü╪º╪¬┘è╪¡ ┘å╪╕╪º┘à ╪╣╪º┘à╪⌐ ┘à╪│╪¼┘ä╪⌐ ╪¡╪º┘ä┘è╪º┘ï. ┘é┘à ╪¿╪Ñ╪╢╪º┘ü╪⌐ ┘à┘ü╪¬╪º╪¡ ┘à┘å ╪º┘ä┘å┘à┘ê╪░╪¼ ╪º┘ä╪¼╪º┘å╪¿┘è.',
-      admin_status_working: '┘è╪╣┘à┘ä',
-      admin_status_failed: '┘à╪╣╪╖┘ä',
-      admin_lbl_provider: '╪º┘ä┘à╪▓┘ê╪»',
-      admin_lbl_model: '╪º┘ä┘å┘à┘ê╪░╪¼',
-      admin_lbl_priority: '╪º┘ä╪ú┘ê┘ä┘ê┘è╪⌐',
-      admin_subtab_overview: '┘å╪╕╪▒╪⌐ ╪╣╪º┘à╪⌐ ╪╣┘ä┘ë ╪º┘ä┘å╪╕╪º┘à',
-      admin_subtab_audit: '╪│╪¼┘ä ╪º┘ä╪¬╪»┘é┘è┘é ┘ê╪º┘ä╪¼┘ä╪│╪º╪¬',
-      admin_subtab_notify: '╪º┘ä╪Ñ╪┤╪╣╪º╪▒╪º╪¬',
-      training_general_title: '╪º┘ä╪¬╪╣┘ä┘è┘à╪º╪¬ ╪º┘ä╪╣╪º┘à╪⌐ ┘ä┘ä┘ê┘â┘è┘ä',
-      training_general_desc: '╪¬┘ê╪¼┘è┘ç╪º╪¬ ╪½╪º╪¿╪¬╪⌐ ╪¬╪¡╪»╪» ┘ç┘ê┘è╪⌐ ┘ê╪│┘ä┘ê┘â ╪º┘ä┘ê┘â┘è┘ä. ┘à┘å┘é┘ê┘ä╪⌐ ┘à┘å ╪º┘ä┘à┘å╪╡╪⌐ ╪º┘ä╪│╪º╪¿┘é╪⌐ ┘ê╪¬┘Å╪¡┘é┘å ┘ü┘è ┘â┘ä ╪▒╪».',
-      btn_add_instruction: '╪Ñ╪╢╪º┘ü╪⌐ ╪¬╪╣┘ä┘è┘à╪º╪¬',
-      label_instruction_content: '╪º┘ä╪¬╪╣┘ä┘è┘à╪º╪¬',
-      instruction_content_placeholder: '┘à╪½╪º┘ä: ╪▒╪¡╪¿ ╪¿╪º┘ä╪╣┘à┘è┘ä ╪»╪º╪ª┘à╪º┘ï ╪¿╪º┘ä╪╣╪º┘à┘è╪⌐ ╪º┘ä┘à╪╡╪▒┘è╪⌐ ┘ê┘ä╪º ╪¬╪░┘â╪▒ ╪ú╪│╪╣╪º╪▒╪º┘ï ╪«╪º╪▒╪¼ ╪º┘ä┘â╪¬╪º┘ä┘ê╪¼.',
-      training_empty_general: '┘ä╪º ╪¬┘ê╪¼╪» ╪¬╪╣┘ä┘è┘à╪º╪¬ ╪╣╪º┘à╪⌐ ╪¿╪╣╪». ╪ú╪╢┘ü ╪º┘ä╪¬┘ê╪¼┘è┘ç╪º╪¬ ╪º┘ä╪¬┘è ╪¬╪¡╪»╪» ┘ç┘ê┘è╪⌐ ╪º┘ä┘ê┘â┘è┘ä.',
-      ov_users_total: '╪Ñ╪¼┘à╪º┘ä┘è ╪º┘ä┘à╪│╪¬╪«╪»┘à┘è┘å',
-      ov_users_active: '┘à╪│╪¬╪«╪»┘à┘ê┘å ┘å╪┤╪╖┘ê┘å',
-      ov_bots_total: '╪Ñ╪¼┘à╪º┘ä┘è ╪º┘ä┘ê┘â┘ä╪º╪í',
-      ov_bots_active: '┘ê┘â┘ä╪º╪í ┘å╪┤╪╖┘ê┘å',
-      ov_conversations: '╪º┘ä┘à╪¡╪º╪»╪½╪º╪¬',
-      ov_messages: '╪º┘ä╪▒╪│╪º╪ª┘ä',
-      ov_chat_orders: '╪╖┘ä╪¿╪º╪¬ ╪º┘ä┘à╪¡╪º╪»╪½╪º╪¬',
-      ov_active_sessions: '╪º┘å╪¬╪¡╪º┘ä╪º╪¬ ┘å╪┤╪╖╪⌐',
-      ov_audit_events: '╪ú╪¡╪»╪º╪½ ╪º┘ä╪¬╪»┘é┘è┘é',
-      audit_sessions_title: '╪¼┘ä╪│╪º╪¬ ╪º┘ä╪º┘å╪¬╪¡╪º┘ä',
-      audit_sessions_desc: '┘â┘ä ╪¼┘ä╪│╪⌐ ╪º┘å╪¬╪¡╪º┘ä ┘è┘é┘ê┘à ╪¿┘ç╪º ╪º┘ä╪ú╪»┘à┘å ┘à╪╣ ╪│╪¿╪¿┘ç╪º ┘ê╪¡╪º┘ä╪¬┘ç╪º ┘ê┘à╪»╪¬┘ç╪º.',
-      th_session_actor: '╪º┘ä╪ú╪»┘à┘å',
-      th_session_subject: '╪º┘ä┘à╪│╪¬╪«╪»┘à ╪º┘ä┘à╪│╪¬┘ç╪»┘ü',
-      th_session_reason: '╪º┘ä╪│╪¿╪¿',
-      th_session_status: '╪º┘ä╪¡╪º┘ä╪⌐',
-      th_session_started: '╪¿╪»╪ú╪¬',
-      th_session_expires: '╪¬┘å╪¬┘ç┘è',
-      admin_loading_sessions: '╪¼╪º╪▒┘è ╪¬╪¡┘à┘è┘ä ╪º┘ä╪¼┘ä╪│╪º╪¬...',
-      audit_events_title: '╪│╪¼┘ä ╪º┘ä╪¬╪»┘é┘è┘é',
-      audit_events_desc: '╪│╪¼┘ä ┘à┘Å╪«┘ü┘ë ╪º┘ä╪¿┘è╪º┘å╪º╪¬ ╪º┘ä╪¡╪│╪º╪│╪⌐ ┘ä┘â┘ä ╪¬╪╣╪»┘è┘ä ┘é╪º┘à ╪¿┘ç ╪ú╪»┘à┘å ╪ú┘ê ╪ú╪½┘å╪º╪í ╪º┘å╪¬╪¡╪º┘ä ╪º┘ä┘ç┘ê┘è╪⌐.',
-      audit_filter_type: '╪¬╪╡┘ü┘è╪⌐ ╪¡╪│╪¿ ┘å┘ê╪╣ ╪º┘ä╪¡╪»╪½',
-      audit_filter_all: '┘â┘ä ╪º┘ä╪ú╪¡╪»╪º╪½',
-      audit_type_started: '╪¿╪»╪í ╪º┘å╪¬╪¡╪º┘ä ┘ç┘ê┘è╪⌐',
-      audit_type_ended: '╪Ñ┘å┘ç╪º╪í ╪º┘å╪¬╪¡╪º┘ä ┘ç┘ê┘è╪⌐',
-      audit_type_imp_write: '╪¬╪╣╪»┘è┘ä ╪ú╪½┘å╪º╪í ╪º┘å╪¬╪¡╪º┘ä',
-      audit_type_admin_write: '╪¬╪╣╪»┘è┘ä ╪Ñ╪»╪º╪▒┘è ┘à╪¿╪º╪┤╪▒',
-      th_event_when: '╪º┘ä┘ê┘é╪¬',
-      th_event_type: '╪º┘ä╪¡╪»╪½',
-      th_event_actor: '╪º┘ä┘à┘å┘ü╪░ ΓåÉ ╪º┘ä┘ç╪»┘ü',
-      th_event_action: '╪º┘ä╪Ñ╪¼╪▒╪º╪í',
-      th_event_outcome: '╪º┘ä┘å╪¬┘è╪¼╪⌐',
-      admin_loading_events: '╪¼╪º╪▒┘è ╪¬╪¡┘à┘è┘ä ╪│╪¼┘ä ╪º┘ä╪¬╪»┘é┘è┘é...',
-      admin_empty_sessions: '┘ä╪º ╪¬┘ê╪¼╪» ╪¼┘ä╪│╪º╪¬ ╪º┘å╪¬╪¡╪º┘ä ┘à╪│╪¼┘ä╪⌐ ╪¿╪╣╪».',
-      admin_empty_events: '┘ä╪º ╪¬┘ê╪¼╪» ╪ú╪¡╪»╪º╪½ ╪¬╪»┘é┘è┘é ┘à╪╖╪º╪¿┘é╪⌐ ┘ä┘ç╪░╪º ╪º┘ä┘ü┘ä╪¬╪▒ ╪¿╪╣╪».',
-      notify_title: '╪Ñ╪▒╪│╪º┘ä ╪Ñ╪┤╪╣╪º╪▒ ┘ä┘ä┘à┘å╪╡╪⌐',
-      notify_desc: '╪ú╪▒╪│┘ä ╪Ñ╪┤╪╣╪º╪▒╪º┘ï ╪»╪º╪«┘ä ╪º┘ä┘à┘å╪╡╪⌐ ┘ä┘â┘ä ╪º┘ä╪¡╪│╪º╪¿╪º╪¬ ╪ú┘ê ┘ä┘à╪│╪¬╪«╪»┘à ┘à╪¡╪»╪».',
-      notify_target: '╪º┘ä┘ê╪¼┘ç╪⌐',
-      notify_target_all: '┘â┘ä ╪º┘ä┘à╪│╪¬╪«╪»┘à┘è┘å',
-      notify_target_single: '┘à╪│╪¬╪«╪»┘à ┘à╪¡╪»╪» (╪¿╪º╪│┘à ╪º┘ä┘à╪│╪¬╪«╪»┘à)',
-      notify_username_label: '╪º╪│┘à ╪º┘ä┘à╪│╪¬╪«╪»┘à',
-      notify_title_label: '╪º┘ä╪╣┘å┘ê╪º┘å',
-      notify_body_label: '┘å╪╡ ╪º┘ä╪▒╪│╪º┘ä╪⌐',
-      notify_send_btn: '╪Ñ╪▒╪│╪º┘ä ╪º┘ä╪Ñ╪┤╪╣╪º╪▒',
-      notify_sent_ok: '╪¬┘à ╪Ñ╪▒╪│╪º┘ä ╪º┘ä╪Ñ╪┤╪╣╪º╪▒ ╪¿┘å╪¼╪º╪¡!',
-      notify_failed: '╪¬╪╣╪░╪▒ ╪Ñ╪▒╪│╪º┘ä ╪º┘ä╪Ñ╪┤╪╣╪º╪▒.',
-      admin_subtab_landing_demo: '╪¿┘ê╪¬ ╪¬╪¼╪▒╪¿╪⌐ ╪º┘ä╪╡┘ü╪¡╪⌐ ╪º┘ä╪▒╪ª┘è╪│┘è╪⌐',
-      landing_demo_title: '┘ê┘â┘è┘ä ╪¬╪¼╪▒╪¿╪⌐ ╪º┘ä╪╡┘ü╪¡╪⌐ ╪º┘ä╪▒╪ª┘è╪│┘è╪⌐',
-      landing_demo_desc: '┘è╪¬╪¡┘â┘à ┘ü┘è ┘ê┘â┘è┘ä ╪º┘ä╪░┘â╪º╪í ╪º┘ä╪º╪╡╪╖┘å╪º╪╣┘è ╪º┘ä╪¡┘é┘è┘é┘è ╪º┘ä╪░┘è ┘è╪¼┘è╪¿ ╪╣┘ä┘ë ╪ú╪│╪ª┘ä╪⌐ ╪º┘ä╪▓┘ê╪º╪▒ ╪»╪º╪«┘ä ┘à╪¡╪º╪»╪½╪⌐ "╪¼╪▒┘æ╪¿┘ç╪º ┘à╪¿╪º╪┤╪▒╪⌐" ┘ü┘è ╪º┘ä╪╡┘ü╪¡╪⌐ ╪º┘ä╪▒╪ª┘è╪│┘è╪⌐.',
-      landing_demo_enable_label: '╪¬┘ü╪╣┘è┘ä ╪º┘ä╪¬╪¼╪▒╪¿╪⌐ ╪º┘ä╪¡┘è╪⌐ ╪¿╪º┘ä╪░┘â╪º╪í ╪º┘ä╪º╪╡╪╖┘å╪º╪╣┘è',
-      landing_demo_instructions_label: '╪¬╪╣┘ä┘è┘à╪º╪¬ ╪º┘ä┘ê┘â┘è┘ä',
-      landing_demo_instructions_placeholder: '┘å╪¿╪▒╪⌐ ╪Ñ╪╢╪º┘ü┘è╪⌐╪î ╪¡╪»┘ê╪»╪î ╪╣╪▒┘ê╪╢╪î ╪ú┘ê ┘à╪╣┘ä┘ê┘à╪º╪¬ ┘è╪¼╪¿ ╪╣┘ä┘ë ╪º┘ä┘ê┘â┘è┘ä ╪º┘ä╪º┘ä╪¬╪▓╪º┘à ╪¿┘ç╪º ╪ú╪½┘å╪º╪í ╪º┘ä╪¬╪¼╪▒╪¿╪⌐.',
-      landing_demo_instructions_hint: '╪¬┘Å╪╢╪º┘ü ┘ç╪░┘ç ╪º┘ä╪¬╪╣┘ä┘è┘à╪º╪¬ ┘ü┘ê┘é ┘é╪º╪╣╪»╪⌐ ╪º┘ä┘à╪╣╪▒┘ü╪⌐ ╪º┘ä┘à╪»┘à╪¼╪⌐ ╪º┘ä╪«╪º╪╡╪⌐ ╪¿╪º┘ä┘à┘å╪╡╪⌐.',
-      landing_demo_save_btn: '╪¡┘ü╪╕ ╪º┘ä╪Ñ╪╣╪»╪º╪»╪º╪¬',
-      landing_demo_saved_ok: '╪¬┘à ╪º┘ä╪¡┘ü╪╕ ╪¿┘å╪¼╪º╪¡!',
-      landing_demo_save_failed: '╪¬╪╣╪░╪▒ ╪¡┘ü╪╕ ╪º┘ä╪Ñ╪╣╪»╪º╪»╪º╪¬.',
-      landing_demo_updated_at: '╪ó╪«╪▒ ╪¬╪¡╪»┘è╪½',
-      model_select_heading: '┘à┘ê╪»┘è┘ä ╪º┘ä╪░┘â╪º╪í ╪º┘ä╪º╪╡╪╖┘å╪º╪╣┘è',
-      model_select_desc: '╪º╪«╪¬╪▒ "╪¬┘ä┘é╪º╪ª┘è" ┘ä┘è╪«╪¬╪º╪▒ ╪º┘ä┘å╪╕╪º┘à ╪ú┘ü╪╢┘ä ┘à┘ê╪»┘è┘ä ┘à╪¬╪º╪¡ ┘ä╪¿╪º┘é╪¬┘â╪î ╪ú┘ê ╪¡╪»╪» ┘à┘ê╪»┘è┘ä╪º┘ï ┘à╪╣┘è┘å╪º┘ï ┘à┘å ╪º┘ä┘é╪º╪ª┘à╪⌐ ╪º┘ä┘à┘ü╪╣┘æ┘ä╪⌐ ┘ä╪¡╪│╪º╪¿┘â.',
-      model_select_label: '╪º┘ä┘à┘ê╪»┘è┘ä',
-      model_select_auto: '╪¬┘ä┘é╪º╪ª┘è (┘à╪│╪¬╪¡╪│┘å)',
-      model_select_save: '╪¡┘ü╪╕ ╪º┘ä┘à┘ê╪»┘è┘ä',
-      model_saved_ok: '╪¬┘à ╪¡┘ü╪╕ ╪º╪«╪¬┘è╪º╪▒ ╪º┘ä┘à┘ê╪»┘è┘ä ╪¿┘å╪¼╪º╪¡!',
-      model_save_failed: '┘ç╪░╪º ╪º┘ä┘à┘ê╪»┘è┘ä ╪║┘è╪▒ ┘à╪¬╪º╪¡ ┘ü┘è ╪¿╪º┘é╪¬┘â ╪º┘ä╪¡╪º┘ä┘è╪⌐.',
-      model_loading_list: '╪¼╪º╪▒┘è ╪¬╪¡┘à┘è┘ä ╪º┘ä┘à┘ê╪»┘è┘ä╪º╪¬ ╪º┘ä┘à╪¬╪º╪¡╪⌐...',
-      orders_bookings_title: '╪Ñ╪»╪º╪▒╪⌐ ╪º┘ä╪╖┘ä╪¿╪º╪¬ ┘ê╪º┘ä┘à┘ê╪º╪╣┘è╪»',
-      orders_bookings_subtitle: '╪Ñ╪»╪º╪▒╪⌐ ╪º┘ä╪╖┘ä╪¿╪º╪¬ ╪º┘ä┘à┘å╪┤╪ú╪⌐ ┘à┘å ╪º┘ä┘à╪¡╪º╪»╪½╪º╪¬ ┘ê╪¬┘å╪│┘è┘é ┘ê╪¼╪»┘ê┘ä╪⌐ ┘ê╪¬╪¬╪¿╪╣ ┘à┘ê╪º╪╣┘è╪» ╪º┘ä╪╣┘à┘ä╪º╪í ╪¿╪┤┘â┘ä ┘ü┘ê╪▒┘è.',
-      btn_new_booking: '┘à┘ê╪╣╪» ╪¼╪»┘è╪»',
-      btn_new_order: '╪╖┘ä╪¿ ╪¼╪»┘è╪»',
-      btn_refresh: '╪¬╪¡╪»┘è╪½',
-      stat_orders_total: '╪Ñ╪¼┘à╪º┘ä┘è ╪º┘ä╪╖┘ä╪¿╪º╪¬',
-      stat_orders_pending: '╪╖┘ä╪¿╪º╪¬ ┘à╪╣┘ä┘é╪⌐',
-      stat_bookings_total: '╪Ñ╪¼┘à╪º┘ä┘è ╪º┘ä┘à┘ê╪º╪╣┘è╪»',
-      stat_bookings_confirmed: '┘à┘ê╪º╪╣┘è╪» ┘à╪ñ┘â╪»╪⌐',
-      orders_search_placeholder: '╪º╪¿╪¡╪½ ╪¿╪º╪│┘à ╪º┘ä╪╣┘à┘è┘ä ╪ú┘ê ╪º┘ä┘ç╪º╪¬┘ü ╪ú┘ê ┘å┘ê╪╣ ╪º┘ä╪«╪»┘à╪⌐...',
-      orders_status_filter: '╪¬╪╡┘ü┘è╪⌐ ╪¡╪│╪¿ ╪º┘ä╪¡╪º┘ä╪⌐',
-      orders_type_filter: '╪¬╪╡┘ü┘è╪⌐ ┘å┘ê╪╣ ╪º┘ä╪│╪¼┘ä',
-      filter_all_statuses: '┘â┘ä ╪º┘ä╪¡╪º┘ä╪º╪¬',
-      status_pending: '┘é┘è╪» ╪º┘ä╪º┘å╪¬╪╕╪º╪▒',
-      status_processing: '┘é┘è╪» ╪º┘ä╪¬╪¼┘ç┘è╪▓',
-      status_confirmed: '┘à╪ñ┘â╪»',
-      status_completed: '┘à┘â╪¬┘à┘ä',
-      status_rescheduled: '┘à┘Å╪╣╪º╪» ╪¼╪»┘ê┘ä╪¬┘ç',
-      status_shipped: '╪¬┘à ╪º┘ä╪┤╪¡┘å',
-      status_delivered: '╪¬┘à ╪º┘ä╪¬╪│┘ä┘è┘à',
-      status_cancelled: '┘à┘ä╪║┘è',
-      filter_view_all: '┘â┘ä ╪º┘ä╪│╪¼┘ä╪º╪¬',
-      filter_view_orders: '╪º┘ä╪╖┘ä╪¿╪º╪¬ ┘ü┘é╪╖',
-      filter_view_bookings: '╪º┘ä┘à┘ê╪º╪╣┘è╪» ┘ü┘é╪╖',
-      appointments_list_title: '╪¬┘é┘ê┘è┘à ╪º┘ä┘à┘ê╪º╪╣┘è╪» ┘ê╪º┘ä╪¡╪¼┘ê╪▓╪º╪¬ ╪º┘ä╪░┘â┘è╪⌐',
-      th_booking_id: '╪▒┘é┘à ╪º┘ä╪¡╪¼╪▓',
-      th_booking_customer: '╪º┘ä╪╣┘à┘è┘ä',
-      th_booking_phone: '╪º┘ä┘ç╪º╪¬┘ü',
-      th_booking_service: '╪º┘ä╪«╪»┘à╪⌐ / ╪º┘ä╪║╪▒╪╢',
-      th_booking_time: '╪º┘ä╪¬╪º╪▒┘è╪« ┘ê╪º┘ä┘ê┘é╪¬',
-      th_booking_status: '╪º┘ä╪¡╪º┘ä╪⌐',
-      th_booking_actions: '╪º┘ä╪Ñ╪¼╪▒╪º╪í╪º╪¬',
-      chat_orders_list_title: '╪╖┘ä╪¿╪º╪¬ ╪¬┘à ╪Ñ┘å╪┤╪º╪ñ┘ç╪º ╪¬┘ä┘é╪º╪ª┘è╪º┘ï ╪¿╪º┘ä╪░┘â╪º╪í ╪º┘ä╪º╪╡╪╖┘å╪º╪╣┘è',
-      th_order_id: '╪▒┘é┘à ╪º┘ä╪╖┘ä╪¿',
-      th_customer: '╪º╪│┘à ╪º┘ä╪╣┘à┘è┘ä',
-      th_phone: '╪º┘ä┘ç╪º╪¬┘ü',
-      th_items: '╪º┘ä┘à┘å╪¬╪¼╪º╪¬',
-      th_total: '╪º┘ä╪Ñ╪¼┘à╪º┘ä┘è',
-      th_status: '╪º┘ä╪¡╪º┘ä╪⌐',
-      th_order_actions: '╪º┘ä╪Ñ╪¼╪▒╪º╪í╪º╪¬',
-      notification_recipients_title: '┘é┘å┘ê╪º╪¬ ┘ê┘à╪│╪¬┘ä┘à┘è ╪º┘ä╪Ñ╪┤╪╣╪º╪▒╪º╪¬ ╪º┘ä┘ü┘ê╪▒┘è╪⌐',
-      notification_recipients_desc: '╪▒╪¿╪╖ ╪ú╪▒┘é╪º┘à ┘ê╪º╪¬╪│╪º╪¿ ┘ê╪¡╪│╪º╪¿╪º╪¬ ╪ú┘ê ┘é┘å┘ê╪º╪¬ ╪¬┘è┘ä┘è╪¼╪▒╪º┘à ┘à╪¬╪╣╪»╪»╪⌐ ┘ä╪¬┘ä┘é┘è ╪Ñ╪┤╪╣╪º╪▒╪º╪¬ ┘ü┘ê╪▒┘è╪⌐ ╪╣┘å╪» ╪Ñ┘å╪┤╪º╪í ╪º┘ä╪╖┘ä╪¿╪º╪¬ ┘ê╪º┘ä┘à┘ê╪º╪╣┘è╪».',
-      btn_add_recipient: '╪Ñ╪╢╪º┘ü╪⌐ ┘é┘å╪º╪⌐ ╪Ñ╪┤╪╣╪º╪▒╪º╪¬',
-      recipient_tier_free_hint: '╪º┘ä╪¿╪º┘é╪⌐ ╪º┘ä┘à╪¼╪º┘å┘è╪⌐ ╪¬╪¬┘è╪¡ ┘é┘å╪º╪⌐ ┘ê╪º╪¡╪»╪⌐ ┘ü┘é╪╖ ┘ä╪¬┘ä┘é┘è ╪º┘ä╪Ñ╪┤╪╣╪º╪▒╪º╪¬. ┘é┘à ╪¿╪º┘ä╪¬╪▒┘é┘è╪⌐ ┘ä╪¿╪º┘é╪⌐ Growth ┘ä┘é┘å┘ê╪º╪¬ ╪║┘è╪▒ ┘à╪¡╪»┘ê╪»╪⌐.',
-      upgrade_plan_link: '╪¬╪▒┘é┘è╪⌐ ╪º┘ä╪¿╪º┘é╪⌐',
-      th_rec_channel: '╪º┘ä┘é┘å╪º╪⌐',
-      th_rec_target: '╪º┘ä╪▒┘é┘à / ╪º┘ä┘à╪╣╪▒┘ü ╪º┘ä┘à╪│╪¬┘ç╪»┘ü',
-      th_rec_label: '╪º┘ä┘ê╪╡┘ü / ╪º┘ä┘ü╪▒┘è┘é',
-      th_rec_events: '╪ú╪¡╪»╪º╪½ ╪º┘ä╪Ñ╪┤╪╣╪º╪▒',
-      th_rec_status: '╪º┘ä╪¡╪º┘ä╪⌐',
-      th_rec_actions: '╪º┘ä╪Ñ╪¼╪▒╪º╪í╪º╪¬',
-      agent_tools_section_title: '╪ú╪»┘ê╪º╪¬ ╪º┘ä┘ê┘â┘è┘ä',
-      agent_tool_booking_title: '╪ú╪»╪º╪⌐ ╪¡╪¼╪▓ ┘ê╪¼╪»┘ê┘ä╪⌐ ╪º┘ä┘à┘ê╪º╪╣┘è╪»',
-      agent_booking_hours_label: '╪│╪º╪╣╪º╪¬ ╪º┘ä╪╣┘à┘ä',
-      agent_booking_service_label: '╪º┘ä╪«╪»┘à╪⌐ ╪º┘ä╪º┘ü╪¬╪▒╪º╪╢┘è╪⌐ / ╪º┘ä╪║╪▒╪╢',
-      agent_tool_orders_title: '╪ú╪»╪º╪⌐ ╪¬╪¬╪¿╪╣ ┘ê╪Ñ╪»╪º╪▒╪⌐ ╪º┘ä╪╖┘ä╪¿╪º╪¬',
-      agent_tool_wa_title: '╪ú╪»╪º╪⌐ ╪Ñ╪▒╪│╪º┘ä ╪Ñ╪┤╪╣╪º╪▒╪º╪¬ ┘ê╪º╪¬╪│╪º╪¿ ╪º┘ä┘ü┘ê╪▒┘è╪⌐',
-      agent_tool_tg_title: '╪ú╪»╪º╪⌐ ╪Ñ╪▒╪│╪º┘ä ╪Ñ╪┤╪╣╪º╪▒╪º╪¬ ╪¬┘è┘ä┘è╪¼╪▒╪º┘à ╪º┘ä┘ü┘ê╪▒┘è╪⌐',
-      agent_skills_section_title: '┘à┘ç╪º╪▒╪º╪¬ ╪º┘ä┘ê┘â┘è┘ä',
-      skill_sales: '╪º╪│╪¬╪┤╪º╪▒┘è ┘à╪¿┘è╪╣╪º╪¬ ╪░┘â┘è',
-      skill_appointments: '┘à┘å╪│┘é ┘à┘ê╪º╪╣┘è╪» ┘ê╪¡╪¼┘ê╪▓╪º╪¬',
-      skill_orders: '┘à╪»┘è╪▒ ╪╖┘ä╪¿╪º╪¬ ┘ê╪┤╪¡┘å',
-      skill_support: '╪ú╪«╪╡╪º╪ª┘è ╪»╪╣┘à ┘ê╪┤┘â╪º┘ê┘ë',
-      skill_winback: '╪º╪│╪¬╪▒╪¼╪º╪╣ ╪º┘ä╪╣┘à┘ä╪º╪í ╪║┘è╪▒ ╪º┘ä┘å╪┤╪╖┘è┘å',
-      booking_modal_title: '╪Ñ╪»╪º╪▒╪⌐ ╪º┘ä╪¡╪¼╪▓ ┘ê╪º┘ä┘à┘ê╪╣╪»',
-      label_customer_name: '╪º╪│┘à ╪º┘ä╪╣┘à┘è┘ä',
-      placeholder_customer_name: '╪º┘ä╪º╪│┘à ╪¿╪º┘ä┘â╪º┘à┘ä',
-      label_customer_phone: '╪▒┘é┘à ╪º┘ä┘ç╪º╪¬┘ü',
+      set_no_agent: 'لا يوجد وكيل نشط بعد. أنشئ وكيلاً أو اختر واحداً من صفحة الوكلاء.',
+      set_state_enabled: 'مفعل',
+      set_state_disabled: 'متوقف',
+      set_value_not_set: 'غير محدد',
+      set_label_welcome: 'رسالة الترحيب',
+      set_label_persona_rules: 'تعليمات الشخصية',
+      set_unit_lines: 'سطر',
+      set_label_objectives: 'الأهداف',
+      set_label_handoff: 'كلمات التحويل للموظف',
+      set_label_auto_reply: 'الرد التلقائي',
+      set_label_tools: 'الأدوات',
+      set_label_skills: 'المهارات',
+      set_tool_booking: 'الحجوزات والمواعيد',
+      set_tool_orders: 'تتبع الطلبات',
+      set_tool_wa: 'تنبيهات واتساب',
+      set_tool_tg: 'تنبيهات تليجرام',
+      set_tool_recovery: 'استعادة المبيعات المتروكة',
+      set_tool_digest: 'التقرير اليومي',
+      set_tool_upsell: 'البيع الذكي',
+      admin_search_placeholder: 'ابحث بالاسم أو البريد أو واتساب',
+      admin_filter_role: 'تصفية حسب الدور',
+      admin_filter_status: 'تصفية حسب الحالة',
+      admin_filter_tier: 'تصفية حسب الباقة',
+      admin_all_roles: 'كل الأدوار',
+      admin_visible_accounts: 'الحسابات الظاهرة',
+      admin_all_tiers: 'كل الباقات',
+      admin_apply: 'تطبيق',
+      admin_previous: 'السابق',
+      admin_next: 'التالي',
+      admin_user_modal: 'إدارة الحساب',
+      admin_username: 'اسم المستخدم',
+      admin_email: 'البريد الإلكتروني',
+      admin_whatsapp: 'واتساب',
+      admin_role: 'الدور',
+      admin_user: 'مستخدم',
+      admin_superadmin: 'مدير عام',
+      admin_subscription: 'نوع الاشتراك',
+      admin_plan_tier: 'الباقة',
+      admin_free: 'مجاني',
+      admin_monthly: 'شهري',
+      admin_yearly: 'سنوي',
+      admin_active: 'نشط',
+      admin_suspended: 'موقوف',
+      admin_verification: 'التوثيق',
+      admin_verified: 'موثق',
+      admin_not_verified: 'غير موثق',
+      admin_daily_usage: 'الرسائل المستخدمة اليوم',
+      admin_monthly_usage: 'الرسائل المستخدمة شهريًا',
+      admin_temporary_password: 'كلمة مرور مؤقتة',
+      admin_password_help: 'اتركها فارغة للإبقاء على كلمة المرور الحالية.',
+      admin_confirm_password: 'تأكيد كلمة المرور',
+      admin_save_user: 'حفظ الحساب',
+      impersonation_title: 'بدء دخول مؤقت مسجل',
+      impersonation_desc: 'سيبدأ هذا دخولًا مؤقتًا ومسجلًا. اكتب سبب الدخول.',
+      impersonation_reason: 'سبب الدخول',
+      impersonation_continue: 'متابعة',
+      logout: 'تسجيل الخروج',
+      account_quota_remaining: 'الرسائل المتبقية',
+      account_settings: 'إعدادات الحساب',
+      stat_conversations: 'المحادثات',
+      stat_messages: 'الرسائل التي تمت معالجتها',
+      stat_connected_channels: 'القنوات المرتبطة',
+      stat_training_rules: 'قواعد التدريب',
+      workspace_status_title: 'حالة مساحة العمل',
+      workspace_status_desc: 'ملخص مباشر للبوت المحدد حاليًا في مساحة العمل.',
+      workspace_active_bot: 'البوت النشط',
+      workspace_auto_reply: 'الرد التلقائي بالذكاء الاصطناعي',
+      workspace_orders: 'طلبات من المحادثات',
+      status_enabled: 'مفعّل',
+      status_disabled: 'متوقف',
+      quota_unlimited: 'غير محدود',
+      stat_active_chats: 'المحادثات النشطة',
+      stat_response_speed: 'سرعة الاستجابة',
+      stat_satisfaction: 'رضا العملاء',
+      stat_orders_count: 'الطلبات المكتملة',
+      usage_summary_title: 'الخطة الشهرية والاستهلاك',
+      current_plan_label: 'الباقة الحالية:',
+      conversations_used_label: 'المحادثات المستهلكة',
+      performance_chart_title: 'معدل حجم المحادثات اليومي',
+      funnel_title: 'قمع المبيعات',
+      funnel_leads: 'العملاء المحتملين الجدد',
+      funnel_qualified: 'العملاء المؤهلين',
+      funnel_closed: 'الطلبات المكتملة',
+      inbox_chat_list_title: 'خلاصة المحادثات',
+      inbox_empty: 'لا توجد محادثات نشطة.',
+      auto_reply_toggle_label: 'الرد التلقائي للبوت',
+      select_chat_instructions: 'اختر محادثة من القائمة الجانبية لعرض السجل والتفاعل البشري المباشر.',
+      chat_reply_placeholder: 'اكتب رسالة للتدخل في المحادثة...',
+      training_title: 'مركز تدريب البوت',
+      training_brand_guidelines_title: 'إرشادات الهوية والتوجيه',
+      label_welcome_message: 'رسالة الترحيب',
+      label_custom_instructions: 'تعليمات شخصية البوت',
+      training_welcome_placeholder: 'اكتب رسالة الترحيب التي يراها العميل...',
+      training_persona_placeholder: 'مثال: اشرح نبرة البوت ومسؤولياته وقواعد تحويل المحادثة لموظف.',
+      training_empty_faqs: 'لا توجد أسئلة شائعة بعد. أضف أول سؤال وجواب.',
+      save_guidelines_btn: 'حفظ الإعدادات',
+      training_faqs_title: 'قائمة الأسئلة الشائعة والأجوبة',
+      btn_add_faq: 'إضافة سؤال وجواب',
+      channels_title: 'ربط وتفعيل قنوات البوت',
+      chan_desc_wa: 'ربط واجهة Cloud API الرسمية لواتساب.',
+      chan_desc_fb: 'أتمتة الردود على صفحات فيسبوك مسنجر.',
+      chan_desc_ig: 'الرد التلقائي على رسائل وتعليقات إنستجرام.',
+      chan_desc_tg: 'ربط وتفعيل بوت تيليجرام مخصص.',
+      btn_configure: 'إعداد وتفعيل',
+      website_widget_title: 'دردشة الموقع الإلكتروني',
+      website_widget_desc: 'انسخ كود البرمجة التالي وضعه قبل وسم الإغلاق body في موقعك لعرض دردشة زين بوت.',
+      ecommerce_sync_title: 'ربط ومزامنة متجرك الإلكتروني',
+      label_store_provider: 'منصة المتجر',
+      store_none: 'غير متصل',
+      label_store_url: 'رابط المتجر',
+      btn_sync_catalog: 'حفظ ومزامنة الكتالوج',
+      orders_bookings_title: 'لوحة إدارة الطلبات والمواعيد',
+      chat_orders_list_title: 'الطلبات المستخلصة تلقائياً عبر البوت',
+      th_order_id: 'معرف الطلب',
+      th_customer: 'اسم العميل',
+      th_phone: 'الهاتف',
+      th_items: 'المنتجات',
+      th_total: 'الإجمالي',
+      th_status: 'الحالة',
+      appointments_list_title: 'مواعيد العملاء المؤكدة عبر البوت',
+      th_booking_customer: 'العميل',
+      th_booking_phone: 'الهاتف',
+      th_booking_time: 'التاريخ والوقت',
+      th_booking_notes: 'ملخص الحجز / ملاحظات البوت',
+      settings_billing_title: 'الإعدادات العامة والربط البرمجي للمطورين',
+      dev_api_keys_title: 'مفاتيح الوصول الخاصة بالمطورين',
+      btn_gen_key: 'إنشاء مفتاح جديد',
+      dev_webhooks_title: 'إعدادات الويب هوك الصادر',
+      label_webhook_url: 'رابط استقبال الويب هوك الخاص بك',
+      label_webhook_secret: 'مفتاح توقيع HMAC السري',
+      label_webhook_events: 'الأحداث المشترك بها',
+      btn_save_webhook: 'حفظ الويب هوك',
+      webhook_logs_title: 'سجل تسليم الويب هوك الصادر',
+      th_wh_time: 'الوقت والتاريخ',
+      th_wh_event: 'الحدث',
+      th_wh_url: 'الرابط',
+      th_wh_status: 'رمز استجابة HTTP',
+      th_wh_actions: 'العمليات',
+      backup_keys_heading: 'المفتاح الاحتياطي للطوارئ (لباقة Growth)',
+      backup_keys_desc: 'إدخال مفتاح API الخاص بك. عند نفاذ رصيد باقتك الشهري، سيقوم النظام بالتحول تلقائياً لاستهلاك مفتاحك لمنع توقف البوت.',
+      label_backup_provider: 'مزود الخدمة',
+      label_backup_key: 'مفتاح الـ API',
+      label_backup_model: 'النموذج الافتراضي',
+      label_backup_url: 'رابط Endpoint مخصص',
+      btn_save_backup_settings: 'حفظ مفتاح الطوارئ',
+      btn_cancel: 'إلغاء',
+      btn_save: 'حفظ القاعدة',
+      label_faq_question: 'السؤال / الكلمات المفتاحية',
+      label_faq_answer: 'الإجابة المتوقعة',
+      faq_question_placeholder: 'مثال: مواعيد التوصيل',
+      faq_answer_placeholder: 'مثال: نوصل خلال ثلاثة أيام عمل داخل القاهرة.',
+      orders_empty: 'لا توجد طلبات أنشأها البوت بعد.',
+      bookings_empty: 'لا توجد مواعيد محجوزة بعد.',
+      api_keys_empty: 'لا توجد مفاتيح وصول منشأة بعد.',
+      webhook_history_empty: 'لا يوجد سجل لتسليمات الربط البرمجي بعد.',
+      admin_title: 'لوحة تحكم مدير النظام الشاملة',
+      admin_desc: 'التحكم الكامل في المستخدمين، التجار، الصلاحيات، الانتحال المباشر (Impersonation)، وإدارة مفاتيح الذكاء الاصطناعي الـ Failover.',
+      admin_subtab_users: 'إدارة المستخدمين والتجار',
+      admin_subtab_keys: 'سيرفرات AI & Failover',
+      admin_users_title: 'قائمة المستخدمين والتجار المسجلين',
+      admin_users_desc: 'إدارة الأدوار، الاشتراكات، تعليق الحسابات، والدخول المباشر كـ مستخدم.',
+      admin_btn_add_user: 'إضافة مستخدم / تاجر جديد',
+      th_user_username: 'اسم المستخدم',
+      th_user_email: 'البريد الإلكتروني',
+      th_user_role: 'الدور (Role)',
+      th_user_tier: 'باقة الاشتراك',
+      th_user_status: 'الحالة',
+      th_user_bots: 'البوتات',
+      th_user_actions: 'الإجراءات السريعة',
+      admin_loading_users: 'جاري تحميل قائمة المستخدمين...',
+      admin_active_keys: 'مفاتيح الوصول العامة النشطة وترتيب الأولوية',
+      admin_btn_reset: 'إعادة تهيئة المفاتيح المعطلة',
+      admin_register_key: 'تسجيل مفتاح نظام عام جديد',
+      admin_label_name: 'اسم المفتاح / الوصف',
+      admin_label_provider: 'مزود الذكاء الاصطناعي',
+      admin_label_key: 'مفتاح الـ API',
+      admin_label_model: 'النموذج الافتراضي',
+      admin_label_priority: 'مستوى الأولوية (1 = الأعلى)',
+      admin_label_base_url: 'رابط Endpoint مخصص (اختياري)',
+      admin_btn_register: 'تسجيل مفتاح النظام',
+      admin_no_keys: 'لا توجد مفاتيح نظام عامة مسجلة حالياً. قم بإضافة مفتاح من النموذج الجانبي.',
+      admin_status_working: 'يعمل',
+      admin_status_failed: 'معطل',
+      admin_lbl_provider: 'المزود',
+      admin_lbl_model: 'النموذج',
+      admin_lbl_priority: 'الأولوية',
+      admin_subtab_overview: 'نظرة عامة على النظام',
+      admin_subtab_audit: 'سجل التدقيق والجلسات',
+      admin_subtab_notify: 'الإشعارات',
+      training_general_title: 'التعليمات العامة للوكيل',
+      training_general_desc: 'توجيهات ثابتة تحدد هوية وسلوك الوكيل. منقولة من المنصة السابقة وتُحقن في كل رد.',
+      btn_add_instruction: 'إضافة تعليمات',
+      label_instruction_content: 'التعليمات',
+      instruction_content_placeholder: 'مثال: رحب بالعميل دائماً بالعامية المصرية ولا تذكر أسعاراً خارج الكتالوج.',
+      training_empty_general: 'لا توجد تعليمات عامة بعد. أضف التوجيهات التي تحدد هوية الوكيل.',
+      ov_users_total: 'إجمالي المستخدمين',
+      ov_users_active: 'مستخدمون نشطون',
+      ov_bots_total: 'إجمالي الوكلاء',
+      ov_bots_active: 'وكلاء نشطون',
+      ov_conversations: 'المحادثات',
+      ov_messages: 'الرسائل',
+      ov_chat_orders: 'طلبات المحادثات',
+      ov_active_sessions: 'انتحالات نشطة',
+      ov_audit_events: 'أحداث التدقيق',
+      audit_sessions_title: 'جلسات الانتحال',
+      audit_sessions_desc: 'كل جلسة انتحال يقوم بها الأدمن مع سببها وحالتها ومدتها.',
+      th_session_actor: 'الأدمن',
+      th_session_subject: 'المستخدم المستهدف',
+      th_session_reason: 'السبب',
+      th_session_status: 'الحالة',
+      th_session_started: 'بدأت',
+      th_session_expires: 'تنتهي',
+      admin_loading_sessions: 'جاري تحميل الجلسات...',
+      audit_events_title: 'سجل التدقيق',
+      audit_events_desc: 'سجل مُخفى البيانات الحساسة لكل تعديل قام به أدمن أو أثناء انتحال الهوية.',
+      audit_filter_type: 'تصفية حسب نوع الحدث',
+      audit_filter_all: 'كل الأحداث',
+      audit_type_started: 'بدء انتحال هوية',
+      audit_type_ended: 'إنهاء انتحال هوية',
+      audit_type_imp_write: 'تعديل أثناء انتحال',
+      audit_type_admin_write: 'تعديل إداري مباشر',
+      th_event_when: 'الوقت',
+      th_event_type: 'الحدث',
+      th_event_actor: 'المنفذ ← الهدف',
+      th_event_action: 'الإجراء',
+      th_event_outcome: 'النتيجة',
+      admin_loading_events: 'جاري تحميل سجل التدقيق...',
+      admin_empty_sessions: 'لا توجد جلسات انتحال مسجلة بعد.',
+      admin_empty_events: 'لا توجد أحداث تدقيق مطابقة لهذا الفلتر بعد.',
+      notify_title: 'إرسال إشعار للمنصة',
+      notify_desc: 'أرسل إشعاراً داخل المنصة لكل الحسابات أو لمستخدم محدد.',
+      notify_target: 'الوجهة',
+      notify_target_all: 'كل المستخدمين',
+      notify_target_single: 'مستخدم محدد (باسم المستخدم)',
+      notify_username_label: 'اسم المستخدم',
+      notify_title_label: 'العنوان',
+      notify_body_label: 'نص الرسالة',
+      notify_send_btn: 'إرسال الإشعار',
+      notify_sent_ok: 'تم إرسال الإشعار بنجاح!',
+      notify_failed: 'تعذر إرسال الإشعار.',
+      admin_subtab_landing_demo: 'بوت تجربة الصفحة الرئيسية',
+      landing_demo_title: 'وكيل تجربة الصفحة الرئيسية',
+      landing_demo_desc: 'يتحكم في وكيل الذكاء الاصطناعي الحقيقي الذي يجيب على أسئلة الزوار داخل محادثة "جرّبها مباشرة" في الصفحة الرئيسية.',
+      landing_demo_enable_label: 'تفعيل التجربة الحية بالذكاء الاصطناعي',
+      landing_demo_instructions_label: 'تعليمات الوكيل',
+      landing_demo_instructions_placeholder: 'نبرة إضافية، حدود، عروض، أو معلومات يجب على الوكيل الالتزام بها أثناء التجربة.',
+      landing_demo_instructions_hint: 'تُضاف هذه التعليمات فوق قاعدة المعرفة المدمجة الخاصة بالمنصة.',
+      landing_demo_save_btn: 'حفظ الإعدادات',
+      landing_demo_saved_ok: 'تم الحفظ بنجاح!',
+      landing_demo_save_failed: 'تعذر حفظ الإعدادات.',
+      landing_demo_updated_at: 'آخر تحديث',
+      model_select_heading: 'موديل الذكاء الاصطناعي',
+      model_select_desc: 'اختر "تلقائي" ليختار النظام أفضل موديل متاح لباقتك، أو حدد موديلاً معيناً من القائمة المفعّلة لحسابك.',
+      model_select_label: 'الموديل',
+      model_select_auto: 'تلقائي (مستحسن)',
+      model_select_save: 'حفظ الموديل',
+      model_saved_ok: 'تم حفظ اختيار الموديل بنجاح!',
+      model_save_failed: 'هذا الموديل غير متاح في باقتك الحالية.',
+      model_loading_list: 'جاري تحميل الموديلات المتاحة...',
+      orders_bookings_title: 'إدارة الطلبات والمواعيد',
+      orders_bookings_subtitle: 'إدارة الطلبات المنشأة من المحادثات وتنسيق وجدولة وتتبع مواعيد العملاء بشكل فوري.',
+      btn_new_booking: 'موعد جديد',
+      btn_new_order: 'طلب جديد',
+      btn_refresh: 'تحديث',
+      stat_orders_total: 'إجمالي الطلبات',
+      stat_orders_pending: 'طلبات معلقة',
+      stat_bookings_total: 'إجمالي المواعيد',
+      stat_bookings_confirmed: 'مواعيد مؤكدة',
+      orders_search_placeholder: 'ابحث باسم العميل أو الهاتف أو نوع الخدمة...',
+      orders_status_filter: 'تصفية حسب الحالة',
+      orders_type_filter: 'تصفية نوع السجل',
+      filter_all_statuses: 'كل الحالات',
+      status_pending: 'قيد الانتظار',
+      status_processing: 'قيد التجهيز',
+      status_confirmed: 'مؤكد',
+      status_completed: 'مكتمل',
+      status_rescheduled: 'مُعاد جدولته',
+      status_shipped: 'تم الشحن',
+      status_delivered: 'تم التسليم',
+      status_cancelled: 'ملغي',
+      filter_view_all: 'كل السجلات',
+      filter_view_orders: 'الطلبات فقط',
+      filter_view_bookings: 'المواعيد فقط',
+      appointments_list_title: 'تقويم المواعيد والحجوزات الذكية',
+      th_booking_id: 'رقم الحجز',
+      th_booking_customer: 'العميل',
+      th_booking_phone: 'الهاتف',
+      th_booking_service: 'الخدمة / الغرض',
+      th_booking_time: 'التاريخ والوقت',
+      th_booking_status: 'الحالة',
+      th_booking_actions: 'الإجراءات',
+      chat_orders_list_title: 'طلبات تم إنشاؤها تلقائياً بالذكاء الاصطناعي',
+      th_order_id: 'رقم الطلب',
+      th_customer: 'اسم العميل',
+      th_phone: 'الهاتف',
+      th_items: 'المنتجات',
+      th_total: 'الإجمالي',
+      th_status: 'الحالة',
+      th_order_actions: 'الإجراءات',
+      notification_recipients_title: 'قنوات ومستلمي الإشعارات الفورية',
+      notification_recipients_desc: 'ربط أرقام واتساب وحسابات أو قنوات تيليجرام متعددة لتلقي إشعارات فورية عند إنشاء الطلبات والمواعيد.',
+      btn_add_recipient: 'إضافة قناة إشعارات',
+      recipient_tier_free_hint: 'الباقة المجانية تتيح قناة واحدة فقط لتلقي الإشعارات. قم بالترقية لباقة Growth لقنوات غير محدودة.',
+      upgrade_plan_link: 'ترقية الباقة',
+      th_rec_channel: 'القناة',
+      th_rec_target: 'الرقم / المعرف المستهدف',
+      th_rec_label: 'الوصف / الفريق',
+      th_rec_events: 'أحداث الإشعار',
+      th_rec_status: 'الحالة',
+      th_rec_actions: 'الإجراءات',
+      agent_tools_section_title: 'أدوات الوكيل',
+      agent_tool_booking_title: 'أداة حجز وجدولة المواعيد',
+      agent_booking_hours_label: 'ساعات العمل',
+      agent_booking_service_label: 'الخدمة الافتراضية / الغرض',
+      agent_tool_orders_title: 'أداة تتبع وإدارة الطلبات',
+      agent_tool_wa_title: 'أداة إرسال إشعارات واتساب الفورية',
+      agent_tool_tg_title: 'أداة إرسال إشعارات تيليجرام الفورية',
+      agent_skills_section_title: 'مهارات الوكيل',
+      skill_sales: 'استشاري مبيعات ذكي',
+      skill_appointments: 'منسق مواعيد وحجوزات',
+      skill_orders: 'مدير طلبات وشحن',
+      skill_support: 'أخصائي دعم وشكاوى',
+      skill_winback: 'استرجاع العملاء غير النشطين',
+      booking_modal_title: 'إدارة الحجز والموعد',
+      label_customer_name: 'اسم العميل',
+      placeholder_customer_name: 'الاسم بالكامل',
+      label_customer_phone: 'رقم الهاتف',
       placeholder_customer_phone: '01xxxxxxxxx',
-      label_service_type: '┘å┘ê╪╣ ╪º┘ä╪«╪»┘à╪⌐ / ╪º┘ä╪║╪▒╪╢',
-      placeholder_service_type: '╪º╪│╪¬╪┤╪º╪▒╪⌐ / ┘à╪╣╪º┘è┘å╪⌐',
-      label_booking_status: '╪º┘ä╪¡╪º┘ä╪⌐',
-      label_booking_date: '╪º┘ä╪¬╪º╪▒┘è╪« ┘ê╪º┘ä┘ê┘é╪¬',
-      label_slot_duration: '╪º┘ä┘à╪»╪⌐ (╪¿╪º┘ä╪»┘é╪º╪ª┘é)',
-      label_booking_notes: '┘à┘ä╪º╪¡╪╕╪º╪¬ ┘ê╪¬┘ü╪º╪╡┘è┘ä',
-      placeholder_booking_notes: '╪ú┘è ╪¬┘ü╪º╪╡┘è┘ä ╪ú┘ê ┘à┘ä╪º╪¡╪╕╪º╪¬ ╪Ñ╪╢╪º┘ü┘è╪⌐...',
-      btn_save_booking: '╪¡┘ü╪╕ ╪º┘ä┘à┘ê╪╣╪»',
-      chat_order_modal_title: '╪Ñ╪»╪º╪▒╪⌐ ╪╖┘ä╪¿ ╪º┘ä┘à╪¡╪º╪»╪½╪⌐',
-      label_customer_address: '╪╣┘å┘ê╪º┘å ╪º┘ä╪¬┘ê╪╡┘è┘ä',
-      label_order_items: '┘à┘ä╪«╪╡ ╪º┘ä┘à┘å╪¬╪¼╪º╪¬',
-      placeholder_order_items: '╪º╪│┘à ╪º┘ä┘à┘å╪¬╪¼ x1',
-      label_total_amount: '╪º┘ä╪Ñ╪¼┘à╪º┘ä┘è (╪¼┘å┘è┘ç)',
-      label_order_status: '╪º┘ä╪¡╪º┘ä╪⌐',
-      label_order_note: '┘à┘ä╪º╪¡╪╕╪º╪¬ ╪º┘ä╪╖┘ä╪¿',
-      btn_save_order: '╪¡┘ü╪╕ ╪º┘ä╪╖┘ä╪¿',
-      recipient_modal_title: '╪Ñ╪╢╪º┘ü╪⌐ ┘é┘å╪º╪⌐ ╪Ñ╪┤╪╣╪º╪▒╪º╪¬ ┘ê╪¬┘å╪¿┘è┘ç╪º╪¬',
-      label_rec_channel: '┘å┘ê╪╣ ╪º┘ä┘é┘å╪º╪⌐',
-      channel_whatsapp: '╪▒┘é┘à ┘ê╪º╪¬╪│╪º╪¿',
-      channel_telegram: '╪¡╪│╪º╪¿ ╪ú┘ê ┘é┘å╪º╪⌐ ╪¬┘è┘ä┘è╪¼╪▒╪º┘à',
-      label_rec_target: '╪º┘ä┘ê╪¼┘ç╪⌐ ╪º┘ä┘à╪│╪¬┘ç╪»┘ü╪⌐',
-      placeholder_rec_target: '01xxxxxxxxx ╪ú┘ê ┘à╪╣╪▒┘ü ╪┤╪º╪¬ ╪¬┘è┘ä┘è╪¼╪▒╪º┘à',
-      hint_rec_target: '┘ä┘ê╪º╪¬╪│╪º╪¿: 01xxxxxxxxx ╪ú┘ê +201xxxxxxxxx. ┘ä╪¬┘è┘ä┘è╪¼╪▒╪º┘à: ┘à╪╣╪▒┘ü ╪º┘ä╪┤╪º╪¬ ╪ú┘ê ╪º┘ä┘é┘å╪º╪⌐.',
-      label_rec_label: '╪º┘ä┘ê╪╡┘ü / ╪º┘ä┘ü╪▒┘è┘é ╪º┘ä┘à╪│╪¬┘ä┘à',
-      placeholder_rec_label: '┘à╪»┘è╪▒ ╪º┘ä┘à╪¿┘è╪╣╪º╪¬╪î ╪º┘ä┘à╪╖╪¿╪«╪î ┘ü╪▒┘è┘é ╪º┘ä╪╣┘à┘ä┘è╪º╪¬...',
-      label_rec_events: '╪ú╪¡╪»╪º╪½ ╪º┘ä╪Ñ╪┤╪╣╪º╪▒╪º╪¬ ╪º┘ä┘à┘ü╪╣┘ä╪⌐',
-      ev_order_created: '╪Ñ┘å╪┤╪º╪í ╪╖┘ä╪¿ ╪¼╪»┘è╪»',
-      ev_order_status: '╪¬╪¡╪»┘è╪½ ╪¡╪º┘ä╪⌐ ╪º┘ä╪╖┘ä╪¿',
-      ev_booking_created: '╪¡╪¼╪▓ ┘à┘ê╪╣╪» ╪¼╪»┘è╪»',
-      ev_booking_rescheduled: '╪¬╪╣╪»┘è┘ä ┘à┘ê╪╣╪» ╪¡╪¼╪▓',
-      ev_booking_cancelled: '╪Ñ┘ä╪║╪º╪í ╪¡╪¼╪▓',
-      btn_save_recipient: '╪¡┘ü╪╕ ┘é┘å╪º╪⌐ ╪º┘ä╪Ñ╪┤╪╣╪º╪▒╪º╪¬',
-      bookings_empty: '┘ä╪º ╪¬┘ê╪¼╪» ┘à┘ê╪º╪╣┘è╪» ┘à╪│╪¼┘ä╪⌐ ╪¡╪¬┘ë ╪º┘ä╪ó┘å.',
-      recipients_empty: '┘ä┘à ┘è╪¬┘à ╪▒╪¿╪╖ ╪ú┘è ┘é┘å┘ê╪º╪¬ ╪Ñ╪┤╪╣╪º╪▒╪º╪¬ ╪¡╪¬┘ë ╪º┘ä╪ó┘å.',
-      action_confirm: '╪¬╪ú┘â┘è╪»',
-      action_reschedule: '╪Ñ╪╣╪º╪»╪⌐ ╪¼╪»┘ê┘ä╪⌐',
-      action_complete: '╪Ñ┘â┘à╪º┘ä',
-      action_cancel: '╪Ñ┘ä╪║╪º╪í',
-      action_edit: '╪¬╪╣╪»┘è┘ä',
-      action_delete: '╪¡╪░┘ü',
-      action_test: '╪º╪«╪¬╪¿╪º╪▒ ╪º┘ä╪Ñ╪▒╪│╪º┘ä',
-      delete_booking_confirm: '┘ç┘ä ╪ú┘å╪¬ ┘à╪¬╪ú┘â╪» ┘à┘å ╪▒╪║╪¿╪¬┘â ┘ü┘è ╪¡╪░┘ü ┘ç╪░╪º ╪º┘ä┘à┘ê╪╣╪»╪ƒ',
-      delete_order_confirm: '┘ç┘ä ╪ú┘å╪¬ ┘à╪¬╪ú┘â╪» ┘à┘å ╪▒╪║╪¿╪¬┘â ┘ü┘è ╪¡╪░┘ü ┘ç╪░╪º ╪º┘ä╪╖┘ä╪¿╪ƒ',
-      delete_recipient_confirm: '┘ç┘ä ╪ú┘å╪¬ ┘à╪¬╪ú┘â╪» ┘à┘å ╪¡╪░┘ü ┘é┘å╪º╪⌐ ╪º┘ä╪Ñ╪┤╪╣╪º╪▒╪º╪¬ ┘ç╪░┘ç╪ƒ',
-      booking_saved_ok: '╪¬┘à ╪¡┘ü╪╕ ╪º┘ä┘à┘ê╪╣╪» ╪¿┘å╪¼╪º╪¡!',
-      order_saved_ok: '╪¬┘à ╪¡┘ü╪╕ ╪º┘ä╪╖┘ä╪¿ ╪¿┘å╪¼╪º╪¡!',
-      recipient_saved_ok: '╪¬┘à ╪¡┘ü╪╕ ┘é┘å╪º╪⌐ ╪º┘ä╪Ñ╪┤╪╣╪º╪▒╪º╪¬ ╪¿┘å╪¼╪º╪¡!',
-      recipient_test_sent: '╪¬┘à ╪Ñ╪▒╪│╪º┘ä ╪º┘ä╪Ñ╪┤╪╣╪º╪▒ ╪º┘ä╪¬╪¼╪▒┘è╪¿┘è ╪¿┘å╪¼╪º╪¡!',
-      chan_webchat_title: '╪╡┘ü╪¡╪⌐ ╪º┘ä╪»╪▒╪»╪┤╪⌐ ╪º┘ä┘à╪│╪¬┘é┘ä╪⌐',
-      chan_desc_webchat: '╪╡┘ü╪¡╪⌐ ╪»╪▒╪»╪┤╪⌐ ┘à╪«╪╡╪╡╪⌐ ┘ê┘à╪│╪¬┘é┘ä╪⌐ ┘ê╪¬╪¼╪▒╪¿╪⌐ ╪¬┘ü╪º╪╣┘ä┘è╪⌐ ┘ä┘ä┘ê┘â┘è┘ä.',
-      btn_customize_chat: '╪¬╪«╪╡┘è╪╡ ┘ê╪º╪«╪¬╪¿╪º╪▒',
-      btn_open_chat: '┘ü╪¬╪¡ ╪º┘ä╪»╪▒╪»╪┤╪⌐',
-      chat_page_customizer_title: '╪¬╪«╪╡┘è╪╡ ╪╡┘ü╪¡╪⌐ ╪º┘ä╪»╪▒╪»╪┤╪⌐ ╪º┘ä┘à╪│╪¬┘é┘ä╪⌐',
-      chat_page_share_link: '╪▒╪º╪¿╪╖ ╪╡┘ü╪¡╪⌐ ╪º┘ä╪»╪▒╪»╪┤╪⌐ ╪º┘ä┘à╪¿╪º╪┤╪▒',
-      btn_copy_link: '┘å╪│╪« ╪º┘ä╪▒╪º╪¿╪╖',
-      label_chat_page_title: '╪╣┘å┘ê╪º┘å ╪╡┘ü╪¡╪⌐ ╪º┘ä╪»╪▒╪»╪┤╪⌐',
-      label_chat_page_slug: '┘à╪╣╪▒┘ü / ┘à╪│╪º╪▒ ╪º┘ä╪▒╪º╪¿╪╖ ╪º┘ä┘à╪«╪╡╪╡',
-      chat_page_theme_colors: '╪ú┘ä┘ê╪º┘å ╪º┘ä┘ê╪º╪¼┘ç╪⌐ ┘ê╪º┘ä┘à╪╕┘ç╪▒',
-      label_color_header: '┘ä┘ê┘å ╪º┘ä┘ç┘è╪»╪▒',
-      label_color_bg: '┘ä┘ê┘å ╪º┘ä╪«┘ä┘ü┘è╪⌐',
-      label_color_bot_bubble: '┘ü┘é╪º╪╣╪⌐ ╪▒╪│╪º┘ä╪⌐ ╪º┘ä┘ê┘â┘è┘ä',
-      label_color_user_bubble: '┘ü┘é╪º╪╣╪⌐ ╪▒╪│╪º┘ä╪⌐ ╪º┘ä╪╣┘à┘è┘ä',
-      label_color_button: '┘ä┘ê┘å ╪▓╪▒ ╪º┘ä╪Ñ╪▒╪│╪º┘ä',
-      label_color_title: '┘ä┘ê┘å ┘å╪╡ ╪º┘ä╪╣┘å┘ê╪º┘å',
-      label_chat_suggested_questions: '╪º┘ä╪ú╪│╪ª┘ä╪⌐ ╪º┘ä╪│╪▒┘è╪╣╪⌐ ╪º┘ä┘à┘é╪¬╪▒╪¡╪⌐ (╪│╪ñ╪º┘ä ┘ü┘è ┘â┘ä ╪│╪╖╪▒)',
-      chk_enable_suggested_questions: '╪¬┘ü╪╣┘è┘ä ╪º┘ä╪ú╪│╪ª┘ä╪⌐ ╪º┘ä┘à┘é╪¬╪▒╪¡╪⌐',
-      chk_enable_image_upload: '╪¬┘ü╪╣┘è┘ä ╪Ñ┘à┘â╪º┘å┘è╪⌐ ╪▒┘ü╪╣ ╪º┘ä╪╡┘ê╪▒',
-      label_embed_widget_code: '┘â┘ê╪» ╪¬╪╢┘à┘è┘å ╪º┘ä┘ê┘è╪»╪¼╪¬ ┘ü┘è ╪º┘ä┘à┘ê╪º┘é╪╣',
-      btn_copy_code: '┘å╪│╪« ╪º┘ä┘â┘ê╪»',
-      btn_save_chat_page: '╪¡┘ü╪╕ ╪Ñ╪╣╪»╪º╪»╪º╪¬ ╪º┘ä╪»╪▒╪»╪┤╪⌐',
-      chat_page_saved_ok: '╪¬┘à ╪¡┘ü╪╕ ╪Ñ╪╣╪»╪º╪»╪º╪¬ ╪╡┘ü╪¡╪⌐ ╪º┘ä╪»╪▒╪»╪┤╪⌐ ╪¿┘å╪¼╪º╪¡!',
-      link_copied_ok: '╪¬┘à ┘å╪│╪« ╪º┘ä╪▒╪º╪¿╪╖ ╪Ñ┘ä┘ë ╪º┘ä╪¡╪º┘ü╪╕╪⌐!',
-      code_copied_ok: '╪¬┘à ┘å╪│╪« ┘â┘ê╪» ╪º┘ä╪¬╪╢┘à┘è┘å ╪Ñ┘ä┘ë ╪º┘ä╪¡╪º┘ü╪╕╪⌐!',
-      label_preset_themes: '╪º╪«╪¬╪▒ ┘å┘à┘ê╪░╪¼╪º┘ï ╪º┘ü╪¬╪▒╪º╪╢┘è╪º┘ï',
-      preset_cyber_dark: '╪º┘ä┘å┘è┘ê┘å ╪º┘ä┘ä┘è┘ä┘è ╪º┘ä╪¡╪»┘è╪½',
-      preset_cyber_dark_desc: '╪¬╪╡┘à┘è┘à ╪»╪º┘â┘å ┘å┘è┘ê┘å',
-      preset_emerald_clean: '╪º┘ä╪ú╪«╪╢╪▒ ╪º┘ä╪▓┘à╪▒╪»┘è',
-      preset_emerald_clean_desc: '┘ü╪º╪¬╪¡ ╪╣╪╡╪▒┘è ┘ü╪º╪«╪▒',
-      preset_royal_purple: '╪º┘ä╪ú╪▒╪¼┘ê╪º┘å┘è ╪º┘ä┘à┘ä┘â┘è',
-      preset_royal_purple_desc: '╪¬╪╡┘à┘è┘à ╪»╪º┘â┘å ┘à┘ä┘â┘è',
-      hint_customize_colors: '┘é╪º╪¿┘ä ┘ä┘ä╪¬╪╣╪»┘è┘ä ╪¿╪¡╪▒┘è╪⌐',
-      preview_live_title: '┘à╪╣╪º┘è┘å╪⌐ ╪¡┘è╪⌐ ╪¬┘ü╪º╪╣┘ä┘è╪⌐',
-      badge_realtime: '┘à╪¿╪º╪┤╪▒',
-      preview_status_online: '┘å╪┤╪╖ ┬╖ ╪¼╪º┘ç╪▓ ┘ä┘ä╪▒╪» ┘ê╪º┘ä┘à╪¿┘è╪╣╪º╪¬',
-      preview_input_placeholder: '╪º┘â╪¬╪¿ ╪▒╪│╪º┘ä╪¬┘â ┘ç┘å╪º...',
-      free_plan_tools_limit_badge: '(╪º┘ä╪¡╪» ╪º┘ä╪ú┘é╪╡┘ë ┘ä┘ä╪¿╪º┘é╪⌐ ╪º┘ä┘à╪¼╪º┘å┘è╪⌐: ╪ú╪»╪º╪¬╪º┘å ┘ü┘é╪╖)',
-      free_plan_skills_limit_badge: '(╪º┘ä╪¡╪» ╪º┘ä╪ú┘é╪╡┘ë ┘ä┘ä╪¿╪º┘é╪⌐ ╪º┘ä┘à╪¼╪º┘å┘è╪⌐: ┘à┘ç╪º╪▒╪¬╪º┘å ┘ü┘é╪╖)',
-      label_chat_page_logo: '╪┤╪╣╪º╪▒ ┘ê╪ú┘è┘é┘ê┘å╪⌐ ╪╡┘ü╪¡╪⌐ ╪º┘ä╪»╪▒╪»╪┤╪⌐',
-      btn_upload_logo: '╪▒┘ü╪╣ ╪┤╪╣╪º╪▒',
-      btn_remove_logo: '╪Ñ╪▓╪º┘ä╪⌐',
-      hint_logo_format: 'PNG ╪ú┘ê JPG ╪¡╪¬┘ë 2 ┘à┘è╪¼╪º╪¿╪º┘è╪¬',
+      label_service_type: 'نوع الخدمة / الغرض',
+      placeholder_service_type: 'استشارة / معاينة',
+      label_booking_status: 'الحالة',
+      label_booking_date: 'التاريخ والوقت',
+      label_slot_duration: 'المدة (بالدقائق)',
+      label_booking_notes: 'ملاحظات وتفاصيل',
+      placeholder_booking_notes: 'أي تفاصيل أو ملاحظات إضافية...',
+      btn_save_booking: 'حفظ الموعد',
+      chat_order_modal_title: 'إدارة طلب المحادثة',
+      label_customer_address: 'عنوان التوصيل',
+      label_order_items: 'ملخص المنتجات',
+      placeholder_order_items: 'اسم المنتج x1',
+      label_total_amount: 'الإجمالي (جنيه)',
+      label_order_status: 'الحالة',
+      label_order_note: 'ملاحظات الطلب',
+      btn_save_order: 'حفظ الطلب',
+      recipient_modal_title: 'إضافة قناة إشعارات وتنبيهات',
+      label_rec_channel: 'نوع القناة',
+      channel_whatsapp: 'رقم واتساب',
+      channel_telegram: 'حساب أو قناة تيليجرام',
+      label_rec_target: 'الوجهة المستهدفة',
+      placeholder_rec_target: '01xxxxxxxxx أو معرف شات تيليجرام',
+      hint_rec_target: 'لواتساب: 01xxxxxxxxx أو +201xxxxxxxxx. لتيليجرام: معرف الشات أو القناة.',
+      label_rec_label: 'الوصف / الفريق المستلم',
+      placeholder_rec_label: 'مدير المبيعات، المطبخ، فريق العمليات...',
+      label_rec_events: 'أحداث الإشعارات المفعلة',
+      ev_order_created: 'إنشاء طلب جديد',
+      ev_order_status: 'تحديث حالة الطلب',
+      ev_booking_created: 'حجز موعد جديد',
+      ev_booking_rescheduled: 'تعديل موعد حجز',
+      ev_booking_cancelled: 'إلغاء حجز',
+      btn_save_recipient: 'حفظ قناة الإشعارات',
+      bookings_empty: 'لا توجد مواعيد مسجلة حتى الآن.',
+      recipients_empty: 'لم يتم ربط أي قنوات إشعارات حتى الآن.',
+      action_confirm: 'تأكيد',
+      action_reschedule: 'إعادة جدولة',
+      action_complete: 'إكمال',
+      action_cancel: 'إلغاء',
+      action_edit: 'تعديل',
+      action_delete: 'حذف',
+      action_test: 'اختبار الإرسال',
+      delete_booking_confirm: 'هل أنت متأكد من رغبتك في حذف هذا الموعد؟',
+      delete_order_confirm: 'هل أنت متأكد من رغبتك في حذف هذا الطلب؟',
+      delete_recipient_confirm: 'هل أنت متأكد من حذف قناة الإشعارات هذه؟',
+      booking_saved_ok: 'تم حفظ الموعد بنجاح!',
+      order_saved_ok: 'تم حفظ الطلب بنجاح!',
+      recipient_saved_ok: 'تم حفظ قناة الإشعارات بنجاح!',
+      recipient_test_sent: 'تم إرسال الإشعار التجريبي بنجاح!',
+      chan_webchat_title: 'صفحة الدردشة المستقلة',
+      chan_desc_webchat: 'صفحة دردشة مخصصة ومستقلة وتجربة تفاعلية للوكيل.',
+      btn_customize_chat: 'تخصيص واختبار',
+      btn_open_chat: 'فتح الدردشة',
+      chat_page_customizer_title: 'تخصيص صفحة الدردشة المستقلة',
+      chat_page_share_link: 'رابط صفحة الدردشة المباشر',
+      btn_copy_link: 'نسخ الرابط',
+      label_chat_page_title: 'عنوان صفحة الدردشة',
+      label_chat_page_slug: 'معرف / مسار الرابط المخصص',
+      chat_page_theme_colors: 'ألوان الواجهة والمظهر',
+      label_color_header: 'لون الهيدر',
+      label_color_bg: 'لون الخلفية',
+      label_color_bot_bubble: 'فقاعة رسالة الوكيل',
+      label_color_user_bubble: 'فقاعة رسالة العميل',
+      label_color_button: 'لون زر الإرسال',
+      label_color_title: 'لون نص العنوان',
+      label_chat_suggested_questions: 'الأسئلة السريعة المقترحة (سؤال في كل سطر)',
+      chk_enable_suggested_questions: 'تفعيل الأسئلة المقترحة',
+      chk_enable_image_upload: 'تفعيل إمكانية رفع الصور',
+      label_embed_widget_code: 'كود تضمين الويدجت في المواقع',
+      btn_copy_code: 'نسخ الكود',
+      btn_save_chat_page: 'حفظ إعدادات الدردشة',
+      chat_page_saved_ok: 'تم حفظ إعدادات صفحة الدردشة بنجاح!',
+      link_copied_ok: 'تم نسخ الرابط إلى الحافظة!',
+      code_copied_ok: 'تم نسخ كود التضمين إلى الحافظة!',
+      label_preset_themes: 'اختر نموذجاً افتراضياً',
+      preset_cyber_dark: 'النيون الليلي الحديث',
+      preset_cyber_dark_desc: 'تصميم داكن نيون',
+      preset_emerald_clean: 'الأخضر الزمردي',
+      preset_emerald_clean_desc: 'فاتح عصري فاخر',
+      preset_royal_purple: 'الأرجواني الملكي',
+      preset_royal_purple_desc: 'تصميم داكن ملكي',
+      hint_customize_colors: 'قابل للتعديل بحرية',
+      preview_live_title: 'معاينة حية تفاعلية',
+      badge_realtime: 'مباشر',
+      preview_status_online: 'نشط · جاهز للرد والمبيعات',
+      preview_input_placeholder: 'اكتب رسالتك هنا...',
+      free_plan_tools_limit_badge: '(الحد الأقصى للباقة المجانية: أداتان فقط)',
+      free_plan_skills_limit_badge: '(الحد الأقصى للباقة المجانية: مهارتان فقط)',
+      label_chat_page_logo: 'شعار وأيقونة صفحة الدردشة',
+      btn_upload_logo: 'رفع شعار',
+      btn_remove_logo: 'إزالة',
+      hint_logo_format: 'PNG أو JPG حتى 2 ميجابايت',
       placeholder_store_url: 'https://my-store.myshopify.com',
-      store_sync_feedback: '╪¬┘à ╪¡┘ü╪╕ ╪Ñ╪╣╪»╪º╪»╪º╪¬ ┘à╪▓╪º┘à┘å╪⌐ ╪º┘ä┘à╪¬╪¼╪▒ ╪¿┘å╪¼╪º╪¡. ┘è╪│╪¬╪╖┘è╪╣ ╪º┘ä┘ê┘â┘è┘ä ╪º┘ä╪░┘â┘è ╪º┘ä╪ó┘å ╪¬╪▒╪┤┘è╪¡ ╪º┘ä┘à┘å╪¬╪¼╪º╪¬ ┘à┘å ╪º┘ä┘â╪¬╪º┘ä┘ê╪¼.',
-      store_sync_planned: '╪º┘ä┘à╪▓╪º┘à┘å╪⌐ ╪º┘ä╪¬┘ä┘é╪º╪ª┘è╪⌐ ╪º┘ä┘à╪¿╪º╪┤╪▒╪⌐ ┘à╪╣ ╪┤┘ê╪¿┘è┘ü╪º┘è ┘ê┘ê┘â┘ê┘à╪▒╪│ ┘é┘è╪» ╪º┘ä╪Ñ╪╖┘ä╪º┘é ╪º┘ä┘à╪¿╪º╪┤╪▒. ┘â╪¬╪º┘ä┘ê╪¼ ╪º┘ä┘à╪¬╪¼╪▒ ╪º┘ä╪»╪º╪«┘ä┘è ┘å╪┤╪╖ ┘ê┘è╪╣┘à┘ä ╪¡╪º┘ä┘è╪º┘ï.',
-      automation_center_title: '┘à╪▒┘â╪▓ ╪ú╪¬┘à╪¬╪⌐ ╪º┘ä┘à╪¿┘è╪╣╪º╪¬ ┘ê╪º┘ä┘à┘ç╪º┘à ╪º┘ä╪¬┘ä┘é╪º╪ª┘è╪⌐',
-      automation_center_desc: '╪Ñ╪»╪º╪▒╪⌐ ╪º┘ä┘à┘ç╪º┘à ╪º┘ä╪¬┘ä┘é╪º╪ª┘è╪⌐ ╪º┘ä╪«┘ä┘ü┘è╪⌐: ╪º╪│╪¬╪╣╪º╪»╪⌐ ╪º┘ä┘à╪¿┘è╪╣╪º╪¬ ╪º┘ä┘à╪¬╪▒┘ê┘â╪⌐╪î ╪¬┘é╪▒┘è╪▒ ╪º┘ä┘à╪¿┘è╪╣╪º╪¬ ╪º┘ä┘è┘ê┘à┘è╪î ┘ê┘ü╪▒╪▓ ╪º┘ä╪┤┘â╪º┘ê┘ë ╪º┘ä╪╣╪º╪¼┘ä╪⌐.',
-      btn_trigger_recovery: '╪º╪│╪¬╪╣╪º╪»╪⌐ ╪º┘ä╪╣┘à┘ä╪º╪í ╪º┘ä┘à╪¡╪¬┘à┘ä┘è┘å ╪º┘ä╪ó┘å',
-      btn_trigger_digest: '╪Ñ╪▒╪│╪º┘ä ┘à┘ä╪«╪╡ ╪º┘ä┘à╪¿┘è╪╣╪º╪¬ ╪º┘ä╪ó┘å',
-      card_recovery_title: '╪º╪│╪¬╪╣╪º╪»╪⌐ ╪º┘ä┘à╪¿┘è╪╣╪º╪¬ ╪º┘ä┘à╪¬╪▒┘ê┘â╪⌐',
-      card_recovery_desc: '╪Ñ╪╣╪º╪»╪⌐ ╪º╪│╪¬┘ç╪»╪º┘ü ┘ê┘à╪¬╪º╪¿╪╣╪⌐ ╪º┘ä╪╣┘à┘ä╪º╪í ╪º┘ä╪░┘è┘å ╪ú╪¿╪»┘ê╪º ╪▒╪║╪¿╪⌐ ╪¿╪º┘ä╪┤╪▒╪º╪í ╪ú┘ê ╪│╪ú┘ä┘ê╪º ╪╣┘å ╪º┘ä╪ú╪│╪╣╪º╪▒ ┘ê╪¬┘ê┘é┘ü┘ê╪º ╪╣┘å ╪º┘ä╪▒╪».',
-      card_digest_title: '╪¬┘é╪▒┘è╪▒ ╪º┘ä╪ú╪»╪º╪í ┘ê╪º┘ä┘à╪¿┘è╪╣╪º╪¬ ╪º┘ä┘è┘ê┘à┘è',
-      card_digest_desc: '┘à┘ä╪«╪╡ ╪┤╪º┘à┘ä ┘ä┘ä╪╖┘ä╪¿╪º╪¬ ╪º┘ä┘è┘ê┘à┘è╪⌐ ┘ê╪º┘ä╪Ñ┘è╪▒╪º╪»╪º╪¬ ┘ê╪º┘ä┘à╪¡╪º╪»╪½╪º╪¬ ┘è┘Å╪▒╪│┘ä ┘ä╪¡╪│╪º╪¿┘â ╪╣┘ä┘ë ╪¬┘è┘ä┘è╪¼╪▒╪º┘à ╪ú┘ê ┘ê╪º╪¬╪│╪º╪¿.',
-      card_stock_title: '╪¬┘å╪¿┘è┘ç╪º╪¬ ╪º┘ä┘à╪«╪▓┘ê┘å ╪º┘ä┘à┘å╪«┘ü╪╢',
-      card_stock_desc: '┘à╪▒╪º┘é╪¿╪⌐ ┘à╪│╪¬┘à╪▒╪⌐ ┘ä┘â┘à┘è╪º╪¬ ╪º┘ä┘à┘å╪¬╪¼╪º╪¬ ┘ü┘è ╪º┘ä┘â╪¬╪º┘ä┘ê╪¼ ┘ê╪Ñ╪▒╪│╪º┘ä ╪Ñ┘å╪░╪º╪▒ ┘à╪¿┘â╪▒ ╪╣┘å╪» ╪º┘é╪¬╪▒╪º╪¿ ┘å┘ü╪º╪» ╪º┘ä┘à╪«╪▓┘ê┘å.',
-      card_complaints_title: '┘ü╪▒╪▓ ┘ê╪¬┘å╪¿┘è┘ç ╪º┘ä╪┤┘â╪º┘ê┘ë ╪º┘ä╪╣╪º╪¼┘ä╪⌐',
-      card_complaints_desc: '╪¬╪¡┘ê┘è┘ä ┘ü┘ê╪▒┘è ┘ä╪┤┘â╪º┘ê┘ë ╪º┘ä╪╣┘à┘ä╪º╪í ╪º┘ä╪¡╪▒╪¼╪⌐ ┘ê╪╖┘ä╪¿╪º╪¬ ╪º┘ä╪¬╪»╪«┘ä ╪º┘ä╪¿╪┤╪▒┘è ╪Ñ┘ä┘ë ┘ç╪º╪¬┘ü┘â ╪»┘ê┘å ╪¬╪ú╪«┘è╪▒.',
-      badge_active: '┘å╪┤╪╖',
-      badge_scheduled: '┘è┘ê┘à┘è╪º┘ï 9:00 ┘à',
-      badge_monitoring: '┘à╪▒╪º┘é╪¿╪⌐ ╪¬┘ä┘é╪º╪ª┘è╪⌐',
-      badge_instant: '╪¬┘å╪¿┘è┘ç ┘ü┘ê╪▒┘è',
-      agent_tool_recovery_title: '╪ú╪»╪º╪⌐ ╪º┘ä┘à╪¬╪º╪¿╪╣╪⌐ ┘ê╪º╪│╪¬╪╣╪º╪»╪⌐ ╪º┘ä┘à╪¿┘è╪╣╪º╪¬ ╪º┘ä┘à╪¬╪▒┘ê┘â╪⌐ ╪¬┘ä┘é╪º╪ª┘è╪º┘ï',
-      agent_recovery_delay_label: '╪º┘ä┘à╪¬╪º╪¿╪╣╪⌐ ╪¿╪╣╪»',
-      delay_2h: '╪│╪º╪╣╪¬╪º┘å',
-      delay_4h: '4 ╪│╪º╪╣╪º╪¬',
-      delay_12h: '12 ╪│╪º╪╣╪⌐',
-      delay_24h: '24 ╪│╪º╪╣╪⌐',
-      agent_recovery_msg_label: '╪▒╪│╪º┘ä╪⌐ ╪º┘ä┘à╪¬╪º╪¿╪╣╪⌐ ╪º┘ä┘à╪«╪╡╪╡╪⌐',
-      agent_recovery_msg_placeholder: '╪º╪¬╪▒┘â┘ç ┘ü╪º╪▒╪║╪º┘ï ┘ä╪º╪│╪¬╪«╪»╪º┘à ╪º┘ä╪▒╪│╪º┘ä╪⌐ ╪º┘ä╪º┘ü╪¬╪▒╪º╪╢┘è╪⌐ ╪º┘ä╪░┘â┘è╪⌐',
-      agent_tool_digest_title: '╪ú╪»╪º╪⌐ ╪¬┘é╪▒┘è╪▒ ╪º┘ä╪ú╪»╪º╪í ┘ê╪º┘ä┘à╪¿┘è╪╣╪º╪¬ ╪º┘ä┘è┘ê┘à┘è ╪º┘ä╪¬┘ä┘é╪º╪ª┘è',
-      agent_digest_channel_label: '┘é┘å╪º╪⌐ ╪º╪│╪¬┘ä╪º┘à ╪º┘ä╪¬┘é╪▒┘è╪▒',
-      channel_all: '╪¬┘è┘ä┘è╪¼╪▒╪º┘à ┘ê┘ê╪º╪¬╪│╪º╪¿ ┘ê┘ä┘ê╪¡╪⌐ ╪º┘ä╪¬╪¡┘â┘à',
-      channel_inapp: '╪Ñ╪┤╪╣╪º╪▒╪º╪¬ ┘ä┘ê╪¡╪⌐ ╪º┘ä╪¬╪¡┘â┘à ┘ü┘é╪╖',
-      agent_digest_time_label: '┘ê┘é╪¬ ╪º┘ä╪Ñ╪▒╪│╪º┘ä ╪º┘ä┘è┘ê┘à┘è',
-      agent_tool_upsell_title: '╪ú╪»╪º╪⌐ ╪¬╪▒╪┤┘è╪¡ ╪º┘ä┘à┘å╪¬╪¼╪º╪¬ ╪º┘ä╪¬┘â┘à┘è┘ä┘è╪⌐ ┘ê╪Ñ╪║┘ä╪º┘é ╪º┘ä╪╡┘ü┘é╪º╪¬',
-      agent_sales_tone_label: '┘å╪¿╪▒╪⌐ ┘ê╪ú╪│┘ä┘ê╪¿ ╪º┘ä╪¿┘è╪╣',
-      tone_consultative: '╪º╪│╪¬╪┤╪º╪▒┘è ┘ê┘à┘é┘å╪╣',
-      tone_enthusiastic: '╪¡┘à╪º╪│┘è ┘ê╪¬╪▒┘ê┘è╪¼┘è',
-      tone_formal: '╪▒╪│┘à┘è ┘ê┘à╪¿╪º╪┤╪▒',
-      agent_max_discount_label: '╪╡┘ä╪º╪¡┘è╪⌐ ╪º┘ä╪«╪╡┘à ╪º┘ä╪¬╪┤╪¼┘è╪╣┘è',
-      discount_none: '╪¿╪»┘ê┘å ╪«╪╡┘à ╪Ñ╪╢╪º┘ü┘è (0%)',
-      menu_idea_council: '┘ä╪¼┘å╪⌐ ╪º┘ä╪ú┘ü┘â╪º╪▒',
-      idea_council_desc: '┘ä╪¼┘å╪⌐ ╪¬╪¡┘ä┘è┘ä ┘à╪¬╪«╪╡╪╡╪⌐ ╪¿╪º┘ä╪░┘â╪º╪í ╪º┘ä╪º╪╡╪╖┘å╪º╪╣┘è ┘ä╪¬┘é┘è┘è┘à ╪º┘ä┘à╪┤╪º╪▒┘è╪╣ ┘ê╪╡┘å╪º╪╣╪⌐ ╪º┘ä┘é╪▒╪º╪▒',
-      idea_quota_label: '╪▒╪╡┘è╪» ╪º┘ä╪ú┘ü┘â╪º╪▒ ╪º┘ä╪┤┘ç╪▒┘è',
-      idea_quota_text: '╪ú┘ü┘â╪º╪▒ ┘à╪¬╪º╪¡╪⌐ ┘ç╪░╪º ╪º┘ä╪┤┘ç╪▒',
-      idea_btn_new: '╪º╪╣╪▒╪╢ ┘ü┘â╪▒╪⌐ ╪¼╪»┘è╪»╪⌐',
-      idea_btn_back_list: '╪º┘ä╪╣┘ê╪»╪⌐ ┘ä┘é╪º╪ª┘à╪⌐ ╪º┘ä╪ú┘ü┘â╪º╪▒',
-      idea_filter_all: '╪º┘ä┘â┘ä',
-      idea_filter_drafts: '╪º┘ä┘à╪│┘ê╪»╪º╪¬',
-      idea_filter_running: '┘é┘è╪» ╪º┘ä╪¬┘é┘è┘è┘à',
-      idea_filter_completed: '┘à┘â╪¬┘à┘ä╪⌐',
-      idea_list_empty: '┘ä╪º ╪¬┘ê╪¼╪» ╪ú┘ü┘â╪º╪▒ ┘à╪│╪¼┘ä╪⌐ ╪¡╪¬┘ë ╪º┘ä╪ó┘å. ╪º┘å┘é╪▒ ┘ü┘ê┘é ┘ü┘â╪▒╪⌐ ╪¼╪»┘è╪»╪⌐ ┘ä┘ä╪¿╪»╪í.',
-      idea_input_title: '╪╡┘ü ┘ü┘â╪▒╪⌐ ┘à╪┤╪▒┘ê╪╣┘â',
-      idea_input_desc_label: '┘ê╪╡┘ü ╪º┘ä┘ü┘â╪▒╪⌐ ╪¿╪º┘ä╪¬┘ü╪╡┘è┘ä (┘à┘å 100 ╪Ñ┘ä┘ë 8,000 ╪¡╪▒┘ü)',
-      idea_input_desc_placeholder: '╪º┘â╪¬╪¿ ┘ü┘â╪▒╪¬┘â ╪¿╪¡╪▒┘è╪⌐: ┘à╪º ╪º┘ä┘à╪┤┘â┘ä╪⌐ ╪º┘ä╪¬┘è ╪¬╪¡┘ä┘ç╪º╪ƒ ┘ä┘à┘å ╪¬┘é╪»┘à╪ƒ ┘ê┘ä┘à╪º╪░╪º ┘é╪» ┘è╪║┘è╪▒ ╪º┘ä┘å╪º╪│ ╪│┘ä┘ê┘â┘ç┘à ┘ä╪º╪│╪¬╪«╪»╪º┘à┘ç╪º╪ƒ',
-      idea_input_market_label: '╪º┘ä╪│┘ê┘é ╪º┘ä┘à╪│╪¬┘ç╪»┘ü ╪ú┘ê ╪º┘ä┘å╪╖╪º┘é ╪º┘ä╪¼╪║╪▒╪º┘ü┘è (╪º╪«╪¬┘è╪º╪▒┘è)',
-      idea_input_market_placeholder: '┘à╪½╪º┘ä: ╪º┘ä╪│╪╣┘ê╪»┘è╪⌐╪î ╪º┘ä╪«┘ä┘è╪¼╪î ┘à╪¬╪¼╪▒ ┘à╪¡┘ä┘è',
-      idea_input_audience_label: '╪º┘ä┘ü╪ª╪⌐ ╪º┘ä┘à╪│╪¬┘ç╪»┘ü╪⌐ ┘à┘å ╪º┘ä╪╣┘à┘ä╪º╪í (╪º╪«╪¬┘è╪º╪▒┘è)',
-      idea_input_audience_placeholder: '┘à╪½╪º┘ä: ╪ú╪╡╪¡╪º╪¿ ╪º┘ä┘à╪╖╪º╪╣┘à╪î ╪º┘ä┘à╪│╪¬┘é┘ä┘è┘å',
-      idea_input_concern_label: '╪ú┘â╪½╪▒ ╪┤┘è╪í ┘è┘é┘ä┘é┘â ┘ê╪¬╪▒┘è╪» ╪¬┘é┘è┘è┘à┘ç (╪º╪«╪¬┘è╪º╪▒┘è)',
-      idea_input_concern_placeholder: '┘à╪½╪º┘ä: ┘ç┘ä ╪│┘è╪»┘ü╪╣ ╪º┘ä╪╣┘à┘è┘ä ┘ü╪╣┘ä╪º┘ï╪ƒ ┘ç┘ä ┘è╪│┘ç┘ä ╪¬┘é┘ä┘è╪»┘ç╪º╪ƒ',
-      idea_lang_label: '┘ä╪║╪⌐ ╪º┘ä╪¬┘é╪▒┘è╪▒',
-      idea_lang_ar: '╪º┘ä╪╣╪▒╪¿┘è╪⌐',
-      idea_lang_en: '╪º┘ä╪Ñ┘å╪¼┘ä┘è╪▓┘è╪⌐',
-      idea_privacy_notice: '╪╢┘à╪º┘å ╪º┘ä╪«╪╡┘ê╪╡┘è╪⌐: ╪ú┘ü┘â╪º╪▒┘â ┘ê╪¬┘é╪º╪▒┘è╪▒┘â ╪«╪º╪╡╪⌐ ╪¿╪¡╪│╪º╪¿┘â ┘ê┘à╪┤┘ü╪▒╪⌐ ┘ê┘ä╪º ╪¬┘Å╪│╪¬╪«╪»┘à ┘ä╪¬╪»╪▒┘è╪¿ ╪º┘ä┘å┘à╪º╪░╪¼ ╪º┘ä╪╣╪º┘à╪⌐.',
-      idea_guiding_questions_title: '╪ú╪│╪ª┘ä╪⌐ ┘à╪│╪º╪╣╪»╪⌐ ╪º╪│╪¬╪▒╪┤╪º╪»┘è╪⌐',
-      idea_gq_one: '┘à╪º ┘ç┘è ╪º┘ä┘à╪┤┘â┘ä╪⌐ ╪º┘ä╪ú╪│╪º╪│┘è╪⌐ ┘ê┘à┘å ╪º┘ä╪░┘è ┘è╪╣╪º┘å┘è ┘à┘å┘ç╪º╪ƒ',
-      idea_gq_two: '┘à╪º╪░╪º ┘è┘ü╪╣┘ä ╪º┘ä╪╣┘à┘ä╪º╪í ╪¡╪º┘ä┘è╪º┘ï ┘â╪¿╪»┘è┘ä ┘ä╪¡┘ä┘â╪ƒ',
-      idea_gq_three: '┘ä┘à╪º╪░╪º ┘é╪» ┘è╪║┘è╪▒ ╪º┘ä┘å╪º╪│ ╪╣╪º╪»╪º╪¬┘ç┘à ╪º┘ä┘è┘ê┘à┘è╪⌐ ┘ä┘ä╪º┘å╪¬┘é╪º┘ä ╪Ñ┘ä┘è┘â╪ƒ',
-      idea_btn_structure: '╪¬┘å╪╕┘è┘à ╪¿╪╖╪º┘é╪⌐ ╪º┘ä┘ü┘â╪▒╪⌐',
-      idea_btn_structuring: '╪¼╪º╪▒┘ì ╪¬┘å╪╕┘è┘à ╪º┘ä┘ü┘â╪▒╪⌐...',
-      idea_card_title: '╪¿╪╖╪º┘é╪⌐ ╪º┘ä┘ü┘â╪▒╪⌐ ╪º┘ä┘à┘å╪╕┘à╪⌐',
-      idea_card_desc: '╪▒╪º╪¼╪╣ ┘ê╪╣╪»┘ä ┘â┘è┘ü┘è╪⌐ ┘ü┘ç┘à ╪º┘ä┘ä╪¼┘å╪⌐ ┘ä┘ü┘â╪▒╪¬┘â ┘é╪¿┘ä ╪¿╪»╪í ╪¼┘ä╪│╪⌐ ╪º┘ä╪¬┘é┘è┘è┘à.',
-      idea_fld_title: '╪º┘ä╪╣┘å┘ê╪º┘å ╪º┘ä┘à┘é╪¬╪▒╪¡',
-      idea_fld_pitch: '╪º┘ä┘ê╪╡┘ü ╪º┘ä┘à╪«╪¬╪╡╪▒',
-      idea_fld_customer: '╪º┘ä╪╣┘à┘è┘ä ╪º┘ä┘à╪│╪¬┘ç╪»┘ü',
-      idea_fld_problem: '╪º┘ä┘à╪┤┘â┘ä╪⌐ ╪º┘ä╪ú╪│╪º╪│┘è╪⌐',
-      idea_fld_solution: '╪º┘ä╪¡┘ä ╪º┘ä┘à┘é╪¬╪▒╪¡',
-      idea_fld_value: '╪º┘ä┘é┘è┘à╪⌐ ╪º┘ä┘à┘é╪¬╪▒╪¡╪⌐',
-      idea_fld_alternatives: '╪º┘ä╪¿╪»╪º╪ª┘ä ╪º┘ä╪¡╪º┘ä┘è╪⌐',
-      idea_fld_revenue: '┘å┘à┘ê╪░╪¼ ╪º┘ä╪▒╪¿╪¡',
-      idea_fld_assumptions: '╪º┘ä╪º┘ü╪¬╪▒╪º╪╢╪º╪¬ ╪º┘ä╪ú┘ê┘ä┘è╪⌐',
-      idea_fld_gaps: '╪º┘ä┘à╪╣┘ä┘ê┘à╪º╪¬ ╪º┘ä┘å╪º┘é╪╡╪⌐',
-      idea_fld_core_question: '╪│╪ñ╪º┘ä ╪º┘ä╪¬┘é┘è┘è┘à ╪º┘ä╪ú╪│╪º╪│┘è',
-      idea_confirm_card_text: '╪ú╪ñ┘â╪» ╪ú┘å ┘ç╪░┘ç ╪º┘ä╪¿╪╖╪º┘é╪⌐ ╪¬┘à╪½┘ä ┘ü┘â╪▒╪¬┘è ╪¿╪»┘é╪⌐ ┘ê╪¼╪º┘ç╪▓ ┘ä╪¿╪»╪í ╪º┘ä╪¬┘é┘è┘è┘à.',
-      idea_btn_start_council: '╪º╪¿╪»╪ú ╪¼┘ä╪│╪⌐ ╪º┘ä╪¬┘é┘è┘è┘à',
-      idea_btn_save_draft: '╪¡┘ü╪╕ ┘â┘à╪│┘ê╪»╪⌐',
-      idea_session_progress_title: '╪¼┘ä╪│╪⌐ ╪º┘ä┘ä╪¼┘å╪⌐ ┘à┘å╪╣┘é╪»╪⌐ ╪¡╪º┘ä┘è╪º┘ï',
-      idea_session_progress_desc: '╪¬╪╣┘à┘ä ╪º┘ä┘ä╪¼┘å╪⌐ ┘ü┘è ╪º┘ä╪«┘ä┘ü┘è╪⌐. ┘è┘à┘â┘å┘â ┘à╪║╪º╪»╪▒╪⌐ ╪º┘ä╪╡┘ü╪¡╪⌐ ┘ê╪º┘ä╪╣┘ê╪»╪⌐ ┘ü┘è ╪ú┘è ┘ê┘é╪¬ ╪»┘ê┘å ┘ü┘é╪»╪º┘å ╪º┘ä╪¬┘é╪»┘à.',
-      idea_step_research: '╪º┘ä╪¿╪¡╪½ ╪º┘ä╪│┘ê┘é┘è ╪º┘ä╪¡┘è',
-      idea_step_analysis: '╪¬╪¡┘ä┘è┘ä ╪ú╪╣╪╢╪º╪í ╪º┘ä┘ä╪¼┘å╪⌐',
-      idea_step_synthesis: '╪╡┘è╪º╪║╪⌐ ╪º┘ä╪¬┘é╪▒┘è╪▒ ╪º┘ä┘å┘ç╪º╪ª┘è',
-      member_cold_customer: '╪º┘ä╪╣┘à┘è┘ä ╪º┘ä╪¿╪º╪▒╪»',
-      member_cold_customer_role: '╪│┘ä┘ê┘â ╪º┘ä┘à╪┤╪¬╪▒┘è ┘ê┘à╪¡┘ü╪▓ ╪º┘ä╪¬╪¼╪▒╪¿╪⌐',
-      member_harsh_auditor: '╪º┘ä┘à╪»┘é┘é ╪º┘ä┘é╪º╪│┘è',
-      member_harsh_auditor_role: '┘â╪┤┘ü ╪º┘ä╪º┘ü╪¬╪▒╪º╪╢╪º╪¬ ┘ê╪º┘ä╪½╪║╪▒╪º╪¬',
-      member_execution_expert: '╪«╪¿┘è╪▒ ╪º┘ä╪¬┘å┘ü┘è╪░',
-      member_execution_expert_role: '┘é╪º╪¿┘ä┘è╪⌐ ╪º┘ä╪¿┘å╪º╪í ┘ê┘å╪╖╪º┘é 7 ╪ú┘è╪º┘à',
-      member_market_researcher: '╪¿╪º╪¡╪½ ╪º┘ä╪│┘ê┘é',
-      member_market_researcher_role: '╪¿╪¡╪½ ╪º┘ä╪¿╪»╪º╪ª┘ä ┘ê╪Ñ╪┤╪º╪▒╪º╪¬ ╪º┘ä╪╖┘ä╪¿',
-      member_devils_advocate: '┘à╪¡╪º┘à┘è ╪º┘ä╪┤┘è╪╖╪º┘å',
-      member_devils_advocate_role: '╪│┘è┘å╪º╪▒┘è┘ê ╪º┘ä┘ü╪┤┘ä ╪º┘ä╪ú╪│┘ê╪ú',
-      member_wedge_hunter: '╪╡╪º╪ª╪» ╪º┘ä╪¬┘à┘è┘æ╪▓',
-      member_wedge_hunter_role: '╪▓╪º┘ê┘è╪⌐ ╪º┘ä╪»╪«┘ê┘ä ┘ê╪º┘ä┘é╪º╪¿┘ä┘è╪⌐ ┘ä┘ä╪»┘ü╪º╪╣',
-      member_ux_designer: '┘à╪╡┘à┘à ╪º┘ä╪¬╪¼╪▒╪¿╪⌐',
-      member_ux_designer_role: '╪ú┘ê┘ä ┘ä╪¡╪╕╪⌐ ┘é┘è┘à╪⌐ ┘ê┘å┘é╪º╪╖ ╪º┘ä╪º╪¡╪¬┘â╪º┘â',
-      member_candid_champion: '╪º┘ä╪»╪º╪╣┘à ╪º┘ä╪╡╪▒┘è╪¡',
-      member_candid_champion_role: '┘å┘é╪╖╪⌐ ╪º┘ä┘é┘ê╪⌐ ╪º┘ä┘ê╪º┘é╪╣┘è╪⌐ ┘ä┘ä╪º╪│╪¬┘à╪▒╪º╪▒',
-      idea_report_title: '╪¬┘é╪▒┘è╪▒ ╪º┘ä┘é╪▒╪º╪▒ ╪º┘ä┘à┘ê╪¡╪» ┘ä┘ä╪¼┘å╪⌐ ╪º┘ä╪ú┘ü┘â╪º╪▒',
-      idea_verdict_label: '╪º┘ä┘é╪▒╪º╪▒ ╪º┘ä╪¬┘å┘ü┘è╪░┘è',
-      idea_seven_day_build_label: '┘é╪▒╪º╪▒ ╪º┘ä╪¿┘å╪º╪í ┘ä╪│╪¿╪╣╪⌐ ╪ú┘è╪º┘à',
-      idea_opp_label: '╪ú┘é┘ê┘ë ┘ü╪▒╪╡╪⌐',
-      idea_risk_label: '╪ú┘â╪¿╪▒ ╪«╪╖╪▒',
-      idea_assumptions_label: '╪ú╪«╪╖╪▒ 3 ╪º┘ü╪¬╪▒╪º╪╢╪º╪¬ ╪║┘è╪▒ ┘à╪½╪¿╪¬╪⌐',
-      idea_question_label: '╪ú┘ç┘à ╪│╪ñ╪º┘ä ┘è╪¼╪¿ ╪¡╪│┘à┘ç',
-      idea_cut_list_label: '┘à╪º ┘è╪¼╪¿ ╪¡╪░┘ü┘ç ╪ú┘ê ╪¬╪ú╪¼┘è┘ä┘ç',
-      idea_validation_plan_title: '╪«╪╖╪⌐ ╪º┘ä╪¬╪¡┘é┘é ╪º┘ä┘à╪▒┘å╪⌐',
-      idea_val_hypothesis: '╪º┘ä┘ü╪▒╪╢┘è╪⌐',
-      idea_val_audience: '╪º┘ä╪¼┘à┘ç┘ê╪▒',
-      idea_val_channel: '╪º┘ä┘é┘å╪º╪⌐',
-      idea_val_duration: '╪º┘ä┘à╪»╪⌐ ╪º┘ä┘à┘é╪¬╪▒╪¡╪⌐',
-      idea_val_cost: '╪º┘ä╪¬┘â┘ä┘ü╪⌐ ╪º┘ä╪¬┘é╪»┘è╪▒┘è╪⌐',
-      idea_val_metric: '┘à╪╣┘è╪º╪▒ ╪º┘ä┘å╪¼╪º╪¡',
-      idea_val_stop: '╪┤╪▒╪╖ ╪º┘ä╪¬┘ê┘é┘ü',
-      idea_mvp_title: '┘å╪╖╪º┘é MVP ┘ä╪│╪¿╪╣╪⌐ ╪ú┘è╪º┘à',
-      idea_wedge_title: '╪▓╪º┘ê┘è╪⌐ ╪º┘ä╪¬┘à┘è┘æ╪▓ ┘ê┘ä╪¡╪╕╪⌐ ╪º┘ä┘é┘è┘à╪⌐',
-      idea_consensus_title: '┘å┘é╪º╪╖ ╪º┘ä╪º╪¬┘ü╪º┘é ┘ê╪º┘ä╪¬╪¿╪º┘è┘å',
-      idea_sources_title: '┘à╪╡╪º╪»╪▒ ╪º┘ä╪¿╪¡╪½ ╪º┘ä┘à┘ê╪½┘é╪⌐',
-      idea_critics_title: '╪¬╪¡┘ä┘è┘ä╪º╪¬ ┘ê╪¬┘é┘è┘è┘à╪º╪¬ ╪ú╪╣╪╢╪º╪í ╪º┘ä┘ä╪¼┘å╪⌐ ╪º┘ä╪¬┘ü╪╡┘è┘ä┘è╪⌐',
-      idea_critics_subtitle: '8 ╪▓┘ê╪º┘è╪º ╪¬╪«╪╡╪╡┘è╪⌐ ╪¡┘ê┘ä ╪º┘ä╪¼╪»┘ê┘ë ┘ê┘é╪º╪¿┘ä┘è╪⌐ ╪º┘ä╪¬┘å┘ü┘è╪░ ┘ê╪º┘ä┘à╪«╪º╪╖╪▒',
-      idea_truth_board_title: '┘ä┘ê╪¡╪⌐ ╪º┘ä╪¡┘é┘è┘é╪⌐ ╪º┘ä╪¬┘ü╪º╪╣┘ä┘è╪⌐',
-      idea_truth_board_desc: '╪¬╪º╪¿╪╣ ╪º┘ä╪º┘ü╪¬╪▒╪º╪╢╪º╪¬ ┘ê╪º┘ä┘à╪«╪º╪╖╪▒ ┘ê╪«╪╖┘ê╪º╪¬ ╪º┘ä╪¬╪¡┘é┘é ┘ü┘è ╪º┘ä┘ê┘é╪¬ ╪º┘ä┘ü╪╣┘ä┘è ╪»┘ê┘å ╪º╪│╪¬┘ç┘ä╪º┘â ╪¼┘ê┘ä╪º╪¬ ╪º┘ä╪░┘â╪º╪í ╪º┘ä╪º╪╡╪╖┘å╪º╪╣┘è.',
-      idea_tb_status_open: '┘à┘ü╪¬┘ê╪¡',
-      idea_tb_status_validating: '╪¼╪º╪▒┘ì ╪º┘ä╪¬╪¡┘é┘é',
-      idea_tb_status_verified: '╪¬┘à ╪º┘ä╪¬╪¡┘é┘é',
-      idea_tb_status_dismissed: '┘à╪│╪¬╪¿╪╣╪»',
-      idea_tb_notes_placeholder: '┘à┘ä╪º╪¡╪╕╪º╪¬ ┘ê╪¬╪¡╪»┘è╪½╪º╪¬ ╪º┘ä┘à╪ñ╪│╪│...',
-      idea_btn_export_md: '╪¬╪╡╪»┘è╪▒ Markdown',
-      idea_btn_export_pdf: '╪╖╪¿╪º╪╣╪⌐ ╪ú┘ê PDF',
-      idea_rounds_history_title: '╪│╪¼┘ä ╪¼┘ê┘ä╪º╪¬ ╪º┘ä╪¬┘é┘è┘è┘à:',
-      idea_btn_compare_rounds: '┘à┘é╪º╪▒┘å╪⌐ ╪º┘ä╪¼┘ê┘ä╪º╪¬',
-      idea_unit_econ_title: '╪¡╪º╪│╪¿╪⌐ ╪º┘é╪¬╪╡╪º╪»┘è╪º╪¬ ╪º┘ä┘ê╪¡╪»╪⌐ ╪º┘ä╪¬┘ü╪º╪╣┘ä┘è╪⌐',
-      idea_unit_econ_subtitle: '┘à╪¡╪º┘â╪º╪⌐ ╪º┘ä┘ç╪º┘à╪┤ ┘ê╪¡╪¼┘à ╪º┘ä╪╖┘ä╪¿╪º╪¬ ┘ê┘å┘é╪º╪╖ ╪º┘ä╪¬╪╣╪º╪»┘ä. ╪¡╪▒┘æ┘â ╪º┘ä┘à╪ñ╪┤╪▒╪º╪¬ ┘ä╪º╪«╪¬╪¿╪º╪▒ ╪╡┘ä╪º╪¿╪⌐ ╪º┘ä┘å┘à┘ê╪░╪¼ ╪º┘ä┘à╪º┘ä┘è.',
-      idea_unit_econ_aov: '┘à╪¬┘ê╪│╪╖ ┘é┘è┘à╪⌐ ╪º┘ä╪╖┘ä╪¿ (AOV):',
-      idea_unit_econ_margin: '┘å╪│╪¿╪⌐ ╪º┘ä╪╣┘à┘ê┘ä╪⌐ / ┘ç╪º┘à╪┤ ╪º┘ä╪▒╪¿╪¡:',
-      idea_unit_econ_direct_costs: '╪º┘ä╪¬┘â╪º┘ä┘è┘ü ╪º┘ä┘à╪¿╪º╪┤╪▒╪⌐ ┘ä┘â┘ä ╪╖┘ä╪¿:',
-      idea_unit_econ_fixed_costs: '╪º┘ä┘à╪╡╪º╪▒┘è┘ü ╪º┘ä╪¬╪┤╪║┘è┘ä┘è╪⌐ ╪º┘ä╪½╪º╪¿╪¬╪⌐ ╪┤┘ç╪▒┘è╪º┘ï:',
-      idea_unit_econ_net_contribution: '╪╡╪º┘ü┘è ╪º┘ä┘à╪│╪º┘ç┘à╪⌐ ┘ä┘â┘ä ╪╖┘ä╪¿',
-      idea_unit_econ_breakeven_orders: '╪╖┘ä╪¿╪º╪¬ ╪º┘ä╪¬╪╣╪º╪»┘ä ╪º┘ä╪┤┘ç╪▒┘è╪⌐',
-      idea_unit_econ_daily_orders: '╪º┘ä╪╖┘ä╪¿╪º╪¬ ╪º┘ä┘è┘ê┘à┘è╪⌐ ╪º┘ä┘à╪╖┘ä┘ê╪¿╪⌐',
-      idea_unit_econ_risk_none: '┘ç┘è┘â┘ä ┘ç┘ê╪º┘à╪┤ ╪╡╪¡┘è ╪╣┘å╪» ╪º┘ä┘à╪ñ╪┤╪▒╪º╪¬ ╪º┘ä╪¡╪º┘ä┘è╪⌐.',
-      idea_compare_modal_title: '┘à┘é╪º╪▒┘å╪⌐ ╪¼┘ê┘ä╪º╪¬ ╪º┘ä╪¬┘é┘è┘è┘à (┘ü╪º╪▒┘é ╪º┘ä╪¼┘ê┘ä╪º╪¬)',
-      idea_compare_modal_subtitle: '╪¬╪¬╪¿╪╣ ┘â┘è┘ü ╪¬╪╖┘ê╪▒ ┘é╪▒╪º╪▒ ╪º┘ä┘ä╪¼┘å╪⌐ ┘ê╪º┘ü╪¬╪▒╪º╪╢╪º╪¬┘ç╪º ┘ê╪«╪╖╪⌐ ╪º┘ä╪¬╪¡┘é┘é ╪¿╪╣╪» ╪»┘ü╪º╪╣┘â ┘ê┘à╪»╪«┘ä╪º╪¬┘â.',
-      idea_compare_round_a: '╪º┘ä╪¼┘ê┘ä╪⌐ ╪º┘ä╪ú╪│╪º╪│┘è╪⌐:',
-      idea_compare_round_b: '╪¼┘ê┘ä╪⌐ ╪º┘ä┘à┘é╪º╪▒┘å╪⌐:',
-      idea_compare_verdict: '╪º┘ä┘é╪▒╪º╪▒ ╪º┘ä╪¬┘å┘ü┘è╪░┘è',
-      idea_compare_assumptions: '╪¬╪╖┘ê╪▒ ╪º┘ä╪º┘ü╪¬╪▒╪º╪╢╪º╪¬',
-      idea_compare_question: '╪º┘ä╪│╪ñ╪º┘ä ╪º┘ä┘à╪¡┘ê╪▒┘è ┘ä┘ä╪¡╪│┘à',
-      idea_compare_validation: '╪¬╪»╪▒╪¼ ╪«╪╖╪⌐ ╪º┘ä╪¬╪¡┘é┘é',
-      idea_compare_founder_defense: '╪»┘ü╪º╪╣ ┘ê╪¡╪¼╪¼ ╪º┘ä┘à╪ñ╪│╪│',
-      idea_compare_no_rounds: '┘è┘ä╪▓┘à ╪¬┘ê┘ü╪▒ ╪¼┘ê┘ä╪¬┘è ╪¬┘é┘è┘è┘à ╪╣┘ä┘ë ╪º┘ä╪ú┘é┘ä ┘ä┘ä┘à┘é╪º╪▒┘å╪⌐.',
-      idea_round_prefix: '╪º┘ä╪¼┘ê┘ä╪⌐',
-      idea_round_initial: '╪º┘ä╪¼┘ê┘ä╪⌐ 1 (╪º┘ä╪¬┘é┘è┘è┘à ╪º┘ä╪ú┘ê┘ä┘è)',
-      idea_round_viewing: '┘è╪¬┘à ╪º┘ä╪ó┘å ╪╣╪▒╪╢ ┘å╪¬╪º╪ª╪¼ ╪¬┘é┘è┘è┘à ╪º┘ä╪¼┘ê┘ä╪⌐',
-      idea_round_founder_defense: '╪»┘ü┘ê╪╣ ┘ê┘à╪»╪«┘ä╪º╪¬ ╪º┘ä┘à╪ñ╪│╪│ ┘ä┘ä╪¼┘ê┘ä╪⌐:',
-      idea_followup_title: '╪¼┘ê┘ä╪º╪¬ ╪º┘ä┘à╪¬╪º╪¿╪╣╪⌐ (3 ┘ä┘â┘ä ┘ü┘â╪▒╪⌐)',
-      idea_followup_remaining: '╪º┘ä╪¼┘ê┘ä╪º╪¬ ╪º┘ä┘à╪¬╪¿┘é┘è╪⌐:',
-      idea_btn_defend: '╪»╪º┘ü╪╣ ╪╣┘å ╪º┘ä┘ü┘â╪▒╪⌐',
-      idea_btn_pivot: '╪º┘é╪¬╪▒╪¡ Pivot',
-      idea_btn_val_plan: '╪«╪╖╪⌐ ╪¬╪¡┘é┘é ╪╡╪║┘è╪▒╪⌐',
-      idea_btn_vote: '╪¬╪╡┘ê┘è╪¬ ╪º┘ä┘ä╪¼┘å╪⌐',
-      idea_btn_compare: '┘é╪º╪▒┘å ╪¿┘à┘å╪º┘ü╪│',
-      idea_btn_mvp: '╪«╪╖╪⌐ MVP ┘ä┘Ç 7 ╪ú┘è╪º┘à',
-      idea_followup_prompt_placeholder: '╪º┘â╪¬╪¿ ╪¡╪¼╪¬┘â ╪º┘ä╪»┘ü╪º╪╣┘è╪⌐╪î ╪ú┘ê ╪º╪¬╪¼╪º┘ç ╪º┘ä┘Ç Pivot ╪º┘ä┘à┘é╪¬╪▒╪¡╪î ╪ú┘ê ╪│╪ñ╪º┘ä┘â ╪º┘ä┘à╪¡╪»╪» ┘ä┘ä╪¼┘å╪⌐...',
-      idea_btn_start_followup: '╪¿╪»╪í ╪¼┘ê┘ä╪⌐ ╪º┘ä┘à╪¬╪º╪¿╪╣╪⌐',
-      idea_followup_modal_title: '╪¼┘ê┘ä╪⌐ ╪º┘ä┘à╪¬╪º╪¿╪╣╪⌐ ┘ê╪»┘ü╪º╪╣ ╪º┘ä┘ü┘â╪▒╪⌐',
-      idea_followup_modal_subtitle: '┘é╪»┘æ┘à ╪¡╪¼╪¼╪º┘ï ┘ê╪ú╪»┘ä╪⌐ ┘ê╪▓┘ê╪º┘è╪º ╪º╪│╪¬╪▒╪º╪¬┘è╪¼┘è╪⌐ ╪¼╪»┘è╪»╪⌐ ┘ä╪¬┘ü┘å┘è╪» ╪┤┘â┘ê┘â ┘ê╪¬╪¡╪»┘è╪º╪¬ ╪ú╪╣╪╢╪º╪í ╪º┘ä┘ä╪¼┘å╪⌐.',
-      idea_followup_action_label: '┘ç╪»┘ü ╪º┘ä╪¼┘ê┘ä╪⌐ ┘ê┘å┘ê╪╣ ╪º┘ä╪¬╪¡╪▒┘â',
-      idea_followup_chips_label: '╪▓┘ê╪º┘è╪º ╪º┘ä╪»┘ü╪º╪╣ ┘ê╪º┘ä┘à┘è╪▓╪º╪¬ ╪º┘ä╪º╪│╪¬╪▒╪º╪¬┘è╪¼┘è╪⌐ (╪º┘å┘é╪▒ ┘ä┘ä╪¬╪¡╪»┘è╪»)',
-      idea_chip_pricing: '≡ƒÆ░ ╪¬╪│╪╣┘è╪▒ ┘ê┘à┘è╪▓╪⌐ ╪¬┘â┘ä┘ü╪⌐ ╪ú┘é┘ä',
-      idea_chip_niche: '≡ƒÄ» ╪º╪│╪¬┘ç╪»╪º┘ü ╪┤╪▒┘è╪¡╪⌐ ┘å┘è╪¬╪┤ ┘à╪¡╪»╪»╪⌐',
-      idea_chip_distribution: '≡ƒñ¥ ╪┤╪▒╪º┘â╪º╪¬ ┘ê┘é┘å┘ê╪º╪¬ ╪¬┘ê╪▓┘è╪╣ ╪¼╪º┘ç╪▓╪⌐',
-      idea_chip_guarantee: '≡ƒ¢í∩╕Å ╪╢┘à╪º┘å ╪º╪│╪¬╪▒╪¼╪º╪╣ ╪ú┘ê ╪¬╪¼╪▒╪¿╪⌐ ┘à╪¼╪º┘å┘è╪⌐',
-      idea_chip_speed: 'ΓÜí ╪¬╪¿╪│┘è╪╖ ╪º┘ä╪¡┘ä ┘ê╪¡╪░┘ü ╪º┘ä╪¬╪╣┘é┘è╪»',
-      idea_chip_team: '≡ƒæÑ ┘ü╪▒┘è┘é ┘à╪¬╪«╪╡╪╡ ┘ê╪«╪¿╪▒╪⌐ ┘à┘è╪»╪º┘å┘è╪⌐',
-      idea_chip_offline: '≡ƒôì ┘à┘ê┘é╪╣ ┘ü╪╣┘ä┘è ┘ê╪¬┘ê╪º╪¼╪» ┘à╪¡┘ä┘è ┘é┘ê┘è',
-      idea_chip_inventory: '≡ƒôª ┘å┘à┘ê╪░╪¼ ╪ú┘ê┘ä┘è ╪¼╪º┘ç╪▓ ╪ú┘ê ╪¿╪╢╪º╪╣╪⌐ ┘à╪¬┘ê┘ü╪▒╪⌐',
-      idea_followup_target_critic_label: '╪º┘ä┘å╪º┘é╪» ╪º┘ä┘à╪│╪¬┘ç╪»┘ü ╪¿╪º┘ä╪▒╪» ╪º┘ä╪ú╪│╪º╪│┘è',
-      idea_critic_opt_all: '┘â╪º┘à┘ä ╪ú╪╣╪╢╪º╪í ╪º┘ä┘ä╪¼┘å╪⌐',
-      idea_critic_opt_customer: '╪º┘ä╪╣┘à┘è┘ä ╪º┘ä╪¿╪º╪▒╪» (╪¬╪▒╪»╪» ╪º┘ä╪┤╪▒╪º╪í ┘ê╪¬┘â┘ä┘ü╪⌐ ╪º┘ä╪¬╪¿╪»┘è┘ä)',
-      idea_critic_opt_auditor: '╪º┘ä┘à╪»┘é┘é ╪º┘ä┘à╪º┘ä┘è ╪º┘ä╪╡╪º╪▒┘à (╪º┘ä╪Ñ┘è╪▒╪º╪»╪º╪¬ ┘ê╪º┘ä╪¼╪»┘ê┘ë)',
-      idea_critic_opt_competitor: '╪º┘ä┘à┘å╪º┘ü╪│ ╪º┘ä╪┤╪▒╪│ (╪º┘ä╪¬┘à┘è╪▓ ┘ê╪¡┘ê╪º╪¼╪▓ ╪º┘ä╪»╪«┘ê┘ä)',
-      idea_critic_opt_ops: '╪«╪¿┘è╪▒ ╪º┘ä╪╣┘à┘ä┘è╪º╪¬ ┘ê╪º┘ä╪¼╪»┘ê┘ë ╪º┘ä╪¬╪┤╪║┘è┘ä┘è╪⌐',
-      idea_followup_review_mode_label: '╪ú╪│┘ä┘ê╪¿ ┘à╪▒╪º╪¼╪╣╪⌐ ╪º┘ä┘ä╪¼┘å╪⌐',
-      idea_mode_opt_balanced: '╪¿┘å╪º╪í ┘ê╪╣┘à┘ä┘è ┘à┘ê╪¼┘ç ┘ä┘ä╪¡┘ä┘ê┘ä',
-      idea_mode_opt_strict: '┘å┘é╪» ╪╡╪º╪▒┘à ┘ê╪º╪«╪¬╪¿╪º╪▒ ╪╢╪║╪╖ ┘à╪¬╪┤╪»╪»',
-      idea_followup_defense_label: '╪¡╪¼╪¼┘â ╪º┘ä╪»┘ü╪º╪╣┘è╪⌐ ┘ê╪º┘ä╪¿┘è╪º┘å╪º╪¬ ┘ê╪º┘ä╪¬╪╣╪»┘è┘ä╪º╪¬ ╪º┘ä┘à┘é╪¬╪▒╪¡╪⌐',
-      idea_followup_evidence_label: '╪ú╪»┘ä╪⌐ ╪Ñ╪╢╪º┘ü┘è╪⌐╪î ╪ú╪▒┘é╪º┘à╪î ╪ú┘ê ╪º╪│┘à ┘à┘å╪º┘ü╪│ ┘à╪¡╪»╪» (╪º╪«╪¬┘è╪º╪▒┘è)',
-      idea_followup_evidence_placeholder: '┘à╪½╪º┘ä: ╪¼┘à╪╣ 150 ╪╖┘ä╪¿╪º┘ï ┘à╪│╪¿┘é╪º┘ï╪î ╪▒╪º╪¿╪╖ ╪¿╪»┘è┘ä ┘ü┘è ╪º┘ä╪│┘ê┘é╪î ╪º╪¬┘ü╪º┘é ╪¬┘ê╪▒┘è╪» ┘à╪¡┘ä┘è...',
-      idea_followup_submit_btn: '╪Ñ╪▒╪│╪º┘ä ┘ê╪¿╪»╪í ╪º┘ä╪¼┘ê┘ä╪⌐ ╪º┘ä╪¬┘ü╪º╪╣┘ä┘è╪⌐',
-      idea_followup_err_empty: '┘è╪▒╪¼┘ë ┘â╪¬╪º╪¿╪⌐ ╪¡╪¼╪¬┘â ╪º┘ä╪»┘ü╪º╪╣┘è╪⌐ ╪ú┘ê ╪¬┘ü╪º╪╡┘è┘ä ╪«╪╖╪¬┘â ┘é╪¿┘ä ╪º┘ä╪Ñ╪▒╪│╪º┘ä.',
-      idea_feedback_title: '┘ç┘ä ┘â╪º┘å ┘ç╪░╪º ╪º┘ä╪¬┘é┘è┘è┘à ┘à┘ü┘è╪»╪º┘ï ┘ä┘â╪ƒ',
-      idea_btn_feedback_submit: '╪Ñ╪▒╪│╪º┘ä ╪º┘ä╪¬┘é┘è┘è┘à',
-      idea_disclaimer: '╪Ñ╪«┘ä╪º╪í ┘à╪│╪ñ┘ê┘ä┘è╪⌐: ┘ç╪░╪º ╪º┘ä╪¬┘é╪▒┘è╪▒ ╪ú╪»╪º╪⌐ ╪º╪│╪¬╪▒╪┤╪º╪»┘è╪⌐ ┘ä┘ä┘à╪│╪º╪╣╪»╪⌐ ┘ü┘è ╪º┘ä┘é╪▒╪º╪▒ ┘ê┘ä┘è╪│ ╪º╪│╪¬╪┤╪º╪▒╪⌐ ┘é╪º┘å┘ê┘å┘è╪⌐ ╪ú┘ê ┘à╪º┘ä┘è╪⌐ ┘à╪╣╪¬┘à╪»╪⌐.',
-      idea_verdict_build: '╪º┘å╪╖┘ä┘é ┘ü┘è ╪º┘ä╪¿┘å╪º╪í (╪╢┘ê╪í ╪ú╪«╪╢╪▒)',
-      idea_verdict_validate: '╪¬╪¡┘é┘é ╪ú┘ê┘ä╪º┘ï (╪╢┘ê╪í ╪ú╪╡┘ü╪▒)',
-      idea_verdict_pivot: '╪Ñ╪╣╪º╪»╪⌐ ╪¬┘ê╪¼┘è┘ç (Pivot)',
-      idea_verdict_do_not_build: '┘ä╪º ╪¬╪¿┘å┘É ╪º┘ä╪ó┘å (╪╢┘ê╪í ╪ú╪¡┘à╪▒)',
-      idea_role_customer_advocate: '┘à╪¡╪º┘à┘è ╪º┘ä╪╣┘à┘è┘ä ╪º┘ä╪¿╪º╪▒╪»',
-      idea_role_financial_auditor: '╪º┘ä┘à╪»┘é┘é ╪º┘ä┘à╪º┘ä┘è',
-      idea_role_growth_marketer: '╪«╪¿┘è╪▒ ╪º┘ä╪¬┘ê╪▓┘è╪╣ ┘ê╪º┘ä┘å┘à┘ê',
-      idea_role_direct_competitor: '╪º┘ä┘à┘å╪º┘ü╪│ ╪º┘ä╪┤╪▒╪│',
-      idea_role_technical_architect: '╪º┘ä┘à┘ç┘å╪»╪│ ╪º┘ä╪¬┘é┘å┘è',
-      idea_role_execution_risk_officer: '┘à╪│╪ñ┘ê┘ä ┘à╪«╪º╪╖╪▒ ╪º┘ä╪¬┘å┘ü┘è╪░',
-      idea_role_monetization_strategist: '╪º╪│╪¬╪▒╪º╪¬┘è╪¼┘è ╪º┘ä╪¬╪│╪╣┘è╪▒ ┘ê╪º┘ä╪▒╪¿╪¡',
-      idea_role_simplicity_editor: '┘à╪¡╪▒╪▒ ╪º┘ä╪¿╪│╪º╪╖╪⌐ ┘ê┘å╪╖╪º┘é MVP',
-      idea_tb_cat_assumption: '┘ü╪▒╪╢┘è╪⌐',
-      idea_tb_cat_market_fact: '╪¡┘é┘è┘é╪⌐ ╪│┘ê┘é┘è╪⌐',
-      idea_tb_cat_validation_test: '╪º╪«╪¬╪¿╪º╪▒ ╪¬╪¡┘é┘é',
-      idea_tb_cat_critical_risk: '╪«╪╖╪▒ ╪¼┘ê┘ç╪▒┘è',
-      idea_tb_status_blocked: '┘à╪╣┘ä┘é',
-      idea_action_resume: '╪º╪│╪¬┘â┘à╪º┘ä',
-      idea_action_view: '╪╣╪▒╪╢ ╪º┘ä╪¬┘é╪▒┘è╪▒',
-      idea_action_delete: '╪¡╪░┘ü',
-      idea_msg_saved: '╪¬┘à ╪¡┘ü╪╕ ╪º┘ä┘à╪│┘ê╪»╪⌐',
-      idea_msg_saving: '╪¼╪º╪▒┘è ╪º┘ä╪¡┘ü╪╕...',
-      idea_msg_confirm_delete: '┘ç┘ä ╪ú┘å╪¬ ┘à╪¬╪ú┘â╪» ┘à┘å ╪¡╪░┘ü ┘ç╪░┘ç ╪º┘ä┘ü┘â╪▒╪⌐╪ƒ',
-      idea_msg_confirm_checkbox_req: '┘è╪▒╪¼┘ë ╪¬╪ú┘â┘è╪» ╪¿╪╖╪º┘é╪⌐ ╪º┘ä┘ü┘â╪▒╪⌐ ┘é╪¿┘ä ╪º╪│╪¬╪»╪╣╪º╪í ╪º┘ä┘ä╪¼┘å╪⌐.',
-      idea_msg_quota_exceeded: '╪¬┘à ╪º╪│╪¬┘ç┘ä╪º┘â ╪▒╪╡┘è╪» ╪º┘ä╪ú┘ü┘â╪º╪▒ ╪º┘ä╪┤┘ç╪▒┘è ╪¿╪º┘ä┘â╪º┘à┘ä (3 ╪ú┘ü┘â╪º╪▒ ╪┤┘ç╪▒┘è╪º┘ï).',
-      idea_msg_card_saved: '╪¬┘à ╪¡┘ü╪╕ ╪¿╪╖╪º┘é╪⌐ ╪º┘ä┘ü┘â╪▒╪⌐.',
-      idea_msg_followup_prompt: '╪ú╪»╪«┘ä ┘à┘ä╪º╪¡╪╕╪º╪¬┘â ╪ú┘ê ╪¡╪¼╪¬┘â ╪º┘ä╪»┘ü╪º╪╣┘è╪⌐ ┘ä╪¼┘ê┘ä╪⌐ ╪º┘ä┘à╪¬╪º╪¿╪╣╪⌐:',
-      idea_msg_followup_success: '╪¬┘à ╪Ñ┘â┘à╪º┘ä ╪¼┘ê┘ä╪⌐ ╪º┘ä┘à╪¬╪º╪¿╪╣╪⌐ ╪¿┘å╪¼╪º╪¡.',
-      idea_status_draft: '┘à╪│┘ê╪»╪⌐',
-      idea_status_structuring: '┘é┘è╪» ╪º┘ä╪╡┘è╪º╪║╪⌐',
-      idea_status_awaiting_conf: '╪¿╪º┘å╪¬╪╕╪º╪▒ ╪º┘ä╪¬╪ú┘â┘è╪»',
-      idea_status_queued: '┘é┘è╪» ╪º┘ä╪º┘å╪¬╪╕╪º╪▒',
-      idea_status_running: '╪¼╪º╪▒┘ì ╪º┘ä╪¬╪¡┘ä┘è┘ä',
-      idea_status_completed: '┘à┘â╪¬┘à┘ä',
-      idea_status_partial: '┘à┘â╪¬┘à┘ä ╪¼╪▓╪ª┘è╪º┘ï',
-      idea_status_failed: '┘ü╪┤┘ä'
+      store_sync_feedback: 'تم حفظ إعدادات مزامنة المتجر بنجاح. يستطيع الوكيل الذكي الآن ترشيح المنتجات من الكتالوج.',
+      store_sync_planned: 'المزامنة التلقائية المباشرة مع شوبيفاي ووكومرس قيد الإطلاق المباشر. كتالوج المتجر الداخلي نشط ويعمل حالياً.',
+      automation_center_title: 'مركز أتمتة المبيعات والمهام التلقائية',
+      automation_center_desc: 'إدارة المهام التلقائية الخلفية: استعادة المبيعات المتروكة، تقرير المبيعات اليومي، وفرز الشكاوى العاجلة.',
+      btn_trigger_recovery: 'استعادة العملاء المحتملين الآن',
+      btn_trigger_digest: 'إرسال ملخص المبيعات الآن',
+      card_recovery_title: 'استعادة المبيعات المتروكة',
+      card_recovery_desc: 'إعادة استهداف ومتابعة العملاء الذين أبدوا رغبة بالشراء أو سألوا عن الأسعار وتوقفوا عن الرد.',
+      card_digest_title: 'تقرير الأداء والمبيعات اليومي',
+      card_digest_desc: 'ملخص شامل للطلبات اليومية والإيرادات والمحادثات يُرسل لحسابك على تيليجرام أو واتساب.',
+      card_stock_title: 'تنبيهات المخزون المنخفض',
+      card_stock_desc: 'مراقبة مستمرة لكميات المنتجات في الكتالوج وإرسال إنذار مبكر عند اقتراب نفاد المخزون.',
+      card_complaints_title: 'فرز وتنبيه الشكاوى العاجلة',
+      card_complaints_desc: 'تحويل فوري لشكاوى العملاء الحرجة وطلبات التدخل البشري إلى هاتفك دون تأخير.',
+      badge_active: 'نشط',
+      badge_scheduled: 'يومياً 9:00 م',
+      badge_monitoring: 'مراقبة تلقائية',
+      badge_instant: 'تنبيه فوري',
+      agent_tool_recovery_title: 'أداة المتابعة واستعادة المبيعات المتروكة تلقائياً',
+      agent_recovery_delay_label: 'المتابعة بعد',
+      delay_2h: 'ساعتان',
+      delay_4h: '4 ساعات',
+      delay_12h: '12 ساعة',
+      delay_24h: '24 ساعة',
+      agent_recovery_msg_label: 'رسالة المتابعة المخصصة',
+      agent_recovery_msg_placeholder: 'اتركه فارغاً لاستخدام الرسالة الافتراضية الذكية',
+      agent_tool_digest_title: 'أداة تقرير الأداء والمبيعات اليومي التلقائي',
+      agent_digest_channel_label: 'قناة استلام التقرير',
+      channel_all: 'تيليجرام وواتساب ولوحة التحكم',
+      channel_inapp: 'إشعارات لوحة التحكم فقط',
+      agent_digest_time_label: 'وقت الإرسال اليومي',
+      agent_tool_upsell_title: 'أداة ترشيح المنتجات التكميلية وإغلاق الصفقات',
+      agent_sales_tone_label: 'نبرة وأسلوب البيع',
+      tone_consultative: 'استشاري ومقنع',
+      tone_enthusiastic: 'حماسي وترويجي',
+      tone_formal: 'رسمي ومباشر',
+      agent_max_discount_label: 'صلاحية الخصم التشجيعي',
+      discount_none: 'بدون خصم إضافي (0%)',
+      menu_idea_council: 'لجنة الأفكار',
+      idea_council_desc: 'لجنة تحليل متخصصة بالذكاء الاصطناعي لتقييم المشاريع وصناعة القرار',
+      idea_quota_label: 'رصيد الأفكار الشهري',
+      idea_quota_text: 'أفكار متاحة هذا الشهر',
+      idea_btn_new: 'اعرض فكرة جديدة',
+      idea_btn_back_list: 'العودة لقائمة الأفكار',
+      idea_filter_all: 'الكل',
+      idea_filter_drafts: 'المسودات',
+      idea_filter_running: 'قيد التقييم',
+      idea_filter_completed: 'مكتملة',
+      idea_list_empty: 'لا توجد أفكار مسجلة حتى الآن. انقر فوق فكرة جديدة للبدء.',
+      idea_input_title: 'صف فكرة مشروعك',
+      idea_input_desc_label: 'وصف الفكرة بالتفصيل (من 100 إلى 8,000 حرف)',
+      idea_input_desc_placeholder: 'اكتب فكرتك بحرية: ما المشكلة التي تحلها؟ لمن تقدم؟ ولماذا قد يغير الناس سلوكهم لاستخدامها؟',
+      idea_input_market_label: 'السوق المستهدف أو النطاق الجغرافي (اختياري)',
+      idea_input_market_placeholder: 'مثال: السعودية، الخليج، متجر محلي',
+      idea_input_audience_label: 'الفئة المستهدفة من العملاء (اختياري)',
+      idea_input_audience_placeholder: 'مثال: أصحاب المطاعم، المستقلين',
+      idea_input_concern_label: 'أكثر شيء يقلقك وتريد تقييمه (اختياري)',
+      idea_input_concern_placeholder: 'مثال: هل سيدفع العميل فعلاً؟ هل يسهل تقليدها؟',
+      idea_lang_label: 'لغة التقرير',
+      idea_lang_ar: 'العربية',
+      idea_lang_en: 'الإنجليزية',
+      idea_privacy_notice: 'ضمان الخصوصية: أفكارك وتقاريرك خاصة بحسابك ومشفرة ولا تُستخدم لتدريب النماذج العامة.',
+      idea_guiding_questions_title: 'أسئلة مساعدة استرشادية',
+      idea_gq_one: 'ما هي المشكلة الأساسية ومن الذي يعاني منها؟',
+      idea_gq_two: 'ماذا يفعل العملاء حالياً كبديل لحلك؟',
+      idea_gq_three: 'لماذا قد يغير الناس عاداتهم اليومية للانتقال إليك؟',
+      idea_btn_structure: 'تنظيم بطاقة الفكرة',
+      idea_btn_structuring: 'جارٍ تنظيم الفكرة...',
+      idea_card_title: 'بطاقة الفكرة المنظمة',
+      idea_card_desc: 'راجع وعدل كيفية فهم اللجنة لفكرتك قبل بدء جلسة التقييم.',
+      idea_fld_title: 'العنوان المقترح',
+      idea_fld_pitch: 'الوصف المختصر',
+      idea_fld_customer: 'العميل المستهدف',
+      idea_fld_problem: 'المشكلة الأساسية',
+      idea_fld_solution: 'الحل المقترح',
+      idea_fld_value: 'القيمة المقترحة',
+      idea_fld_alternatives: 'البدائل الحالية',
+      idea_fld_revenue: 'نموذج الربح',
+      idea_fld_assumptions: 'الافتراضات الأولية',
+      idea_fld_gaps: 'المعلومات الناقصة',
+      idea_fld_core_question: 'سؤال التقييم الأساسي',
+      idea_confirm_card_text: 'أؤكد أن هذه البطاقة تمثل فكرتي بدقة وجاهز لبدء التقييم.',
+      idea_btn_start_council: 'ابدأ جلسة التقييم',
+      idea_btn_save_draft: 'حفظ كمسودة',
+      idea_session_progress_title: 'جلسة اللجنة منعقدة حالياً',
+      idea_session_progress_desc: 'تعمل اللجنة في الخلفية. يمكنك مغادرة الصفحة والعودة في أي وقت دون فقدان التقدم.',
+      idea_step_research: 'البحث السوقي الحي',
+      idea_step_analysis: 'تحليل أعضاء اللجنة',
+      idea_step_synthesis: 'صياغة التقرير النهائي',
+      member_cold_customer: 'العميل البارد',
+      member_cold_customer_role: 'سلوك المشتري ومحفز التجربة',
+      member_harsh_auditor: 'المدقق القاسي',
+      member_harsh_auditor_role: 'كشف الافتراضات والثغرات',
+      member_execution_expert: 'خبير التنفيذ',
+      member_execution_expert_role: 'قابلية البناء ونطاق 7 أيام',
+      member_market_researcher: 'باحث السوق',
+      member_market_researcher_role: 'بحث البدائل وإشارات الطلب',
+      member_devils_advocate: 'محامي الشيطان',
+      member_devils_advocate_role: 'سيناريو الفشل الأسوأ',
+      member_wedge_hunter: 'صائد التميّز',
+      member_wedge_hunter_role: 'زاوية الدخول والقابلية للدفاع',
+      member_ux_designer: 'مصمم التجربة',
+      member_ux_designer_role: 'أول لحظة قيمة ونقاط الاحتكاك',
+      member_candid_champion: 'الداعم الصريح',
+      member_candid_champion_role: 'نقطة القوة الواقعية للاستمرار',
+      idea_report_title: 'تقرير القرار الموحد للجنة الأفكار',
+      idea_verdict_label: 'القرار التنفيذي',
+      idea_seven_day_build_label: 'قرار البناء لسبعة أيام',
+      idea_opp_label: 'أقوى فرصة',
+      idea_risk_label: 'أكبر خطر',
+      idea_assumptions_label: 'أخطر 3 افتراضات غير مثبتة',
+      idea_question_label: 'أهم سؤال يجب حسمه',
+      idea_cut_list_label: 'ما يجب حذفه أو تأجيله',
+      idea_validation_plan_title: 'خطة التحقق المرنة',
+      idea_val_hypothesis: 'الفرضية',
+      idea_val_audience: 'الجمهور',
+      idea_val_channel: 'القناة',
+      idea_val_duration: 'المدة المقترحة',
+      idea_val_cost: 'التكلفة التقديرية',
+      idea_val_metric: 'معيار النجاح',
+      idea_val_stop: 'شرط التوقف',
+      idea_mvp_title: 'نطاق MVP لسبعة أيام',
+      idea_wedge_title: 'زاوية التميّز ولحظة القيمة',
+      idea_consensus_title: 'نقاط الاتفاق والتباين',
+      idea_sources_title: 'مصادر البحث الموثقة',
+      idea_critics_title: 'تحليلات وتقييمات أعضاء اللجنة التفصيلية',
+      idea_critics_subtitle: '8 زوايا تخصصية حول الجدوى وقابلية التنفيذ والمخاطر',
+      idea_truth_board_title: 'لوحة الحقيقة التفاعلية',
+      idea_truth_board_desc: 'تابع الافتراضات والمخاطر وخطوات التحقق في الوقت الفعلي دون استهلاك جولات الذكاء الاصطناعي.',
+      idea_tb_status_open: 'مفتوح',
+      idea_tb_status_validating: 'جارٍ التحقق',
+      idea_tb_status_verified: 'تم التحقق',
+      idea_tb_status_dismissed: 'مستبعد',
+      idea_tb_notes_placeholder: 'ملاحظات وتحديثات المؤسس...',
+      idea_btn_export_md: 'تصدير Markdown',
+      idea_btn_export_pdf: 'طباعة أو PDF',
+      idea_rounds_history_title: 'سجل جولات التقييم:',
+      idea_btn_compare_rounds: 'مقارنة الجولات',
+      idea_unit_econ_title: 'حاسبة اقتصاديات الوحدة التفاعلية',
+      idea_unit_econ_subtitle: 'محاكاة الهامش وحجم الطلبات ونقاط التعادل. حرّك المؤشرات لاختبار صلابة النموذج المالي.',
+      idea_unit_econ_aov: 'متوسط قيمة الطلب (AOV):',
+      idea_unit_econ_margin: 'نسبة العمولة / هامش الربح:',
+      idea_unit_econ_direct_costs: 'التكاليف المباشرة لكل طلب:',
+      idea_unit_econ_fixed_costs: 'المصاريف التشغيلية الثابتة شهرياً:',
+      idea_unit_econ_net_contribution: 'صافي المساهمة لكل طلب',
+      idea_unit_econ_breakeven_orders: 'طلبات التعادل الشهرية',
+      idea_unit_econ_daily_orders: 'الطلبات اليومية المطلوبة',
+      idea_unit_econ_risk_none: 'هيكل هوامش صحي عند المؤشرات الحالية.',
+      idea_compare_modal_title: 'مقارنة جولات التقييم (فارق الجولات)',
+      idea_compare_modal_subtitle: 'تتبع كيف تطور قرار اللجنة وافتراضاتها وخطة التحقق بعد دفاعك ومدخلاتك.',
+      idea_compare_round_a: 'الجولة الأساسية:',
+      idea_compare_round_b: 'جولة المقارنة:',
+      idea_compare_verdict: 'القرار التنفيذي',
+      idea_compare_assumptions: 'تطور الافتراضات',
+      idea_compare_question: 'السؤال المحوري للحسم',
+      idea_compare_validation: 'تدرج خطة التحقق',
+      idea_compare_founder_defense: 'دفاع وحجج المؤسس',
+      idea_compare_no_rounds: 'يلزم توفر جولتي تقييم على الأقل للمقارنة.',
+      idea_round_prefix: 'الجولة',
+      idea_round_initial: 'الجولة 1 (التقييم الأولي)',
+      idea_round_viewing: 'يتم الآن عرض نتائج تقييم الجولة',
+      idea_round_founder_defense: 'دفوع ومدخلات المؤسس للجولة:',
+      idea_followup_title: 'جولات المتابعة (3 لكل فكرة)',
+      idea_followup_remaining: 'الجولات المتبقية:',
+      idea_btn_defend: 'دافع عن الفكرة',
+      idea_btn_pivot: 'اقترح Pivot',
+      idea_btn_val_plan: 'خطة تحقق صغيرة',
+      idea_btn_vote: 'تصويت اللجنة',
+      idea_btn_compare: 'قارن بمنافس',
+      idea_btn_mvp: 'خطة MVP لـ 7 أيام',
+      idea_followup_prompt_placeholder: 'اكتب حجتك الدفاعية، أو اتجاه الـ Pivot المقترح، أو سؤالك المحدد للجنة...',
+      idea_btn_start_followup: 'بدء جولة المتابعة',
+      idea_followup_modal_title: 'جولة المتابعة ودفاع الفكرة',
+      idea_followup_modal_subtitle: 'قدّم حججاً وأدلة وزوايا استراتيجية جديدة لتفنيد شكوك وتحديات أعضاء اللجنة.',
+      idea_followup_action_label: 'هدف الجولة ونوع التحرك',
+      idea_followup_chips_label: 'زوايا الدفاع والميزات الاستراتيجية (انقر للتحديد)',
+      idea_chip_pricing: '💰 تسعير وميزة تكلفة أقل',
+      idea_chip_niche: '🎯 استهداف شريحة نيتش محددة',
+      idea_chip_distribution: '🤝 شراكات وقنوات توزيع جاهزة',
+      idea_chip_guarantee: '🛡️ ضمان استرجاع أو تجربة مجانية',
+      idea_chip_speed: '⚡ تبسيط الحل وحذف التعقيد',
+      idea_chip_team: '👥 فريق متخصص وخبرة ميدانية',
+      idea_chip_offline: '📍 موقع فعلي وتواجد محلي قوي',
+      idea_chip_inventory: '📦 نموذج أولي جاهز أو بضاعة متوفرة',
+      idea_followup_target_critic_label: 'الناقد المستهدف بالرد الأساسي',
+      idea_critic_opt_all: 'كامل أعضاء اللجنة',
+      idea_critic_opt_customer: 'العميل البارد (تردد الشراء وتكلفة التبديل)',
+      idea_critic_opt_auditor: 'المدقق المالي الصارم (الإيرادات والجدوى)',
+      idea_critic_opt_competitor: 'المنافس الشرس (التميز وحواجز الدخول)',
+      idea_critic_opt_ops: 'خبير العمليات والجدوى التشغيلية',
+      idea_followup_review_mode_label: 'أسلوب مراجعة اللجنة',
+      idea_mode_opt_balanced: 'بناء وعملي موجه للحلول',
+      idea_mode_opt_strict: 'نقد صارم واختبار ضغط متشدد',
+      idea_followup_defense_label: 'حججك الدفاعية والبيانات والتعديلات المقترحة',
+      idea_followup_evidence_label: 'أدلة إضافية، أرقام، أو اسم منافس محدد (اختياري)',
+      idea_followup_evidence_placeholder: 'مثال: جمع 150 طلباً مسبقاً، رابط بديل في السوق، اتفاق توريد محلي...',
+      idea_followup_submit_btn: 'إرسال وبدء الجولة التفاعلية',
+      idea_followup_err_empty: 'يرجى كتابة حجتك الدفاعية أو تفاصيل خطتك قبل الإرسال.',
+      idea_feedback_title: 'هل كان هذا التقييم مفيداً لك؟',
+      idea_btn_feedback_submit: 'إرسال التقييم',
+      idea_disclaimer: 'إخلاء مسؤولية: هذا التقرير أداة استرشادية للمساعدة في القرار وليس استشارة قانونية أو مالية معتمدة.',
+      idea_verdict_build: 'انطلق في البناء (ضوء أخضر)',
+      idea_verdict_validate: 'تحقق أولاً (ضوء أصفر)',
+      idea_verdict_pivot: 'إعادة توجيه (Pivot)',
+      idea_verdict_do_not_build: 'لا تبنِ الآن (ضوء أحمر)',
+      idea_role_customer_advocate: 'محامي العميل البارد',
+      idea_role_financial_auditor: 'المدقق المالي',
+      idea_role_growth_marketer: 'خبير التوزيع والنمو',
+      idea_role_direct_competitor: 'المنافس الشرس',
+      idea_role_technical_architect: 'المهندس التقني',
+      idea_role_execution_risk_officer: 'مسؤول مخاطر التنفيذ',
+      idea_role_monetization_strategist: 'استراتيجي التسعير والربح',
+      idea_role_simplicity_editor: 'محرر البساطة ونطاق MVP',
+      idea_tb_cat_assumption: 'فرضية',
+      idea_tb_cat_market_fact: 'حقيقة سوقية',
+      idea_tb_cat_validation_test: 'اختبار تحقق',
+      idea_tb_cat_critical_risk: 'خطر جوهري',
+      idea_tb_status_blocked: 'معلق',
+      idea_action_resume: 'استكمال',
+      idea_action_view: 'عرض التقرير',
+      idea_action_delete: 'حذف',
+      idea_msg_saved: 'تم حفظ المسودة',
+      idea_msg_saving: 'جاري الحفظ...',
+      idea_msg_confirm_delete: 'هل أنت متأكد من حذف هذه الفكرة؟',
+      idea_msg_confirm_checkbox_req: 'يرجى تأكيد بطاقة الفكرة قبل استدعاء اللجنة.',
+      idea_msg_quota_exceeded: 'تم استهلاك رصيد الأفكار الشهري بالكامل (3 أفكار شهرياً).',
+      idea_msg_card_saved: 'تم حفظ بطاقة الفكرة.',
+      idea_msg_followup_prompt: 'أدخل ملاحظاتك أو حجتك الدفاعية لجولة المتابعة:',
+      idea_msg_followup_success: 'تم إكمال جولة المتابعة بنجاح.',
+      idea_status_draft: 'مسودة',
+      idea_status_structuring: 'قيد الصياغة',
+      idea_status_awaiting_conf: 'بانتظار التأكيد',
+      idea_status_queued: 'قيد الانتظار',
+      idea_status_running: 'جارٍ التحليل',
+      idea_status_completed: 'مكتمل',
+      idea_status_partial: 'مكتمل جزئياً',
+      idea_status_failed: 'فشل'
     }
   };
 
@@ -1705,7 +1705,7 @@
         currentBot.telegramUserId,
       ].filter(Boolean).length;
       document.getElementById('statConnectedChannels').textContent = connectedChannels;
-      document.getElementById('overviewActiveBot').textContent = currentBot.name || 'ΓÇö';
+      document.getElementById('overviewActiveBot').textContent = currentBot.name || '—';
       document.getElementById('overviewAutoReply').textContent = (translations[currentLanguage] || translations.en)[currentBot.autoReplyEnabled === false ? 'status_disabled' : 'status_enabled'];
 
       // Load billing data
@@ -1871,7 +1871,7 @@
           const note = document.createElement('div');
           note.style.cssText = 'font-size:11px; color:var(--text-muted); margin:-6px 0 12px 4px;';
           note.textContent = currentLanguage === 'ar'
-            ? '╪¬┘à ╪¬╪│╪¼┘è┘ä ╪º┘ä╪▒╪» ┘ü┘è ╪º┘ä┘à╪¡╪º╪»╪½╪⌐╪î ┘ê┘ä┘à ┘è╪¬┘à ╪Ñ╪▒╪│╪º┘ä┘ç ╪╣╪¿╪▒ ╪º┘ä┘é┘å╪º╪⌐ ╪¿╪╣╪».'
+            ? 'تم تسجيل الرد في المحادثة، ولم يتم إرساله عبر القناة بعد.'
             : 'Reply saved to the conversation, not yet sent via the channel.';
           msgContainer.appendChild(bubbleRow);
           msgContainer.appendChild(note);
@@ -1936,7 +1936,7 @@
         renderFaqs();
       }
 
-      // Get general agent instructions (legacy "╪╣╪º┘à╪⌐" rules ΓÇö bot identity)
+      // Get general agent instructions (legacy "عامة" rules — bot identity)
       const instrRes = await apiFetch(`/api/rules?botId=${currentBot._id}&type=general`);
       if (instrRes && instrRes.success) {
         generalInstructions = instrRes.data;
@@ -2010,7 +2010,7 @@
       card.style.justifyContent = 'space-between';
       card.style.alignItems = 'center';
       const raw = typeof rule.content === 'string' ? rule.content : (rule.content?.value || '');
-      const preview = raw.length > 120 ? raw.slice(0, 120) + 'ΓÇª' : raw;
+      const preview = raw.length > 120 ? raw.slice(0, 120) + '…' : raw;
 
       card.innerHTML = `
         <div style="flex:1; overflow:hidden;">
@@ -2030,7 +2030,7 @@
   const instructionModal = document.getElementById('instructionModal');
 
   document.getElementById('addInstructionBtn')?.addEventListener('click', () => {
-    document.getElementById('instructionModalTitle').textContent = currentLanguage === 'ar' ? '╪Ñ╪╢╪º┘ü╪⌐ ╪¬╪╣┘ä┘è┘à╪º╪¬ ╪╣╪º┘à╪⌐' : 'Add General Instruction';
+    document.getElementById('instructionModalTitle').textContent = currentLanguage === 'ar' ? 'إضافة تعليمات عامة' : 'Add General Instruction';
     document.getElementById('instructionIdInput').value = '';
     document.getElementById('instructionContentInput').value = '';
     instructionModal?.classList.add('active');
@@ -2065,14 +2065,14 @@
     const rule = generalInstructions.find(r => r._id === id);
     if (!rule) return;
     const raw = typeof rule.content === 'string' ? rule.content : (rule.content?.value || '');
-    document.getElementById('instructionModalTitle').textContent = currentLanguage === 'ar' ? '╪¬╪╣╪»┘è┘ä ╪º┘ä╪¬╪╣┘ä┘è┘à╪º╪¬ ╪º┘ä╪╣╪º┘à╪⌐' : 'Edit General Instruction';
+    document.getElementById('instructionModalTitle').textContent = currentLanguage === 'ar' ? 'تعديل التعليمات العامة' : 'Edit General Instruction';
     document.getElementById('instructionIdInput').value = rule._id;
     document.getElementById('instructionContentInput').value = raw;
     instructionModal?.classList.add('active');
   };
 
   window.deleteInstruction = async function(id) {
-    if (!confirm(currentLanguage === 'ar' ? '┘ç┘ä ╪ú┘å╪¬ ┘à╪¬╪ú┘â╪» ┘à┘å ╪¡╪░┘ü ┘ç╪░┘ç ╪º┘ä╪¬╪╣┘ä┘è┘à╪º╪¬╪ƒ' : 'Are you sure you want to delete this instruction?')) return;
+    if (!confirm(currentLanguage === 'ar' ? 'هل أنت متأكد من حذف هذه التعليمات؟' : 'Are you sure you want to delete this instruction?')) return;
     try {
       const res = await apiFetch(`/api/rules/${id}`, { method: 'DELETE' });
       if (res && res.success) {
@@ -2134,7 +2134,7 @@
           })
         });
         if (res && res.success) {
-          alert(currentLanguage === 'ar' ? '╪¬┘à ╪º┘ä╪¡┘ü╪╕ ╪¿┘å╪¼╪º╪¡!' : 'Settings saved successfully!');
+          alert(currentLanguage === 'ar' ? 'تم الحفظ بنجاح!' : 'Settings saved successfully!');
         }
       } catch (err) {
         console.error(err);
@@ -2185,7 +2185,7 @@
           feedbackEl.style.background = 'rgba(255, 255, 255, 0.05)';
           feedbackEl.style.border = '1px solid var(--glass-border)';
           feedbackEl.style.color = 'var(--text-muted)';
-          feedbackEl.textContent = currentLanguage === 'ar' ? '╪¬┘à ╪º╪«╪¬┘è╪º╪▒ ╪╣╪»┘à ╪º┘ä╪▒╪¿╪╖.' : 'No platform selected.';
+          feedbackEl.textContent = currentLanguage === 'ar' ? 'تم اختيار عدم الربط.' : 'No platform selected.';
         } else {
           feedbackEl.style.background = 'rgba(16, 185, 129, 0.1)';
           feedbackEl.style.border = '1px solid var(--green)';
@@ -2246,9 +2246,9 @@
     if (elBookingsConfirmed) elBookingsConfirmed.textContent = confirmedBookings;
 
     const elOrderBadge = document.getElementById('ordersCountBadge');
-    if (elOrderBadge) elOrderBadge.textContent = `${totalOrders} ${currentLanguage === 'ar' ? '╪╖┘ä╪¿' : 'Orders'}`;
+    if (elOrderBadge) elOrderBadge.textContent = `${totalOrders} ${currentLanguage === 'ar' ? 'طلب' : 'Orders'}`;
     const elBookingBadge = document.getElementById('bookingsCountBadge');
-    if (elBookingBadge) elBookingBadge.textContent = `${totalBookings} ${currentLanguage === 'ar' ? '┘à┘ê╪╣╪»' : 'Appointments'}`;
+    if (elBookingBadge) elBookingBadge.textContent = `${totalBookings} ${currentLanguage === 'ar' ? 'موعد' : 'Appointments'}`;
   }
 
   function getFilteredOrders() {
@@ -2358,7 +2358,7 @@
         <td style="font-family:monospace; font-weight:600;">#${booking._id.slice(-6).toUpperCase()}</td>
         <td><strong>${escapeHtml(booking.customerName || 'Customer')}</strong></td>
         <td>${escapeHtml(booking.customerPhone || 'N/A')}</td>
-        <td><span class="badge" style="background:rgba(6, 182, 212, 0.15); color:var(--cyan); border:1px solid rgba(6,182,212,0.3);">${escapeHtml(booking.serviceType || '┘à┘ê╪╣╪» / ╪º╪│╪¬╪┤╪º╪▒╪⌐')}</span></td>
+        <td><span class="badge" style="background:rgba(6, 182, 212, 0.15); color:var(--cyan); border:1px solid rgba(6,182,212,0.3);">${escapeHtml(booking.serviceType || 'موعد / استشارة')}</span></td>
         <td><i class="fas fa-calendar-day" style="color:var(--text-muted); margin-inline-end:4px;"></i> ${dateStr}</td>
         <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
         <td style="text-align:center;">
@@ -2502,7 +2502,7 @@
         botId: currentBot._id,
         customerName: document.getElementById('bookingCustomerName').value.trim(),
         customerPhone: document.getElementById('bookingCustomerPhone').value.trim(),
-        serviceType: document.getElementById('bookingServiceType').value.trim() || '╪º╪│╪¬╪┤╪º╪▒╪⌐ / ┘à┘ê╪╣╪»',
+        serviceType: document.getElementById('bookingServiceType').value.trim() || 'استشارة / موعد',
         bookingDate: new Date(document.getElementById('bookingDateTime').value).toISOString(),
         slotDurationMinutes: parseInt(document.getElementById('bookingDuration').value) || 30,
         status: document.getElementById('bookingStatusSelect').value,
@@ -2900,7 +2900,7 @@
         questionsBar.style.display = 'flex';
         questionsBar.innerHTML = '';
         const questionsList = questionsText.split('\n').map(s => s.trim()).filter(Boolean);
-        const fallbackList = ['┘à╪º ┘ç┘è ╪º┘ä┘à┘å╪¬╪¼╪º╪¬ ┘ê╪º┘ä╪╣╪▒┘ê╪╢ ╪º┘ä┘à╪¬┘ê┘ü╪▒╪⌐╪ƒ', '┘â┘è┘ü ┘è┘à┘â┘å┘å┘è ╪¡╪¼╪▓ ┘à┘ê╪╣╪»╪ƒ'];
+        const fallbackList = ['ما هي المنتجات والعروض المتوفرة؟', 'كيف يمكنني حجز موعد؟'];
         const displayList = questionsList.length > 0 ? questionsList : fallbackList;
 
         displayList.slice(0, 4).forEach((q, idx) => {
@@ -3336,7 +3336,7 @@
   const generateKeyBtn = document.getElementById('generateKeyBtn');
   if (generateKeyBtn) {
     generateKeyBtn.addEventListener('click', async () => {
-      const name = prompt(currentLanguage === 'ar' ? '╪ú╪»╪«┘ä ╪º╪│┘à╪º┘ï ┘ä┘à┘ü╪¬╪º╪¡ ╪º┘ä┘ê╪╡┘ê┘ä:' : 'Enter a name for the access key:');
+      const name = prompt(currentLanguage === 'ar' ? 'أدخل اسماً لمفتاح الوصول:' : 'Enter a name for the access key:');
       if (!name) return;
 
       try {
@@ -3345,7 +3345,7 @@
           body: JSON.stringify({ name })
         });
         if (res && res.success) {
-          alert(`${currentLanguage === 'ar' ? '╪¬┘à ╪Ñ┘å╪┤╪º╪í ╪º┘ä┘à┘ü╪¬╪º╪¡ ╪¿┘å╪¼╪º╪¡! ┘à┘ü╪¬╪º╪¡ ╪º┘ä┘ê╪╡┘ê┘ä ╪º┘ä╪«╪º╪╡ ╪¿┘â ┘ç┘ê (┘è╪▒╪¼┘ë ┘å╪│╪«┘ç ╪º┘ä╪ó┘å ┘ü┘ä┘å ╪¬╪¬┘à┘â┘å ┘à┘å ╪▒╪ñ┘è╪¬┘ç ┘à╪¼╪»╪»╪º┘ï):' : 'Key generated successfully! Your access key is (Please copy it now, you will not see it again):'}\n\n${res.data.key}`);
+          alert(`${currentLanguage === 'ar' ? 'تم إنشاء المفتاح بنجاح! مفتاح الوصول الخاص بك هو (يرجى نسخه الآن فلن تتمكن من رؤيته مجدداً):' : 'Key generated successfully! Your access key is (Please copy it now, you will not see it again):'}\n\n${res.data.key}`);
           loadSettingsData();
         }
       } catch (err) {
@@ -3377,7 +3377,7 @@
         });
         if (res && res.success) {
           document.getElementById('webhookSecretInput').value = res.data.secret;
-          alert(currentLanguage === 'ar' ? '╪¬┘à ╪¡┘ü╪╕ ╪Ñ╪╣╪»╪º╪»╪º╪¬ ╪º┘ä┘ê┘è╪¿ ┘ç┘ê┘â ╪¿┘å╪¼╪º╪¡!' : 'Webhook settings saved successfully!');
+          alert(currentLanguage === 'ar' ? 'تم حفظ إعدادات الويب هوك بنجاح!' : 'Webhook settings saved successfully!');
           loadSettingsData();
         }
       } catch (err) {
@@ -3408,7 +3408,7 @@
         });
 
         if (res && res.success) {
-          alert(currentLanguage === 'ar' ? '╪¬┘à ╪¡┘ü╪╕ ┘à┘ü╪¬╪º╪¡ ╪º┘ä╪╖┘ê╪º╪▒╪ª ╪¿┘å╪¼╪º╪¡!' : 'Backup key settings saved successfully!');
+          alert(currentLanguage === 'ar' ? 'تم حفظ مفتاح الطوارئ بنجاح!' : 'Backup key settings saved successfully!');
         }
       } catch (e) {
         console.error(e);
@@ -3438,7 +3438,7 @@
     const isAr = currentLanguage === 'ar';
 
     if (adminUsersList.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" style="padding:24px; text-align:center; color:var(--text-muted);">${isAr ? '┘ä╪º ┘è┘ê╪¼╪» ┘à╪│╪¬╪«╪»┘à┘è┘å ┘à╪│╪¼┘ä┘è┘å ╪¡╪º┘ä┘è╪º┘ï.' : 'No users registered yet.'}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" style="padding:24px; text-align:center; color:var(--text-muted);">${isAr ? 'لا يوجد مستخدمين مسجلين حالياً.' : 'No users registered yet.'}</td></tr>`;
       return;
     }
 
@@ -3447,21 +3447,21 @@
       tr.style.borderBottom = '1px solid var(--glass-border)';
 
       const roleBadge = u.role === 'superadmin'
-        ? `<span class="badge" style="background:var(--orange); color:#000; font-weight:700;">${isAr ? '┘à╪»┘è╪▒ ╪╣╪º┘à (SuperAdmin)' : 'Super Admin'}</span>`
-        : `<span class="badge" style="background:var(--blue); color:#fff;">${isAr ? '╪¬╪º╪¼╪▒ / ┘à╪│╪¬╪«╪»┘à' : 'Merchant / User'}</span>`;
+        ? `<span class="badge" style="background:var(--orange); color:#000; font-weight:700;">${isAr ? 'مدير عام (SuperAdmin)' : 'Super Admin'}</span>`
+        : `<span class="badge" style="background:var(--blue); color:#fff;">${isAr ? 'تاجر / مستخدم' : 'Merchant / User'}</span>`;
 
       const statusBadge = u.status === 'suspended'
-        ? `<span class="badge badge-danger">${isAr ? '┘à┘ê┘é┘ê┘ü' : 'Suspended'}</span>`
-        : `<span class="badge badge-success">${isAr ? '┘å╪┤╪╖' : 'Active'}</span>`;
+        ? `<span class="badge badge-danger">${isAr ? 'موقوف' : 'Suspended'}</span>`
+        : `<span class="badge badge-success">${isAr ? 'نشط' : 'Active'}</span>`;
 
       const botsCount = Array.isArray(u.bots) ? u.bots.length : 0;
-      const botUnitText = isAr ? '╪¿┘ê╪¬' : 'Bot(s)';
+      const botUnitText = isAr ? 'بوت' : 'Bot(s)';
 
       const suspendText = u.status === 'suspended' 
-        ? (isAr ? '<i class="fas fa-check"></i> ╪¬┘ü╪╣┘è┘ä' : '<i class="fas fa-check"></i> Activate')
-        : (isAr ? '<i class="fas fa-ban" style="color:var(--red);"></i> ╪¬╪╣┘ä┘è┘é' : '<i class="fas fa-ban" style="color:var(--red);"></i> Suspend');
+        ? (isAr ? '<i class="fas fa-check"></i> تفعيل' : '<i class="fas fa-check"></i> Activate')
+        : (isAr ? '<i class="fas fa-ban" style="color:var(--red);"></i> تعليق' : '<i class="fas fa-ban" style="color:var(--red);"></i> Suspend');
 
-      const impersonateText = isAr ? '<i class="fas fa-user-secret"></i> ╪»╪«┘ê┘ä ┘â┘Ç' : '<i class="fas fa-user-secret"></i> Login As';
+      const impersonateText = isAr ? '<i class="fas fa-user-secret"></i> دخول كـ' : '<i class="fas fa-user-secret"></i> Login As';
 
       tr.innerHTML = `
         <td style="padding:12px; font-weight:600;">${u.username}</td>
@@ -3484,7 +3484,7 @@
   }
 
   window.toggleUserStatus = async function(userId, newStatus) {
-    if (!confirm(`┘ç┘ä ╪ú┘å╪¬ ┘à╪¬╪ú┘â╪» ┘à┘å ╪¬╪║┘è┘è╪▒ ╪¡╪º┘ä╪⌐ ╪º┘ä╪¬╪º╪¼╪▒/╪º┘ä┘à╪│╪¬╪«╪»┘à ╪Ñ┘ä┘ë ${newStatus === 'active' ? '┘å╪┤╪╖' : '┘à┘ê┘é┘ê┘ü'}╪ƒ`)) return;
+    if (!confirm(`هل أنت متأكد من تغيير حالة التاجر/المستخدم إلى ${newStatus === 'active' ? 'نشط' : 'موقوف'}؟`)) return;
     try {
       await apiFetch(`/api/users/${userId}`, {
         method: 'PUT',
@@ -3492,12 +3492,12 @@
       });
       loadAdminUsers();
     } catch (e) {
-      alert('┘ü╪┤┘ä ╪¬╪¡╪»┘è╪½ ╪¡╪º┘ä╪⌐ ╪º┘ä┘à╪│╪¬╪«╪»┘à');
+      alert('فشل تحديث حالة المستخدم');
     }
   };
 
   window.impersonateUser = async function(userId) {
-    if (!confirm('┘ç┘ä ╪¬╪▒┘è╪» ╪º┘ä╪º┘å╪¬┘é╪º┘ä ╪º┘ä┘ü┘ê╪▒┘è ┘ê╪º┘ä╪»╪«┘ê┘ä ╪º┘ä┘à╪¿╪º╪┤╪▒ ╪Ñ┘ä┘ë ╪¡╪│╪º╪¿ ┘ç╪░╪º ╪º┘ä╪¬╪º╪¼╪▒ ┘ä╪¬╪╡┘ü╪¡ ┘ê╪Ñ╪»╪º╪▒╪⌐ ╪¿┘ê╪¬╪º╪¬┘ç ┘ê┘é┘å┘ê╪º╪¬┘ç╪ƒ')) return;
+    if (!confirm('هل تريد الانتقال الفوري والدخول المباشر إلى حساب هذا التاجر لتصفح وإدارة بوتاته وقنواته؟')) return;
     try {
       const res = await apiFetch('/api/admin/impersonation/sessions', {
         method: 'POST',
@@ -3505,13 +3505,13 @@
       });
       if (res && res.token) {
         localStorage.setItem('token', res.token);
-        alert('╪¬┘à ╪»╪«┘ê┘ä ╪¡╪│╪º╪¿ ╪º┘ä╪¬╪º╪¼╪▒ ╪¿┘å╪¼╪º╪¡! ╪¼╪º╪▒┘è ╪¬╪¡┘à┘è┘ä ┘ä┘ê╪¡╪¬┘ç...');
+        alert('تم دخول حساب التاجر بنجاح! جاري تحميل لوحته...');
         window.location.reload();
       } else {
-        alert(res?.message || '┘ü╪┤┘ä ╪º┘ä╪º┘å╪¬╪¡╪º┘ä ╪º┘ä┘à╪¿╪º╪┤╪▒');
+        alert(res?.message || 'فشل الانتحال المباشر');
       }
     } catch (e) {
-      alert('╪¡╪»╪½ ╪«╪╖╪ú ╪ú╪½┘å╪º╪í ╪º┘ä┘à╪╡╪º╪»┘é╪⌐');
+      alert('حدث خطأ أثناء المصادقة');
     }
   };
 
@@ -3525,7 +3525,7 @@
   function adminCell(row, value, style = '') {
     const cell = document.createElement('td');
     cell.style.cssText = `padding:12px;${style}`;
-    cell.textContent = value || 'ΓÇö';
+    cell.textContent = value || '—';
     row.appendChild(cell);
   }
 
@@ -3539,8 +3539,8 @@
     const used = Number(currentUser.monthlyMessagesUsed) || 0;
     const unlimited = currentUser.subscriptionTier === 'unlimited';
     const remaining = unlimited ? text.quota_unlimited : Math.max(0, quotaLimitForTier(currentUser.subscriptionTier) - used);
-    document.getElementById('accountMenuName').textContent = currentUser.username || 'ΓÇö';
-    document.getElementById('accountMenuEmail').textContent = currentUser.email || 'ΓÇö';
+    document.getElementById('accountMenuName').textContent = currentUser.username || '—';
+    document.getElementById('accountMenuEmail').textContent = currentUser.email || '—';
     document.getElementById('accountMenuQuota').textContent = unlimited ? remaining : `${remaining} / ${quotaLimitForTier(currentUser.subscriptionTier)}`;
   }
 
@@ -3562,7 +3562,7 @@
     if (!list || !entitlement) return;
     const tier = currentUser?.subscriptionTier || 'free';
     const limit = clientAgentLimit(tier);
-    entitlement.textContent = `${workspaceBots.length} / ${limit === Infinity ? 'Γê₧' : limit} ${currentLanguage === 'ar' ? '┘ê┘â┘ä╪º╪í ┘à╪│╪¬╪«╪»┘à┘ê┘å ┘ü┘è ╪¿╪º┘é╪⌐' : 'agents used on'} ${tier}`;
+    entitlement.textContent = `${workspaceBots.length} / ${limit === Infinity ? '∞' : limit} ${currentLanguage === 'ar' ? 'وكلاء مستخدمون في باقة' : 'agents used on'} ${tier}`;
     list.replaceChildren();
     workspaceBots.forEach((bot) => {
       const card = document.createElement('article');
@@ -3572,26 +3572,26 @@
       title.textContent = bot.name;
       title.style.marginBottom = '6px';
       const meta = document.createElement('p');
-      meta.textContent = `${String(bot.agentType || 'customer_support').replaceAll('_', ' ')} ┬╖ ${bot.autoReplyEnabled === false ? (currentLanguage === 'ar' ? '╪º┘ä╪▒╪» ╪º┘ä╪ó┘ä┘è ┘à╪¬┘ê┘é┘ü' : 'Auto-reply off') : (currentLanguage === 'ar' ? '╪º┘ä╪▒╪» ╪º┘ä╪ó┘ä┘è ┘è╪╣┘à┘ä' : 'Auto-reply on')}`;
+      meta.textContent = `${String(bot.agentType || 'customer_support').replaceAll('_', ' ')} · ${bot.autoReplyEnabled === false ? (currentLanguage === 'ar' ? 'الرد الآلي متوقف' : 'Auto-reply off') : (currentLanguage === 'ar' ? 'الرد الآلي يعمل' : 'Auto-reply on')}`;
       meta.style.cssText = 'font-size:12px; color:var(--text-muted); margin-bottom:12px;';
       const description = document.createElement('p');
-      description.textContent = bot.description || bot.welcomeMessage || (currentLanguage === 'ar' ? '┘ä╪º ┘è┘ê╪¼╪» ┘ê╪╡┘ü ╪¿╪╣╪».' : 'No description yet.');
+      description.textContent = bot.description || bot.welcomeMessage || (currentLanguage === 'ar' ? 'لا يوجد وصف بعد.' : 'No description yet.');
       description.style.cssText = 'font-size:13px; color:var(--text-muted); min-height:40px;';
       const actions = document.createElement('div');
       actions.style.cssText = 'display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;';
       const select = document.createElement('button');
-      select.type = 'button'; select.className = 'btn btn-secondary btn-sm'; select.textContent = String(currentBot?._id) === String(bot._id) ? (currentLanguage === 'ar' ? '╪º┘ä┘ê┘â┘è┘ä ╪º┘ä╪¡╪º┘ä┘è' : 'Current agent') : (currentLanguage === 'ar' ? '╪º╪│╪¬╪«╪»╪º┘à ┘ç╪░╪º ╪º┘ä┘ê┘â┘è┘ä' : 'Use this agent');
+      select.type = 'button'; select.className = 'btn btn-secondary btn-sm'; select.textContent = String(currentBot?._id) === String(bot._id) ? (currentLanguage === 'ar' ? 'الوكيل الحالي' : 'Current agent') : (currentLanguage === 'ar' ? 'استخدام هذا الوكيل' : 'Use this agent');
       select.disabled = String(currentBot?._id) === String(bot._id);
       select.addEventListener('click', () => refreshActiveBot(bot));
       const edit = document.createElement('button');
-      edit.type = 'button'; edit.className = 'btn btn-secondary btn-sm'; edit.textContent = currentLanguage === 'ar' ? '╪¬╪╣╪»┘è┘ä' : 'Edit'; edit.addEventListener('click', () => openAgentModal(bot));
+      edit.type = 'button'; edit.className = 'btn btn-secondary btn-sm'; edit.textContent = currentLanguage === 'ar' ? 'تعديل' : 'Edit'; edit.addEventListener('click', () => openAgentModal(bot));
       const chatBtn = document.createElement('button');
-      chatBtn.type = 'button'; chatBtn.className = 'btn btn-primary btn-sm'; chatBtn.innerHTML = `<i class="fas fa-comments"></i> ${currentLanguage === 'ar' ? '╪¬╪«╪╡┘è╪╡ ┘ê╪»╪▒╪»╪┤╪⌐' : 'Customize & Chat'}`;
+      chatBtn.type = 'button'; chatBtn.className = 'btn btn-primary btn-sm'; chatBtn.innerHTML = `<i class="fas fa-comments"></i> ${currentLanguage === 'ar' ? 'تخصيص ودردشة' : 'Customize & Chat'}`;
       chatBtn.addEventListener('click', () => window.openChatPageModal(bot));
       actions.append(select, edit, chatBtn); card.append(title, meta, description, actions); list.appendChild(card);
     });
     if (workspaceBots.length === 0) {
-      const empty = document.createElement('div'); empty.className = 'glass-card'; empty.textContent = currentLanguage === 'ar' ? '╪ú┘å╪┤╪ª ┘ê┘â┘è┘ä┘â ╪º┘ä╪ú┘ê┘ä ┘ä┘ä╪¿╪»╪í.' : 'Create your first agent to begin.'; list.appendChild(empty);
+      const empty = document.createElement('div'); empty.className = 'glass-card'; empty.textContent = currentLanguage === 'ar' ? 'أنشئ وكيلك الأول للبدء.' : 'Create your first agent to begin.'; list.appendChild(empty);
     }
   }
 
@@ -3622,7 +3622,7 @@
         if (chk.parentElement) {
           chk.parentElement.style.opacity = toolsMaxReached ? '0.45' : '1';
           chk.parentElement.style.cursor = toolsMaxReached ? 'not-allowed' : 'pointer';
-          chk.parentElement.title = toolsMaxReached ? (currentLanguage === 'ar' ? '╪º┘ä╪¡╪» ╪º┘ä╪ú┘é╪╡┘ë ┘ü┘è ╪º┘ä╪¿╪º┘é╪⌐ ╪º┘ä┘à╪¼╪º┘å┘è╪⌐: ╪ú╪»╪º╪¬╪º┘å ┘ü┘é╪╖' : 'Free plan limit: 2 tools max') : '';
+          chk.parentElement.title = toolsMaxReached ? (currentLanguage === 'ar' ? 'الحد الأقصى في الباقة المجانية: أداتان فقط' : 'Free plan limit: 2 tools max') : '';
         }
       } else {
         chk.disabled = false;
@@ -3645,7 +3645,7 @@
         if (chk.parentElement) {
           chk.parentElement.style.opacity = skillsMaxReached ? '0.45' : '1';
           chk.parentElement.style.cursor = skillsMaxReached ? 'not-allowed' : 'pointer';
-          chk.parentElement.title = skillsMaxReached ? (currentLanguage === 'ar' ? '╪º┘ä╪¡╪» ╪º┘ä╪ú┘é╪╡┘ë ┘ü┘è ╪º┘ä╪¿╪º┘é╪⌐ ╪º┘ä┘à╪¼╪º┘å┘è╪⌐: ┘à┘ç╪º╪▒╪¬╪º┘å ┘ü┘é╪╖' : 'Free plan limit: 2 skills max') : '';
+          chk.parentElement.title = skillsMaxReached ? (currentLanguage === 'ar' ? 'الحد الأقصى في الباقة المجانية: مهارتان فقط' : 'Free plan limit: 2 skills max') : '';
         }
       } else {
         chk.disabled = false;
@@ -3664,7 +3664,7 @@
     if (!agentModal || !form) return;
     form.reset();
     document.getElementById('agentId').value = bot?._id || '';
-    document.getElementById('agentModalTitle').textContent = bot ? (currentLanguage === 'ar' ? '╪¬╪╣╪»┘è┘ä ╪º┘ä┘ê┘â┘è┘ä' : 'Edit agent') : (currentLanguage === 'ar' ? '╪Ñ┘å╪┤╪º╪í ┘ê┘â┘è┘ä' : 'Create agent');
+    document.getElementById('agentModalTitle').textContent = bot ? (currentLanguage === 'ar' ? 'تعديل الوكيل' : 'Edit agent') : (currentLanguage === 'ar' ? 'إنشاء وكيل' : 'Create agent');
     
     const isFree = !currentUser?.subscriptionTier || currentUser.subscriptionTier === 'free';
 
@@ -3703,7 +3703,7 @@
       const bookingHours = document.getElementById('agentBookingWorkingHours');
       if (bookingHours) bookingHours.value = tools.bookingTool?.workingHours || '09:00 - 22:00';
       const bookingService = document.getElementById('agentBookingDefaultService');
-      if (bookingService) bookingService.value = tools.bookingTool?.defaultService || '╪º╪│╪¬╪┤╪º╪▒╪⌐ / ┘à┘ê╪╣╪»';
+      if (bookingService) bookingService.value = tools.bookingTool?.defaultService || 'استشارة / موعد';
 
       // Sales & Marketing tools population
       const toolRecovery = document.getElementById('agentToolSalesRecovery');
@@ -3798,7 +3798,7 @@
       bookingTool: {
         enabled: document.getElementById('agentToolBooking')?.checked === true,
         workingHours: document.getElementById('agentBookingWorkingHours')?.value.trim() || '09:00 - 22:00',
-        defaultService: document.getElementById('agentBookingDefaultService')?.value.trim() || '╪º╪│╪¬╪┤╪º╪▒╪⌐ / ┘à┘ê╪╣╪»',
+        defaultService: document.getElementById('agentBookingDefaultService')?.value.trim() || 'استشارة / موعد',
       },
       orderTrackingTool: {
         enabled: document.getElementById('agentToolOrders')?.checked === true,
@@ -3843,7 +3843,7 @@
       agentSkills: selectedSkills,
     };
     const result = await apiFetch(id ? `/api/bots/${id}` : '/api/bots', { method: id ? 'PUT' : 'POST', body: JSON.stringify(payload) });
-    if (!result || result.error || result.message && !result._id && !result.success) return alert(result?.message || (currentLanguage === 'ar' ? '┘ü╪┤┘ä ╪¡┘ü╪╕ ╪º┘ä┘ê┘â┘è┘ä.' : 'Could not save agent.'));
+    if (!result || result.error || result.message && !result._id && !result.success) return alert(result?.message || (currentLanguage === 'ar' ? 'فشل حفظ الوكيل.' : 'Could not save agent.'));
     agentModal?.classList.remove('active');
     await loadAgents();
     if (!id && result._id) refreshActiveBot(result);
@@ -3857,7 +3857,7 @@
       if (!currentBot) return;
       const feedbackBox = document.getElementById('automationFeedbackBox');
       triggerRecoveryBtn.disabled = true;
-      triggerRecoveryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (currentLanguage === 'ar' ? '╪¼╪º╪▒┘è ╪º┘ä┘ü╪¡╪╡...' : 'Checking...');
+      triggerRecoveryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (currentLanguage === 'ar' ? 'جاري الفحص...' : 'Checking...');
       try {
         const res = await apiFetch(`/api/bots/${currentBot._id}/trigger-automation`, {
           method: 'POST',
@@ -3868,7 +3868,7 @@
           feedbackBox.style.background = 'rgba(16, 185, 129, 0.15)';
           feedbackBox.style.border = '1px solid var(--green)';
           feedbackBox.style.color = 'var(--green)';
-          feedbackBox.textContent = res?.message || (currentLanguage === 'ar' ? '╪¬┘à ┘ü╪¡╪╡ ╪º┘ä┘à╪¡╪º╪»╪½╪º╪¬ ╪¿┘å╪¼╪º╪¡.' : 'Checked conversations successfully.');
+          feedbackBox.textContent = res?.message || (currentLanguage === 'ar' ? 'تم فحص المحادثات بنجاح.' : 'Checked conversations successfully.');
         }
       } catch (err) {
         if (feedbackBox) {
@@ -3876,7 +3876,7 @@
           feedbackBox.style.background = 'rgba(239, 68, 68, 0.15)';
           feedbackBox.style.border = '1px solid var(--red)';
           feedbackBox.style.color = 'var(--red)';
-          feedbackBox.textContent = currentLanguage === 'ar' ? '╪¡╪»╪½ ╪«╪╖╪ú ╪ú╪½┘å╪º╪í ╪¬╪┤╪║┘è┘ä ╪º┘ä┘ü╪¡╪╡.' : 'Error triggering check.';
+          feedbackBox.textContent = currentLanguage === 'ar' ? 'حدث خطأ أثناء تشغيل الفحص.' : 'Error triggering check.';
         }
       } finally {
         triggerRecoveryBtn.disabled = false;
@@ -3891,7 +3891,7 @@
       if (!currentBot) return;
       const feedbackBox = document.getElementById('automationFeedbackBox');
       triggerDigestBtn.disabled = true;
-      triggerDigestBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (currentLanguage === 'ar' ? '╪¼╪º╪▒┘è ╪º┘ä╪Ñ╪▒╪│╪º┘ä...' : 'Sending...');
+      triggerDigestBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (currentLanguage === 'ar' ? 'جاري الإرسال...' : 'Sending...');
       try {
         const res = await apiFetch(`/api/bots/${currentBot._id}/trigger-automation`, {
           method: 'POST',
@@ -3902,7 +3902,7 @@
           feedbackBox.style.background = 'rgba(6, 182, 212, 0.15)';
           feedbackBox.style.border = '1px solid var(--cyan)';
           feedbackBox.style.color = 'var(--cyan)';
-          feedbackBox.textContent = res?.message || (currentLanguage === 'ar' ? '╪¬┘à ╪Ñ╪▒╪│╪º┘ä ╪º┘ä┘à┘ä╪«╪╡ ╪¿┘å╪¼╪º╪¡.' : 'Digest sent successfully.');
+          feedbackBox.textContent = res?.message || (currentLanguage === 'ar' ? 'تم إرسال الملخص بنجاح.' : 'Digest sent successfully.');
         }
       } catch (err) {
         if (feedbackBox) {
@@ -3910,7 +3910,7 @@
           feedbackBox.style.background = 'rgba(239, 68, 68, 0.15)';
           feedbackBox.style.border = '1px solid var(--red)';
           feedbackBox.style.color = 'var(--red)';
-          feedbackBox.textContent = currentLanguage === 'ar' ? '╪¡╪»╪½ ╪«╪╖╪ú ╪ú╪½┘å╪º╪í ╪Ñ╪▒╪│╪º┘ä ╪º┘ä╪¬┘é╪▒┘è╪▒.' : 'Error sending digest.';
+          feedbackBox.textContent = currentLanguage === 'ar' ? 'حدث خطأ أثناء إرسال التقرير.' : 'Error sending digest.';
         }
       } finally {
         triggerDigestBtn.disabled = false;
@@ -3933,7 +3933,7 @@
     const info = document.getElementById('adminUsersPaginationInfo');
     const previous = document.getElementById('adminUsersPrevBtn');
     const next = document.getElementById('adminUsersNextBtn');
-    if (info) info.textContent = `${adminUsersPageState.total} ${adminCopy('╪¡╪│╪º╪¿ ΓÇö ╪╡┘ü╪¡╪⌐', 'accounts ΓÇö page')} ${adminUsersPageState.page} / ${adminUsersPageState.pages}`;
+    if (info) info.textContent = `${adminUsersPageState.total} ${adminCopy('حساب — صفحة', 'accounts — page')} ${adminUsersPageState.page} / ${adminUsersPageState.pages}`;
     if (previous) previous.disabled = adminUsersPageState.page <= 1;
     if (next) next.disabled = adminUsersPageState.page >= adminUsersPageState.pages;
   }
@@ -3955,7 +3955,7 @@
       renderAdminUsers();
     } catch (error) {
       console.error('admin_users_load_failed', error);
-      alert(adminCopy('╪¬╪╣╪░╪▒ ╪¬╪¡┘à┘è┘ä ┘é╪º╪ª┘à╪⌐ ╪º┘ä╪¡╪│╪º╪¿╪º╪¬.', 'Could not load accounts.'));
+      alert(adminCopy('تعذر تحميل قائمة الحسابات.', 'Could not load accounts.'));
     }
   }
 
@@ -3968,7 +3968,7 @@
       const cell = document.createElement('td');
       cell.colSpan = 7;
       cell.style.cssText = 'padding:24px; text-align:center; color:var(--text-muted);';
-      cell.textContent = adminCopy('┘ä╪º ╪¬┘ê╪¼╪» ╪¡╪│╪º╪¿╪º╪¬ ┘à╪╖╪º╪¿┘é╪⌐.', 'No matching accounts.');
+      cell.textContent = adminCopy('لا توجد حسابات مطابقة.', 'No matching accounts.');
       row.appendChild(cell);
       tbody.appendChild(row);
       renderAdminPagination();
@@ -3979,20 +3979,20 @@
       row.style.borderBottom = '1px solid var(--glass-border)';
       adminCell(row, user.username, 'font-weight:600;');
       adminCell(row, user.email, 'font-size:12px; color:var(--cyan);');
-      adminCell(row, user.role === 'superadmin' ? adminCopy('┘à╪»┘è╪▒ ╪╣╪º┘à', 'Super admin') : adminCopy('┘à╪│╪¬╪«╪»┘à', 'User'));
+      adminCell(row, user.role === 'superadmin' ? adminCopy('مدير عام', 'Super admin') : adminCopy('مستخدم', 'User'));
       adminCell(row, user.subscriptionTier || 'free', 'font-size:12px;');
-      adminCell(row, user.status === 'suspended' ? adminCopy('┘à┘ê┘é┘ê┘ü', 'Suspended') : (user.status === 'deleted' ? adminCopy('┘à╪¡╪░┘ê┘ü', 'Deleted') : adminCopy('┘å╪┤╪╖', 'Active')));
-      adminCell(row, `${Array.isArray(user.bots) ? user.bots.length : 0} ${adminCopy('┘ê┘â┘è┘ä', 'agent(s)')}`, 'font-size:12px;');
+      adminCell(row, user.status === 'suspended' ? adminCopy('موقوف', 'Suspended') : (user.status === 'deleted' ? adminCopy('محذوف', 'Deleted') : adminCopy('نشط', 'Active')));
+      adminCell(row, `${Array.isArray(user.bots) ? user.bots.length : 0} ${adminCopy('وكيل', 'agent(s)')}`, 'font-size:12px;');
       const actions = document.createElement('td');
       actions.style.cssText = 'padding:12px; text-align:center; display:flex; justify-content:center; gap:5px; flex-wrap:wrap;';
-      actions.appendChild(adminAction(adminCopy('╪¬╪╣╪»┘è┘ä', 'Edit'), () => openAdminUserModal(user._id)));
-      actions.appendChild(adminAction(adminCopy('╪º┘ä┘ê┘â┘ä╪º╪í', 'Agents'), () => openUserBotsModal(user._id)));
+      actions.appendChild(adminAction(adminCopy('تعديل', 'Edit'), () => openAdminUserModal(user._id)));
+      actions.appendChild(adminAction(adminCopy('الوكلاء', 'Agents'), () => openUserBotsModal(user._id)));
       if (user.status !== 'deleted' && String(user._id) !== String(currentUser?._id)) {
-        actions.appendChild(adminAction(adminCopy('╪»╪«┘ê┘ä ┘à╪ñ┘é╪¬', 'Temporary access'), () => openImpersonationModal(user._id), 'border-color:var(--orange); color:var(--orange);'));
+        actions.appendChild(adminAction(adminCopy('دخول مؤقت', 'Temporary access'), () => openImpersonationModal(user._id), 'border-color:var(--orange); color:var(--orange);'));
       }
       if (user.status !== 'deleted' && user.role !== 'superadmin') {
-        actions.appendChild(adminAction(user.status === 'suspended' ? adminCopy('╪¬┘ü╪╣┘è┘ä', 'Activate') : adminCopy('╪Ñ┘è┘é╪º┘ü', 'Suspend'), () => updateAdminUserStatus(user._id, user.status === 'suspended' ? 'active' : 'suspended')));
-        actions.appendChild(adminAction(adminCopy('╪ú╪▒╪┤┘ü╪⌐', 'Archive'), () => archiveAdminUser(user._id), 'border-color:var(--red); color:var(--red);'));
+        actions.appendChild(adminAction(user.status === 'suspended' ? adminCopy('تفعيل', 'Activate') : adminCopy('إيقاف', 'Suspend'), () => updateAdminUserStatus(user._id, user.status === 'suspended' ? 'active' : 'suspended')));
+        actions.appendChild(adminAction(adminCopy('أرشفة', 'Archive'), () => archiveAdminUser(user._id), 'border-color:var(--red); color:var(--red);'));
       }
       row.appendChild(actions);
       tbody.appendChild(row);
@@ -4001,16 +4001,16 @@
   }
 
   async function updateAdminUserStatus(userId, status) {
-    if (!confirm(adminCopy(`┘ç┘ä ╪¬╪▒┘è╪» ╪¬╪║┘è┘è╪▒ ╪¡╪º┘ä╪⌐ ╪º┘ä╪¡╪│╪º╪¿ ╪Ñ┘ä┘ë ${status === 'active' ? '┘å╪┤╪╖' : '┘à┘ê┘é┘ê┘ü'}╪ƒ`, `Change account status to ${status}?`))) return;
+    if (!confirm(adminCopy(`هل تريد تغيير حالة الحساب إلى ${status === 'active' ? 'نشط' : 'موقوف'}؟`, `Change account status to ${status}?`))) return;
     const result = await apiFetch(`/api/users/${userId}`, { method: 'PUT', body: JSON.stringify({ status }) });
-    if (!result?.data) return alert(result?.message || adminCopy('┘ü╪┤┘ä ╪¬╪¡╪»┘è╪½ ╪º┘ä╪¡╪│╪º╪¿.', 'Could not update account.'));
+    if (!result?.data) return alert(result?.message || adminCopy('فشل تحديث الحساب.', 'Could not update account.'));
     loadAdminUsers();
   }
 
   async function archiveAdminUser(userId) {
-    if (!confirm(adminCopy('╪│╪¬╪¬┘ê┘é┘ü ╪Ñ┘à┘â╪º┘å┘è╪⌐ ╪º┘ä╪»╪«┘ê┘ä ┘à╪╣ ╪º┘ä╪º╪¡╪¬┘ü╪º╪╕ ╪¿╪º┘ä┘à╪¡╪º╪»╪½╪º╪¬ ┘ê╪º┘ä┘é┘å┘ê╪º╪¬. ┘ç┘ä ╪¬╪▒┘è╪» ╪º┘ä┘à╪¬╪º╪¿╪╣╪⌐╪ƒ', 'Sign-in will stop while conversations and channels are preserved. Continue?'))) return;
+    if (!confirm(adminCopy('ستتوقف إمكانية الدخول مع الاحتفاظ بالمحادثات والقنوات. هل تريد المتابعة؟', 'Sign-in will stop while conversations and channels are preserved. Continue?'))) return;
     const result = await apiFetch(`/api/users/${userId}`, { method: 'DELETE' });
-    if (!result?.data) return alert(result?.message || adminCopy('┘ü╪┤┘ä╪¬ ╪ú╪▒╪┤┘ü╪⌐ ╪º┘ä╪¡╪│╪º╪¿.', 'Could not archive account.'));
+    if (!result?.data) return alert(result?.message || adminCopy('فشلت أرشفة الحساب.', 'Could not archive account.'));
     loadAdminUsers();
   }
 
@@ -4019,11 +4019,11 @@
     if (!modal) return;
     const user = adminUsersList.find((entry) => String(entry._id) === String(userId));
     if (!user || !Array.isArray(user.bots)) {
-      alert(adminCopy('┘ä╪º ╪¬┘ê╪¼╪» ┘ê┘â┘ä╪º╪í ┘à╪¡┘à┘æ┘ä┘ê┘å ┘ä┘ç╪░╪º ╪º┘ä╪¡╪│╪º╪¿╪î ╪ú╪╣╪» ╪¬╪¡┘à┘è┘ä ╪º┘ä┘é╪º╪ª┘à╪⌐.', 'No loaded agents for this account. Reload the list.'));
+      alert(adminCopy('لا توجد وكلاء محمّلون لهذا الحساب، أعد تحميل القائمة.', 'No loaded agents for this account. Reload the list.'));
       return;
     }
-    modalTitle.innerHTML = `<i class="fas fa-robot" style="color:var(--orange)"></i> ${adminCopy(`┘ê┘â┘ä╪º╪í ${user.username}`, `${user.username}'s agents`)}`;
-    modalBody.innerHTML = `<div id="adminBotsList" style="font-size:13px;">${adminCopy('╪¼╪º╪▒┘è ╪º┘ä╪¬╪¡┘à┘è┘ä...', 'Loading...')}</div>`;
+    modalTitle.innerHTML = `<i class="fas fa-robot" style="color:var(--orange)"></i> ${adminCopy(`وكلاء ${user.username}`, `${user.username}'s agents`)}`;
+    modalBody.innerHTML = `<div id="adminBotsList" style="font-size:13px;">${adminCopy('جاري التحميل...', 'Loading...')}</div>`;
     modal.classList.add('active');
 
     const listEl = document.getElementById('adminBotsList');
@@ -4036,11 +4036,11 @@
         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--glass-border);">
           <div style="min-width:0;">
             <div style="font-weight:600; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${botItem.name}</div>
-            <div style="font-size:11px; color:${running ? 'var(--green)' : 'var(--red)'};">${running ? adminCopy('┘è╪╣┘à┘ä', 'Running') : adminCopy('┘à╪¬┘ê┘é┘ü', 'Stopped')}</div>
+            <div style="font-size:11px; color:${running ? 'var(--green)' : 'var(--red)'};">${running ? adminCopy('يعمل', 'Running') : adminCopy('متوقف', 'Stopped')}</div>
           </div>
           <button type="button" class="btn btn-secondary btn-sm" data-bot-toggle="${botItem._id}"
             style="flex-shrink:0; ${running ? 'border-color:var(--red); color:var(--red);' : 'border-color:var(--green); color:var(--green);'}">
-            ${running ? adminCopy('╪Ñ┘è┘é╪º┘ü', 'Stop') : adminCopy('╪¬╪┤╪║┘è┘ä', 'Start')}
+            ${running ? adminCopy('إيقاف', 'Stop') : adminCopy('تشغيل', 'Start')}
           </button>
         </div>`;
       }).join('');
@@ -4059,14 +4059,14 @@
             target.isActive = res.data.isActive;
             renderBots();
           } else {
-            alert(res?.message || adminCopy('┘ü╪┤┘ä ╪¬╪¡╪»┘è╪½ ╪¡╪º┘ä╪⌐ ╪º┘ä┘ê┘â┘è┘ä.', 'Could not update the agent.'));
+            alert(res?.message || adminCopy('فشل تحديث حالة الوكيل.', 'Could not update the agent.'));
           }
         });
       });
     };
 
     if (bots.length === 0) {
-      listEl.textContent = adminCopy('┘ä╪º ┘è┘à┘ä┘â ┘ç╪░╪º ╪º┘ä╪¡╪│╪º╪¿ ┘ê┘â┘ä╪º╪í ╪¿╪╣╪».', 'This account has no agents yet.');
+      listEl.textContent = adminCopy('لا يملك هذا الحساب وكلاء بعد.', 'This account has no agents yet.');
       return;
     }
     renderBots();
@@ -4078,13 +4078,13 @@
     form.reset();
     document.getElementById('adminUserId').value = userId;
     document.getElementById('adminUserMode').value = userId ? 'edit' : 'create';
-    document.getElementById('adminUserModalTitle').textContent = userId ? adminCopy('╪¬╪╣╪»┘è┘ä ╪º┘ä╪¡╪│╪º╪¿', 'Edit account') : adminCopy('╪Ñ╪╢╪º┘ü╪⌐ ╪¡╪│╪º╪¿', 'Add account');
+    document.getElementById('adminUserModalTitle').textContent = userId ? adminCopy('تعديل الحساب', 'Edit account') : adminCopy('إضافة حساب', 'Add account');
     document.getElementById('adminUserPassword').required = !userId;
     document.getElementById('adminUserConfirmPassword').required = !userId;
     if (userId) {
       const response = await apiFetch(`/api/users/${userId}`);
       const user = response?.data;
-      if (!user) return alert(adminCopy('╪¬╪╣╪░╪▒ ╪¬╪¡┘à┘è┘ä ╪¿┘è╪º┘å╪º╪¬ ╪º┘ä╪¡╪│╪º╪¿.', 'Could not load account.'));
+      if (!user) return alert(adminCopy('تعذر تحميل بيانات الحساب.', 'Could not load account.'));
       document.getElementById('adminUserUsername').value = user.username || '';
       document.getElementById('adminUserEmail').value = user.email || '';
       document.getElementById('adminUserWhatsapp').value = user.whatsapp || '';
@@ -4111,7 +4111,7 @@
     const sessionId = sessionStorage.getItem('zainbot_impersonation_session_id');
     const banner = document.getElementById('impersonationBanner');
     if (!sessionId || !banner) return;
-    document.getElementById('impersonationBannerText').textContent = adminCopy(`╪ú┘å╪¬ ╪»╪º╪«┘ä ┘à╪ñ┘é╪¬╪º┘ï ╪Ñ┘ä┘ë ╪¡╪│╪º╪¿ ${currentUser?.username || ''}. ┘â┘ä ╪º┘ä┘å╪┤╪º╪╖ ┘à╪│╪¼┘ä.`, `You are temporarily viewing ${currentUser?.username || 'this account'}. Activity is audited.`);
+    document.getElementById('impersonationBannerText').textContent = adminCopy(`أنت داخل مؤقتاً إلى حساب ${currentUser?.username || ''}. كل النشاط مسجل.`, `You are temporarily viewing ${currentUser?.username || 'this account'}. Activity is audited.`);
     banner.style.display = 'block';
   }
 
@@ -4133,7 +4133,7 @@
     };
     if (password) { payload.password = password; payload.confirmPassword = document.getElementById('adminUserConfirmPassword').value; }
     const result = await apiFetch(id ? `/api/users/${id}` : '/api/users', { method: id ? 'PUT' : 'POST', body: JSON.stringify(payload) });
-    if (!result?.data) return alert(result?.message || adminCopy('┘ü╪┤┘ä ╪¡┘ü╪╕ ╪º┘ä╪¡╪│╪º╪¿.', 'Could not save account.'));
+    if (!result?.data) return alert(result?.message || adminCopy('فشل حفظ الحساب.', 'Could not save account.'));
     adminUserModal?.classList.remove('active');
     loadAdminUsers(id ? adminUsersPageState.page : 1);
   });
@@ -4141,7 +4141,7 @@
     event.preventDefault();
     const response = await apiFetch('/api/admin/impersonation/sessions', { method: 'POST', body: JSON.stringify({ subjectUserId: document.getElementById('impersonationSubjectId').value, reason: document.getElementById('impersonationReason').value.trim() }) });
     const data = response?.data;
-    if (!data?.token || !data?.session?.id) return alert(response?.message || adminCopy('┘ü╪┤┘ä ╪¿╪»╪í ╪º┘ä╪¼┘ä╪│╪⌐ ╪º┘ä┘à╪ñ┘é╪¬╪⌐.', 'Could not start temporary access.'));
+    if (!data?.token || !data?.session?.id) return alert(response?.message || adminCopy('فشل بدء الجلسة المؤقتة.', 'Could not start temporary access.'));
     sessionStorage.setItem('zainbot_admin_session', JSON.stringify({ token: localStorage.getItem('token'), tokenExpiry: localStorage.getItem('tokenExpiry'), role: localStorage.getItem('role'), userId: localStorage.getItem('userId'), username: localStorage.getItem('username') }));
     sessionStorage.setItem('zainbot_impersonation_session_id', data.session.id);
     localStorage.setItem('token', data.token);
@@ -4154,10 +4154,10 @@
     let admin;
     try { admin = JSON.parse(sessionStorage.getItem('zainbot_admin_session') || '{}'); } catch (_error) { admin = {}; }
     const sessionId = sessionStorage.getItem('zainbot_impersonation_session_id');
-    if (!admin.token || !sessionId) return alert(adminCopy('╪º┘å╪¬┘ç╪¬ ╪¼┘ä╪│╪⌐ ╪º┘ä┘à╪»┘è╪▒. ╪│╪¼┘ä ╪º┘ä╪»╪«┘ê┘ä ┘à┘å ╪¼╪»┘è╪».', 'The admin session is unavailable. Please sign in again.'));
+    if (!admin.token || !sessionId) return alert(adminCopy('انتهت جلسة المدير. سجل الدخول من جديد.', 'The admin session is unavailable. Please sign in again.'));
     const response = await fetch(`/api/admin/impersonation/sessions/${encodeURIComponent(sessionId)}/end`, { method: 'POST', headers: { Authorization: `Bearer ${admin.token}` } });
     const result = await response.json();
-    if (!response.ok || !result?.success) return alert(result?.message || adminCopy('╪¬╪╣╪░╪▒ ╪Ñ┘å┘ç╪º╪í ╪º┘ä╪¼┘ä╪│╪⌐ ╪º┘ä┘à╪ñ┘é╪¬╪⌐ ╪¿╪ú┘à╪º┘å.', 'Could not safely end the temporary session.'));
+    if (!response.ok || !result?.success) return alert(result?.message || adminCopy('تعذر إنهاء الجلسة المؤقتة بأمان.', 'Could not safely end the temporary session.'));
     Object.entries(admin).forEach(([key, value]) => value === null || value === undefined ? localStorage.removeItem(key) : localStorage.setItem(key, value));
     sessionStorage.removeItem('zainbot_admin_session');
     sessionStorage.removeItem('zainbot_impersonation_session_id');
@@ -4236,12 +4236,12 @@
         const statusColors = { active: 'var(--green)', ended: 'var(--text-muted)', revoked: 'var(--red)', expired: 'var(--orange)' };
         const color = statusColors[s.status] || 'var(--text-muted)';
         return `<tr style="border-bottom:1px solid var(--glass-border);">
-          <td style="padding:10px;">${s.actor?.username || 'ΓÇö'}</td>
-          <td style="padding:10px;">${s.subject?.username || 'ΓÇö'}</td>
-          <td style="padding:10px; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${(s.reason || '').replace(/"/g, '&quot;')}">${s.reason || 'ΓÇö'}</td>
+          <td style="padding:10px;">${s.actor?.username || '—'}</td>
+          <td style="padding:10px;">${s.subject?.username || '—'}</td>
+          <td style="padding:10px; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${(s.reason || '').replace(/"/g, '&quot;')}">${s.reason || '—'}</td>
           <td style="padding:10px; color:${color}; font-weight:600;">${s.status}</td>
-          <td style="padding:10px;">${s.createdAt ? new Date(s.createdAt).toLocaleString() : 'ΓÇö'}</td>
-          <td style="padding:10px;">${s.expiresAt ? new Date(s.expiresAt).toLocaleString() : 'ΓÇö'}</td>
+          <td style="padding:10px;">${s.createdAt ? new Date(s.createdAt).toLocaleString() : '—'}</td>
+          <td style="padding:10px;">${s.expiresAt ? new Date(s.expiresAt).toLocaleString() : '—'}</td>
         </tr>`;
       }).join('');
     } catch (e) {
@@ -4269,7 +4269,7 @@
       if (!res || !res.success) return;
       const rows = res.data || [];
       const info = document.getElementById('adminAuditPaginationInfo');
-      if (info) info.textContent = `${res.total ?? 0} ┬╖ ${res.page}/${res.totalPages}`;
+      if (info) info.textContent = `${res.total ?? 0} · ${res.page}/${res.totalPages}`;
 
       if (rows.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:var(--text-muted);">${(translations[currentLanguage] || translations.en).admin_empty_events}</td></tr>`;
@@ -4279,11 +4279,11 @@
       const outcomeColors = { success: 'var(--green)', denied: 'var(--orange)', error: 'var(--red)' };
       tbody.innerHTML = rows.map((ev) => {
         const color = outcomeColors[ev.outcome] || 'var(--text-muted)';
-        const actionText = [ev.method, ev.path].filter(Boolean).join(' ') || ev.action || 'ΓÇö';
+        const actionText = [ev.method, ev.path].filter(Boolean).join(' ') || ev.action || '—';
         return `<tr style="border-bottom:1px solid var(--glass-border);">
-          <td style="padding:10px; white-space:nowrap;">${ev.createdAt ? new Date(ev.createdAt).toLocaleString() : 'ΓÇö'}</td>
+          <td style="padding:10px; white-space:nowrap;">${ev.createdAt ? new Date(ev.createdAt).toLocaleString() : '—'}</td>
           <td style="padding:10px;">${ev.eventType}</td>
-          <td style="padding:10px;">${ev.actorUsername || 'ΓÇö'} ΓåÆ ${ev.subjectUsername || 'ΓÇö'}</td>
+          <td style="padding:10px;">${ev.actorUsername || '—'} → ${ev.subjectUsername || '—'}</td>
           <td style="padding:10px; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${actionText.replace(/"/g, '&quot;')}">${actionText}</td>
           <td style="padding:10px; color:${color}; font-weight:600;">${ev.outcome}${ev.statusCode ? ` (${ev.statusCode})` : ''}</td>
         </tr>`;
@@ -4541,7 +4541,7 @@
     const faq = faqs.find(f => f._id === id);
     if (!faq) return;
 
-    document.getElementById('faqModalTitle').textContent = currentLanguage === 'ar' ? '╪¬╪╣╪»┘è┘ä ╪º┘ä┘é╪º╪╣╪»╪⌐' : 'Edit FAQ Rule';
+    document.getElementById('faqModalTitle').textContent = currentLanguage === 'ar' ? 'تعديل القاعدة' : 'Edit FAQ Rule';
     document.getElementById('faqIdInput').value = faq._id;
     document.getElementById('faqQuestionInput').value = faq.content?.question || '';
     document.getElementById('faqAnswerInput').value = faq.content?.answer || '';
@@ -4550,7 +4550,7 @@
   };
 
   window.deleteFaq = async function(id) {
-    if (!confirm(currentLanguage === 'ar' ? '┘ç┘ä ╪ú┘å╪¬ ┘à╪¬╪ú┘â╪» ┘à┘å ╪¡╪░┘ü ┘ç╪░┘ç ╪º┘ä┘é╪º╪╣╪»╪⌐╪ƒ' : 'Are you sure you want to delete this FAQ rule?')) return;
+    if (!confirm(currentLanguage === 'ar' ? 'هل أنت متأكد من حذف هذه القاعدة؟' : 'Are you sure you want to delete this FAQ rule?')) return;
     try {
       const res = await apiFetch(`/api/rules/${id}`, { method: 'DELETE' });
       if (res && res.success) {
@@ -4562,7 +4562,7 @@
   };
 
   window.revokeApiKey = async function(id) {
-    if (!confirm(currentLanguage === 'ar' ? '┘ç┘ä ╪ú┘å╪¬ ┘à╪¬╪ú┘â╪» ┘à┘å ╪Ñ╪¿╪╖╪º┘ä ┘à┘ü╪¬╪º╪¡ ╪º┘ä┘ê╪╡┘ê┘ä ┘ç╪░╪º╪ƒ' : 'Are you sure you want to revoke this access key?')) return;
+    if (!confirm(currentLanguage === 'ar' ? 'هل أنت متأكد من إبطال مفتاح الوصول هذا؟' : 'Are you sure you want to revoke this access key?')) return;
     try {
       const res = await apiFetch(`/api/integrations/keys/${id}`, { method: 'DELETE' });
       if (res && res.success) {
@@ -4577,10 +4577,10 @@
     try {
       const res = await apiFetch(`/api/integrations/webhooks/logs/${id}/retry`, { method: 'POST' });
       if (res && res.success) {
-        alert(currentLanguage === 'ar' ? '╪¬┘à ╪Ñ╪╣╪º╪»╪⌐ ╪º┘ä╪Ñ╪▒╪│╪º┘ä ┘ê╪º┘ä╪¬╪│┘ä┘è┘à ╪¿┘å╪¼╪º╪¡!' : 'Webhook redelivered successfully!');
+        alert(currentLanguage === 'ar' ? 'تم إعادة الإرسال والتسليم بنجاح!' : 'Webhook redelivered successfully!');
         loadSettingsData();
       } else {
-        alert(currentLanguage === 'ar' ? '┘ü╪┤┘ä ╪Ñ╪╣╪º╪»╪⌐ ╪º┘ä╪Ñ╪▒╪│╪º┘ä.' : 'Webhook retry failed.');
+        alert(currentLanguage === 'ar' ? 'فشل إعادة الإرسال.' : 'Webhook retry failed.');
       }
     } catch (e) {
       console.error(e);
@@ -4617,7 +4617,7 @@
   const addFaqBtn = document.getElementById('addFaqBtn');
   if (addFaqBtn) {
     addFaqBtn.addEventListener('click', () => {
-      document.getElementById('faqModalTitle').textContent = currentLanguage === 'ar' ? '╪Ñ╪╢╪º┘ü╪⌐ ╪│╪ñ╪º┘ä ┘ê╪¼┘ê╪º╪¿' : 'Create FAQ Rule';
+      document.getElementById('faqModalTitle').textContent = currentLanguage === 'ar' ? 'إضافة سؤال وجواب' : 'Create FAQ Rule';
       document.getElementById('faqIdInput').value = '';
       document.getElementById('faqQuestionInput').value = '';
       document.getElementById('faqAnswerInput').value = '';
@@ -4644,16 +4644,16 @@
     modal.classList.add('active');
 
     if (type === 'whatsapp') {
-      modalTitle.innerHTML = `<i class="fab fa-whatsapp" style="color:var(--green)"></i> ${currentLanguage === 'ar' ? '╪▒╪¿╪╖ ┘ê╪º╪¬╪│╪º╪¿ ╪╣╪¿╪▒ ╪º┘ä╪▒┘à╪▓ (QR Code)' : 'Connect WhatsApp via QR Code'}`;
+      modalTitle.innerHTML = `<i class="fab fa-whatsapp" style="color:var(--green)"></i> ${currentLanguage === 'ar' ? 'ربط واتساب عبر الرمز (QR Code)' : 'Connect WhatsApp via QR Code'}`;
       modalBody.innerHTML = `
         <div style="text-align:center; padding:16px;">
           <div id="waQrContainer" style="background:rgba(255,255,255,0.03); padding:20px; border-radius:16px; border:1px solid var(--glass-border); display:inline-block; margin-bottom:16px;">
-            <div style="color:var(--cyan); font-weight:600;"><i class="fas fa-spinner fa-spin"></i> ${currentLanguage === 'ar' ? '╪¼╪º╪▒┘è ╪¬┘ê┘ä┘è╪» ╪º┘ä╪▒┘à╪▓...' : 'Generating QR Code...'}</div>
+            <div style="color:var(--cyan); font-weight:600;"><i class="fas fa-spinner fa-spin"></i> ${currentLanguage === 'ar' ? 'جاري توليد الرمز...' : 'Generating QR Code...'}</div>
           </div>
           <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px; line-height:1.6;">
-            ${currentLanguage === 'ar' ? '╪º┘ü╪¬╪¡ ╪¬╪╖╪¿┘è┘é ╪º┘ä┘ê╪º╪¬╪│╪º╪¿ ╪╣┘ä┘ë ┘ç╪º╪¬┘ü┘â > ╪º┘ä╪ú╪¼┘ç╪▓╪⌐ ╪º┘ä┘à╪▒╪¬╪¿╪╖╪⌐ > ╪▒╪¿╪╖ ╪¼┘ç╪º╪▓ > ┘ê┘é┘à ╪¿┘à╪│╪¡ ╪º┘ä╪▒┘à╪▓ ╪ú╪╣┘ä╪º┘ç.' : 'Open WhatsApp on your phone > Linked Devices > Link a Device > Scan the QR code above.'}
+            ${currentLanguage === 'ar' ? 'افتح تطبيق الواتساب على هاتفك > الأجهزة المرتبطة > ربط جهاز > وقم بمسح الرمز أعلاه.' : 'Open WhatsApp on your phone > Linked Devices > Link a Device > Scan the QR code above.'}
           </p>
-          <button id="waDisconnectBtn" class="btn btn-secondary btn-sm" style="border-color:var(--red); color:var(--red);">${currentLanguage === 'ar' ? '╪Ñ┘ä╪║╪º╪í ╪º┘ä╪▒╪¿╪╖' : 'Disconnect Session'}</button>
+          <button id="waDisconnectBtn" class="btn btn-secondary btn-sm" style="border-color:var(--red); color:var(--red);">${currentLanguage === 'ar' ? 'إلغاء الربط' : 'Disconnect Session'}</button>
         </div>
       `;
 
@@ -4674,7 +4674,7 @@
           ) {
             const image = document.createElement('img');
             image.src = qrCode;
-            image.alt = currentLanguage === 'ar' ? '╪▒┘à╪▓ ╪▒╪¿╪╖ ┘ê╪º╪¬╪│╪º╪¿' : 'WhatsApp QR Code';
+            image.alt = currentLanguage === 'ar' ? 'رمز ربط واتساب' : 'WhatsApp QR Code';
             image.width = 220;
             image.height = 220;
             image.style.borderRadius = '12px';
@@ -4683,8 +4683,8 @@
             return true;
           }
           container.textContent = data?.status === 'connected'
-            ? (currentLanguage === 'ar' ? '╪¬┘à ╪º┘ä╪▒╪¿╪╖ ╪¿┘å╪¼╪º╪¡.' : 'WhatsApp is connected.')
-            : (currentLanguage === 'ar' ? '┘è╪¬┘à ╪¬╪¼┘ç┘è╪▓ ╪º┘ä╪▒┘à╪▓ΓÇª' : 'Preparing QR codeΓÇª');
+            ? (currentLanguage === 'ar' ? 'تم الربط بنجاح.' : 'WhatsApp is connected.')
+            : (currentLanguage === 'ar' ? 'يتم تجهيز الرمز…' : 'Preparing QR code…');
           return false;
         };
 
@@ -4703,14 +4703,14 @@
         } else {
           const container = document.getElementById('waQrContainer');
           if (container) {
-            container.textContent = currentLanguage === 'ar' ? '╪¬╪╣╪░╪▒ ╪¿╪»╪í ╪¼┘ä╪│╪⌐ ┘ê╪º╪¬╪│╪º╪¿.' : 'Could not start WhatsApp session.';
+            container.textContent = currentLanguage === 'ar' ? 'تعذر بدء جلسة واتساب.' : 'Could not start WhatsApp session.';
           }
         }
       } catch (e) {
         console.error(e);
         const container = document.getElementById('waQrContainer');
         if (container) {
-          container.textContent = currentLanguage === 'ar' ? '╪¬╪╣╪░╪▒ ╪¬┘ê┘ä┘è╪» ╪º┘ä╪▒┘à╪▓. ╪¡╪º┘ê┘ä ┘à╪▒╪⌐ ╪ú╪«╪▒┘ë.' : 'Could not generate the QR code. Try again.';
+          container.textContent = currentLanguage === 'ar' ? 'تعذر توليد الرمز. حاول مرة أخرى.' : 'Could not generate the QR code. Try again.';
         }
       }
 
@@ -4722,28 +4722,28 @@
     }
 
     else if (type === 'facebook') {
-      modalTitle.innerHTML = `<i class="fab fa-facebook-messenger" style="color:var(--blue)"></i> ${currentLanguage === 'ar' ? '╪▒╪¿╪╖ ╪╡┘ü╪¡╪⌐ ┘ü┘è╪│╪¿┘ê┘â ┘à╪¿╪º╪┤╪▒╪⌐' : 'Facebook Page Direct Connect'}`;
+      modalTitle.innerHTML = `<i class="fab fa-facebook-messenger" style="color:var(--blue)"></i> ${currentLanguage === 'ar' ? 'ربط صفحة فيسبوك مباشرة' : 'Facebook Page Direct Connect'}`;
       modalBody.innerHTML = `
         <form id="fbDirectForm">
           <div class="form-group">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <label>${currentLanguage === 'ar' ? '┘à┘ü╪¬╪º╪¡ ┘ê╪╡┘ê┘ä ╪º┘ä╪╡┘ü╪¡╪⌐ (Page Access Token)' : 'Page Access Token'}</label>
-              <button type="button" class="btn btn-secondary btn-sm info-hint-toggle" style="padding:2px 8px; font-size:11px; color:var(--cyan); border-color:var(--cyan);"><i class="fas fa-info-circle"></i> ${currentLanguage === 'ar' ? '┘â┘è┘ü ╪ú╪¡╪╡┘ä ╪╣┘ä┘è┘ç╪ƒ' : 'How to get?'}</button>
+              <label>${currentLanguage === 'ar' ? 'مفتاح وصول الصفحة (Page Access Token)' : 'Page Access Token'}</label>
+              <button type="button" class="btn btn-secondary btn-sm info-hint-toggle" style="padding:2px 8px; font-size:11px; color:var(--cyan); border-color:var(--cyan);"><i class="fas fa-info-circle"></i> ${currentLanguage === 'ar' ? 'كيف أحصل عليه؟' : 'How to get?'}</button>
             </div>
             <div class="info-hint-box" style="display:none; background:rgba(0,240,255,0.06); border:1px solid var(--cyan); padding:10px 14px; border-radius:8px; font-size:12px; color:var(--text); margin-bottom:10px;">
-              ${currentLanguage === 'ar' ? '1. ╪º╪»╪«┘ä ╪Ñ┘ä┘ë developers.facebook.com ┘ê╪ú┘å╪┤╪ª ╪¬╪╖╪¿┘è┘é╪º.<br>2. ╪º╪«╪¬╪▒ ╪╡┘ü╪¡╪⌐ ╪º┘ä┘ü┘è╪│╪¿┘ê┘â ╪º┘ä╪«╪º╪╡╪⌐ ╪¿┘â ┘ê┘ê┘ä┘æ╪» ┘à┘ü╪¬╪º╪¡ ┘ê╪╡┘ê┘ä ╪º┘ä╪╡┘ü╪¡╪⌐ (Page Access Token).<br>3. ┘é┘à ╪¿┘å╪│╪« ╪º┘ä┘à┘ü╪¬╪º╪¡ ┘ê┘ä╪╡┘é┘ç ┘ü┘è ╪º┘ä╪¡┘é┘ä ╪ú╪»┘å╪º┘ç.' : '1. Go to developers.facebook.com and select your App.<br>2. Select your FB Page in Graph API Explorer & generate Page Access Token.<br>3. Copy & paste the token below.'}
+              ${currentLanguage === 'ar' ? '1. ادخل إلى developers.facebook.com وأنشئ تطبيقا.<br>2. اختر صفحة الفيسبوك الخاصة بك وولّد مفتاح وصول الصفحة (Page Access Token).<br>3. قم بنسخ المفتاح ولصقه في الحقل أدناه.' : '1. Go to developers.facebook.com and select your App.<br>2. Select your FB Page in Graph API Explorer & generate Page Access Token.<br>3. Copy & paste the token below.'}
             </div>
             <input type="password" id="fbTokenInput" class="form-control" placeholder="EAA..." value="${currentBot.facebookApiKey || ''}" required />
           </div>
           <div class="form-group">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <label>${currentLanguage === 'ar' ? '┘à╪╣╪▒┘æ┘ü ╪º┘ä╪╡┘ü╪¡╪⌐ (Page ID)' : 'Page ID'}</label>
+              <label>${currentLanguage === 'ar' ? 'معرّف الصفحة (Page ID)' : 'Page ID'}</label>
             </div>
             <input type="text" id="fbPageIdInput" class="form-control" placeholder="1023948574..." value="${currentBot.facebookPageId || ''}" required />
           </div>
           <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
-            <button type="button" class="btn btn-secondary btn-sm modal-close-btn">${currentLanguage === 'ar' ? '╪Ñ┘ä╪║╪º╪í' : 'Cancel'}</button>
-            <button type="submit" class="btn btn-primary btn-sm">${currentLanguage === 'ar' ? '╪¡┘ü╪╕ ╪º┘ä╪▒╪¿╪╖' : 'Save Connection'}</button>
+            <button type="button" class="btn btn-secondary btn-sm modal-close-btn">${currentLanguage === 'ar' ? 'إلغاء' : 'Cancel'}</button>
+            <button type="submit" class="btn btn-primary btn-sm">${currentLanguage === 'ar' ? 'حفظ الربط' : 'Save Connection'}</button>
           </div>
         </form>
       `;
@@ -4770,28 +4770,28 @@
     }
 
     else if (type === 'instagram') {
-      modalTitle.innerHTML = `<i class="fab fa-instagram" style="color:var(--purple-light)"></i> ${currentLanguage === 'ar' ? '╪▒╪¿╪╖ ╪¡╪│╪º╪¿ ╪Ñ┘å╪│╪¬╪¼╪▒╪º┘à ┘à╪¿╪º╪┤╪▒╪⌐' : 'Instagram Direct Connect'}`;
+      modalTitle.innerHTML = `<i class="fab fa-instagram" style="color:var(--purple-light)"></i> ${currentLanguage === 'ar' ? 'ربط حساب إنستجرام مباشرة' : 'Instagram Direct Connect'}`;
       modalBody.innerHTML = `
         <form id="igDirectForm">
           <div class="form-group">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <label>${currentLanguage === 'ar' ? '┘à┘ü╪¬╪º╪¡ ┘ê╪╡┘ê┘ä ╪Ñ┘å╪│╪¬╪¼╪▒╪º┘à (Instagram Access Token)' : 'Instagram Access Token'}</label>
-              <button type="button" class="btn btn-secondary btn-sm info-hint-toggle" style="padding:2px 8px; font-size:11px; color:var(--cyan); border-color:var(--cyan);"><i class="fas fa-info-circle"></i> ${currentLanguage === 'ar' ? '┘â┘è┘ü ╪ú╪¡╪╡┘ä ╪╣┘ä┘è┘ç╪ƒ' : 'How to get?'}</button>
+              <label>${currentLanguage === 'ar' ? 'مفتاح وصول إنستجرام (Instagram Access Token)' : 'Instagram Access Token'}</label>
+              <button type="button" class="btn btn-secondary btn-sm info-hint-toggle" style="padding:2px 8px; font-size:11px; color:var(--cyan); border-color:var(--cyan);"><i class="fas fa-info-circle"></i> ${currentLanguage === 'ar' ? 'كيف أحصل عليه؟' : 'How to get?'}</button>
             </div>
             <div class="info-hint-box" style="display:none; background:rgba(0,240,255,0.06); border:1px solid var(--cyan); padding:10px 14px; border-radius:8px; font-size:12px; color:var(--text); margin-bottom:10px;">
-              ${currentLanguage === 'ar' ? '1. ┘é┘à ╪¿╪▒╪¿╪╖ ╪¡╪│╪º╪¿ ╪Ñ┘å╪│╪¬╪¼╪▒╪º┘à ╪º┘ä╪¬╪¼╪º╪▒┘è ╪¿╪╡┘ü╪¡╪¬┘â ╪╣┘ä┘ë ┘ü┘è╪│╪¿┘ê┘â.<br>2. ╪º┘å╪│╪« ┘à┘ü╪¬╪º╪¡ ╪º┘ä┘ê╪╡┘ê┘ä ╪º┘ä┘à╪│╪¬╪«╪▒╪¼ ┘à┘å Meta Developer Console.<br>3. ╪╢╪╣ ╪º┘ä┘à┘ü╪¬╪º╪¡ ┘ê┘à╪╣╪▒┘ü ╪º┘ä╪¡╪│╪º╪¿ ┘ü┘è ╪º┘ä╪¡┘é┘ê┘ä ╪ú╪»┘å╪º┘ç.' : '1. Link your IG Business account to your Facebook Page.<br>2. Generate Page/IG Access Token in Meta Developer Console.<br>3. Copy & paste the token and account ID below.'}
+              ${currentLanguage === 'ar' ? '1. قم بربط حساب إنستجرام التجاري بصفحتك على فيسبوك.<br>2. انسخ مفتاح الوصول المستخرج من Meta Developer Console.<br>3. ضع المفتاح ومعرف الحساب في الحقول أدناه.' : '1. Link your IG Business account to your Facebook Page.<br>2. Generate Page/IG Access Token in Meta Developer Console.<br>3. Copy & paste the token and account ID below.'}
             </div>
             <input type="password" id="igTokenInput" class="form-control" placeholder="EAA..." value="${currentBot.instagramApiKey || ''}" required />
           </div>
           <div class="form-group">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <label>${currentLanguage === 'ar' ? '┘à╪╣╪▒┘æ┘ü ╪¡╪│╪º╪¿ ╪Ñ┘å╪│╪¬╪¼╪▒╪º┘à (Instagram Page ID)' : 'Instagram Page ID'}</label>
+              <label>${currentLanguage === 'ar' ? 'معرّف حساب إنستجرام (Instagram Page ID)' : 'Instagram Page ID'}</label>
             </div>
             <input type="text" id="igPageIdInput" class="form-control" placeholder="178414..." value="${currentBot.instagramPageId || ''}" required />
           </div>
           <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
-            <button type="button" class="btn btn-secondary btn-sm modal-close-btn">${currentLanguage === 'ar' ? '╪Ñ┘ä╪║╪º╪í' : 'Cancel'}</button>
-            <button type="submit" class="btn btn-primary btn-sm">${currentLanguage === 'ar' ? '╪¡┘ü╪╕ ╪º┘ä╪▒╪¿╪╖' : 'Save Connection'}</button>
+            <button type="button" class="btn btn-secondary btn-sm modal-close-btn">${currentLanguage === 'ar' ? 'إلغاء' : 'Cancel'}</button>
+            <button type="submit" class="btn btn-primary btn-sm">${currentLanguage === 'ar' ? 'حفظ الربط' : 'Save Connection'}</button>
           </div>
         </form>
       `;
@@ -4818,21 +4818,21 @@
     }
 
     else if (type === 'telegram') {
-      modalTitle.innerHTML = `<i class="fab fa-telegram" style="color:var(--cyan)"></i> ${currentLanguage === 'ar' ? '╪▒╪¿╪╖ ╪¬┘è┘ä┘è╪¼╪▒╪º┘à' : 'Connect Telegram'}`;
+      modalTitle.innerHTML = `<i class="fab fa-telegram" style="color:var(--cyan)"></i> ${currentLanguage === 'ar' ? 'ربط تيليجرام' : 'Connect Telegram'}`;
       modalBody.innerHTML = `
         <div id="tgLinkFlow">
           <p style="font-size:13px; color:var(--text); margin-bottom:10px;">${currentLanguage === 'ar'
-            ? '╪º╪▒╪¿╪╖ ┘ê┘â┘è┘ä┘â ╪¿╪º┘ä╪¿┘ê╪¬ ╪º┘ä╪▒╪│┘à┘è ┘ä┘ä┘à┘å╪╡╪⌐ ╪╣┘ä┘ë ╪¬┘è┘ä┘è╪¼╪▒╪º┘à ┘ä╪¬╪╡┘ä┘â ╪º┘ä╪Ñ╪┤╪╣╪º╪▒╪º╪¬. ┘ê┘ä┘æ╪» ┘â┘ê╪» ╪º┘ä╪▒╪¿╪╖ ╪½┘à ╪ú╪▒╪│┘ä┘ç ┘ä┘ä╪¿┘ê╪¬ ╪º┘ä╪▒╪│┘à┘è.'
+            ? 'اربط وكيلك بالبوت الرسمي للمنصة على تيليجرام لتصلك الإشعارات. ولّد كود الربط ثم أرسله للبوت الرسمي.'
             : 'Link your agent to the official platform bot on Telegram to receive notifications. Generate a link code, then send it to the official bot.'}</p>
           <ol style="font-size:13px; color:var(--text-muted); margin:0 0 14px; padding-inline-start:18px;">
-            <li>${currentLanguage === 'ar' ? '╪º╪╢╪║╪╖ ╪▓╪▒ "╪¬┘ê┘ä┘è╪» ┘â┘ê╪» ╪º┘ä╪▒╪¿╪╖" ╪¿╪º┘ä╪ú╪│┘ü┘ä.' : 'Click the "Generate link code" button below.'}</li>
-            <li>${currentLanguage === 'ar' ? '╪º┘ü╪¬╪¡ ╪º┘ä╪¿┘ê╪¬ ╪º┘ä╪▒╪│┘à┘è ┘ü┘è ╪¬┘è┘ä┘è╪¼╪▒╪º┘à ┘ê╪º╪╢╪║╪╖ Start.' : 'Open the official bot in Telegram and press Start.'}</li>
-            <li>${currentLanguage === 'ar' ? '╪ú╪▒╪│┘ä ╪º┘ä┘â┘ê╪» ┘â┘à╪º ┘ç┘ê ┘ü┘è ╪▒╪│╪º┘ä╪⌐ ┘ê╪º╪¡╪»╪⌐.' : 'Send the code as a single message.'}</li>
+            <li>${currentLanguage === 'ar' ? 'اضغط زر "توليد كود الربط" بالأسفل.' : 'Click the "Generate link code" button below.'}</li>
+            <li>${currentLanguage === 'ar' ? 'افتح البوت الرسمي في تيليجرام واضغط Start.' : 'Open the official bot in Telegram and press Start.'}</li>
+            <li>${currentLanguage === 'ar' ? 'أرسل الكود كما هو في رسالة واحدة.' : 'Send the code as a single message.'}</li>
           </ol>
           <div id="tgStatusBox"></div>
           <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
-            <button type="button" class="btn btn-secondary btn-sm modal-close-btn">${currentLanguage === 'ar' ? '╪Ñ╪║┘ä╪º┘é' : 'Close'}</button>
-            <button type="button" id="tgGenerateCodeBtn" class="btn btn-primary btn-sm">${currentLanguage === 'ar' ? '╪¬┘ê┘ä┘è╪» ┘â┘ê╪» ╪º┘ä╪▒╪¿╪╖' : 'Generate link code'}</button>
+            <button type="button" class="btn btn-secondary btn-sm modal-close-btn">${currentLanguage === 'ar' ? 'إغلاق' : 'Close'}</button>
+            <button type="button" id="tgGenerateCodeBtn" class="btn btn-primary btn-sm">${currentLanguage === 'ar' ? 'توليد كود الربط' : 'Generate link code'}</button>
           </div>
         </div>
       `;
@@ -4843,9 +4843,9 @@
         const st = await apiFetch(`/api/telegram/status?botId=${currentBot._id}`);
         if (!st) { tgStatusBox.innerHTML = ''; return; }
         if (st.linked) {
-          tgStatusBox.innerHTML = `<div style="background:rgba(16,185,129,0.08); border:1px solid var(--green); padding:10px 14px; border-radius:8px; font-size:13px;">Γ£à ${currentLanguage === 'ar' ? '┘à╪▒╪¿┘ê╪╖ ╪¿╪¡╪│╪º╪¿ ╪¬┘è┘ä┘è╪¼╪▒╪º┘à' : 'Linked to a Telegram account'}${st.username ? ` (${st.username})` : ''}</div>`;
+          tgStatusBox.innerHTML = `<div style="background:rgba(16,185,129,0.08); border:1px solid var(--green); padding:10px 14px; border-radius:8px; font-size:13px;">✅ ${currentLanguage === 'ar' ? 'مربوط بحساب تيليجرام' : 'Linked to a Telegram account'}${st.username ? ` (${st.username})` : ''}</div>`;
         } else if (st.linkCode && st.linkExpiresAt && new Date(st.linkExpiresAt) > new Date()) {
-          tgStatusBox.innerHTML = `<div style="background:rgba(59,130,246,0.08); border:1px solid var(--blue); padding:10px 14px; border-radius:8px; font-size:13px;">${currentLanguage === 'ar' ? '┘â┘ê╪» ┘å╪┤╪╖ ╪¿╪º┘ä┘ü╪╣┘ä:' : 'Active code already issued:'} <strong>${st.linkCode}</strong></div>`;
+          tgStatusBox.innerHTML = `<div style="background:rgba(59,130,246,0.08); border:1px solid var(--blue); padding:10px 14px; border-radius:8px; font-size:13px;">${currentLanguage === 'ar' ? 'كود نشط بالفعل:' : 'Active code already issued:'} <strong>${st.linkCode}</strong></div>`;
         } else {
           tgStatusBox.innerHTML = '';
         }
@@ -4864,10 +4864,10 @@
         if (res && res.code && tgStatusBox) {
           tgStatusBox.innerHTML = `
             <div style="background:rgba(6,182,212,0.08); border:1px solid var(--cyan); padding:12px 14px; border-radius:8px;">
-              <div style="font-size:13px; color:var(--text-muted);">${currentLanguage === 'ar' ? '┘â┘ê╪» ╪º┘ä╪▒╪¿╪╖ ╪º┘ä╪«╪º╪╡ ╪¿┘â:' : 'Your link code:'}</div>
+              <div style="font-size:13px; color:var(--text-muted);">${currentLanguage === 'ar' ? 'كود الربط الخاص بك:' : 'Your link code:'}</div>
               <div style="font-size:24px; font-weight:700; letter-spacing:3px; color:var(--cyan); margin:4px 0;">${res.code}</div>
               <div style="font-size:12px; color:var(--text-muted);">${currentLanguage === 'ar'
-                ? `╪ú╪▒╪│┘ä┘ç ╪Ñ┘ä┘ë <a href="https://t.me/${res.botUsername}" target="_blank" rel="noopener" style="color:var(--cyan);">@${res.botUsername}</a> ┘é╪¿┘ä ╪º┘å╪¬┘ç╪º╪í ╪º┘ä╪╡┘ä╪º╪¡┘è╪⌐.`
+                ? `أرسله إلى <a href="https://t.me/${res.botUsername}" target="_blank" rel="noopener" style="color:var(--cyan);">@${res.botUsername}</a> قبل انتهاء الصلاحية.`
                 : `Send it to <a href="https://t.me/${res.botUsername}" target="_blank" rel="noopener" style="color:var(--cyan);">@${res.botUsername}</a> before it expires.`}</div>
             </div>`;
         }
@@ -5178,7 +5178,7 @@
 
     if (rawText.length < 100) {
       if (!silent) {
-        alert(currentLanguage === 'ar' ? '┘è╪¼╪¿ ╪ú┘å ┘ä╪º ┘è┘é┘ä ┘ê╪╡┘ü ╪º┘ä┘ü┘â╪▒╪⌐ ╪╣┘å 100 ╪¡╪▒┘ü.' : 'Idea description must be at least 100 characters.');
+        alert(currentLanguage === 'ar' ? 'يجب أن لا يقل وصف الفكرة عن 100 حرف.' : 'Idea description must be at least 100 characters.');
       }
       return null;
     }
@@ -5231,7 +5231,7 @@
     const rawText = rawEl ? rawEl.value.trim() : '';
 
     if (rawText.length < 100) {
-      alert(currentLanguage === 'ar' ? '┘è╪¼╪¿ ╪ú┘å ┘ä╪º ┘è┘é┘ä ┘ê╪╡┘ü ╪º┘ä┘ü┘â╪▒╪⌐ ╪╣┘å 100 ╪¡╪▒┘ü.' : 'Idea description must be at least 100 characters.');
+      alert(currentLanguage === 'ar' ? 'يجب أن لا يقل وصف الفكرة عن 100 حرف.' : 'Idea description must be at least 100 characters.');
       return;
     }
 
@@ -5261,11 +5261,11 @@
         populateStructuredCardForm(currentIdea.structuredCard || currentIdea.structuredIdea || {});
         showIdeaView('card');
       } else {
-        alert(res?.error || (currentLanguage === 'ar' ? '┘ü╪┤┘ä ╪¬┘å╪╕┘è┘à ╪¿╪╖╪º┘é╪⌐ ╪º┘ä┘ü┘â╪▒╪⌐.' : 'Failed to structure idea.'));
+        alert(res?.error || (currentLanguage === 'ar' ? 'فشل تنظيم بطاقة الفكرة.' : 'Failed to structure idea.'));
       }
     } catch (err) {
       console.error('Error structuring idea:', err);
-      alert(currentLanguage === 'ar' ? '╪¡╪»╪½ ╪«╪╖╪ú ╪ú╪½┘å╪º╪í ╪¬┘å╪╕┘è┘à ╪º┘ä┘ü┘â╪▒╪⌐.' : 'Error structuring idea.');
+      alert(currentLanguage === 'ar' ? 'حدث خطأ أثناء تنظيم الفكرة.' : 'Error structuring idea.');
     } finally {
       if (btn) {
         btn.disabled = false;
@@ -5316,7 +5316,7 @@
     const originalText = btn ? btn.innerHTML : '';
     if (btn) {
       btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (currentLanguage === 'ar' ? '╪¼╪º╪▒┘ì ╪º┘ä╪º╪│╪¬╪»╪╣╪º╪í...' : 'Convening...');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (currentLanguage === 'ar' ? 'جارٍ الاستدعاء...' : 'Convening...');
     }
 
     try {
@@ -5344,7 +5344,7 @@
       }
     } catch (err) {
       console.error('Failed to convene council:', err);
-      alert(currentLanguage === 'ar' ? '┘ü╪┤┘ä ╪º╪│╪¬╪»╪╣╪º╪í ┘ä╪¼┘å╪⌐ ╪º┘ä╪ú┘ü┘â╪º╪▒.' : 'Failed to convene idea council.');
+      alert(currentLanguage === 'ar' ? 'فشل استدعاء لجنة الأفكار.' : 'Failed to convene idea council.');
     } finally {
       if (btn) {
         btn.disabled = false;
@@ -5364,10 +5364,10 @@
       const insight = output?.summary || agentResult?.keyInsight || agentResult?.recommendation || '';
 
       const statusMap = {
-        PENDING: { label: currentLanguage === 'ar' ? '╪¿╪º┘å╪¬╪╕╪º╪▒ ╪º┘ä╪¿╪»╪í' : 'Pending', color: 'var(--text-muted)', icon: 'fa-clock' },
-        RUNNING: { label: currentLanguage === 'ar' ? '╪¼╪º╪▒┘ì ╪º┘ä╪¬╪¡┘ä┘è┘ä...' : 'Analyzing...', color: 'var(--cyan)', icon: 'fa-spinner fa-spin' },
-        COMPLETED: { label: currentLanguage === 'ar' ? '╪º┘â╪¬┘à┘ä' : 'Completed', color: 'var(--green)', icon: 'fa-check' },
-        FAILED: { label: currentLanguage === 'ar' ? '┘ü╪┤┘ä' : 'Failed', color: 'var(--red)', icon: 'fa-times' }
+        PENDING: { label: currentLanguage === 'ar' ? 'بانتظار البدء' : 'Pending', color: 'var(--text-muted)', icon: 'fa-clock' },
+        RUNNING: { label: currentLanguage === 'ar' ? 'جارٍ التحليل...' : 'Analyzing...', color: 'var(--cyan)', icon: 'fa-spinner fa-spin' },
+        COMPLETED: { label: currentLanguage === 'ar' ? 'اكتمل' : 'Completed', color: 'var(--green)', icon: 'fa-check' },
+        FAILED: { label: currentLanguage === 'ar' ? 'فشل' : 'Failed', color: 'var(--red)', icon: 'fa-times' }
       };
 
       const sm = statusMap[status] || statusMap.PENDING;
@@ -5386,7 +5386,7 @@
               </span>
             </div>
             <p style="font-size:12px; color:var(--text-muted); margin:0; line-height:1.4;">
-              ${insight ? escapeIdeaHtml(insight) : (currentLanguage === 'ar' ? '┘ü┘è ╪º┘å╪¬╪╕╪º╪▒ ┘ü╪¡╪╡ ╪º┘ä┘ü┘â╪▒╪⌐ ┘ê╪º┘ä╪ú╪»┘ä╪⌐...' : 'Awaiting evidence inspection...')}
+              ${insight ? escapeIdeaHtml(insight) : (currentLanguage === 'ar' ? 'في انتظار فحص الفكرة والأدلة...' : 'Awaiting evidence inspection...')}
             </p>
           </div>
         </div>
@@ -5411,15 +5411,15 @@
 
         if (run.stage === 'RESEARCH') {
           pct = 20;
-          stg = currentLanguage === 'ar' ? '╪¼╪º╪▒┘ì ╪Ñ╪¼╪▒╪º╪í ╪º┘ä╪¿╪¡╪½ ╪º┘ä╪│┘ê┘é┘è ╪º┘ä┘à╪¿╪º╪┤╪▒ ┘ê╪¼┘à╪╣ ╪º┘ä╪ú╪»┘ä╪⌐...' : 'Conducting live web market research...';
+          stg = currentLanguage === 'ar' ? 'جارٍ إجراء البحث السوقي المباشر وجمع الأدلة...' : 'Conducting live web market research...';
         } else if (run.stage === 'AGENT_ANALYSIS' || run.stage === 'ANALYSIS') {
           const completed = (run.agents || []).filter(a => a.status === 'COMPLETED').length;
           const total = run.stageProgress?.agentsTotal || (run.agents || []).length || 8;
           pct = 25 + Math.round((completed / Math.max(1, total)) * 55);
-          stg = (currentLanguage === 'ar' ? '╪ú╪╣╪╢╪º╪í ╪º┘ä┘ä╪¼┘å╪⌐ ┘è╪¡┘ä┘ä┘ê┘å ╪º┘ä┘ü┘â╪▒╪⌐ ╪¿╪º┘ä╪¬┘ê╪º╪▓┘è' : 'Council members analyzing in parallel') + ` (${completed}/${total})...`;
+          stg = (currentLanguage === 'ar' ? 'أعضاء اللجنة يحللون الفكرة بالتوازي' : 'Council members analyzing in parallel') + ` (${completed}/${total})...`;
         } else if (run.stage === 'SYNTHESIS') {
           pct = 88;
-          stg = currentLanguage === 'ar' ? '╪▒╪ª┘è╪│ ╪º┘ä┘ä╪¼┘å╪⌐ ┘è╪╡┘è╪║ ╪º┘ä╪¬┘é╪▒┘è╪▒ ╪º┘ä┘å┘ç╪º╪ª┘è ┘ê┘ä┘ê╪¡╪⌐ ╪º┘ä╪¡┘é┘è┘é╪⌐...' : 'Chairperson synthesizing verdict and truth board...';
+          stg = currentLanguage === 'ar' ? 'رئيس اللجنة يصيغ التقرير النهائي ولوحة الحقيقة...' : 'Chairperson synthesizing verdict and truth board...';
         }
 
         if (progressBar) progressBar.style.width = `${pct}%`;
@@ -5438,7 +5438,7 @@
           clearInterval(ideaPollTimer);
           ideaPollTimer = null;
           if (stageText) {
-            stageText.textContent = currentLanguage === 'ar' ? '┘ü╪┤┘ä ╪¬╪┤╪║┘è┘ä ╪¼┘ä╪│╪⌐ ╪º┘ä╪¬┘é┘è┘è┘à.' : 'Evaluation run failed.';
+            stageText.textContent = currentLanguage === 'ar' ? 'فشل تشغيل جلسة التقييم.' : 'Evaluation run failed.';
             stageText.style.color = 'var(--red)';
           }
         }
@@ -5468,12 +5468,12 @@
     buttonsContainer.innerHTML = '';
 
     const followupTypeNames = {
-      DEFEND: { en: 'Defend', ar: '╪»┘ü╪º╪╣' },
-      PIVOT: { en: 'Pivot', ar: '╪¬╪║┘è┘è╪▒ ┘à╪│╪º╪▒' },
-      VALIDATION_PLAN: { en: 'Test Plan', ar: '╪«╪╖╪⌐ ┘ü╪¡╪╡' },
-      VOTE: { en: 'Vote', ar: '╪¬╪╡┘ê┘è╪¬' },
-      COMPARE: { en: 'Competitor', ar: '┘à┘é╪º╪▒┘å╪⌐' },
-      MVP: { en: 'MVP Plan', ar: '╪«╪╖╪⌐ MVP' }
+      DEFEND: { en: 'Defend', ar: 'دفاع' },
+      PIVOT: { en: 'Pivot', ar: 'تغيير مسار' },
+      VALIDATION_PLAN: { en: 'Test Plan', ar: 'خطة فحص' },
+      VOTE: { en: 'Vote', ar: 'تصويت' },
+      COMPARE: { en: 'Competitor', ar: 'مقارنة' },
+      MVP: { en: 'MVP Plan', ar: 'خطة MVP' }
     };
 
     let activeRunObj = null;
@@ -5486,12 +5486,12 @@
 
       let roundLabel = '';
       if (idx === 0) {
-        roundLabel = currentLanguage === 'ar' ? '╪º┘ä╪¼┘ê┘ä╪⌐ 1 (╪º┘ä╪¬┘é┘è┘è┘à ╪º┘ä╪ú┘ê┘ä┘è)' : 'Round 1 (Initial)';
+        roundLabel = currentLanguage === 'ar' ? 'الجولة 1 (التقييم الأولي)' : 'Round 1 (Initial)';
       } else {
         const typeInfo = followupTypeNames[run.followupType];
         const typeLabel = typeInfo ? (currentLanguage === 'ar' ? typeInfo.ar : typeInfo.en) : (run.followupType || '');
         const suffix = typeLabel ? ` (${typeLabel})` : '';
-        roundLabel = currentLanguage === 'ar' ? `╪º┘ä╪¼┘ê┘ä╪⌐ ${roundNum}${suffix}` : `Round ${roundNum}${suffix}`;
+        roundLabel = currentLanguage === 'ar' ? `الجولة ${roundNum}${suffix}` : `Round ${roundNum}${suffix}`;
       }
 
       const btn = document.createElement('button');
@@ -5514,12 +5514,12 @@
     if (bannerEl) {
       if (activeRunObj && activeRunObj.followupPrompt) {
         const promptSnippet = activeRunObj.followupPrompt.length > 70 ? activeRunObj.followupPrompt.slice(0, 70) + '...' : activeRunObj.followupPrompt;
-        bannerEl.innerHTML = `<span style="color:var(--text-muted);">${currentLanguage === 'ar' ? '┘à╪»╪«┘ä╪º╪¬ ╪º┘ä╪¼┘ê┘ä╪⌐:' : 'Round input:'}</span> <strong style="color:var(--cyan); font-weight:500;">"${escapeIdeaHtml(promptSnippet)}"</strong>`;
+        bannerEl.innerHTML = `<span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'مدخلات الجولة:' : 'Round input:'}</span> <strong style="color:var(--cyan); font-weight:500;">"${escapeIdeaHtml(promptSnippet)}"</strong>`;
       } else {
         const isLatest = activeRunObj && runs.length > 0 && String(activeRunObj.runId || activeRunObj._id) === String(runs[runs.length - 1].runId || runs[runs.length - 1]._id);
         bannerEl.innerHTML = isLatest 
-          ? `<span class="badge" style="background:rgba(16,185,129,0.15); color:var(--green); font-size:11px;">${currentLanguage === 'ar' ? '╪ú╪¡╪»╪½ ╪¼┘ê┘ä╪⌐ ╪¬┘é┘è┘è┘à' : 'Latest Evaluation Round'}</span>`
-          : `<span class="badge" style="background:rgba(245,158,11,0.15); color:var(--orange); font-size:11px;">${currentLanguage === 'ar' ? '╪ú╪▒╪┤┘è┘ü ╪¼┘ê┘ä╪⌐ ╪│╪º╪¿┘é╪⌐' : 'Viewing Past Round'}</span>`;
+          ? `<span class="badge" style="background:rgba(16,185,129,0.15); color:var(--green); font-size:11px;">${currentLanguage === 'ar' ? 'أحدث جولة تقييم' : 'Latest Evaluation Round'}</span>`
+          : `<span class="badge" style="background:rgba(245,158,11,0.15); color:var(--orange); font-size:11px;">${currentLanguage === 'ar' ? 'أرشيف جولة سابقة' : 'Viewing Past Round'}</span>`;
       }
     }
   }
@@ -5562,50 +5562,50 @@
     }
 
     const titleEl = document.getElementById('ideaReportTitle');
-    if (titleEl) titleEl.textContent = r.summary || idea.structuredCard?.title || idea.title || 'ΓÇö';
+    if (titleEl) titleEl.textContent = r.summary || idea.structuredCard?.title || idea.title || '—';
 
     const execEl = document.getElementById('ideaExecSummary');
-    if (execEl) execEl.textContent = r.executiveSummary || 'ΓÇö';
+    if (execEl) execEl.textContent = r.executiveSummary || '—';
 
     const explEl = document.getElementById('ideaVerdictExplanation');
-    if (explEl) explEl.textContent = r.verdictExplanation || 'ΓÇö';
+    if (explEl) explEl.textContent = r.verdictExplanation || '—';
 
     const sevenDayEl = document.getElementById('idea7DayVerdictText');
     if (sevenDayEl) {
-      sevenDayEl.textContent = r.sevenDayBuildVerdict?.recommendation || (r.sevenDayBuildVerdict?.canBuildIn7Days ? 'YES' : 'NO') || 'ΓÇö';
+      sevenDayEl.textContent = r.sevenDayBuildVerdict?.recommendation || (r.sevenDayBuildVerdict?.canBuildIn7Days ? 'YES' : 'NO') || '—';
     }
 
     const oppEl = document.getElementById('ideaStrongestOpportunity');
-    if (oppEl) oppEl.textContent = r.strongestOpportunity || 'ΓÇö';
+    if (oppEl) oppEl.textContent = r.strongestOpportunity || '—';
 
     const riskEl = document.getElementById('ideaBiggestRisk');
-    if (riskEl) riskEl.textContent = r.biggestRisk || 'ΓÇö';
+    if (riskEl) riskEl.textContent = r.biggestRisk || '—';
 
     const assumpList = document.getElementById('ideaTopAssumptionsList');
     if (assumpList) {
       const items = Array.isArray(r.top3Assumptions) ? r.top3Assumptions : [];
-      assumpList.innerHTML = items.map(a => `<li>${escapeIdeaHtml(a)}</li>`).join('') || '<li>ΓÇö</li>';
+      assumpList.innerHTML = items.map(a => `<li>${escapeIdeaHtml(a)}</li>`).join('') || '<li>—</li>';
     }
 
     const questEl = document.getElementById('ideaCriticalQuestion');
-    if (questEl) questEl.textContent = r.criticalQuestionToSettle || r.criticalQuestion || 'ΓÇö';
+    if (questEl) questEl.textContent = r.criticalQuestionToSettle || r.criticalQuestion || '—';
 
     const cutList = document.getElementById('ideaCutList');
     if (cutList) {
       const items = (Array.isArray(r.cutListForV1) && r.cutListForV1.length > 0)
         ? r.cutListForV1
         : (Array.isArray(r.killOrDeferList) ? r.killOrDeferList : []);
-      cutList.innerHTML = items.map(c => `<li>${escapeIdeaHtml(c)}</li>`).join('') || '<li>ΓÇö</li>';
+      cutList.innerHTML = items.map(c => `<li>${escapeIdeaHtml(c)}</li>`).join('') || '<li>—</li>';
     }
 
     const vp = r.validationPlan || {};
     const valFields = {
-      ideaValHypothesis: vp.coreHypothesis || vp.hypothesis || 'ΓÇö',
-      ideaValAudience: vp.targetAudience || vp.audience || 'ΓÇö',
-      ideaValChannel: vp.testingChannel || vp.channel || 'ΓÇö',
-      ideaValDuration: vp.suggestedDuration || vp.duration || 'ΓÇö',
-      ideaValMetric: vp.successMetric || vp.metric || 'ΓÇö',
-      ideaValStop: vp.stopCondition || vp.stopCriteria || 'ΓÇö'
+      ideaValHypothesis: vp.coreHypothesis || vp.hypothesis || '—',
+      ideaValAudience: vp.targetAudience || vp.audience || '—',
+      ideaValChannel: vp.testingChannel || vp.channel || '—',
+      ideaValDuration: vp.suggestedDuration || vp.duration || '—',
+      ideaValMetric: vp.successMetric || vp.metric || '—',
+      ideaValStop: vp.stopCondition || vp.stopCriteria || '—'
     };
     Object.keys(valFields).forEach(id => {
       const el = document.getElementById(id);
@@ -5620,10 +5620,10 @@
       } else if (Array.isArray(r.sevenDayMvpScope?.coreFeatures)) {
         feats = r.sevenDayMvpScope.coreFeatures;
       }
-      mvpList.innerHTML = feats.map(f => `<li>${escapeIdeaHtml(f)}</li>`).join('') || '<li>ΓÇö</li>';
+      mvpList.innerHTML = feats.map(f => `<li>${escapeIdeaHtml(f)}</li>`).join('') || '<li>—</li>';
     }
 
-    const wedgeVal = r.sevenDayMvpScope?.uniqueWedge || r.uniqueWedge || 'ΓÇö';
+    const wedgeVal = r.sevenDayMvpScope?.uniqueWedge || r.uniqueWedge || '—';
     const wedgeEl = document.getElementById('ideaUniqueWedge');
     if (wedgeEl) wedgeEl.textContent = wedgeVal;
 
@@ -5631,7 +5631,7 @@
     const firstValEl = document.getElementById('ideaFirstMomentOfValue');
     if (firstValEl) {
       if (firstVal) {
-        firstValEl.textContent = currentLanguage === 'ar' ? `┘ä╪¡╪╕╪⌐ ╪º┘ä┘é┘è┘à╪⌐ ╪º┘ä╪ú┘ê┘ä┘ë: ${firstVal}` : `First Moment: ${firstVal}`;
+        firstValEl.textContent = currentLanguage === 'ar' ? `لحظة القيمة الأولى: ${firstVal}` : `First Moment: ${firstVal}`;
       } else {
         firstValEl.textContent = '';
       }
@@ -5643,7 +5643,7 @@
         ? currentRun.sourceReferences
         : (Array.isArray(idea.marketResearchPack?.sources) ? idea.marketResearchPack.sources : (r.sources || []));
       if (sources.length === 0) {
-        sourcesList.innerHTML = `<span style="font-size:12px; color:var(--text-muted);">${currentLanguage === 'ar' ? '┘ä╪º ╪¬┘ê╪¼╪» ┘à╪╡╪º╪»╪▒ ╪«╪º╪▒╪¼┘è╪⌐ ┘à╪¿╪º╪┤╪▒╪⌐.' : 'No external web sources available.'}</span>`;
+        sourcesList.innerHTML = `<span style="font-size:12px; color:var(--text-muted);">${currentLanguage === 'ar' ? 'لا توجد مصادر خارجية مباشرة.' : 'No external web sources available.'}</span>`;
       } else {
         sourcesList.innerHTML = sources.map(s => `
           <div style="font-size:12px; padding:8px 12px; background:rgba(255,255,255,0.02); border-radius:6px; border:1px solid var(--glass-border);">
@@ -5661,7 +5661,7 @@
 
     const followCountEl = document.getElementById('ideaFollowupCountText');
     const isSuperadmin = Boolean(ideaUsageData?.isSuperadmin || idea.isSuperadmin);
-    const roundsRem = isSuperadmin ? 'Γê₧' : (idea.followupRoundsRemaining ?? idea.followUpRoundsRemaining ?? Math.max(0, 3 - (idea.followupRoundsUsed || 0)));
+    const roundsRem = isSuperadmin ? '∞' : (idea.followupRoundsRemaining ?? idea.followUpRoundsRemaining ?? Math.max(0, 3 - (idea.followupRoundsUsed || 0)));
     if (followCountEl) followCountEl.textContent = roundsRem;
 
     document.querySelectorAll('.idea-followup-btn').forEach(btn => {
@@ -5681,7 +5681,7 @@
     if (!container) return;
 
     if (!Array.isArray(agents) || agents.length === 0) {
-      container.innerHTML = `<div style="padding:16px; text-align:center; color:var(--text-muted); font-size:13px;">${currentLanguage === 'ar' ? '┘ä┘à ┘è╪¬┘à ╪¡┘ü╪╕ ╪¬┘é╪º╪▒┘è╪▒ ╪ú╪╣╪╢╪º╪í ╪º┘ä┘ä╪¼┘å╪⌐ ╪¿╪╣╪».' : 'No council member critiques recorded yet.'}</div>`;
+      container.innerHTML = `<div style="padding:16px; text-align:center; color:var(--text-muted); font-size:13px;">${currentLanguage === 'ar' ? 'لم يتم حفظ تقارير أعضاء اللجنة بعد.' : 'No council member critiques recorded yet.'}</div>`;
       return;
     }
 
@@ -5697,20 +5697,20 @@
         metricsHtml = `
           <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:12px; font-size:12px;">
             <div style="background:rgba(239, 68, 68, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(239, 68, 68, 0.2);">
-              <strong style="color:var(--red); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? '╪│╪¿╪¿ ╪º┘ä╪▒┘ü╪╢ ┘ê╪º┘ä╪¬╪▒╪»╪»:' : 'Rejection Reason:'}</strong>
-              <span style="color:#e2e8f0;">${escapeIdeaHtml(output.rejectionReason || 'ΓÇö')}</span>
+              <strong style="color:var(--red); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'سبب الرفض والتردد:' : 'Rejection Reason:'}</strong>
+              <span style="color:#e2e8f0;">${escapeIdeaHtml(output.rejectionReason || '—')}</span>
             </div>
             <div style="background:rgba(245, 158, 11, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(245, 158, 11, 0.2);">
-              <strong style="color:var(--orange); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? '╪¬┘â┘ä┘ü╪⌐ ╪º┘ä╪¬╪¿╪»┘è┘ä ┘ê╪º┘ä╪º┘å╪¬┘é╪º┘ä:' : 'Switching Cost:'}</strong>
-              <span style="color:#e2e8f0;">${escapeIdeaHtml(output.switchingCost || 'ΓÇö')}</span>
+              <strong style="color:var(--orange); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'تكلفة التبديل والانتقال:' : 'Switching Cost:'}</strong>
+              <span style="color:#e2e8f0;">${escapeIdeaHtml(output.switchingCost || '—')}</span>
             </div>
             <div style="background:rgba(6, 182, 212, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(6, 182, 212, 0.2);">
-              <strong style="color:var(--cyan); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? '┘à╪¡┘ü╪▓ ╪º┘ä╪¬╪¼╪▒╪¿╪⌐ ╪º┘ä╪¡┘é┘è┘é┘è:' : 'Trigger to Try:'}</strong>
-              <span style="color:#e2e8f0;">${escapeIdeaHtml(output.triggerToTry || 'ΓÇö')}</span>
+              <strong style="color:var(--cyan); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'محفز التجربة الحقيقي:' : 'Trigger to Try:'}</strong>
+              <span style="color:#e2e8f0;">${escapeIdeaHtml(output.triggerToTry || '—')}</span>
             </div>
             ${output.willingnessToPay ? `
             <div style="background:rgba(16, 185, 129, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(16, 185, 129, 0.2);">
-              <strong style="color:var(--green); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? '╪º┘ä╪º╪│╪¬╪╣╪»╪º╪» ┘ä┘ä╪»┘ü╪╣:' : 'Willingness to Pay:'}</strong>
+              <strong style="color:var(--green); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'الاستعداد للدفع:' : 'Willingness to Pay:'}</strong>
               <span style="color:#e2e8f0;">${escapeIdeaHtml(output.willingnessToPay)}</span>
             </div>` : ''}
           </div>
@@ -5722,19 +5722,19 @@
           <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
             ${output.weakestLink ? `
             <div style="background:rgba(239, 68, 68, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(239, 68, 68, 0.2);">
-              <strong style="color:var(--red);">${currentLanguage === 'ar' ? '╪ú╪╢╪╣┘ü ┘å┘é╪╖╪⌐ ┘ü┘è ╪º┘ä┘à┘ü┘ç┘ê┘à:' : 'Weakest Link:'}</strong>
+              <strong style="color:var(--red);">${currentLanguage === 'ar' ? 'أضعف نقطة في المفهوم:' : 'Weakest Link:'}</strong>
               <span style="color:#e2e8f0; margin-inline-start:4px;">${escapeIdeaHtml(output.weakestLink)}</span>
             </div>` : ''}
             ${assumptions.length > 0 ? `
             <div>
-              <strong style="color:var(--orange); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? '╪ú╪«╪╖╪▒ ╪º┘ä╪º┘ü╪¬╪▒╪º╪╢╪º╪¬ ╪║┘è╪▒ ╪º┘ä┘à╪½╪¿╪¬╪⌐:' : 'Deadliest Assumptions:'}</strong>
+              <strong style="color:var(--orange); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'أخطر الافتراضات غير المثبتة:' : 'Deadliest Assumptions:'}</strong>
               <ul style="margin:0; padding-inline-start:18px; color:#cbd5e1;">
                 ${assumptions.map(a => `<li>${escapeIdeaHtml(a)}</li>`).join('')}
               </ul>
             </div>` : ''}
             ${hardQuestions.length > 0 ? `
             <div>
-              <strong style="color:var(--cyan); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? '╪ú╪│╪ª┘ä╪⌐ ╪¡╪º╪│┘à╪⌐ ╪¬╪¬╪╖┘ä╪¿ ╪Ñ╪½╪¿╪º╪¬╪º┘ï ╪¿╪º┘ä╪ú╪▒┘é╪º┘à:' : 'Hard Questions to Settle:'}</strong>
+              <strong style="color:var(--cyan); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'أسئلة حاسمة تتطلب إثباتاً بالأرقام:' : 'Hard Questions to Settle:'}</strong>
               <ul style="margin:0; padding-inline-start:18px; color:#cbd5e1;">
                 ${hardQuestions.map(q => `<li>${escapeIdeaHtml(q)}</li>`).join('')}
               </ul>
@@ -5747,19 +5747,19 @@
         metricsHtml = `
           <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
             <div style="display:flex; gap:12px; align-items:center;">
-              <span style="color:var(--text-muted);">${currentLanguage === 'ar' ? '┘à╪│╪¬┘ê┘ë ╪º┘ä╪¬╪╣┘é┘è╪» ╪º┘ä┘ç┘å╪»╪│┘è:' : 'Complexity Level:'}</span>
+              <span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'مستوى التعقيد الهندسي:' : 'Complexity Level:'}</span>
               <span class="badge" style="background:rgba(6,182,212,0.15); color:var(--cyan); font-weight:700;">${escapeIdeaHtml(output.complexityLevel || 'MEDIUM')}</span>
             </div>
             ${mvpScope.length > 0 ? `
             <div>
-              <strong style="color:var(--purple-light); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? '┘å╪╖╪º┘é MVP ╪º┘ä┘é╪º╪¿┘ä ┘ä┘ä╪Ñ╪╖┘ä╪º┘é ╪«┘ä╪º┘ä 7 ╪ú┘è╪º┘à:' : '7-Day MVP Scope:'}</strong>
+              <strong style="color:var(--purple-light); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'نطاق MVP القابل للإطلاق خلال 7 أيام:' : '7-Day MVP Scope:'}</strong>
               <ul style="margin:0; padding-inline-start:18px; color:#cbd5e1;">
                 ${mvpScope.map(item => `<li>${escapeIdeaHtml(item)}</li>`).join('')}
               </ul>
             </div>` : ''}
             ${deferred.length > 0 ? `
             <div>
-              <strong style="color:var(--text-muted); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? '┘à╪º ┘è╪¼╪¿ ╪¡╪░┘ü┘ç/╪¬╪ú╪¼┘è┘ä┘ç ╪«╪º╪▒╪¼ ╪º┘ä┘å╪│╪«╪⌐ ╪º┘ä╪ú┘ê┘ä┘ë:' : 'Cut / Deferred for V1:'}</strong>
+              <strong style="color:var(--text-muted); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'ما يجب حذفه/تأجيله خارج النسخة الأولى:' : 'Cut / Deferred for V1:'}</strong>
               <ul style="margin:0; padding-inline-start:18px; color:var(--text-muted);">
                 ${deferred.map(item => `<li>${escapeIdeaHtml(item)}</li>`).join('')}
               </ul>
@@ -5772,19 +5772,19 @@
         metricsHtml = `
           <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
             <div style="display:flex; gap:12px; align-items:center;">
-              <span style="color:var(--text-muted);">${currentLanguage === 'ar' ? '╪¬╪┤╪¿╪╣ ╪º┘ä╪│┘ê┘é:' : 'Market Saturation:'}</span>
-              <strong style="color:#fff;">${escapeIdeaHtml(output.marketSaturation || 'ΓÇö')}</strong>
+              <span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'تشبع السوق:' : 'Market Saturation:'}</span>
+              <strong style="color:#fff;">${escapeIdeaHtml(output.marketSaturation || '—')}</strong>
             </div>
             ${directAlts.length > 0 ? `
             <div>
-              <strong style="color:var(--cyan); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? '╪º┘ä┘à┘å╪º┘ü╪│┘ê┘å ┘ê╪º┘ä╪¿╪»╪º╪ª┘ä ╪º┘ä┘à╪¿╪º╪┤╪▒╪⌐ ┘ü┘è ╪º┘ä╪│┘ê┘é:' : 'Direct Market Competitors:'}</strong>
+              <strong style="color:var(--cyan); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'المنافسون والبدائل المباشرة في السوق:' : 'Direct Market Competitors:'}</strong>
               <div style="display:flex; flex-wrap:wrap; gap:6px;">
                 ${directAlts.map(alt => `<span class="badge" style="background:rgba(6,182,212,0.15); color:var(--cyan);">${escapeIdeaHtml(alt)}</span>`).join('')}
               </div>
             </div>` : ''}
             ${indirectAlts.length > 0 ? `
             <div>
-              <strong style="color:var(--text-muted); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? '╪º┘ä╪¿╪»╪º╪ª┘ä ╪║┘è╪▒ ╪º┘ä┘à╪¿╪º╪┤╪▒╪⌐ ┘ê╪╖╪▒┘é ╪º┘ä╪╣┘à┘ä ╪º┘ä╪¡╪º┘ä┘è╪⌐:' : 'Indirect Alternatives & Workarounds:'}</strong>
+              <strong style="color:var(--text-muted); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'البدائل غير المباشرة وطرق العمل الحالية:' : 'Indirect Alternatives & Workarounds:'}</strong>
               <div style="display:flex; flex-wrap:wrap; gap:6px;">
                 ${indirectAlts.map(alt => `<span class="badge" style="background:rgba(255,255,255,0.06); color:var(--text-muted);">${escapeIdeaHtml(alt)}</span>`).join('')}
               </div>
@@ -5798,19 +5798,19 @@
           <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
             ${output.primaryFailureReason ? `
             <div style="background:rgba(239, 68, 68, 0.1); border-radius:6px; padding:10px 12px; border:1px solid rgba(239, 68, 68, 0.3);">
-              <strong style="color:var(--red); display:block; margin-bottom:3px;">${currentLanguage === 'ar' ? '╪º┘ä╪│╪¿╪¿ ╪º┘ä╪¼╪░╪▒┘è ╪º┘ä╪ú┘ê┘ä ╪º┘ä╪░┘è ┘é╪» ┘è┘é╪╢┘è ╪╣┘ä┘ë ╪º┘ä┘à╪┤╪▒┘ê╪╣:' : 'Primary Root Cause of Death:'}</strong>
+              <strong style="color:var(--red); display:block; margin-bottom:3px;">${currentLanguage === 'ar' ? 'السبب الجذري الأول الذي قد يقضي على المشروع:' : 'Primary Root Cause of Death:'}</strong>
               <span style="color:#fff; font-weight:600;">${escapeIdeaHtml(output.primaryFailureReason)}</span>
             </div>` : ''}
             ${conditions.length > 0 ? `
             <div>
-              <strong style="color:var(--red); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? '╪┤╪▒┘ê╪╖ ┘ê╪│┘è┘å╪º╪▒┘è┘ê┘ç╪º╪¬ ╪º┘ä┘ü╪┤┘ä:' : 'Failure Conditions:'}</strong>
+              <strong style="color:var(--red); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'شروط وسيناريوهات الفشل:' : 'Failure Conditions:'}</strong>
               <ul style="margin:0; padding-inline-start:18px; color:#cbd5e1;">
                 ${conditions.map(c => `<li>${escapeIdeaHtml(c)}</li>`).join('')}
               </ul>
             </div>` : ''}
             ${warnings.length > 0 ? `
             <div>
-              <strong style="color:var(--orange); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? '┘à╪ñ╪┤╪▒╪º╪¬ ╪º┘ä╪«╪╖╪▒ ╪º┘ä┘à╪¿┘â╪▒╪⌐:' : 'Early Warning Signs:'}</strong>
+              <strong style="color:var(--orange); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'مؤشرات الخطر المبكرة:' : 'Early Warning Signs:'}</strong>
               <ul style="margin:0; padding-inline-start:18px; color:#cbd5e1;">
                 ${warnings.map(w => `<li>${escapeIdeaHtml(w)}</li>`).join('')}
               </ul>
@@ -5822,17 +5822,17 @@
           <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
             ${output.uniqueWedge ? `
             <div style="background:rgba(168, 85, 247, 0.1); border-radius:6px; padding:10px 12px; border:1px solid rgba(168, 85, 247, 0.3);">
-              <strong style="color:var(--purple-light); display:block; margin-bottom:3px;">${currentLanguage === 'ar' ? '╪▓╪º┘ê┘è╪⌐ ╪º┘ä╪»╪«┘ê┘ä ╪º┘ä╪¡╪º╪»╪⌐ (Unique Wedge):' : 'Unique Wedge Angle:'}</strong>
+              <strong style="color:var(--purple-light); display:block; margin-bottom:3px;">${currentLanguage === 'ar' ? 'زاوية الدخول الحادة (Unique Wedge):' : 'Unique Wedge Angle:'}</strong>
               <span style="color:#fff;">${escapeIdeaHtml(output.uniqueWedge)}</span>
             </div>` : ''}
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
               <div>
-                <strong style="color:var(--cyan); display:block;">${currentLanguage === 'ar' ? '╪º┘ä┘é╪º╪¿┘ä┘è╪⌐ ┘ä┘ä╪»┘ü╪º╪╣ ╪╢╪» ╪º┘ä┘à┘å╪º┘ü╪│┘è┘å:' : 'Defensibility Moat:'}</strong>
-                <span style="color:#cbd5e1;">${escapeIdeaHtml(output.defensibility || 'ΓÇö')}</span>
+                <strong style="color:var(--cyan); display:block;">${currentLanguage === 'ar' ? 'القابلية للدفاع ضد المنافسين:' : 'Defensibility Moat:'}</strong>
+                <span style="color:#cbd5e1;">${escapeIdeaHtml(output.defensibility || '—')}</span>
               </div>
               <div>
-                <strong style="color:var(--orange); display:block;">${currentLanguage === 'ar' ? '╪│┘ç┘ê┘ä╪⌐ ┘ê╪│╪▒╪╣╪⌐ ╪º┘ä┘å╪│╪«:' : 'Ease / Speed of Copying:'}</strong>
-                <span style="color:#cbd5e1;">${escapeIdeaHtml(output.easeOfCopying || 'ΓÇö')}</span>
+                <strong style="color:var(--orange); display:block;">${currentLanguage === 'ar' ? 'سهولة وسرعة النسخ:' : 'Ease / Speed of Copying:'}</strong>
+                <span style="color:#cbd5e1;">${escapeIdeaHtml(output.easeOfCopying || '—')}</span>
               </div>
             </div>
           </div>
@@ -5842,12 +5842,12 @@
           <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
             ${output.firstMomentOfValue60s ? `
             <div style="background:rgba(6, 182, 212, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(6, 182, 212, 0.2);">
-              <strong style="color:var(--cyan); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? '╪ú┘ê┘ä ┘ä╪¡╪╕╪⌐ ┘é┘è┘à╪⌐ ┘ü┘è ╪º┘ä┘Ç 60 ╪½╪º┘å┘è╪⌐ ╪º┘ä╪ú┘ê┘ä┘ë:' : 'First Moment of Value in 60s:'}</strong>
+              <strong style="color:var(--cyan); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'أول لحظة قيمة في الـ 60 ثانية الأولى:' : 'First Moment of Value in 60s:'}</strong>
               <span style="color:#fff;">${escapeIdeaHtml(output.firstMomentOfValue60s)}</span>
             </div>` : ''}
             ${output.biggestFriction ? `
             <div style="background:rgba(239, 68, 68, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(239, 68, 68, 0.2);">
-              <strong style="color:var(--red); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? '╪ú┘â╪¿╪▒ ┘å┘é╪╖╪⌐ ╪º╪¡╪¬┘â╪º┘â ╪ú┘ê ╪¬╪│╪▒╪¿ ┘ä┘ä┘à╪│╪¬╪«╪»┘à┘è┘å:' : 'Biggest Friction / Drop-off Point:'}</strong>
+              <strong style="color:var(--red); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'أكبر نقطة احتكاك أو تسرب للمستخدمين:' : 'Biggest Friction / Drop-off Point:'}</strong>
               <span style="color:#e2e8f0;">${escapeIdeaHtml(output.biggestFriction)}</span>
             </div>` : ''}
           </div>
@@ -5857,17 +5857,17 @@
           <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
             ${output.coreStrength ? `
             <div style="background:rgba(16, 185, 129, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(16, 185, 129, 0.2);">
-              <strong style="color:var(--green); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? '╪º┘ä╪┤╪▒╪º╪▒╪⌐ ╪º┘ä╪¡┘é┘è┘é┘è╪⌐ ┘ê┘å┘é╪╖╪⌐ ╪º┘ä┘é┘ê╪⌐ ╪º┘ä╪¼┘ê┘ç╪▒┘è╪⌐:' : 'Core Strength Worth Fighting For:'}</strong>
+              <strong style="color:var(--green); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'الشرارة الحقيقية ونقطة القوة الجوهرية:' : 'Core Strength Worth Fighting For:'}</strong>
               <span style="color:#fff;">${escapeIdeaHtml(output.coreStrength)}</span>
             </div>` : ''}
             ${output.reasonToProceed ? `
             <div>
-              <strong style="color:var(--cyan); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? '╪ú┘é┘ê┘ë ╪│╪¿╪¿ ┘ä┘ä╪º╪│╪¬┘à╪▒╪º╪▒ ┘ê╪╣╪»┘à ╪º┘ä╪¬╪▒╪º╪¼╪╣:' : 'Single Best Reason to Proceed:'}</strong>
+              <strong style="color:var(--cyan); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'أقوى سبب للاستمرار وعدم التراجع:' : 'Single Best Reason to Proceed:'}</strong>
               <span style="color:#cbd5e1;">${escapeIdeaHtml(output.reasonToProceed)}</span>
             </div>` : ''}
             ${output.indispensableAsset ? `
             <div>
-              <strong style="color:var(--orange); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? '╪º┘ä╪ú╪╡┘ä ╪º┘ä╪░┘è ┘ä╪º ┘è┘à┘â┘å ╪º┘ä╪¬┘å╪º╪▓┘ä ╪╣┘å┘ç:' : 'Indispensable Asset:'}</strong>
+              <strong style="color:var(--orange); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'الأصل الذي لا يمكن التنازل عنه:' : 'Indispensable Asset:'}</strong>
               <span style="color:#cbd5e1;">${escapeIdeaHtml(output.indispensableAsset)}</span>
             </div>` : ''}
           </div>
@@ -5888,16 +5888,16 @@
             </div>
             ${(() => {
               const isCarryover = Boolean(agent?.isFromPreviousRound);
-              let bLabel = currentLanguage === 'ar' ? '╪º┘â╪¬┘à┘ä ╪º┘ä╪¬╪¡┘ä┘è┘ä' : 'Analyzed';
+              let bLabel = currentLanguage === 'ar' ? 'اكتمل التحليل' : 'Analyzed';
               let bBg = 'rgba(16, 185, 129, 0.15)';
               let bColor = 'var(--green)';
 
               if (status !== 'COMPLETED') {
-                bLabel = currentLanguage === 'ar' ? '┘é┘è╪» ╪º┘ä┘à╪▒╪º╪¼╪╣╪⌐' : 'Pending';
+                bLabel = currentLanguage === 'ar' ? 'قيد المراجعة' : 'Pending';
                 bBg = 'rgba(245, 158, 11, 0.15)';
                 bColor = 'var(--orange)';
               } else if (isCarryover) {
-                bLabel = currentLanguage === 'ar' ? '╪º┘ä╪¼┘ê┘ä╪⌐ ╪º┘ä╪│╪º╪¿┘é╪⌐' : 'Prior Round';
+                bLabel = currentLanguage === 'ar' ? 'الجولة السابقة' : 'Prior Round';
                 bBg = 'rgba(6, 182, 212, 0.15)';
                 bColor = 'var(--cyan)';
               }
@@ -5911,7 +5911,7 @@
           ${output.summary ? `
           <div style="border-top:1px solid var(--glass-border); padding-top:10px; margin-top:8px;">
             <span style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:600; display:block; margin-bottom:4px;">
-              ${currentLanguage === 'ar' ? '╪º┘ä╪¿┘è╪º┘å ╪º┘ä┘å┘ç╪º╪ª┘è ┘ä┘ä┘å╪º┘é╪»:' : 'Full Critic Verdict:'}
+              ${currentLanguage === 'ar' ? 'البيان النهائي للناقد:' : 'Full Critic Verdict:'}
             </span>
             <p style="font-size:13px; color:#f1f5f9; line-height:1.6; margin:0;">
               ${escapeIdeaHtml(output.summary)}
@@ -5963,11 +5963,11 @@
 
     if (netContributionPerUnit <= 0) {
       if (beEl) {
-        beEl.textContent = 'Γê₧';
+        beEl.textContent = '∞';
         beEl.style.color = 'var(--red)';
       }
       if (dailyEl) {
-        dailyEl.textContent = 'ΓÇö';
+        dailyEl.textContent = '—';
         dailyEl.style.color = 'var(--red)';
       }
       if (riskBox && riskText) {
@@ -5975,7 +5975,7 @@
         riskBox.style.background = 'rgba(239, 68, 68, 0.12)';
         riskBox.style.borderColor = 'rgba(239, 68, 68, 0.4)';
         riskText.textContent = currentLanguage === 'ar'
-          ? '╪¬╪¡╪░┘è╪▒ ╪¡╪▒╪¼: ╪╡╪º┘ü┘è ╪º┘ä┘à╪│╪º┘ç┘à╪⌐ ╪│╪º┘ä╪¿! ╪¬╪«╪│╪▒ ╪ú┘à┘ê╪º┘ä╪º┘ï ┘ü┘è ┘â┘ä ╪╖┘ä╪¿ ┘é╪¿┘ä ╪¡╪│╪º╪¿ ╪º┘ä┘à╪╡╪º╪▒┘è┘ü ╪º┘ä╪½╪º╪¿╪¬╪⌐.'
+          ? 'تحذير حرج: صافي المساهمة سالب! تخسر أموالاً في كل طلب قبل حساب المصاريف الثابتة.'
           : 'Critical Warning: Negative contribution margin! You lose money on every order before overhead.';
       }
     } else {
@@ -5983,11 +5983,11 @@
       const dailyOrders = Math.ceil(monthlyOrders / 30);
 
       if (beEl) {
-        beEl.textContent = `${monthlyOrders.toLocaleString()} ${currentLanguage === 'ar' ? '╪╖┘ä╪¿/╪┤┘ç╪▒' : 'orders/mo'}`;
+        beEl.textContent = `${monthlyOrders.toLocaleString()} ${currentLanguage === 'ar' ? 'طلب/شهر' : 'orders/mo'}`;
         beEl.style.color = 'var(--cyan)';
       }
       if (dailyEl) {
-        dailyEl.textContent = `${dailyOrders.toLocaleString()} ${currentLanguage === 'ar' ? '╪╖┘ä╪¿/┘è┘ê┘à' : 'orders/day'}`;
+        dailyEl.textContent = `${dailyOrders.toLocaleString()} ${currentLanguage === 'ar' ? 'طلب/يوم' : 'orders/day'}`;
         dailyEl.style.color = 'var(--purple-light)';
       }
 
@@ -5998,7 +5998,7 @@
           riskBox.style.borderColor = 'rgba(245, 158, 11, 0.4)';
           riskText.style.color = '#fca5a5';
           riskText.textContent = currentLanguage === 'ar'
-            ? `┘à╪«╪º╪╖╪▒╪⌐ ╪¡╪¼┘à ┘à╪▒╪¬┘ü╪╣╪⌐: ╪¬╪¡╪¬╪º╪¼ ┘ä╪ú┘â╪½╪▒ ┘à┘å ${dailyOrders} ╪╖┘ä╪¿ ┘è┘ê┘à┘è╪º┘ï ┘ä╪¬╪║╪╖┘è╪⌐ ╪º┘ä┘å┘ü┘é╪º╪¬ ╪º┘ä╪½╪º╪¿╪¬╪⌐.`
+            ? `مخاطرة حجم مرتفعة: تحتاج لأكثر من ${dailyOrders} طلب يومياً لتغطية النفقات الثابتة.`
             : `High Volume Hurdle: Requires ${dailyOrders} orders daily just to break even on fixed costs.`;
         } else {
           riskBox.style.display = 'flex';
@@ -6072,7 +6072,7 @@
       runs.forEach((r, idx) => {
         const roundNum = r.roundNumber || (idx + 1);
         const label = idx === 0 
-          ? `${ideaT('idea_round_prefix', 'Round')} 1 (${currentLanguage === 'ar' ? '╪º┘ä╪¬┘é┘è┘è┘à ╪º┘ä╪ú┘ê┘ä┘è' : 'Initial'})`
+          ? `${ideaT('idea_round_prefix', 'Round')} 1 (${currentLanguage === 'ar' ? 'التقييم الأولي' : 'Initial'})`
           : `${ideaT('idea_round_prefix', 'Round')} ${roundNum} (${r.followupType || 'FOLLOW_UP'})`;
         
         const optA = document.createElement('option');
@@ -6166,16 +6166,16 @@
           <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
               <strong style="color:var(--text-muted); font-size:12px;">${escapeIdeaHtml(labelA)}</strong>
-              <span class="badge" style="background:rgba(6,182,212,0.15); color:var(--cyan); font-size:11px;">${escapeIdeaHtml(rA.verdict || 'ΓÇö')}</span>
+              <span class="badge" style="background:rgba(6,182,212,0.15); color:var(--cyan); font-size:11px;">${escapeIdeaHtml(rA.verdict || '—')}</span>
             </div>
-            <p style="font-size:12px; color:#e2e8f0; margin:0; line-height:1.5;">${escapeIdeaHtml(rA.verdictExplanation || rA.executiveSummary || 'ΓÇö')}</p>
+            <p style="font-size:12px; color:#e2e8f0; margin:0; line-height:1.5;">${escapeIdeaHtml(rA.verdictExplanation || rA.executiveSummary || '—')}</p>
           </div>
           <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px; border-inline-start:3px solid var(--green);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
               <strong style="color:var(--text-muted); font-size:12px;">${escapeIdeaHtml(labelB)}</strong>
-              <span class="badge" style="background:rgba(16,185,129,0.15); color:var(--green); font-size:11px;">${escapeIdeaHtml(rB.verdict || 'ΓÇö')}</span>
+              <span class="badge" style="background:rgba(16,185,129,0.15); color:var(--green); font-size:11px;">${escapeIdeaHtml(rB.verdict || '—')}</span>
             </div>
-            <p style="font-size:12px; color:#e2e8f0; margin:0; line-height:1.5;">${escapeIdeaHtml(rB.verdictExplanation || rB.executiveSummary || 'ΓÇö')}</p>
+            <p style="font-size:12px; color:#e2e8f0; margin:0; line-height:1.5;">${escapeIdeaHtml(rB.verdictExplanation || rB.executiveSummary || '—')}</p>
           </div>
         </div>
       </div>
@@ -6189,13 +6189,13 @@
           <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px;">
             <strong style="color:var(--text-muted); font-size:12px; display:block; margin-bottom:8px;">${escapeIdeaHtml(labelA)}</strong>
             <ul style="padding-inline-start:18px; margin:0; font-size:12px; color:#e2e8f0;">
-              ${assumpA.map(a => `<li>${escapeIdeaHtml(a)}</li>`).join('') || '<li>ΓÇö</li>'}
+              ${assumpA.map(a => `<li>${escapeIdeaHtml(a)}</li>`).join('') || '<li>—</li>'}
             </ul>
           </div>
           <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px; border-inline-start:3px solid var(--orange);">
             <strong style="color:var(--text-muted); font-size:12px; display:block; margin-bottom:8px;">${escapeIdeaHtml(labelB)}</strong>
             <ul style="padding-inline-start:18px; margin:0; font-size:12px; color:#e2e8f0;">
-              ${assumpB.map(a => `<li>${escapeIdeaHtml(a)}</li>`).join('') || '<li>ΓÇö</li>'}
+              ${assumpB.map(a => `<li>${escapeIdeaHtml(a)}</li>`).join('') || '<li>—</li>'}
             </ul>
           </div>
         </div>
@@ -6209,11 +6209,11 @@
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
           <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px;">
             <strong style="color:var(--text-muted); font-size:12px; display:block; margin-bottom:6px;">${escapeIdeaHtml(labelA)}</strong>
-            <p style="font-size:12px; color:#e2e8f0; margin:0;">${escapeIdeaHtml(rA.criticalQuestionToSettle || rA.criticalQuestion || 'ΓÇö')}</p>
+            <p style="font-size:12px; color:#e2e8f0; margin:0;">${escapeIdeaHtml(rA.criticalQuestionToSettle || rA.criticalQuestion || '—')}</p>
           </div>
           <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px; border-inline-start:3px solid var(--cyan);">
             <strong style="color:var(--text-muted); font-size:12px; display:block; margin-bottom:6px;">${escapeIdeaHtml(labelB)}</strong>
-            <p style="font-size:12px; color:#fff; font-weight:600; margin:0;">${escapeIdeaHtml(rB.criticalQuestionToSettle || rB.criticalQuestion || 'ΓÇö')}</p>
+            <p style="font-size:12px; color:#fff; font-weight:600; margin:0;">${escapeIdeaHtml(rB.criticalQuestionToSettle || rB.criticalQuestion || '—')}</p>
           </div>
         </div>
       </div>
@@ -6226,15 +6226,15 @@
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
           <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px; font-size:12px;">
             <strong style="color:var(--text-muted); display:block; margin-bottom:6px;">${escapeIdeaHtml(labelA)}</strong>
-            <div><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? '╪º┘ä┘à╪»╪⌐ ╪º┘ä┘à┘é╪¬╪▒╪¡╪⌐:' : 'Duration:'}</span> <strong style="color:var(--cyan);">${escapeIdeaHtml(vpA.suggestedDuration || vpA.duration || 'ΓÇö')}</strong></div>
-            <div style="margin-top:4px;"><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? '┘à╪╣┘è╪º╪▒ ╪º┘ä┘å╪¼╪º╪¡:' : 'Success Metric:'}</span> <span>${escapeIdeaHtml(vpA.successMetric || vpA.metric || 'ΓÇö')}</span></div>
-            <div style="margin-top:4px;"><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? '╪┤╪▒╪╖ ╪º┘ä╪¬┘ê┘é┘ü:' : 'Stop Condition:'}</span> <span>${escapeIdeaHtml(vpA.stopCondition || vpA.stopCriteria || 'ΓÇö')}</span></div>
+            <div><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'المدة المقترحة:' : 'Duration:'}</span> <strong style="color:var(--cyan);">${escapeIdeaHtml(vpA.suggestedDuration || vpA.duration || '—')}</strong></div>
+            <div style="margin-top:4px;"><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'معيار النجاح:' : 'Success Metric:'}</span> <span>${escapeIdeaHtml(vpA.successMetric || vpA.metric || '—')}</span></div>
+            <div style="margin-top:4px;"><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'شرط التوقف:' : 'Stop Condition:'}</span> <span>${escapeIdeaHtml(vpA.stopCondition || vpA.stopCriteria || '—')}</span></div>
           </div>
           <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px; font-size:12px; border-inline-start:3px solid var(--green);">
             <strong style="color:var(--text-muted); display:block; margin-bottom:6px;">${escapeIdeaHtml(labelB)}</strong>
-            <div><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? '╪º┘ä┘à╪»╪⌐ ╪º┘ä┘à┘é╪¬╪▒╪¡╪⌐:' : 'Duration:'}</span> <strong style="color:var(--cyan);">${escapeIdeaHtml(vpB.suggestedDuration || vpB.duration || 'ΓÇö')}</strong></div>
-            <div style="margin-top:4px;"><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? '┘à╪╣┘è╪º╪▒ ╪º┘ä┘å╪¼╪º╪¡:' : 'Success Metric:'}</span> <strong style="color:var(--green);">${escapeIdeaHtml(vpB.successMetric || vpB.metric || 'ΓÇö')}</strong></div>
-            <div style="margin-top:4px;"><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? '╪┤╪▒╪╖ ╪º┘ä╪¬┘ê┘é┘ü:' : 'Stop Condition:'}</span> <strong style="color:var(--red);">${escapeIdeaHtml(vpB.stopCondition || vpB.stopCriteria || 'ΓÇö')}</strong></div>
+            <div><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'المدة المقترحة:' : 'Duration:'}</span> <strong style="color:var(--cyan);">${escapeIdeaHtml(vpB.suggestedDuration || vpB.duration || '—')}</strong></div>
+            <div style="margin-top:4px;"><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'معيار النجاح:' : 'Success Metric:'}</span> <strong style="color:var(--green);">${escapeIdeaHtml(vpB.successMetric || vpB.metric || '—')}</strong></div>
+            <div style="margin-top:4px;"><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'شرط التوقف:' : 'Stop Condition:'}</span> <strong style="color:var(--red);">${escapeIdeaHtml(vpB.stopCondition || vpB.stopCriteria || '—')}</strong></div>
           </div>
         </div>
       </div>
@@ -6246,7 +6246,7 @@
     if (!container) return;
 
     if (!items || items.length === 0) {
-      container.innerHTML = `<div style="font-size:13px; color:var(--text-muted); text-align:center; padding:20px;">${currentLanguage === 'ar' ? '┘ä╪º ╪¬┘ê╪¼╪» ╪╣┘å╪º╪╡╪▒ ┘à╪│╪¼┘ä╪⌐ ┘ü┘è ┘ä┘ê╪¡╪⌐ ╪º┘ä╪¡┘é┘è┘é╪⌐.' : 'No truth items recorded yet.'}</div>`;
+      container.innerHTML = `<div style="font-size:13px; color:var(--text-muted); text-align:center; padding:20px;">${currentLanguage === 'ar' ? 'لا توجد عناصر مسجلة في لوحة الحقيقة.' : 'No truth items recorded yet.'}</div>`;
       return;
     }
 
@@ -6331,9 +6331,9 @@
     if (!ideaId) return;
 
     const isSuperadmin = Boolean(ideaUsageData?.isSuperadmin || currentIdea?.isSuperadmin);
-    const roundsRem = isSuperadmin ? 'Γê₧' : (currentIdea.followupRoundsRemaining ?? currentIdea.followUpRoundsRemaining ?? Math.max(0, 3 - (currentIdea.followupRoundsUsed || 0)));
+    const roundsRem = isSuperadmin ? '∞' : (currentIdea.followupRoundsRemaining ?? currentIdea.followUpRoundsRemaining ?? Math.max(0, 3 - (currentIdea.followupRoundsUsed || 0)));
     if (!isSuperadmin && Number(roundsRem) <= 0) {
-      alert(currentLanguage === 'ar' ? '┘ä┘é╪» ╪º╪│╪¬┘å┘ü╪»╪¬ ╪¼┘à┘è╪╣ ╪¼┘ê┘ä╪º╪¬ ╪º┘ä┘à╪¬╪º╪¿╪╣╪⌐ ╪º┘ä┘à╪¬╪º╪¡╪⌐ ┘ä┘ç╪░┘ç ╪º┘ä┘ü┘â╪▒╪⌐ (3 ╪¼┘ê┘ä╪º╪¬).' : 'All 3 follow-up rounds used for this idea.');
+      alert(currentLanguage === 'ar' ? 'لقد استنفدت جميع جولات المتابعة المتاحة لهذه الفكرة (3 جولات).' : 'All 3 follow-up rounds used for this idea.');
       return;
     }
 
@@ -6343,7 +6343,7 @@
     const roundBadge = document.getElementById('ideaFollowupRoundBadge');
     if (roundBadge) {
       const nextRound = (currentIdea.followupRoundsUsed || 0) + 2;
-      roundBadge.textContent = currentLanguage === 'ar' ? `╪º┘ä╪¼┘ê┘ä╪⌐ ${nextRound}` : `Round ${nextRound}`;
+      roundBadge.textContent = currentLanguage === 'ar' ? `الجولة ${nextRound}` : `Round ${nextRound}`;
     }
 
     // Update Rounds Left text
@@ -6442,19 +6442,19 @@
 
     const parts = [];
     if (selectedChips.length > 0) {
-      parts.push(`[Strategic Angles / ┘à┘è╪▓╪º╪¬ ╪º╪│╪¬╪▒╪º╪¬┘è╪¼┘è╪⌐]: ${selectedChips.join(' | ')}`);
+      parts.push(`[Strategic Angles / ميزات استراتيجية]: ${selectedChips.join(' | ')}`);
     }
     if (criticSelect && criticSelect.value !== 'ALL') {
-      parts.push(`[Target Critic Focus / ╪º┘ä┘å╪º┘é╪» ╪º┘ä┘à╪│╪¬┘ç╪»┘ü]: ${criticLabel}`);
+      parts.push(`[Target Critic Focus / الناقد المستهدف]: ${criticLabel}`);
     }
     if (modeLabel) {
-      parts.push(`[Review Tone / ╪ú╪│┘ä┘ê╪¿ ╪º┘ä┘à╪▒╪º╪¼╪╣╪⌐]: ${modeLabel}`);
+      parts.push(`[Review Tone / أسلوب المراجعة]: ${modeLabel}`);
     }
     if (extraEvidence) {
-      parts.push(`[Extra Evidence / ╪ú╪»┘ä╪⌐ ┘ê╪ú╪▒┘é╪º┘à ╪Ñ╪╢╪º┘ü┘è╪⌐]: ${extraEvidence}`);
+      parts.push(`[Extra Evidence / أدلة وأرقام إضافية]: ${extraEvidence}`);
     }
     if (mainDefense) {
-      parts.push(`[Founder Defense & Details / ╪¡╪¼╪¼ ┘ê╪¬┘ü╪º╪╡┘è┘ä ╪º┘ä┘à╪ñ╪│╪│]:\n${mainDefense}`);
+      parts.push(`[Founder Defense & Details / حجج وتفاصيل المؤسس]:\n${mainDefense}`);
     }
 
     const combinedPrompt = parts.join('\n\n');
@@ -6462,7 +6462,7 @@
     const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-inline-end:6px;"></i> ' + (currentLanguage === 'ar' ? '╪¼╪º╪▒┘ì ╪º┘ä╪Ñ╪╖┘ä╪º┘é...' : 'Launching...');
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-inline-end:6px;"></i> ' + (currentLanguage === 'ar' ? 'جارٍ الإطلاق...' : 'Launching...');
     }
 
     try {
@@ -6493,11 +6493,11 @@
         currentIdea = res.data;
         renderIdeaReport(currentIdea);
       } else {
-        alert(res?.error || res?.message || (currentLanguage === 'ar' ? '┘ü╪┤┘ä ╪¬┘å┘ü┘è╪░ ╪¼┘ê┘ä╪⌐ ╪º┘ä┘à╪¬╪º╪¿╪╣╪⌐.' : 'Failed to run follow-up round.'));
+        alert(res?.error || res?.message || (currentLanguage === 'ar' ? 'فشل تنفيذ جولة المتابعة.' : 'Failed to run follow-up round.'));
       }
     } catch (err) {
       console.error('Follow-up submit error:', err);
-      alert(currentLanguage === 'ar' ? '╪¡╪»╪½ ╪«╪╖╪ú ╪ú╪½┘å╪º╪í ╪¬┘å┘ü┘è╪░ ╪¼┘ê┘ä╪⌐ ╪º┘ä┘à╪¬╪º╪¿╪╣╪⌐.' : 'Error during follow-up round.');
+      alert(currentLanguage === 'ar' ? 'حدث خطأ أثناء تنفيذ جولة المتابعة.' : 'Error during follow-up round.');
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
@@ -6537,7 +6537,7 @@
       }
     } catch (err) {
       console.error('Export error:', err);
-      alert(currentLanguage === 'ar' ? '┘ü╪┤┘ä ╪¬╪╡╪»┘è╪▒ ╪º┘ä╪¬┘é╪▒┘è╪▒.' : 'Failed to export report.');
+      alert(currentLanguage === 'ar' ? 'فشل تصدير التقرير.' : 'Failed to export report.');
     }
   }
 

@@ -22,7 +22,7 @@
     const color = on ? 'var(--green)' : 'var(--text-muted)';
     const bg = on ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.04)';
     const title = hintText ? ' title="' + esc(hintText) + '"' : '';
-    return '<span class="set-chip"' + title + ' style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:12px;background:' + bg + ';color:' + color + ';border:1px solid var(--glass-border);"><span style="width:7px;height:7px;border-radius:50%;background:' + color + ';display:inline-block;"></span>' + esc(label) + ' ΓÇö ' + esc(state) + '</span>';
+    return '<span class="set-chip"' + title + ' style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:12px;background:' + bg + ';color:' + color + ';border:1px solid var(--glass-border);"><span style="width:7px;height:7px;border-radius:50%;background:' + color + ';display:inline-block;"></span>' + esc(label) + ' — ' + esc(state) + '</span>';
   }
 
   function renderInstructionsSummary() {
@@ -42,7 +42,7 @@
     box.innerHTML =
       '<div class="set-summary-row"><span class="set-summary-label">' + esc(t.set_label_welcome || 'Welcome message') + '</span><span class="set-summary-value">' + (welcome ? esc(welcome.slice(0, 80)) : esc(t.set_value_not_set || 'Not set')) + '</span></div>' +
       '<div class="set-summary-row"><span class="set-summary-label">' + esc(t.set_label_persona_rules || 'Persona instructions') + '</span><span class="set-summary-value">' + (lines ? esc(lines + ' ' + (t.set_unit_lines || 'lines')) : esc(t.set_value_not_set || 'Not set')) + '</span></div>' +
-      '<div class="set-summary-row"><span class="set-summary-label">' + esc(t.set_label_objectives || 'Objectives') + '</span><span class="set-summary-value">' + (objectives.length ? esc(objectives.join(' ┬╖ ')) : esc(t.set_value_not_set || 'Not set')) + '</span></div>' +
+      '<div class="set-summary-row"><span class="set-summary-label">' + esc(t.set_label_objectives || 'Objectives') + '</span><span class="set-summary-value">' + (objectives.length ? esc(objectives.join(' · ')) : esc(t.set_value_not_set || 'Not set')) + '</span></div>' +
       '<div class="set-summary-row"><span class="set-summary-label">' + esc(t.set_label_handoff || 'Human handoff keywords') + '</span><span class="set-summary-value">' + (keywords.length ? esc(keywords.join(', ')) : esc(t.set_value_not_set || 'Not set')) + '</span></div>' +
       '<div class="set-summary-row"><span class="set-summary-label">' + esc(t.set_label_auto_reply || 'AI auto-reply') + '</span><span class="set-summary-value">' + chip(t.set_label_auto_reply || 'AI auto-reply', bot.autoReplyEnabled !== false) + '</span></div>';
   }
@@ -69,7 +69,7 @@
     const hints = {
       bookingTool: tools.bookingTool && tools.bookingTool.workingHours ? (String(tools.bookingTool.workingHours)) : '',
       dailyDigestTool: tools.dailyDigestTool && tools.dailyDigestTool.digestTime ? (String(tools.dailyDigestTool.digestTime)) : '',
-      salesUpsellTool: tools.salesUpsellTool && tools.salesUpsellTool.maxDiscountPercent ? ('Γëñ' + tools.salesUpsellTool.maxDiscountPercent + '%') : ''
+      salesUpsellTool: tools.salesUpsellTool && tools.salesUpsellTool.maxDiscountPercent ? ('≤' + tools.salesUpsellTool.maxDiscountPercent + '%') : ''
     };
     const chips = Object.keys(labels).map((k) => chip(labels[k], !!(tools[k] && tools[k].enabled), hints[k] || ''));
     const skills = Array.isArray(bot.agentSkills) ? bot.agentSkills.filter(Boolean) : [];
