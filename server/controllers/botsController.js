@@ -5,6 +5,7 @@ const axios = require('axios');
 const logger = require('../logger');
 const { serializeBot } = require('../utils/serializers');
 const { canCreateAgent } = require('../services/agentLimits');
+const { validateToolsAndSkillsLimits, normalizeSkills } = require('../services/agentToolsSkillsLimits');
 const { invalidateBotCache } = require('../botEngine');
 const AiTierEntitlement = require('../models/AiTierEntitlement');
 const AiUserOverride = require('../models/AiUserOverride');
@@ -238,30 +239,12 @@ exports.createBot = async (req, res) => {
       return res.status(400).json({ message: 'المستخدم غير موجود' });
     }
 
-    // تحقق من قيود الباقة المجانية على الأدوات والمهارات
-    const isFree = !owner || owner.planTier === 'free' || owner.subscriptionType === 'free';
-    const userFacingTools = ['bookingTool', 'orderTrackingTool', 'whatsappNotificationTool', 'telegramNotificationTool'];
-    const activeTools = agentTools && typeof agentTools === 'object'
-      ? userFacingTools.filter((k) => agentTools[k] && agentTools[k].enabled === true)
-      : [];
-    const normalizedSkills = Array.isArray(agentSkills)
-      ? agentSkills.map((s) => (typeof s === 'string' ? s.trim() : (s?.skillKey || '')).trim()).filter(Boolean)
-      : [];
-
-    if (isFree && !isDirectSuperadmin) {
-      if (activeTools.length > 2) {
-        return res.status(400).json({
-          success: false,
-          error: 'FREE_PLAN_TOOLS_LIMIT',
-          message: 'تسمح الباقة المجانية بتفعيل أداتين فقط كحد أقصى للوكيل. يرجى الترقية لتفعيل أدوات غير محدودة.',
-        });
-      }
-      if (normalizedSkills.length > 2) {
-        return res.status(400).json({
-          success: false,
-          error: 'FREE_PLAN_SKILLS_LIMIT',
-          message: 'تسمح الباقة المجانية باختيار مهارتين فقط كحد أقصى للوكيل. يرجى الترقية لفتح كافة المهارات.',
-        });
+    // تحقق من قيود الباقة المجانية: كل المهارات متاحة، حد أقصى 3 أدوات
+    const normalizedSkills = normalizeSkills(agentSkills);
+    if (!isDirectSuperadmin) {
+      const verdict = validateToolsAndSkillsLimits(owner?.subscriptionTier, agentTools, normalizedSkills, owner?.subscriptionType);
+      if (!verdict.allowed) {
+        return res.status(400).json({ success: false, error: verdict.error, message: verdict.message });
       }
     }
 
@@ -333,31 +316,13 @@ exports.updateBot = async (req, res) => {
       }
     }
 
-    // تحقق من قيود الباقة المجانية على الأدوات والمهارات عند التعديل
-    const currentOwner = await User.findById(bot.userId).select('planTier subscriptionType');
-    const isFree = !currentOwner || currentOwner.planTier === 'free' || currentOwner.subscriptionType === 'free';
-    const userFacingTools = ['bookingTool', 'orderTrackingTool', 'whatsappNotificationTool', 'telegramNotificationTool'];
-    const activeTools = agentTools && typeof agentTools === 'object'
-      ? userFacingTools.filter((k) => agentTools[k] && agentTools[k].enabled === true)
-      : [];
-    const normalizedSkills = Array.isArray(agentSkills)
-      ? agentSkills.map((s) => (typeof s === 'string' ? s.trim() : (s?.skillKey || '')).trim()).filter(Boolean)
-      : [];
-
-    if (isFree && !isDirectSuperadmin) {
-      if (activeTools.length > 2) {
-        return res.status(400).json({
-          success: false,
-          error: 'FREE_PLAN_TOOLS_LIMIT',
-          message: 'تسمح الباقة المجانية بتفعيل أداتين فقط كحد أقصى للوكيل. يرجى الترقية لتفعيل أدوات غير محدودة.',
-        });
-      }
-      if (normalizedSkills.length > 2) {
-        return res.status(400).json({
-          success: false,
-          error: 'FREE_PLAN_SKILLS_LIMIT',
-          message: 'تسمح الباقة المجانية باختيار مهارتين فقط كحد أقصى للوكيل. يرجى الترقية لفتح كافة المهارات.',
-        });
+    // تحقق من قيود الباقة المجانية عند التعديل: كل المهارات متاحة، حد أقصى 3 أدوات
+    const currentOwner = await User.findById(bot.userId).select('subscriptionTier subscriptionType');
+    const normalizedSkills = normalizeSkills(agentSkills);
+    if (!isDirectSuperadmin && agentTools !== undefined) {
+      const verdict = validateToolsAndSkillsLimits(currentOwner?.subscriptionTier, agentTools, normalizedSkills, currentOwner?.subscriptionType);
+      if (!verdict.allowed) {
+        return res.status(400).json({ success: false, error: verdict.error, message: verdict.message });
       }
     }
 

@@ -540,32 +540,63 @@
       pricing_eyebrow: 'Pricing',
       pricing_title: 'Flexible plans that <span class="gradient-text">scale with you.</span>',
       pricing_desc: 'Start free, upgrade when you need more power, and scale seamlessly as your business grows.',
+      pricing_billing_monthly: 'Monthly',
+      pricing_billing_yearly: 'Yearly',
+      pricing_billing_save: 'Save 2 months',
       plan_free_title: 'Free',
       plan_free_price: '0',
       plan_free_period: 'EGP/mo',
       plan_free_desc: 'Perfect for testing, personal projects, and small stores starting out.',
       plan_free_f1: '<i class="fas fa-check"></i> 1 AI agent',
       plan_free_f2: '<i class="fas fa-check"></i> 25 messages/day (250/mo)',
-      plan_free_f3: '<i class="fas fa-check"></i> Up to 2 Agent Skills & 2 Agent Tools',
+      plan_free_f3: '<i class="fas fa-check"></i> All Agent Skills + up to 3 Agent Tools',
       plan_free_f4: '<i class="fas fa-check"></i> 1 Notification recipient (WhatsApp or Telegram)',
       plan_free_f5: '<i class="fas fa-check"></i> Basic analytics & order tracking',
       plan_free_f6: '<i class="fas fa-check"></i> 3 Idea Council evaluations / mo',
       plan_free_btn: 'Start free',
       plan_growth_popular: 'Most popular',
-      plan_growth_title: 'Growth',
+      plan_growth_title: 'Growth Starter',
       plan_growth_price: '199',
       plan_growth_period: 'EGP/mo',
       plan_growth_desc: 'For growing stores and businesses wanting automated customer engagement.',
       plan_growth_f1: '<i class="fas fa-check"></i> Up to 5 AI agents',
-      plan_growth_f2: '<i class="fas fa-check"></i> 1,000+ monthly cloud messages',
+      plan_growth_f2: '<i class="fas fa-check"></i> 1,000 monthly cloud messages',
       plan_growth_f3: '<i class="fas fa-check"></i> Unlimited Agent Tools & Skills (Bookings, Orders, Sales, Classification)',
       plan_growth_f4: '<i class="fas fa-check"></i> Multi-channel instant alerts (multiple WhatsApp & Telegram)',
       plan_growth_f5: '<i class="fas fa-check"></i> Fail-safe backup API key failover',
       plan_growth_f6: '<i class="fas fa-check"></i> Priority customer support',
       plan_growth_f7: '<i class="fas fa-check"></i> 10 Idea Council evaluations / mo + Live Web Research & 3 Defense Rounds',
-      plan_growth_btn: 'Start free trial',
+      plan_growth_btn: 'Subscribe now',
+      plan_growth2_title: 'Growth Plus',
+      plan_growth2_price: '499',
+      plan_growth2_period: 'EGP/mo',
+      plan_growth2_desc: 'For scaling stores with higher chat volume and more agents.',
+      plan_growth2_f1: '<i class="fas fa-check"></i> Up to 15 AI agents',
+      plan_growth2_f2: '<i class="fas fa-check"></i> 10,000 monthly cloud messages',
+      plan_growth2_f3: '<i class="fas fa-check"></i> Unlimited Agent Tools & Skills (Bookings, Orders, Sales, Classification)',
+      plan_growth2_f4: '<i class="fas fa-check"></i> Multi-channel instant alerts (multiple WhatsApp & Telegram)',
+      plan_growth2_f5: '<i class="fas fa-check"></i> Fail-safe backup API key failover',
+      plan_growth2_f6: '<i class="fas fa-check"></i> Priority customer support',
+      plan_growth2_f7: '<i class="fas fa-check"></i> 30 Idea Council evaluations / mo + Live Web Research & 3 Defense Rounds',
+      plan_growth2_btn: 'Subscribe now',
+      plan_growth3_title: 'Growth Pro',
+      plan_growth3_price: '999',
+      plan_growth3_period: 'EGP/mo',
+      plan_growth3_desc: 'For established businesses with high-volume automation needs.',
+      plan_growth3_f1: '<i class="fas fa-check"></i> Up to 50 AI agents',
+      plan_growth3_f2: '<i class="fas fa-check"></i> 50,000 monthly cloud messages',
+      plan_growth3_f3: '<i class="fas fa-check"></i> Unlimited Agent Tools & Skills (Bookings, Orders, Sales, Classification)',
+      plan_growth3_f4: '<i class="fas fa-check"></i> Multi-channel instant alerts (multiple WhatsApp & Telegram)',
+      plan_growth3_f5: '<i class="fas fa-check"></i> Fail-safe backup API key failover',
+      plan_growth3_f6: '<i class="fas fa-check"></i> Priority customer support',
+      plan_growth3_f7: '<i class="fas fa-check"></i> 100 Idea Council evaluations / mo + Live Web Research & 3 Defense Rounds',
+      plan_growth3_btn: 'Subscribe now',
+      pricing_payment_title: 'Manual activation — pay with Instapay or cash wallet',
+      pricing_payment_desc: 'Subscriptions are activated manually for now. Choose your plan, pay with Instapay or a cash wallet (Vodafone Cash / Orange / Etisalat), then contact the owner on WhatsApp with your payment receipt to activate within hours.',
+      pricing_payment_whatsapp: 'Contact on WhatsApp to subscribe',
+      pricing_payment_methods: 'We accept: Instapay • Vodafone Cash • Orange Money • Etisalat Cash',
       plan_scale_title: 'Enterprise / Scale',
-      plan_scale_price: '999',
+      plan_scale_price: '4999',
       plan_scale_period: 'EGP/mo',
       plan_scale_desc: 'For high-volume operations, larger teams, and established brands.',
       plan_scale_f1: '<i class="fas fa-check"></i> Unlimited AI agents',
@@ -575,7 +606,7 @@
       plan_scale_f5: '<i class="fas fa-check"></i> Dedicated account manager & 24/7 VIP support',
       plan_scale_f6: '<i class="fas fa-check"></i> White-label options & 99.9% uptime SLA',
       plan_scale_f7: '<i class="fas fa-check"></i> High-volume Idea Council evaluations + Deep Market Research & Custom Personas',
-      plan_scale_btn: 'Get started',
+      plan_scale_btn: 'Contact sales',
       cta_title: 'Ready to make every <span class="gradient-text">conversation count?</span>',
       cta_btn: 'Start building for free <i class="fas fa-arrow-right"></i>',
       cta_note: 'No credit card required. Start from your workspace.',
@@ -724,32 +755,63 @@
       pricing_eyebrow: 'الأسعار والباقات',
       pricing_title: 'خطط مرنة وواضحة تناسب <span class="gradient-text">نمو أعمالك.</span>',
       pricing_desc: 'ابدأ مجانًا، وقم بالترقية عند حاجتك لمزيد من القوة والتوسع مع نمو نشاطك التجاري.',
+      pricing_billing_monthly: 'شهري',
+      pricing_billing_yearly: 'سنوي',
+      pricing_billing_save: 'وفّر شهرين',
       plan_free_title: 'المجانية',
       plan_free_price: '0',
       plan_free_period: 'ج.م/شهرياً',
       plan_free_desc: 'مثالية للتجربة والمشاريع الناشئة والمتاجر في بدايتها.',
       plan_free_f1: '<i class="fas fa-check"></i> وكيل ذكي واحد (1 AI Agent)',
       plan_free_f2: '<i class="fas fa-check"></i> 25 رسالة يومياً (250 شهرياً)',
-      plan_free_f3: '<i class="fas fa-check"></i> حتى أداتين ذكيتين ومهارتين للوكيل',
+      plan_free_f3: '<i class="fas fa-check"></i> جميع مهارات الوكيل + حتى 3 أدوات',
       plan_free_f4: '<i class="fas fa-check"></i> قناة إشعارات واحدة ومستلم واحد (واتساب أو تيليجرام)',
       plan_free_f5: '<i class="fas fa-check"></i> لوحة تحكم وتحليلات وإدارة الطلبات',
       plan_free_f6: '<i class="fas fa-check"></i> 3 جلسات تقييم أفكار شهرياً (Idea Council)',
       plan_free_btn: 'ابدأ مجاناً',
       plan_growth_popular: 'الأكثر طلباً',
-      plan_growth_title: 'النمو (Growth)',
+      plan_growth_title: 'النمو الأساسي',
       plan_growth_price: '199',
       plan_growth_period: 'ج.م/شهرياً',
       plan_growth_desc: 'للمتاجر والأنشطة المتنامية التي تبحث عن أتمتة كاملة للمحادثات.',
       plan_growth_f1: '<i class="fas fa-check"></i> حتى 5 وكلاء ذكاء اصطناعي مخصصين',
-      plan_growth_f2: '<i class="fas fa-check"></i> أكثر من 1,000 محادثة سحابية شهرياً',
+      plan_growth_f2: '<i class="fas fa-check"></i> 1,000 محادثة سحابية شهرياً',
       plan_growth_f3: '<i class="fas fa-check"></i> أدوات ومهارات غير محدودة (حجوزات، تتبع طلبات، تصنيف، مبيعات)',
       plan_growth_f4: '<i class="fas fa-check"></i> إشعارات فورية غير محدودة لقنوات متعددة (واتساب وتيليجرام)',
       plan_growth_f5: '<i class="fas fa-check"></i> مفتاح احتياطي ذكي لمنع انقطاع الخدمة',
       plan_growth_f6: '<i class="fas fa-check"></i> دعم فني ذو أولوية',
       plan_growth_f7: '<i class="fas fa-check"></i> 10 جلسات تقييم أفكار شهرياً + بحث سوقي مباشر و3 جولات دفاع تفاعلية',
-      plan_growth_btn: 'ابدأ التجربة المجانية',
+      plan_growth_btn: 'اشترك الآن',
+      plan_growth2_title: 'النمو المتقدم',
+      plan_growth2_price: '499',
+      plan_growth2_period: 'ج.م/شهرياً',
+      plan_growth2_desc: 'للمتاجر المتوسعة بحجم محادثات أعلى ووكلاء أكثر.',
+      plan_growth2_f1: '<i class="fas fa-check"></i> حتى 15 وكيل ذكاء اصطناعي',
+      plan_growth2_f2: '<i class="fas fa-check"></i> 10,000 محادثة سحابية شهرياً',
+      plan_growth2_f3: '<i class="fas fa-check"></i> أدوات ومهارات غير محدودة (حجوزات، تتبع طلبات، تصنيف، مبيعات)',
+      plan_growth2_f4: '<i class="fas fa-check"></i> إشعارات فورية غير محدودة لقنوات متعددة (واتساب وتيليجرام)',
+      plan_growth2_f5: '<i class="fas fa-check"></i> مفتاح احتياطي ذكي لمنع انقطاع الخدمة',
+      plan_growth2_f6: '<i class="fas fa-check"></i> دعم فني ذو أولوية',
+      plan_growth2_f7: '<i class="fas fa-check"></i> 30 جلسة تقييم أفكار شهرياً + بحث سوقي مباشر و3 جولات دفاع',
+      plan_growth2_btn: 'اشترك الآن',
+      plan_growth3_title: 'النمو الاحترافي',
+      plan_growth3_price: '999',
+      plan_growth3_period: 'ج.م/شهرياً',
+      plan_growth3_desc: 'للأنشطة الراسخة باحتياجات أتمتة ضخمة.',
+      plan_growth3_f1: '<i class="fas fa-check"></i> حتى 50 وكيل ذكاء اصطناعي',
+      plan_growth3_f2: '<i class="fas fa-check"></i> 50,000 محادثة سحابية شهرياً',
+      plan_growth3_f3: '<i class="fas fa-check"></i> أدوات ومهارات غير محدودة (حجوزات، تتبع طلبات، تصنيف، مبيعات)',
+      plan_growth3_f4: '<i class="fas fa-check"></i> إشعارات فورية غير محدودة لقنوات متعددة (واتساب وتيليجرام)',
+      plan_growth3_f5: '<i class="fas fa-check"></i> مفتاح احتياطي ذكي لمنع انقطاع الخدمة',
+      plan_growth3_f6: '<i class="fas fa-check"></i> دعم فني ذو أولوية',
+      plan_growth3_f7: '<i class="fas fa-check"></i> 100 جلسة تقييم أفكار شهرياً + بحث سوقي مباشر و3 جولات دفاع',
+      plan_growth3_btn: 'اشترك الآن',
+      pricing_payment_title: 'تفعيل يدوي — الدفع عبر انستاباي أو محفظة كاش',
+      pricing_payment_desc: 'الاشتراكات تُفعّل يدوياً حالياً. اختر خطتك، ادفع عبر انستاباي أو محفظة كاش (فودافون كاش / أورانج / اتصالات)، ثم تواصل مع المالك على واتساب بصورة التحويل للتفعيل خلال ساعات.',
+      pricing_payment_whatsapp: 'تواصل واتساب للاشتراك',
+      pricing_payment_methods: 'نقبل: انستاباي • فودافون كاش • أورانج موني • اتصالات كاش',
       plan_scale_title: 'الشركات (Enterprise)',
-      plan_scale_price: '999',
+      plan_scale_price: '4999',
       plan_scale_period: 'ج.م/شهرياً',
       plan_scale_desc: 'للشركات الكبرى والعمليات الضخمة والعلامات التجارية الرائدة.',
       plan_scale_f1: '<i class="fas fa-check"></i> عدد غير محدود من الوكلاء الذكيين',
@@ -759,7 +821,7 @@
       plan_scale_f5: '<i class="fas fa-check"></i> مدير حساب مخصص ودعم فني VIP على مدار الساعة',
       plan_scale_f6: '<i class="fas fa-check"></i> تخصيص العلامة التجارية وضمان استقرار SLA 99.9%',
       plan_scale_f7: '<i class="fas fa-check"></i> تقييم أفكار غير محدود ومخصص للشركات + بحث سوقي عميق ونماذج مخصصة',
-      plan_scale_btn: 'ابدأ الآن',
+      plan_scale_btn: 'تواصل مع المبيعات',
       cta_title: 'هل أنت جاهز لجعل كل <span class="gradient-text">محادثة مهمة؟</span>',
       cta_btn: 'ابدأ مجانًا <i class="fas fa-arrow-left"></i>',
       cta_note: 'لا تحتاج إلى بطاقة دفع. ابدأ من مساحة عملك.',
@@ -834,9 +896,83 @@
     });
   }
 
+  /* ===== PRICING: billing toggle + manual subscribe via WhatsApp ===== */
+  let currentBilling = 'monthly';
+  function refreshPricing() {
+    document.querySelectorAll('.pricing-card .price').forEach(function (el) {
+      var monthly = el.getAttribute('data-monthly');
+      var yearly = el.getAttribute('data-yearly');
+      if (currentBilling === 'yearly' && yearly !== null) el.textContent = yearly;
+      else if (monthly !== null) el.textContent = monthly;
+    });
+    document.querySelectorAll('.pricing-card .price-period').forEach(function (el) {
+      var key = el.getAttribute('data-i18n');
+      if (!key) return;
+      // Yearly suffix handled via translation keys ending with period; append /yr hint
+      if (currentBilling === 'yearly') {
+        el.textContent = currentLang === 'ar' ? 'ج.م/سنوياً (وفّر شهرين)' : 'EGP/yr (save 2 mo)';
+      } else if (langTranslations[currentLang] && langTranslations[currentLang][key]) {
+        el.innerHTML = langTranslations[currentLang][key];
+      }
+    });
+    document.querySelectorAll('.plan-cta').forEach(function (a) {
+      try {
+        var url = new URL(a.getAttribute('href'), window.location.origin);
+        url.searchParams.set('billing', currentBilling);
+        a.setAttribute('href', url.pathname + url.search);
+      } catch (e) { /* ignore */ }
+    });
+  }
+
+  document.querySelectorAll('.billing-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      currentBilling = btn.getAttribute('data-billing') || 'monthly';
+      document.querySelectorAll('.billing-btn').forEach(function (b) {
+        b.classList.toggle('active', b === btn);
+      });
+      refreshPricing();
+    });
+  });
+
+  function buildSubscribeMessage(plan) {
+    var labels = {
+      free: 'Free',
+      growth_1k: 'Growth Starter (199 EGP/mo)',
+      growth_10k: 'Growth Plus (499 EGP/mo)',
+      growth_50k: 'Growth Pro (999 EGP/mo)',
+      unlimited: 'Enterprise (4999 EGP/mo)'
+    };
+    var label = labels[plan] || plan || 'subscription';
+    var period = currentBilling === 'yearly' ? 'yearly (save 2 months)' : 'monthly';
+    return 'Hello ZainBot, I want to subscribe to ' + label + ' (' + period + '). I paid via Instapay / cash wallet and here is my receipt: ';
+  }
+
+  var whatsappBtn = document.getElementById('subscribeWhatsappBtn');
+  function refreshWhatsappBtn() {
+    if (!whatsappBtn) return;
+    // Number is injected via /api/config (no hard-coded PII in frontend).
+    var num = (window.ZAINBOT_SUBSCRIBE_WHATSAPP || '').replace(/\D/g, '');
+    var base = num ? 'https://wa.me/' + num : 'https://wa.me/';
+    whatsappBtn.href = base + '?text=' + encodeURIComponent(buildSubscribeMessage('growth_1k'));
+  }
+
+  document.querySelectorAll('.plan-cta').forEach(function (a) {
+    a.addEventListener('click', function () {
+      try { localStorage.setItem('zainbot_pending_plan', a.getAttribute('data-plan') || ''); } catch (e) {}
+      try { localStorage.setItem('zainbot_pending_billing', currentBilling); } catch (e) {}
+    });
+  });
+
+  fetch('/api/config').then(function (r) { return r.ok ? r.json() : {}; }).then(function (cfg) {
+    window.ZAINBOT_SUBSCRIBE_WHATSAPP = cfg.subscribeWhatsapp || '';
+    refreshWhatsappBtn();
+  }).catch(function () { refreshWhatsappBtn(); });
+
   /* ===== INIT ===== */
   handleNavScroll();
   handleBackToTop();
   applyLanguage(currentLang);
+  refreshPricing();
+  refreshWhatsappBtn();
 
 })();

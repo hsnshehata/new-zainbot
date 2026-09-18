@@ -513,54 +513,99 @@
         <span class="section-eyebrow" data-i18n="pricing_eyebrow">Pricing</span>
         <h2 data-i18n="pricing_title">Flexible plans that <span class="gradient-text">scale with you.</span></h2>
         <p data-i18n="pricing_desc">Start free, upgrade when you need more power, and scale seamlessly as your business grows.</p>
+        <div class="billing-toggle" role="group" aria-label="Billing period">
+          <button type="button" class="billing-btn active" data-billing="monthly" data-i18n="pricing_billing_monthly">Monthly</button>
+          <button type="button" class="billing-btn" data-billing="yearly" data-i18n="pricing_billing_yearly">Yearly</button>
+          <span class="billing-save" data-i18n="pricing_billing_save">Save 2 months</span>
+        </div>
       </div>
 
-      <div class="pricing-grid reveal" style="margin-top:40px;">
+      <div class="pricing-grid pricing-grid-5 reveal" style="margin-top:40px;">
         <!-- FREE PLAN -->
-        <div class="pricing-card">
+        <div class="pricing-card" data-plan="free">
           <div class="pricing-plan" data-i18n="plan_free_title">Free</div>
           <div class="pricing-price">
-            <span class="price" data-i18n="plan_free_price">0</span>
+            <span class="price" data-monthly="0" data-yearly="0">0</span>
             <span class="price-period" data-i18n="plan_free_period">EGP/mo</span>
           </div>
           <p class="pricing-desc" data-i18n="plan_free_desc">Perfect for testing, personal projects, and small stores starting out.</p>
           <ul class="pricing-features">
             <li data-i18n="plan_free_f1"><i class="fas fa-check"></i> 1 AI agent</li>
             <li data-i18n="plan_free_f2"><i class="fas fa-check"></i> 25 messages/day (250/mo)</li>
-            <li data-i18n="plan_free_f3"><i class="fas fa-check"></i> Up to 2 Agent Skills & 2 Agent Tools</li>
+            <li data-i18n="plan_free_f3"><i class="fas fa-check"></i> All Agent Skills + up to 3 Agent Tools</li>
             <li data-i18n="plan_free_f4"><i class="fas fa-check"></i> 1 Notification recipient (WhatsApp or Telegram)</li>
             <li data-i18n="plan_free_f5"><i class="fas fa-check"></i> Basic analytics & order tracking</li>
             <li data-i18n="plan_free_f6"><i class="fas fa-check"></i> 3 Idea Council evaluations / mo</li>
           </ul>
-          <a href="/register" class="btn btn-secondary btn-block" data-i18n="plan_free_btn">Start free</a>
+          <a href="/register?plan=free" class="btn btn-secondary btn-block plan-cta" data-plan="free" data-i18n="plan_free_btn">Start free</a>
         </div>
 
-        <!-- GROWTH PLAN -->
-        <div class="pricing-card pricing-popular">
+        <!-- GROWTH LEVEL 1 -->
+        <div class="pricing-card pricing-popular" data-plan="growth_1k">
           <div class="popular-badge" data-i18n="plan_growth_popular">Most popular</div>
-          <div class="pricing-plan" data-i18n="plan_growth_title">Growth</div>
+          <div class="pricing-plan" data-i18n="plan_growth_title">Growth Starter</div>
           <div class="pricing-price">
-            <span class="price" data-i18n="plan_growth_price">199</span>
+            <span class="price" data-monthly="199" data-yearly="1990">199</span>
             <span class="price-period" data-i18n="plan_growth_period">EGP/mo</span>
           </div>
           <p class="pricing-desc" data-i18n="plan_growth_desc">For growing stores and businesses wanting automated customer engagement.</p>
           <ul class="pricing-features">
             <li data-i18n="plan_growth_f1"><i class="fas fa-check"></i> Up to 5 AI agents</li>
-            <li data-i18n="plan_growth_f2"><i class="fas fa-check"></i> 1,000+ monthly cloud messages</li>
+            <li data-i18n="plan_growth_f2"><i class="fas fa-check"></i> 1,000 monthly cloud messages</li>
             <li data-i18n="plan_growth_f3"><i class="fas fa-check"></i> Unlimited Agent Tools & Skills (Bookings, Orders, Sales, Classification)</li>
             <li data-i18n="plan_growth_f4"><i class="fas fa-check"></i> Multi-channel instant alerts (multiple WhatsApp & Telegram)</li>
             <li data-i18n="plan_growth_f5"><i class="fas fa-check"></i> Fail-safe backup API key failover</li>
             <li data-i18n="plan_growth_f6"><i class="fas fa-check"></i> Priority customer support</li>
             <li data-i18n="plan_growth_f7"><i class="fas fa-check"></i> 10 Idea Council evaluations / mo + Live Web Research & 3 Defense Rounds</li>
           </ul>
-          <a href="/register" class="btn btn-primary btn-block" data-i18n="plan_growth_btn">Start free trial</a>
+          <a href="/register?plan=growth_1k" class="btn btn-primary btn-block plan-cta" data-plan="growth_1k" data-i18n="plan_growth_btn">Subscribe now</a>
         </div>
 
-        <!-- SCALE / ENTERPRISE PLAN -->
-        <div class="pricing-card">
+        <!-- GROWTH LEVEL 2 -->
+        <div class="pricing-card" data-plan="growth_10k">
+          <div class="pricing-plan" data-i18n="plan_growth2_title">Growth Plus</div>
+          <div class="pricing-price">
+            <span class="price" data-monthly="499" data-yearly="4990">499</span>
+            <span class="price-period" data-i18n="plan_growth2_period">EGP/mo</span>
+          </div>
+          <p class="pricing-desc" data-i18n="plan_growth2_desc">For scaling stores with higher chat volume and more agents.</p>
+          <ul class="pricing-features">
+            <li data-i18n="plan_growth2_f1"><i class="fas fa-check"></i> Up to 15 AI agents</li>
+            <li data-i18n="plan_growth2_f2"><i class="fas fa-check"></i> 10,000 monthly cloud messages</li>
+            <li data-i18n="plan_growth2_f3"><i class="fas fa-check"></i> Unlimited Agent Tools & Skills (Bookings, Orders, Sales, Classification)</li>
+            <li data-i18n="plan_growth2_f4"><i class="fas fa-check"></i> Multi-channel instant alerts (multiple WhatsApp & Telegram)</li>
+            <li data-i18n="plan_growth2_f5"><i class="fas fa-check"></i> Fail-safe backup API key failover</li>
+            <li data-i18n="plan_growth2_f6"><i class="fas fa-check"></i> Priority customer support</li>
+            <li data-i18n="plan_growth2_f7"><i class="fas fa-check"></i> 30 Idea Council evaluations / mo + Live Web Research & 3 Defense Rounds</li>
+          </ul>
+          <a href="/register?plan=growth_10k" class="btn btn-primary btn-block plan-cta" data-plan="growth_10k" data-i18n="plan_growth2_btn">Subscribe now</a>
+        </div>
+
+        <!-- GROWTH LEVEL 3 -->
+        <div class="pricing-card" data-plan="growth_50k">
+          <div class="pricing-plan" data-i18n="plan_growth3_title">Growth Pro</div>
+          <div class="pricing-price">
+            <span class="price" data-monthly="999" data-yearly="9990">999</span>
+            <span class="price-period" data-i18n="plan_growth3_period">EGP/mo</span>
+          </div>
+          <p class="pricing-desc" data-i18n="plan_growth3_desc">For established businesses with high-volume automation needs.</p>
+          <ul class="pricing-features">
+            <li data-i18n="plan_growth3_f1"><i class="fas fa-check"></i> Up to 50 AI agents</li>
+            <li data-i18n="plan_growth3_f2"><i class="fas fa-check"></i> 50,000 monthly cloud messages</li>
+            <li data-i18n="plan_growth3_f3"><i class="fas fa-check"></i> Unlimited Agent Tools & Skills (Bookings, Orders, Sales, Classification)</li>
+            <li data-i18n="plan_growth3_f4"><i class="fas fa-check"></i> Multi-channel instant alerts (multiple WhatsApp & Telegram)</li>
+            <li data-i18n="plan_growth3_f5"><i class="fas fa-check"></i> Fail-safe backup API key failover</li>
+            <li data-i18n="plan_growth3_f6"><i class="fas fa-check"></i> Priority customer support</li>
+            <li data-i18n="plan_growth3_f7"><i class="fas fa-check"></i> 100 Idea Council evaluations / mo + Live Web Research & 3 Defense Rounds</li>
+          </ul>
+          <a href="/register?plan=growth_50k" class="btn btn-primary btn-block plan-cta" data-plan="growth_50k" data-i18n="plan_growth3_btn">Subscribe now</a>
+        </div>
+
+        <!-- ENTERPRISE PLAN -->
+        <div class="pricing-card" data-plan="unlimited">
           <div class="pricing-plan" data-i18n="plan_scale_title">Enterprise / Scale</div>
           <div class="pricing-price">
-            <span class="price" data-i18n="plan_scale_price">999</span>
+            <span class="price" data-monthly="4999" data-yearly="49990">4999</span>
             <span class="price-period" data-i18n="plan_scale_period">EGP/mo</span>
           </div>
           <p class="pricing-desc" data-i18n="plan_scale_desc">For high-volume operations, larger teams, and established brands.</p>
@@ -573,7 +618,16 @@
             <li data-i18n="plan_scale_f6"><i class="fas fa-check"></i> White-label options & 99.9% uptime SLA</li>
             <li data-i18n="plan_scale_f7"><i class="fas fa-check"></i> High-volume Idea Council evaluations + Deep Market Research & Custom Personas</li>
           </ul>
-          <a href="/register" class="btn btn-secondary btn-block" data-i18n="plan_scale_btn">Get started</a>
+          <a href="/register?plan=unlimited" class="btn btn-secondary btn-block plan-cta" data-plan="unlimited" data-i18n="plan_scale_btn">Contact sales</a>
+        </div>
+      </div>
+
+      <div class="pricing-payment reveal">
+        <h3 data-i18n="pricing_payment_title">Manual activation — pay with Instapay or cash wallet</h3>
+        <p data-i18n="pricing_payment_desc">Subscriptions are activated manually for now. Choose your plan, pay with Instapay or a cash wallet (Vodafone Cash / Orange / Etisalat), then contact the owner on WhatsApp with your payment receipt to activate within hours.</p>
+        <div class="pricing-payment-actions">
+          <a href="#" id="subscribeWhatsappBtn" class="btn btn-primary" target="_blank" rel="noopener" data-i18n="pricing_payment_whatsapp">Contact on WhatsApp to subscribe</a>
+          <span class="pricing-payment-methods" data-i18n="pricing_payment_methods">We accept: Instapay • Vodafone Cash • Orange Money • Etisalat Cash</span>
         </div>
       </div>
     </div>

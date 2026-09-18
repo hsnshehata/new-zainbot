@@ -373,6 +373,43 @@
       btn_add_recipient: 'Add Notification Channel',
       recipient_tier_free_hint: 'Free plan allows 1 notification recipient channel. Upgrade to Growth for unlimited channels.',
       upgrade_plan_link: 'Upgrade Plan',
+      subscription_title: 'Subscription & Upgrade',
+      subscription_desc: 'Monthly subscriptions with manual activation. Pay with Instapay or cash wallet, then contact the owner on WhatsApp.',
+      subscription_current_free: 'Free plan',
+      subscription_plan_free: 'Free • 0',
+      subscription_plan_growth1: 'Growth Starter • 199',
+      subscription_plan_growth2: 'Growth Plus • 499',
+      subscription_plan_growth3: 'Growth Pro • 999',
+      subscription_plan_enterprise: 'Enterprise • 4999',
+      subscription_label_period: 'Billing period',
+      subscription_monthly: 'Monthly',
+      subscription_yearly: 'Yearly (save 2 months)',
+      subscription_label_method: 'Payment method',
+      pay_instapay: 'Instapay',
+      pay_vodafone: 'Vodafone Cash',
+      pay_orange: 'Orange Money',
+      pay_etisalat: 'Etisalat Cash',
+      subscription_label_reference: 'Payment reference / receipt',
+      subscription_reference_placeholder: 'Transaction ID or sender number',
+      subscription_btn_request: 'Submit activation request',
+      subscription_btn_whatsapp: 'Contact on WhatsApp',
+      subscription_payment_hint: 'We accept: Instapay • Vodafone Cash • Orange Money • Etisalat Cash. Activation is manual within hours after receipt review.',
+      th_sub_tier: 'Plan',
+      th_sub_period: 'Period',
+      th_sub_method: 'Method',
+      th_sub_status: 'Status',
+      th_sub_date: 'Date',
+      th_sub_user: 'User',
+      th_sub_actions: 'Actions',
+      admin_subtab_subs: 'Subscriptions',
+      admin_subs_title: 'Subscription Requests',
+      admin_subs_desc: 'Review manual payments (Instapay / cash wallet) and approve to activate the plan.',
+      admin_subs_all: 'All statuses',
+      admin_subs_pending: 'Pending',
+      admin_subs_approved: 'Approved',
+      admin_subs_rejected: 'Rejected',
+      admin_subs_refresh: 'Refresh',
+      admin_subs_loading: 'Loading requests...',
       th_rec_channel: 'Channel',
       th_rec_target: 'Target / Destination',
       th_rec_label: 'Label / Description',
@@ -482,8 +519,8 @@
       badge_realtime: 'Real-time',
       preview_status_online: 'Online · AI Sales Ready',
       preview_input_placeholder: 'Type your message here...',
-      free_plan_tools_limit_badge: '(Free Plan Limit: 2 tools max)',
-      free_plan_skills_limit_badge: '(Free Plan Limit: 2 skills max)',
+      free_plan_tools_limit_badge: '(Free Plan Limit: 3 tools max, all skills included)',
+      free_plan_skills_limit_badge: '(Free Plan: all skills included)',
       label_chat_page_logo: 'Chat Page Logo / Avatar',
       btn_upload_logo: 'Upload Logo',
       btn_remove_logo: 'Remove',
@@ -1074,6 +1111,43 @@
       btn_add_recipient: 'إضافة قناة إشعارات',
       recipient_tier_free_hint: 'الباقة المجانية تتيح قناة واحدة فقط لتلقي الإشعارات. قم بالترقية لباقة Growth لقنوات غير محدودة.',
       upgrade_plan_link: 'ترقية الباقة',
+      subscription_title: 'الاشتراك والترقية',
+      subscription_desc: 'اشتراكات شهرية بتفعيل يدوي. ادفع عبر انستاباي أو محفظة كاش ثم تواصل مع المالك على واتساب.',
+      subscription_current_free: 'الباقة المجانية',
+      subscription_plan_free: 'مجاني • 0',
+      subscription_plan_growth1: 'النمو الأساسي • 199',
+      subscription_plan_growth2: 'النمو المتقدم • 499',
+      subscription_plan_growth3: 'النمو الاحترافي • 999',
+      subscription_plan_enterprise: 'الشركات • 4999',
+      subscription_label_period: 'فترة الدفع',
+      subscription_monthly: 'شهري',
+      subscription_yearly: 'سنوي (وفّر شهرين)',
+      subscription_label_method: 'طريقة الدفع',
+      pay_instapay: 'انستاباي',
+      pay_vodafone: 'فودافون كاش',
+      pay_orange: 'أورانج موني',
+      pay_etisalat: 'اتصالات كاش',
+      subscription_label_reference: 'مرجع الدفع / الإيصال',
+      subscription_reference_placeholder: 'رقم العملية أو رقم المرسل',
+      subscription_btn_request: 'إرسال طلب التفعيل',
+      subscription_btn_whatsapp: 'تواصل واتساب',
+      subscription_payment_hint: 'نقبل: انستاباي • فودافون كاش • أورانج موني • اتصالات كاش. التفعيل يدوي خلال ساعات بعد مراجعة الإيصال.',
+      th_sub_tier: 'الخطة',
+      th_sub_period: 'الفترة',
+      th_sub_method: 'الطريقة',
+      th_sub_status: 'الحالة',
+      th_sub_date: 'التاريخ',
+      th_sub_user: 'المستخدم',
+      th_sub_actions: 'إجراءات',
+      admin_subtab_subs: 'الاشتراكات',
+      admin_subs_title: 'طلبات الاشتراك',
+      admin_subs_desc: 'راجع المدفوعات اليدوية (انستاباي / محافظ الكاش) واعتمد لتفعيل الخطة.',
+      admin_subs_all: 'كل الحالات',
+      admin_subs_pending: 'قيد الانتظار',
+      admin_subs_approved: 'مقبول',
+      admin_subs_rejected: 'مرفوض',
+      admin_subs_refresh: 'تحديث',
+      admin_subs_loading: 'جاري تحميل الطلبات...',
       th_rec_channel: 'القناة',
       th_rec_target: 'الرقم / المعرف المستهدف',
       th_rec_label: 'الوصف / الفريق',
@@ -1183,8 +1257,8 @@
       badge_realtime: 'مباشر',
       preview_status_online: 'نشط · جاهز للرد والمبيعات',
       preview_input_placeholder: 'اكتب رسالتك هنا...',
-      free_plan_tools_limit_badge: '(الحد الأقصى للباقة المجانية: أداتان فقط)',
-      free_plan_skills_limit_badge: '(الحد الأقصى للباقة المجانية: مهارتان فقط)',
+      free_plan_tools_limit_badge: '(الحد الأقصى للباقة المجانية: 3 أدوات فقط وجميع المهارات متاحة)',
+      free_plan_skills_limit_badge: '(الباقة المجانية: جميع المهارات متاحة)',
       label_chat_page_logo: 'شعار وأيقونة صفحة الدردشة',
       btn_upload_logo: 'رفع شعار',
       btn_remove_logo: 'إزالة',
@@ -3601,20 +3675,47 @@
     if (window.__zainbotRenderSettingsSummary) setTimeout(window.__zainbotRenderSettingsSummary, 60);
   }
 
+  var FREE_MAX_TOOLS = 3;
   function enforceToolAndSkillTierLimits() {
-    const isFree = !currentUser?.subscriptionTier || currentUser.subscriptionTier === 'free';
-    if (!isFree) return;
+    var isFree = !currentUser?.subscriptionTier || currentUser.subscriptionTier === 'free';
+    var skillCheckboxes = Array.from(document.querySelectorAll('input[name="agentSkill"]'));
+    // Skills are unlimited on all plans: always enable.
+    skillCheckboxes.forEach(function (chk) {
+      chk.disabled = false;
+      if (chk.parentElement) {
+        chk.parentElement.style.opacity = '1';
+        chk.parentElement.style.cursor = 'pointer';
+        chk.parentElement.title = '';
+      }
+    });
+    if (!isFree) {
+      ['agentToolBooking', 'agentToolOrders', 'agentToolWhatsapp', 'agentToolTelegram', 'agentToolSalesRecovery', 'agentToolDailyDigest', 'agentToolSalesUpsell'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) {
+          el.disabled = false;
+          if (el.parentElement) {
+            el.parentElement.style.opacity = '1';
+            el.parentElement.style.cursor = 'pointer';
+            el.parentElement.title = '';
+          }
+        }
+      });
+      return;
+    }
 
-    // 1. Tool Checkboxes Limit (Max 2 for free)
+    // 1. Tool Checkboxes Limit (Max 3 for free, across all agent tools)
     const toolCheckboxes = [
       document.getElementById('agentToolBooking'),
       document.getElementById('agentToolOrders'),
       document.getElementById('agentToolWhatsapp'),
-      document.getElementById('agentToolTelegram')
+      document.getElementById('agentToolTelegram'),
+      document.getElementById('agentToolSalesRecovery'),
+      document.getElementById('agentToolDailyDigest'),
+      document.getElementById('agentToolSalesUpsell')
     ].filter(Boolean);
 
     const checkedTools = toolCheckboxes.filter(chk => chk.checked);
-    const toolsMaxReached = checkedTools.length >= 2;
+    const toolsMaxReached = checkedTools.length >= FREE_MAX_TOOLS;
 
     toolCheckboxes.forEach(chk => {
       if (!chk.checked) {
@@ -3622,30 +3723,7 @@
         if (chk.parentElement) {
           chk.parentElement.style.opacity = toolsMaxReached ? '0.45' : '1';
           chk.parentElement.style.cursor = toolsMaxReached ? 'not-allowed' : 'pointer';
-          chk.parentElement.title = toolsMaxReached ? (currentLanguage === 'ar' ? 'الحد الأقصى في الباقة المجانية: أداتان فقط' : 'Free plan limit: 2 tools max') : '';
-        }
-      } else {
-        chk.disabled = false;
-        if (chk.parentElement) {
-          chk.parentElement.style.opacity = '1';
-          chk.parentElement.style.cursor = 'pointer';
-          chk.parentElement.title = '';
-        }
-      }
-    });
-
-    // 2. Skill Checkboxes Limit (Max 2 for free)
-    const skillCheckboxes = Array.from(document.querySelectorAll('input[name="agentSkill"]'));
-    const checkedSkills = skillCheckboxes.filter(chk => chk.checked);
-    const skillsMaxReached = checkedSkills.length >= 2;
-
-    skillCheckboxes.forEach(chk => {
-      if (!chk.checked) {
-        chk.disabled = skillsMaxReached;
-        if (chk.parentElement) {
-          chk.parentElement.style.opacity = skillsMaxReached ? '0.45' : '1';
-          chk.parentElement.style.cursor = skillsMaxReached ? 'not-allowed' : 'pointer';
-          chk.parentElement.title = skillsMaxReached ? (currentLanguage === 'ar' ? 'الحد الأقصى في الباقة المجانية: مهارتان فقط' : 'Free plan limit: 2 skills max') : '';
+          chk.parentElement.title = toolsMaxReached ? (currentLanguage === 'ar' ? 'الحد الأقصى في الباقة المجانية: 3 أدوات فقط وجميع المهارات متاحة' : 'Free plan limit: 3 tools max, all skills included') : '';
         }
       } else {
         chk.disabled = false;
@@ -3680,7 +3758,7 @@
 
       // Tools population
       const tools = bot.agentTools || {};
-      const hasExplicitTools = Boolean(tools.bookingTool || tools.orderTrackingTool || tools.whatsappNotificationTool || tools.telegramNotificationTool);
+      const hasExplicitTools = Boolean(tools.bookingTool || tools.orderTrackingTool || tools.whatsappNotificationTool || tools.telegramNotificationTool || tools.salesRecoveryTool || tools.dailyDigestTool || tools.salesUpsellTool || tools.messageClassificationTool);
 
       const toolBooking = document.getElementById('agentToolBooking');
       const toolOrders = document.getElementById('agentToolOrders');
@@ -3727,17 +3805,17 @@
       const discountEl = document.getElementById('agentMaxDiscount');
       if (discountEl) discountEl.value = String(tools.salesUpsellTool?.maxDiscountPercent || 0);
 
-      // Skills checkboxes population
+      // Skills checkboxes population (all skills available on every plan)
       const rawSkills = Array.isArray(bot.agentSkills) && bot.agentSkills.length > 0
         ? bot.agentSkills.map(s => typeof s === 'string' ? s : s?.skillKey).filter(Boolean)
-        : (isFree ? ['sales_consultant', 'appointment_scheduler'] : ['sales_consultant', 'appointment_scheduler', 'order_manager', 'support_specialist', 'winback_agent']);
+        : ['sales_consultant', 'appointment_scheduler', 'order_manager', 'support_specialist', 'winback_agent'];
 
-      const allowedSkills = (isFree && rawSkills.length > 2) ? rawSkills.slice(0, 2) : rawSkills;
+      const allowedSkills = rawSkills;
       document.querySelectorAll('input[name="agentSkill"]').forEach(chk => {
         chk.checked = allowedSkills.includes(chk.value);
       });
     } else {
-      // Default for new agent
+      // Default for new agent: free gets 3 tools (booking + orders + recovery), all skills
       const toolBooking = document.getElementById('agentToolBooking');
       if (toolBooking) toolBooking.checked = true;
       const toolOrders = document.getElementById('agentToolOrders');
@@ -3755,21 +3833,21 @@
       if (msgEl) msgEl.value = '';
 
       const toolDigest = document.getElementById('agentToolDailyDigest');
-      if (toolDigest) toolDigest.checked = true;
+      if (toolDigest) toolDigest.checked = !isFree;
       const channelEl = document.getElementById('agentDailyDigestChannel');
       if (channelEl) channelEl.value = 'all';
       const timeEl = document.getElementById('agentDailyDigestTime');
       if (timeEl) timeEl.value = '21:00';
 
       const toolUpsell = document.getElementById('agentToolSalesUpsell');
-      if (toolUpsell) toolUpsell.checked = true;
+      if (toolUpsell) toolUpsell.checked = !isFree;
       const toneEl = document.getElementById('agentSalesTone');
       if (toneEl) toneEl.value = 'consultative';
       const discountEl = document.getElementById('agentMaxDiscount');
       if (discountEl) discountEl.value = '0';
 
-      document.querySelectorAll('input[name="agentSkill"]').forEach((chk, idx) => {
-        chk.checked = isFree ? (idx < 2) : true;
+      document.querySelectorAll('input[name="agentSkill"]').forEach((chk) => {
+        chk.checked = true;
       });
     }
 
@@ -4171,6 +4249,7 @@
     { id: 'adminTabOverviewBtn', sectionId: 'adminSectionOverview', onLoad: loadAdminOverview },
     { id: 'adminTabAuditBtn', sectionId: 'adminSectionAudit', onLoad: () => { loadAdminSessions(); loadAdminAudit(); } },
     { id: 'adminTabNotifyBtn', sectionId: 'adminSectionNotify', onLoad: null },
+    { id: 'adminTabSubsBtn', sectionId: 'adminSectionSubs', onLoad: loadAdminSubs },
     { id: 'adminTabLandingDemoBtn', sectionId: 'adminSectionLandingDemo', onLoad: loadAdminLandingDemo },
   ].map((entry) => ({ ...entry, button: document.getElementById(entry.id), section: document.getElementById(entry.sectionId) }))
     .filter((entry) => entry.button && entry.section);
@@ -6768,6 +6847,170 @@
   // Expose minimal hooks for settings-summary module
   window.switchTab = switchTab;
   window.__zainbotSettingsHooks = true;
+  // ===== Manual subscriptions (Instapay / cash wallet + WhatsApp) =====
+  let selectedPlanTier = 'growth_1k';
+  try {
+    const pendingPlan = localStorage.getItem('zainbot_pending_plan');
+    if (pendingPlan) selectedPlanTier = pendingPlan;
+  } catch (e) {}
+
+  function paintSelectedPlan() {
+    document.querySelectorAll('.plan-pick').forEach(function (btn) {
+      const active = btn.getAttribute('data-tier') === selectedPlanTier;
+      btn.style.borderColor = active ? 'var(--orange)' : 'var(--glass-border)';
+      btn.style.background = active ? 'rgba(255,150,50,0.15)' : '';
+    });
+    const badge = document.getElementById('currentPlanBadge');
+    if (badge && currentUser) {
+      const tier = currentUser.subscriptionTier || 'free';
+      badge.textContent = tier === 'free'
+        ? (translations[currentLanguage]?.subscription_current_free || 'Free plan')
+        : tier;
+    }
+  }
+
+  document.querySelectorAll('.plan-pick').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      selectedPlanTier = btn.getAttribute('data-tier') || 'growth_1k';
+      try { localStorage.setItem('zainbot_pending_plan', selectedPlanTier); } catch (e) {}
+      paintSelectedPlan();
+    });
+  });
+
+  async function refreshSubscriptionMeta() {
+    try {
+      const res = await fetch('/api/config');
+      const cfg = res.ok ? await res.json() : {};
+      const num = String(cfg.subscribeWhatsapp || '').replace(/\D/g, '');
+      const link = document.getElementById('subscriptionWhatsappLink');
+      if (link) {
+        const msg = 'Hello ZainBot, I want to subscribe to ' + selectedPlanTier + '. I paid and here is my receipt: ';
+        link.href = (num ? 'https://wa.me/' + num : 'https://wa.me/') + '?text=' + encodeURIComponent(msg);
+      }
+    } catch (e) {}
+    paintSelectedPlan();
+  }
+
+  async function loadMySubscriptionRequests() {
+    const body = document.getElementById('mySubscriptionRequestsBody');
+    if (!body) return;
+    try {
+      const res = await apiFetch('/api/subscriptions/mine');
+      const rows = (res && res.data) || [];
+      body.replaceChildren();
+      if (!rows.length) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 5;
+        td.style.cssText = 'padding:14px; text-align:center; color:var(--text-muted);';
+        td.textContent = currentLanguage === 'ar' ? 'لا توجد طلبات بعد.' : 'No requests yet.';
+        tr.appendChild(td);
+        body.appendChild(tr);
+        return;
+      }
+      rows.forEach(function (r) {
+        const tr = document.createElement('tr');
+        [r.tier, r.billingPeriod, r.paymentMethod, r.status, new Date(r.createdAt).toLocaleString()].forEach(function (v) {
+          const td = document.createElement('td');
+          td.style.padding = '10px';
+          td.textContent = String(v || '—');
+          tr.appendChild(td);
+        });
+        body.appendChild(tr);
+      });
+    } catch (e) {}
+  }
+
+  document.getElementById('subscriptionRequestForm')?.addEventListener('submit', async function (ev) {
+    ev.preventDefault();
+    if (selectedPlanTier === 'free') {
+      alert(currentLanguage === 'ar' ? 'أنت بالفعل على الباقة المجانية.' : 'You are already on the free plan.');
+      return;
+    }
+    const payload = {
+      tier: selectedPlanTier,
+      billingPeriod: document.getElementById('subBillingPeriod')?.value || 'monthly',
+      paymentMethod: document.getElementById('subPaymentMethod')?.value || 'instapay',
+      paymentReference: document.getElementById('subPaymentReference')?.value || '',
+    };
+    const res = await apiFetch('/api/subscriptions/request', { method: 'POST', body: JSON.stringify(payload) });
+    if (res && res.success) {
+      alert(currentLanguage === 'ar' ? 'تم إرسال طلبك بنجاح. تواصل واتساب بصورة التحويل للتفعيل.' : 'Request sent. Contact us on WhatsApp with your receipt to activate.');
+      document.getElementById('subPaymentReference').value = '';
+      loadMySubscriptionRequests();
+    } else {
+      alert((res && (res.message || res.error)) || (currentLanguage === 'ar' ? 'تعذر إرسال الطلب' : 'Could not submit request'));
+    }
+  });
+
+  async function loadAdminSubs() {
+    const body = document.getElementById('adminSubsTableBody');
+    if (!body) return;
+    const status = document.getElementById('adminSubsStatusFilter')?.value || '';
+    try {
+      const res = await apiFetch('/api/subscriptions/requests' + (status ? '?status=' + encodeURIComponent(status) : ''));
+      const rows = (res && res.data) || [];
+      body.replaceChildren();
+      if (!rows.length) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 6;
+        td.style.cssText = 'padding:20px; text-align:center; color:var(--text-muted);';
+        td.textContent = currentLanguage === 'ar' ? 'لا توجد طلبات.' : 'No requests.';
+        tr.appendChild(td);
+        body.appendChild(tr);
+        return;
+      }
+      rows.forEach(function (r) {
+        const tr = document.createElement('tr');
+        const user = r.userId && typeof r.userId === 'object' ? (r.userId.username + ' / ' + r.userId.email) : String(r.userId);
+        const cells = [user, r.tier, r.billingPeriod, r.paymentMethod + (r.paymentReference ? ' • ' + r.paymentReference : ''), r.status];
+        cells.forEach(function (v) {
+          const td = document.createElement('td');
+          td.style.padding = '10px';
+          td.textContent = String(v || '—');
+          tr.appendChild(td);
+        });
+        const actions = document.createElement('td');
+        actions.style.padding = '10px';
+        if (r.status === 'pending') {
+          const ok = document.createElement('button');
+          ok.className = 'btn btn-primary btn-sm';
+          ok.textContent = currentLanguage === 'ar' ? 'اعتماد وتفعيل' : 'Approve';
+          ok.addEventListener('click', async function () {
+            const resp = await apiFetch('/api/subscriptions/requests/' + r._id, { method: 'PUT', body: JSON.stringify({ action: 'approve' }) });
+            if (resp && resp.success) loadAdminSubs();
+            else alert((resp && resp.message) || 'Error');
+          });
+          const no = document.createElement('button');
+          no.className = 'btn btn-secondary btn-sm';
+          no.style.marginInlineStart = '6px';
+          no.textContent = currentLanguage === 'ar' ? 'رفض' : 'Reject';
+          no.addEventListener('click', async function () {
+            const resp = await apiFetch('/api/subscriptions/requests/' + r._id, { method: 'PUT', body: JSON.stringify({ action: 'reject' }) });
+            if (resp && resp.success) loadAdminSubs();
+            else alert((resp && resp.message) || 'Error');
+          });
+          actions.append(ok, no);
+        } else {
+          actions.textContent = '—';
+        }
+        tr.appendChild(actions);
+        body.appendChild(tr);
+      });
+    } catch (e) {}
+  }
+
+  document.getElementById('adminSubsRefreshBtn')?.addEventListener('click', loadAdminSubs);
+  document.getElementById('adminSubsStatusFilter')?.addEventListener('change', loadAdminSubs);
+
+  const _origCheckAuthAndLoad = checkAuthAndLoad;
+  checkAuthAndLoad = async function () {
+    await _origCheckAuthAndLoad();
+    paintSelectedPlan();
+    refreshSubscriptionMeta();
+    loadMySubscriptionRequests();
+  };
 
   // Initialize and Boot System
   initIdeaCouncil();

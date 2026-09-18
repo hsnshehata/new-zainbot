@@ -1725,6 +1725,66 @@
           <h2 data-i18n="settings_billing_title" style="margin-bottom:8px;">Settings & Developer Integrations</h2>
           <p style="color:var(--text-muted); font-size:14px; margin-bottom:24px;" data-i18n="settings_intro_desc">All agent and workspace controls in one place, organized into ordered sections: Agent Instructions → Agent Capabilities → Notifications → AI Model → Developer Integrations → Account.</p>
 
+          <!-- ===== Section 0: Subscription & Manual Activation ===== -->
+          <div class="glass-card settings-section" style="margin-bottom:24px; border-right:3px solid var(--orange);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+              <div>
+                <h3 data-i18n="subscription_title"><i class="fas fa-crown" style="color:var(--orange);"></i> Subscription & Upgrade</h3>
+                <p style="font-size:12px; color:var(--text-muted); margin-top:4px;" data-i18n="subscription_desc">Monthly subscriptions with manual activation. Pay with Instapay or cash wallet, then contact the owner on WhatsApp.</p>
+              </div>
+              <span class="badge badge-warning" id="currentPlanBadge" data-i18n="subscription_current_free">Free plan</span>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin-bottom:16px;" id="plansGrid">
+              <button type="button" class="btn btn-secondary btn-sm plan-pick" data-tier="free" data-i18n="subscription_plan_free">Free • 0</button>
+              <button type="button" class="btn btn-secondary btn-sm plan-pick" data-tier="growth_1k" data-i18n="subscription_plan_growth1">Growth Starter • 199</button>
+              <button type="button" class="btn btn-secondary btn-sm plan-pick" data-tier="growth_10k" data-i18n="subscription_plan_growth2">Growth Plus • 499</button>
+              <button type="button" class="btn btn-secondary btn-sm plan-pick" data-tier="growth_50k" data-i18n="subscription_plan_growth3">Growth Pro • 999</button>
+              <button type="button" class="btn btn-secondary btn-sm plan-pick" data-tier="unlimited" data-i18n="subscription_plan_enterprise">Enterprise • 4999</button>
+            </div>
+            <form id="subscriptionRequestForm" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; align-items:end;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label data-i18n="subscription_label_period">Billing period</label>
+                <select id="subBillingPeriod" class="form-control">
+                  <option value="monthly" data-i18n="subscription_monthly">Monthly</option>
+                  <option value="yearly" data-i18n="subscription_yearly">Yearly (save 2 months)</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label data-i18n="subscription_label_method">Payment method</label>
+                <select id="subPaymentMethod" class="form-control">
+                  <option value="instapay" data-i18n="pay_instapay">Instapay</option>
+                  <option value="vodafone_cash" data-i18n="pay_vodafone">Vodafone Cash</option>
+                  <option value="orange_money" data-i18n="pay_orange">Orange Money</option>
+                  <option value="etisalat_cash" data-i18n="pay_etisalat">Etisalat Cash</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label data-i18n="subscription_label_reference">Payment reference / receipt</label>
+                <input id="subPaymentReference" class="form-control" data-i18n-placeholder="subscription_reference_placeholder" placeholder="Transaction ID or sender number" />
+              </div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button type="submit" class="btn btn-primary btn-sm" data-i18n="subscription_btn_request">Submit activation request</button>
+                <a id="subscriptionWhatsappLink" href="#" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" data-i18n="subscription_btn_whatsapp">Contact on WhatsApp</a>
+              </div>
+            </form>
+            <p style="font-size:12px; color:var(--text-muted); margin-top:10px;" data-i18n="subscription_payment_hint">We accept: Instapay • Vodafone Cash • Orange Money • Etisalat Cash. Activation is manual within hours after receipt review.</p>
+            <div class="custom-table-container" style="margin-top:12px;">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th data-i18n="th_sub_tier">Plan</th>
+                    <th data-i18n="th_sub_period">Period</th>
+                    <th data-i18n="th_sub_method">Method</th>
+                    <th data-i18n="th_sub_status">Status</th>
+                    <th data-i18n="th_sub_date">Date</th>
+                  </tr>
+                </thead>
+                <tbody id="mySubscriptionRequestsBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <!-- ===== Section 1: Agent Instructions & Personality ===== -->
           <div class="glass-card settings-section" id="settingsSectionInstructions" style="margin-bottom:24px; border-right:3px solid var(--cyan);">
             <div class="settings-section-head">
@@ -1923,6 +1983,7 @@
             <button id="adminTabOverviewBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-chart-line"></i> <span data-i18n="admin_subtab_overview">System Overview</span></button>
             <button id="adminTabAuditBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-clipboard-list"></i> <span data-i18n="admin_subtab_audit">Audit & Sessions</span></button>
             <button id="adminTabNotifyBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-bullhorn"></i> <span data-i18n="admin_subtab_notify">Notifications</span></button>
+            <button id="adminTabSubsBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-crown"></i> <span data-i18n="admin_subtab_subs">Subscriptions</span></button>
             <button id="adminTabLandingDemoBtn" class="btn btn-secondary btn-sm admin-subtab-btn" style="color:var(--text); border-color:var(--glass-border); font-weight:600;"><i class="fas fa-robot"></i> <span data-i18n="admin_subtab_landing_demo">Landing Demo Bot</span></button>
           </div>
 
@@ -2153,6 +2214,40 @@
                 <button type="submit" class="btn btn-primary btn-sm" style="background:var(--orange); color:#000; border-color:var(--orange);" data-i18n="notify_send_btn">Send notification</button>
                 <span id="notifyResultMsg" style="margin-inline-start:12px; font-size:13px;"></span>
               </form>
+            </div>
+          </div>
+
+          <!-- Section: Subscription requests (manual activation) -->
+          <div id="adminSectionSubs" class="admin-subtab-content" style="display:none;">
+            <div class="glass-card">
+              <h3 style="font-size:18px; font-weight:700; margin-bottom:6px;"><i class="fas fa-crown" style="color:var(--orange);"></i> <span data-i18n="admin_subs_title">Subscription Requests</span></h3>
+              <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;" data-i18n="admin_subs_desc">Review manual payments (Instapay / cash wallet) and approve to activate the plan.</p>
+              <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+                <select id="adminSubsStatusFilter" class="form-control" style="max-width:200px;">
+                  <option value="" data-i18n="admin_subs_all">All statuses</option>
+                  <option value="pending" data-i18n="admin_subs_pending">Pending</option>
+                  <option value="approved" data-i18n="admin_subs_approved">Approved</option>
+                  <option value="rejected" data-i18n="admin_subs_rejected">Rejected</option>
+                </select>
+                <button id="adminSubsRefreshBtn" class="btn btn-secondary btn-sm" type="button" data-i18n="admin_subs_refresh">Refresh</button>
+              </div>
+              <div style="overflow-x:auto;">
+                <table class="db-table" style="width:100%; border-collapse:collapse;">
+                  <thead>
+                    <tr style="border-bottom:2px solid var(--glass-border); font-size:13px; color:var(--text-muted);">
+                      <th style="padding:10px;" data-i18n="th_sub_user">User</th>
+                      <th style="padding:10px;" data-i18n="th_sub_tier">Plan</th>
+                      <th style="padding:10px;" data-i18n="th_sub_period">Period</th>
+                      <th style="padding:10px;" data-i18n="th_sub_method">Method</th>
+                      <th style="padding:10px;" data-i18n="th_sub_status">Status</th>
+                      <th style="padding:10px;" data-i18n="th_sub_actions">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminSubsTableBody">
+                    <tr><td colspan="6" style="padding:20px; text-align:center; color:var(--text-muted);" data-i18n="admin_subs_loading">Loading requests...</td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 

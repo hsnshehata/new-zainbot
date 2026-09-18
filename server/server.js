@@ -350,10 +350,19 @@ const authenticatedPaths = [
 ];
 app.use(authenticatedPaths, authenticate, accountLimiter);
 
-// Route لجلب GOOGLE_CLIENT_ID
+// Route لجلب GOOGLE_CLIENT_ID + public subscription info (no secrets)
 app.get('/api/config', (req, res) => {
+  let plans = {};
+  try {
+    // eslint-disable-next-line global-require
+    const { PLANS } = require('./config/plans');
+    plans = Object.fromEntries(Object.values(PLANS).map((p) => [p.tier, { monthlyEGP: p.monthlyEGP, yearlyEGP: p.yearlyEGP, agents: p.agents === Infinity ? -1 : p.agents }]));
+  } catch (e) { plans = {}; }
   res.json({
-    googleClientId: process.env.GOOGLE_CLIENT_ID
+    googleClientId: process.env.GOOGLE_CLIENT_ID,
+    subscribeWhatsapp: process.env.SUBSCRIPTION_WHATSAPP_NUMBER || '',
+    paymentMethods: ['instapay', 'vodafone_cash', 'orange_money', 'etisalat_cash'],
+    plans,
   });
 });
 
@@ -396,6 +405,7 @@ app.use('/api/chat-customers', chatCustomersRoutes);
 app.use('/api/bookings', bookingsRoutes);
 app.use('/api/telegram', telegramRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/subscriptions', require('./routes/subscriptions'));
 app.use('/api/integrations', integrationsRoutes);
 app.use('/api/admin/keys', adminKeysRoutes);
 app.use('/api/admin/system', require('./routes/adminSystem'));

@@ -1,81 +1,60 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const {
+  validateToolsAndSkillsLimits,
+  countActiveTools,
+  normalizeSkills,
+} = require('../server/services/agentToolsSkillsLimits');
 
-function countActiveTools(agentTools) {
-  if (!agentTools || typeof agentTools !== 'object') return 0;
-  return Object.keys(agentTools).filter((k) => agentTools[k] && agentTools[k].enabled === true).length;
-}
-
-function validateToolsAndSkillsLimits(userTier, agentTools, agentSkills) {
-  const isFree = !userTier || userTier === 'free' || userTier.startsWith('free');
-  if (!isFree) return { allowed: true };
-
-  const activeTools = countActiveTools(agentTools);
-  if (activeTools > 2) {
-    return {
-      allowed: false,
-      error: 'FREE_PLAN_TOOLS_LIMIT',
-      message: 'تسمح الباقة المجانية بتفعيل أداتين فقط كحد أقصى للوكيل. يرجى الترقية لتفعيل أدوات غير محدودة.',
-    };
-  }
-
-  const activeSkillsCount = Array.isArray(agentSkills) ? agentSkills.length : 0;
-  if (activeSkillsCount > 2) {
-    return {
-      allowed: false,
-      error: 'FREE_PLAN_SKILLS_LIMIT',
-      message: 'تسمح الباقة المجانية باختيار مهارتين فقط كحد أقصى للوكيل. يرجى الترقية لفتح كافة المهارات.',
-    };
-  }
-
-  return { allowed: true };
-}
-
-test('Free Plan allows up to 2 active tools and 2 active skills', () => {
-  const tools = {
-    bookingTool: { enabled: true },
-    orderTrackingTool: { enabled: true },
-    whatsappNotificationTool: { enabled: false },
-    telegramNotificationTool: { enabled: false }
-  };
-  const skills = [
-    { skillKey: 'sales_consultant', enabled: true },
-    { skillKey: 'appointment_scheduler', enabled: true }
-  ];
-
-  const result = validateToolsAndSkillsLimits('free', tools, skills);
-  assert.equal(result.allowed, true);
-});
-
-test('Free Plan blocks more than 2 active tools', () => {
+test('Free Plan allows up to 3 active tools and unlimited skills', () => {
   const tools = {
     bookingTool: { enabled: true },
     orderTrackingTool: { enabled: true },
     whatsappNotificationTool: { enabled: true },
-    telegramNotificationTool: { enabled: false }
+    telegramNotificationTool: { enabled: false },
   };
   const skills = [
-    { skillKey: 'sales_consultant', enabled: true }
+    'sales_consultant',
+    'appointment_scheduler',
+    'order_manager',
+    'support_specialist',
+    'winback_agent',
   ];
+
+  const result = validateToolsAndSkillsLimits('free', tools, skills);
+  assert.equal(result.allowed, true);
+  assert.equal(countActiveTools(tools), 3);
+  assert.deepEqual(normalizeSkills(skills).length, 5);
+});
+
+test('Free Plan blocks more than 3 active tools', () => {
+  const tools = {
+    bookingTool: { enabled: true },
+    orderTrackingTool: { enabled: true },
+    whatsappNotificationTool: { enabled: true },
+    telegramNotificationTool: { enabled: true },
+  };
+  const skills = ['sales_consultant'];
 
   const result = validateToolsAndSkillsLimits('free', tools, skills);
   assert.equal(result.allowed, false);
   assert.equal(result.error, 'FREE_PLAN_TOOLS_LIMIT');
 });
 
-test('Free Plan blocks more than 2 active skills', () => {
+test('Free Plan allows all 5 skills (no skills cap)', () => {
   const tools = {
-    bookingTool: { enabled: true }
+    bookingTool: { enabled: true },
   };
   const skills = [
-    { skillKey: 'sales_consultant', enabled: true },
-    { skillKey: 'appointment_scheduler', enabled: true },
-    { skillKey: 'order_manager', enabled: true }
+    'sales_consultant',
+    'appointment_scheduler',
+    'order_manager',
+    'support_specialist',
+    'winback_agent',
   ];
 
   const result = validateToolsAndSkillsLimits('free', tools, skills);
-  assert.equal(result.allowed, false);
-  assert.equal(result.error, 'FREE_PLAN_SKILLS_LIMIT');
+  assert.equal(result.allowed, true);
 });
 
 test('Paid Plans (Growth / Enterprise) allow unlimited tools and skills', () => {
@@ -84,19 +63,21 @@ test('Paid Plans (Growth / Enterprise) allow unlimited tools and skills', () => 
     orderTrackingTool: { enabled: true },
     whatsappNotificationTool: { enabled: true },
     telegramNotificationTool: { enabled: true },
-    messageClassificationTool: { enabled: true }
+    messageClassificationTool: { enabled: true },
+    salesRecoveryTool: { enabled: true },
+    dailyDigestTool: { enabled: true },
+    salesUpsellTool: { enabled: true },
   };
   const skills = [
-    { skillKey: 'sales_consultant', enabled: true },
-    { skillKey: 'appointment_scheduler', enabled: true },
-    { skillKey: 'order_manager', enabled: true },
-    { skillKey: 'support_specialist', enabled: true },
-    { skillKey: 'winback_agent', enabled: true }
+    'sales_consultant',
+    'appointment_scheduler',
+    'order_manager',
+    'support_specialist',
+    'winback_agent',
   ];
 
-  const growthResult = validateToolsAndSkillsLimits('growth_1k', tools, skills);
-  assert.equal(growthResult.allowed, true);
-
-  const enterpriseResult = validateToolsAndSkillsLimits('unlimited', tools, skills);
-  assert.equal(enterpriseResult.allowed, true);
+  for (const tier of ['growth_1k', 'growth_10k', 'growth_50k', 'unlimited']) {
+    const result = validateToolsAndSkillsLimits(tier, tools, skills);
+    assert.equal(result.allowed, true, `tier ${tier} should allow unlimited`);
+  }
 });
