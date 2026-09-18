@@ -2,7 +2,7 @@
 // Canonical service worker. It must live at the site root so its default
 // scope is "/" and it can control every page.
 
-const CACHE_NAME = 'zain-ai-v0.0012'; // canonical asset consolidation release
+const CACHE_NAME = 'zain-ai-v0.0020-plans'; // pricing plans release (5 tiers + manual subs)
 // Pre-cache only real, actively-loaded app shell assets. addAll() is atomic:
 // one missing URL aborts the whole precache, so every entry must exist.
 const urlsToCache = [
