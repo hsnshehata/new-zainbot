@@ -6877,11 +6877,17 @@
     });
   });
 
+  function normalizeWhatsappNumber(raw) {
+    const digits = String(raw || '').replace(/\D/g, '');
+    if (/^0\d{10}$/.test(digits)) return '20' + digits.slice(1);
+    return digits;
+  }
+
   async function refreshSubscriptionMeta() {
     try {
       const res = await fetch('/api/config');
       const cfg = res.ok ? await res.json() : {};
-      const num = String(cfg.subscribeWhatsapp || '').replace(/\D/g, '');
+      const num = normalizeWhatsappNumber(cfg.subscribeWhatsapp || '');
       const link = document.getElementById('subscriptionWhatsappLink');
       if (link) {
         const msg = 'Hello ZainBot, I want to subscribe to ' + selectedPlanTier + '. I paid and here is my receipt: ';

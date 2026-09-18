@@ -947,11 +947,18 @@
     return 'Hello ZainBot, I want to subscribe to ' + label + ' (' + period + '). I paid via Instapay / cash wallet and here is my receipt: ';
   }
 
+  function normalizeWhatsappNumber(raw) {
+    var digits = String(raw || '').replace(/\D/g, '');
+    // Egyptian mobile like 01xxxxxxxxx -> 201xxxxxxxxx for wa.me links.
+    if (/^0\d{10}$/.test(digits)) digits = '20' + digits.slice(1);
+    return digits;
+  }
+
   var whatsappBtn = document.getElementById('subscribeWhatsappBtn');
   function refreshWhatsappBtn() {
     if (!whatsappBtn) return;
     // Number is injected via /api/config (no hard-coded PII in frontend).
-    var num = (window.ZAINBOT_SUBSCRIBE_WHATSAPP || '').replace(/\D/g, '');
+    var num = normalizeWhatsappNumber(window.ZAINBOT_SUBSCRIBE_WHATSAPP || '');
     var base = num ? 'https://wa.me/' + num : 'https://wa.me/';
     whatsappBtn.href = base + '?text=' + encodeURIComponent(buildSubscribeMessage('growth_1k'));
   }
