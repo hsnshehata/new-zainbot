@@ -5,7 +5,7 @@
   <!-- الصفحة الرئيسية -->
   <url>
     <loc>https://zainbot.com/</loc>
-    <lastmod>2026-02-15</lastmod>
+    <lastmod>2026-09-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <mobile:mobile />
@@ -14,7 +14,7 @@
   <!-- صفحة تسجيل الدخول -->
   <url>
     <loc>https://zainbot.com/login</loc>
-    <lastmod>2026-02-15</lastmod>
+    <lastmod>2026-09-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <mobile:mobile />
@@ -23,7 +23,7 @@
   <!-- صفحة التسجيل -->
   <url>
     <loc>https://zainbot.com/register</loc>
-    <lastmod>2026-02-15</lastmod>
+    <lastmod>2026-09-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <mobile:mobile />
@@ -32,7 +32,7 @@
   <!-- لوحة التحكم -->
   <url>
     <loc>https://zainbot.com/dashboard</loc>
-    <lastmod>2026-02-15</lastmod>
+    <lastmod>2026-09-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <mobile:mobile />
@@ -41,7 +41,7 @@
   <!-- صفحة الدردشة -->
   <url>
     <loc>https://zainbot.com/chat</loc>
-    <lastmod>2026-02-15</lastmod>
+    <lastmod>2026-09-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <mobile:mobile />

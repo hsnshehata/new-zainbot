@@ -5,29 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ZainBot — Turn every conversation into growth</title>
   <meta name="description" content="ZainBot helps businesses build intelligent customer-support chatbots that work across WhatsApp, Instagram, Messenger, websites, and online stores.">
+  <link rel="canonical" href="https://zainbot.com/">
+  <meta name="theme-color" content="#0A0F1D">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ZainBot AI">
+  <meta property="og:title" content="ZainBot — Turn every conversation into growth">
+  <meta property="og:description" content="AI agents that answer, sell, follow up, and learn from every customer conversation — across WhatsApp, Instagram, Messenger, your website, and online store.">
+  <meta property="og:url" content="https://zainbot.com/">
+  <meta property="og:image" content="https://zainbot.com/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ZainBot — Turn every conversation into growth">
+  <meta name="twitter:description" content="AI agents that answer, sell, follow up, and learn from every customer conversation.">
+  <meta name="twitter:image" content="https://zainbot.com/og-image.png">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="/images/logo-icon.svg">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="manifest" href="/manifest.json">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"SoftwareApplication","name":"ZainBot AI","applicationCategory":"BusinessApplication","operatingSystem":"Web","url":"https://zainbot.com/","offers":{"@type":"Offer","price":"0","priceCurrency":"EGP"},"description":"AI agents that answer, sell, follow up, and learn from every customer conversation."}
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Cairo:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=20260918-plans">
+  <link rel="stylesheet" href="style.css?v=20260926-fixes">
 </head>
 <body>
 
   <!-- ===== NAVBAR ===== -->
   <nav class="navbar" id="navbar" data-i18n-aria="aria_main_navigation" aria-label="Main navigation">
     <div class="nav-container">
-      <a href="#hero" class="logo" aria-label="ZainBot home">
+      <a href="#hero" class="logo" data-i18n-aria="aria_logo_home" aria-label="ZainBot home">
         <span class="logo-mark">
-          <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
-            <defs>
-              <linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#7c3aed"/>
-                <stop offset="50%" stop-color="#3b82f6"/>
-                <stop offset="100%" stop-color="#06b6d4"/>
-              </linearGradient>
-            </defs>
-            <path d="M6 7h20L6 25h20" fill="none" stroke="url(#logoGrad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+          <img src="/images/logo-icon.svg" width="30" height="30" alt="" aria-hidden="true">
         </span>
         <span class="logo-text">ZainBot<span class="logo-accent">AI</span></span>
       </a>
@@ -64,7 +74,7 @@
       <div class="hero-content">
         <a href="#features" class="pill" data-i18n="hero_pill">
           <span class="pill-dot"></span>
-          ZainBot 2.0 is now live
+          New workspace experience
           <i class="fas fa-arrow-right"></i>
         </a>
         <h1 data-i18n="hero_title">Your business deserves an <span class="gradient-text">AI team</span> that never sleeps.</h1>
@@ -157,7 +167,7 @@
       </div>
     </div>
     <div class="scroll-hint" aria-hidden="true">
-      <span>Scroll to explore</span>
+      <span data-i18n="scroll_hint">Scroll to explore</span>
       <div class="scroll-line"><span></span></div>
     </div>
   </section>
@@ -426,20 +436,20 @@
     </div>
     <div class="marquee" id="integrationMarquee">
       <div class="marquee-track">
-        <div class="integration-card"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span><span class="int-badge" data-i18n="int_connected">Connected</span></div>
-        <div class="integration-card"><i class="fa-brands fa-instagram"></i><span>Instagram</span><span class="int-badge" data-i18n="int_connected">Connected</span></div>
-        <div class="integration-card"><i class="fa-brands fa-facebook-messenger"></i><span>Messenger</span><span class="int-badge" data-i18n="int_connected">Connected</span></div>
-        <div class="integration-card"><i class="fa-brands fa-shopify"></i><span>Shopify</span><span class="int-badge int-available" data-i18n="int_available">Available</span></div>
-        <div class="integration-card"><i class="fas fa-bag-shopping"></i><span>WooCommerce</span><span class="int-badge int-available" data-i18n="int_available">Available</span></div>
-        <div class="integration-card"><i class="fa-brands fa-telegram"></i><span>Telegram</span><span class="int-badge int-available" data-i18n="int_available">Available</span></div>
-        <div class="integration-card"><i class="fas fa-globe"></i><span data-i18n="int_webchat">Website Chat</span><span class="int-badge" data-i18n="int_connected">Ready to connect</span></div>
         <div class="integration-card"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span><span class="int-badge" data-i18n="int_connected">Ready to connect</span></div>
         <div class="integration-card"><i class="fa-brands fa-instagram"></i><span>Instagram</span><span class="int-badge" data-i18n="int_connected">Ready to connect</span></div>
         <div class="integration-card"><i class="fa-brands fa-facebook-messenger"></i><span>Messenger</span><span class="int-badge" data-i18n="int_connected">Ready to connect</span></div>
+        <div class="integration-card"><i class="fa-brands fa-telegram"></i><span>Telegram</span><span class="int-badge" data-i18n="int_connected">Ready to connect</span></div>
+        <div class="integration-card"><i class="fas fa-globe"></i><span data-i18n="int_webchat">Website Chat</span><span class="int-badge" data-i18n="int_connected">Ready to connect</span></div>
         <div class="integration-card"><i class="fa-brands fa-shopify"></i><span>Shopify</span><span class="int-badge int-available" data-i18n="int_available">Available</span></div>
         <div class="integration-card"><i class="fas fa-bag-shopping"></i><span>WooCommerce</span><span class="int-badge int-available" data-i18n="int_available">Available</span></div>
-        <div class="integration-card"><i class="fa-brands fa-telegram"></i><span>Telegram</span><span class="int-badge int-available" data-i18n="int_available">Available</span></div>
-        <div class="integration-card"><i class="fas fa-globe"></i><span data-i18n="int_webchat">Website Chat</span><span class="int-badge" data-i18n="int_connected">Connected</span></div>
+        <div class="integration-card" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span><span class="int-badge" data-i18n="int_connected">Ready to connect</span></div>
+        <div class="integration-card" aria-hidden="true"><i class="fa-brands fa-instagram"></i><span>Instagram</span><span class="int-badge" data-i18n="int_connected">Ready to connect</span></div>
+        <div class="integration-card" aria-hidden="true"><i class="fa-brands fa-facebook-messenger"></i><span>Messenger</span><span class="int-badge" data-i18n="int_connected">Ready to connect</span></div>
+        <div class="integration-card" aria-hidden="true"><i class="fa-brands fa-telegram"></i><span>Telegram</span><span class="int-badge" data-i18n="int_connected">Ready to connect</span></div>
+        <div class="integration-card" aria-hidden="true"><i class="fas fa-globe"></i><span data-i18n="int_webchat">Website Chat</span><span class="int-badge" data-i18n="int_connected">Ready to connect</span></div>
+        <div class="integration-card" aria-hidden="true"><i class="fa-brands fa-shopify"></i><span>Shopify</span><span class="int-badge int-available" data-i18n="int_available">Available</span></div>
+        <div class="integration-card" aria-hidden="true"><i class="fas fa-bag-shopping"></i><span>WooCommerce</span><span class="int-badge int-available" data-i18n="int_available">Available</span></div>
       </div>
     </div>
   </section>
@@ -542,7 +552,7 @@
 
         <!-- GROWTH LEVEL 1 -->
         <div class="pricing-card pricing-popular" data-plan="growth_1k">
-          <div class="popular-badge" data-i18n="plan_growth_popular">Most popular</div>
+          <div class="popular-badge" data-i18n="plan_growth_popular">Recommended for growth</div>
           <div class="pricing-plan" data-i18n="plan_growth_title">Growth Starter</div>
           <div class="pricing-price">
             <span class="price" data-monthly="199" data-yearly="1990">199</span>
@@ -626,7 +636,7 @@
         <h3 data-i18n="pricing_payment_title">Manual activation — pay with Instapay or cash wallet</h3>
         <p data-i18n="pricing_payment_desc">Subscriptions are activated manually for now. Choose your plan, pay with Instapay or a cash wallet (Vodafone Cash / Orange / Etisalat), then contact the owner on WhatsApp with your payment receipt to activate within hours.</p>
         <div class="pricing-payment-actions">
-          <a href="#" id="subscribeWhatsappBtn" class="btn btn-primary" target="_blank" rel="noopener" data-i18n="pricing_payment_whatsapp">Contact on WhatsApp to subscribe</a>
+          <a href="#pricing" id="subscribeWhatsappBtn" class="btn btn-primary" target="_blank" rel="noopener" data-i18n="pricing_payment_whatsapp">Contact on WhatsApp to subscribe</a>
           <span class="pricing-payment-methods" data-i18n="pricing_payment_methods">We accept: Instapay • Vodafone Cash • Orange Money • Etisalat Cash</span>
         </div>
       </div>
@@ -652,20 +662,18 @@
     <div class="container">
       <div class="footer-top">
         <div class="footer-brand">
-          <a href="#hero" class="logo" aria-label="ZainBot home">
+          <a href="#hero" class="logo" data-i18n-aria="aria_logo_home" aria-label="ZainBot home">
             <span class="logo-mark">
-              <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
-                <path d="M6 7h20L6 25h20" fill="none" stroke="url(#logoGrad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
+              <img src="/images/logo-icon.svg" width="28" height="28" alt="" aria-hidden="true">
             </span>
             <span class="logo-text">ZainBot<span class="logo-accent">AI</span></span>
           </a>
           <p class="footer-desc" data-i18n="footer_desc">Turn every conversation into growth. Build intelligent AI agents that answer, sell, and learn — across every channel your customers use.</p>
           <div class="footer-social">
-            <a href="#" aria-label="Twitter / X"><i class="fa-brands fa-x-twitter"></i></a>
-            <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
-            <a href="#" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
-            <a href="#" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+            <a href="#" data-i18n-aria="aria_social_x" aria-label="X (Twitter)"><i class="fa-brands fa-x-twitter"></i></a>
+            <a href="#" data-i18n-aria="aria_social_linkedin" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+            <a href="#" data-i18n-aria="aria_social_github" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+            <a href="#" data-i18n-aria="aria_social_youtube" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
           </div>
         </div>
 
@@ -725,7 +733,7 @@
     <i class="fas fa-arrow-up"></i>
   </button>
 
-  <script src="js/script.js?v=20260918-plans"></script>
+  <script src="js/script.js?v=20260926-fixes"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

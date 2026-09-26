@@ -3,7 +3,6 @@
 
 User-agent: *
 Allow: /
-Allow: /api/config
 Allow: /store/
 Allow: /chat/
 Disallow: /admin/
@@ -12,10 +11,11 @@ Disallow: /uploads/temp/
 Disallow: /server/
 Disallow: /node_modules/
 Disallow: /wazainbot/
+Allow: /.well-known/assetlinks.json
 Disallow: /*.json$
 
 # تحديد موقع خريطة الموقع
-Sitemap: https://zaináitro.com/sitemap.xml
+Sitemap: https://zainbot.com/sitemap.xml
 
 # تحديد معدل الزحف
 Crawl-delay: 1

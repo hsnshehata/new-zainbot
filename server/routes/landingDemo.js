@@ -59,7 +59,7 @@ function buildPlatformKnowledge() {
     '- Human handoff: the agent can pause auto-replies and hand the conversation to a human when the customer asks or when handoff keywords are matched.',
     '- Analytics: conversations, messages handled, connected channels, training rules, orders, and usage dashboards.',
     '- Reliability: bring-your-own API keys (BYOK) with provider/model choice (OpenAI, Gemini, Anthropic, OpenRouter, custom endpoints) plus platform-managed backup keys with automatic failover.',
-    '- Plans (EGP/month): Free = 0 EGP, 1 agent, 25 messages/day (250/month), up to 3 channels, BYOK, basic analytics. Growth = 199 EGP, up to 5 agents, 1,000+ monthly messages, backup key failover, all channels, advanced catalog training, priority support. Enterprise/Scale = 999 EGP, unlimited agents, high-volume capacity, full API and webhook integrations, custom model fine-tuning, dedicated account manager, white-label options and 99.9% uptime SLA.',
+    '- Plans (EGP/month): Free = 0 EGP (1 agent, 25 messages/day / 250 monthly, up to 3 tools, basic analytics). Growth: Starter 199 EGP (5 agents, 1,000 monthly messages), Plus 499 EGP (15 agents, 10,000 monthly), Pro 999 EGP (50 agents, 50,000 monthly) — all with unlimited tools/skills, multi-channel alerts, backup key failover, priority support. Enterprise/Scale = 4999 EGP (unlimited agents, high-volume capacity, full API/webhooks, dedicated manager, white-label, 99.9% SLA).',
     '- Getting started is free at /register and does not require a credit card. Existing users sign in at /login.',
   ].join('\n');
 }

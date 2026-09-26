@@ -250,7 +250,11 @@ app.use((req, res, next) => {
   }
   else if (req.path.match(/\.(css|js|woff|woff2|ttf)$/i)) {
     // DEV MODE: Disable caching to ensure updates are seen immediately
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    if (process.env.NODE_ENV === 'production') {
+      res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+    } else {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
   }
   // إضافة headers لتحسين الأداء والأمان
   res.setHeader('X-Content-Type-Options', 'nosniff');

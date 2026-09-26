@@ -67,7 +67,7 @@ html {
   background: transparent;
 }
 body {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Inter', 'Outfit', system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
@@ -93,6 +93,14 @@ ul { list-style: none; }
 img, svg { display: block; max-width: 100%; }
 button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
 input { font-family: inherit; }
+
+/* ===== ARABIC (RTL) TYPOGRAPHY — Cairo per BRAND_IDENTITY_GUIDE.md ===== */
+html[lang="ar"] body { font-family: 'Cairo', 'Inter', system-ui, sans-serif; }
+html[lang="ar"] .logo,
+html[lang="ar"] .pricing-plan,
+html[lang="ar"] h1,
+html[lang="ar"] h2,
+html[lang="ar"] h3 { font-family: 'Cairo', 'Outfit', sans-serif; }
 
 /* ===== UTILITIES ===== */
 .container { max-width: var(--container); margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
@@ -184,7 +192,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'Outfit', 'Space Grotesk', sans-serif;
   font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.5px;
@@ -1614,7 +1622,7 @@ html[dir="rtl"] .testimonial-card::before {
 .pricing-plan {
   font-size: 18px;
   font-weight: 600;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'Outfit', 'Space Grotesk', sans-serif;
   margin-bottom: 8px;
 }
 .pricing-price {

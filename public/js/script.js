@@ -88,113 +88,6 @@
     });
   }
 
-  /* ===== ANIMATED COUNTERS ===== */
-  const counters = document.querySelectorAll('.metric-value');
-  let countersAnimated = false;
-
-  function animateCounter(el) {
-    if (!el.dataset.target) return;
-    const target = parseFloat(el.dataset.target);
-    if (isNaN(target)) return;
-    const suffix = el.dataset.suffix || '';
-    const duration = 2000;
-    const startTime = performance.now();
-    const isDecimal = target % 1 !== 0;
-
-    function update(currentTime) {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const current = target * eased;
-
-      if (isDecimal) {
-        el.textContent = current.toFixed(1) + suffix;
-      } else {
-        el.textContent = Math.floor(current) + suffix;
-      }
-
-      if (progress < 1) {
-        requestAnimationFrame(update);
-      } else {
-        el.textContent = target + suffix;
-      }
-    }
-
-    if (prefersReducedMotion) {
-      el.textContent = target + suffix;
-    } else {
-      requestAnimationFrame(update);
-    }
-  }
-
-  const counterObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting && !countersAnimated) {
-        countersAnimated = true;
-        counters.forEach(animateCounter);
-        counterObserver.disconnect();
-      }
-    });
-  }, { threshold: 0.3 });
-
-  if (counters.length) counterObserver.observe(counters[0].closest('.metrics'));
-
-  /* ===== TESTIMONIAL CAROUSEL ===== */
-  const track = document.getElementById('testimonialTrack');
-  const slides = track ? track.children : [];
-  const dotsContainer = document.getElementById('testimonialDots');
-  const prevBtn = document.getElementById('testPrev');
-  const nextBtn = document.getElementById('testNext');
-  let currentSlide = 0;
-  let autoplayInterval = null;
-  const AUTOPLAY_DELAY = 5000;
-
-  if (track && slides.length) {
-    // Create dots
-    for (let i = 0; i < slides.length; i++) {
-      const dot = document.createElement('button');
-      dot.className = 'testimonial-dot' + (i === 0 ? ' active' : '');
-      dot.setAttribute('role', 'tab');
-      dot.setAttribute('aria-label', `Go to testimonial ${i + 1}`);
-      dot.addEventListener('click', () => goToSlide(i));
-      dotsContainer.appendChild(dot);
-    }
-
-    function goToSlide(index) {
-      currentSlide = (index + slides.length) % slides.length;
-      track.style.transform = `translateX(-${currentSlide * 100}%)`;
-      dotsContainer.querySelectorAll('.testimonial-dot').forEach((dot, i) => {
-        dot.classList.toggle('active', i === currentSlide);
-      });
-    }
-
-    function nextSlide() { goToSlide(currentSlide + 1); }
-    function prevSlide() { goToSlide(currentSlide - 1); }
-
-    nextBtn.addEventListener('click', () => { nextSlide(); resetAutoplay(); });
-    prevBtn.addEventListener('click', () => { prevSlide(); resetAutoplay(); });
-
-    function startAutoplay() {
-      if (prefersReducedMotion) return;
-      autoplayInterval = setInterval(nextSlide, AUTOPLAY_DELAY);
-    }
-    function stopAutoplay() { clearInterval(autoplayInterval); }
-    function resetAutoplay() { stopAutoplay(); startAutoplay(); }
-
-    const carousel = document.getElementById('testimonialCarousel');
-    carousel.addEventListener('mouseenter', stopAutoplay);
-    carousel.addEventListener('mouseleave', startAutoplay);
-
-    // Keyboard navigation
-    carousel.setAttribute('tabindex', '0');
-    carousel.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft') { prevSlide(); resetAutoplay(); }
-      if (e.key === 'ArrowRight') { nextSlide(); resetAutoplay(); }
-    });
-
-    startAutoplay();
-  }
-
   /* ===== AI CHAT DEMO ===== */
   const demoChatBody = document.getElementById('demoChatBody');
   const demoChatForm = document.getElementById('demoChatForm');
@@ -270,9 +163,53 @@
     }
   }
 
+  const aiResponsesAr = [
+    {
+      triggers: ['طلب', 'طلبي', 'تتبع', 'شحن', 'توصيل', 'فين طلب'],
+      response: 'أقدر أساعدك في متابعة الطلبات. في مساحة العمل المربوطة، الوكيل بيراجع البيانات المتاحة ويرشد العميل للخطوة الجاية.',
+      confidence: 97
+    },
+    {
+      triggers: ['سعر', 'أسعار', 'باقة', 'باقات', 'اشتراك', 'بكام', 'تكلفة'],
+      response: 'مساحة العمل بتبدأ بالخطة المجانية. الاستهلاك المتاح وأي مزايا مفعلة ظاهرين دايمًا من قايمة الحساب في لوحة التحكم.',
+      confidence: 95
+    },
+    {
+      triggers: ['احجز', 'حجز', 'موعد', 'ميعاد', 'مقابلة'],
+      response: 'أكيد! أقدر أساعدك في حجز موعد. 📅 المواعيد المتاحة:\n\n• الثلاثاء الساعة 2 ظهرًا\n• الأربعاء الساعة 11 صباحًا\n• الخميس الساعة 4 عصرًا\n\nأي ميعاد يناسبك؟',
+      confidence: 93
+    },
+    {
+      triggers: ['سلام', 'صباح', 'مساء', 'أهلا', 'اهلا', 'ازيك', 'مرحبا'],
+      response: 'أهلًا بيك! 👋 أنا مساعد زين بوت. أقدر أساعدك في الطلبات والأسعار والحجوزات وأسئلة المنتجات. تحب أساعدك في إيه النهاردة؟',
+      confidence: 99
+    },
+    {
+      triggers: ['استرجاع', 'مرتجع', 'إلغاء', 'الغاء', 'استرداد'],
+      response: 'فاهم إنك محتاج مساعدة في استرجاع أو إلغاء. مفيش مشكلة — الاسترجاع متاح خلال 30 يوم من الاستلام. تحب أبدألك طلب الاسترجاع؟ محتاج رقم الطلب بس. 🔄',
+      confidence: 91
+    },
+    {
+      triggers: ['شكرا', 'متشكر', 'ممتاز', 'جميل', 'رائع', 'تمام'],
+      response: 'العفو! 😊 في حاجة تانية أقدر أساعدك فيها؟ أنا موجود 24/7 في أي وقت تحتاجني.',
+      confidence: 98
+    }
+  ];
+
+  const defaultResponseAr = {
+    response: 'أنا هنا للمساعدة في الطلبات والأسعار والحجوزات وأسئلة المنتجات. ممكن توضحلي أكتر محتاج إيه؟ أو جرب واحد من الاقتراحات تحت. 😊',
+    confidence: 88
+  };
+
   function getAIResponse(message) {
     if (currentLang === 'ar') {
-      return { response: 'شكرًا لرسالتك. في المنصة الفعلية يستخدم الوكيل تعليماتك وبياناتك المتاحة لمساعدة العميل.', confidence: 0 };
+      const msg = message.trim();
+      for (const item of aiResponsesAr) {
+        if (item.triggers.some(trigger => msg.includes(trigger))) {
+          return item;
+        }
+      }
+      return defaultResponseAr;
     }
     const msg = message.toLowerCase().trim();
     for (const item of aiResponses) {
@@ -431,7 +368,7 @@
       nav_resources: 'Resources',
       nav_signin: 'Sign in',
       nav_start_free: 'Start free',
-      hero_pill: '<span class="pill-dot"></span>ZainBot 2.0 is now live <i class="fas fa-arrow-right"></i>',
+      hero_pill: '<span class="pill-dot"></span>New workspace experience <i class="fas fa-arrow-right"></i>',
       hero_title: 'Your business deserves an <span class="gradient-text">AI team</span> that never sleeps.',
       hero_subtitle: 'Deploy intelligent AI agents that answer, sell, follow up, and learn from every customer conversation — across WhatsApp, Instagram, Messenger, your website, and online store. All from one beautifully simple platform.',
       hero_btn_primary: 'Build your AI agent <i class="fas fa-arrow-right"></i>',
@@ -543,6 +480,13 @@
       pricing_billing_monthly: 'Monthly',
       pricing_billing_yearly: 'Yearly',
       pricing_billing_save: 'Save 2 months',
+      pricing_period_yearly: 'EGP/yr (save 2 mo)',
+      scroll_hint: 'Scroll to explore',
+      aria_logo_home: 'ZainBot home',
+      aria_social_x: 'X (Twitter)',
+      aria_social_linkedin: 'LinkedIn',
+      aria_social_github: 'GitHub',
+      aria_social_youtube: 'YouTube',
       plan_free_title: 'Free',
       plan_free_price: '0',
       plan_free_period: 'EGP/mo',
@@ -554,7 +498,7 @@
       plan_free_f5: '<i class="fas fa-check"></i> Basic analytics & order tracking',
       plan_free_f6: '<i class="fas fa-check"></i> 3 Idea Council evaluations / mo',
       plan_free_btn: 'Start free',
-      plan_growth_popular: 'Most popular',
+      plan_growth_popular: 'Recommended for growth',
       plan_growth_title: 'Growth Starter',
       plan_growth_price: '199',
       plan_growth_period: 'EGP/mo',
@@ -646,7 +590,7 @@
       nav_resources: 'المصادر',
       nav_signin: 'تسجيل الدخول',
       nav_start_free: 'ابدأ مجاناً',
-      hero_pill: '<span class="pill-dot"></span>زين بوت 2.0 متاح الآن <i class="fas fa-arrow-left"></i>',
+      hero_pill: '<span class="pill-dot"></span>تجربة مساحة عمل جديدة <i class="fas fa-arrow-left"></i>',
       hero_title: 'عملك يستحق <span class="gradient-text">فريق عمل ذكي</span> لا ينام أبداً.',
       hero_subtitle: 'قم بنشر عملاء أذكياء يجيبون، يبيعون، يتابعون، ويتعلمون من كل محادثة مع العميل — عبر واتساب، إنستجرام، مسنجر، موقعك الإلكتروني، ومتجرك الإلكتروني. كل ذلك من منصة واحدة بسيطة وجميلة.',
       hero_btn_primary: 'ابنِ عميلك الذكي <i class="fas fa-arrow-left"></i>',
@@ -758,6 +702,13 @@
       pricing_billing_monthly: 'شهري',
       pricing_billing_yearly: 'سنوي',
       pricing_billing_save: 'وفّر شهرين',
+      pricing_period_yearly: 'ج.م/سنوياً (وفّر شهرين)',
+      scroll_hint: 'مرر لاستكشاف المزيد',
+      aria_logo_home: 'الصفحة الرئيسية لزين بوت',
+      aria_social_x: 'إكس (تويتر)',
+      aria_social_linkedin: 'لينكدإن',
+      aria_social_github: 'جيت هب',
+      aria_social_youtube: 'يوتيوب',
       plan_free_title: 'المجانية',
       plan_free_price: '0',
       plan_free_period: 'ج.م/شهرياً',
@@ -769,7 +720,7 @@
       plan_free_f5: '<i class="fas fa-check"></i> لوحة تحكم وتحليلات وإدارة الطلبات',
       plan_free_f6: '<i class="fas fa-check"></i> 3 جلسات تقييم أفكار شهرياً (Idea Council)',
       plan_free_btn: 'ابدأ مجاناً',
-      plan_growth_popular: 'الأكثر طلباً',
+      plan_growth_popular: 'مقترح للنمو',
       plan_growth_title: 'النمو الأساسي',
       plan_growth_price: '199',
       plan_growth_period: 'ج.م/شهرياً',
@@ -887,6 +838,11 @@
       const key = el.getAttribute('data-i18n-aria');
       if (langTranslations[lang] && langTranslations[lang][key]) el.setAttribute('aria-label', langTranslations[lang][key]);
     });
+
+    // Keep billing-period labels and the WhatsApp subscribe message in sync
+    // with the active language (refreshPricing/readers use currentLang).
+    try { refreshPricing(); } catch (e) { /* defined below, hoisted */ }
+    try { refreshWhatsappBtn(); } catch (e) { /* defined below, hoisted */ }
   }
 
   if (langToggleBtn) {
@@ -908,9 +864,11 @@
     document.querySelectorAll('.pricing-card .price-period').forEach(function (el) {
       var key = el.getAttribute('data-i18n');
       if (!key) return;
-      // Yearly suffix handled via translation keys ending with period; append /yr hint
       if (currentBilling === 'yearly') {
-        el.textContent = currentLang === 'ar' ? 'ج.م/سنوياً (وفّر شهرين)' : 'EGP/yr (save 2 mo)';
+        var yearlyKey = 'pricing_period_yearly';
+        if (langTranslations[currentLang] && langTranslations[currentLang][yearlyKey]) {
+          el.innerHTML = langTranslations[currentLang][yearlyKey];
+        }
       } else if (langTranslations[currentLang] && langTranslations[currentLang][key]) {
         el.innerHTML = langTranslations[currentLang][key];
       }
@@ -931,10 +889,23 @@
         b.classList.toggle('active', b === btn);
       });
       refreshPricing();
+      try { refreshWhatsappBtn(); } catch (e) { /* ignore */ }
     });
   });
 
   function buildSubscribeMessage(plan) {
+    if (currentLang === 'ar') {
+      var labelsAr = {
+        free: 'المجانية (0 ج.م/شهرياً)',
+        growth_1k: 'النمو الأساسي (199 ج.م/شهرياً)',
+        growth_10k: 'النمو المتقدم (499 ج.م/شهرياً)',
+        growth_50k: 'النمو الاحترافي (999 ج.م/شهرياً)',
+        unlimited: 'الشركات (4999 ج.م/شهرياً)'
+      };
+      var labelAr = labelsAr[plan] || plan || 'اشتراك';
+      var periodAr = currentBilling === 'yearly' ? 'سنوي (وفّر شهرين)' : 'شهري';
+      return 'أهلًا زين بوت، عايز أشترك في باقة ' + labelAr + ' (' + periodAr + '). دفعت عبر انستاباي / محفظة كاش ودي صورة التحويل: ';
+    }
     var labels = {
       free: 'Free',
       growth_1k: 'Growth Starter (199 EGP/mo)',
@@ -959,8 +930,15 @@
     if (!whatsappBtn) return;
     // Number is injected via /api/config (no hard-coded PII in frontend).
     var num = normalizeWhatsappNumber(window.ZAINBOT_SUBSCRIBE_WHATSAPP || '');
-    var base = num ? 'https://wa.me/' + num : 'https://wa.me/';
-    whatsappBtn.href = base + '?text=' + encodeURIComponent(buildSubscribeMessage('growth_1k'));
+    if (!num) {
+      // No number configured yet: keep the user on the pricing section
+      // instead of a broken wa.me link without a recipient.
+      whatsappBtn.href = '#pricing';
+      whatsappBtn.removeAttribute('target');
+      return;
+    }
+    whatsappBtn.setAttribute('target', '_blank');
+    whatsappBtn.href = 'https://wa.me/' + num + '?text=' + encodeURIComponent(buildSubscribeMessage('growth_1k'));
   }
 
   document.querySelectorAll('.plan-cta').forEach(function (a) {
