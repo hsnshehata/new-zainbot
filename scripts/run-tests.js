@@ -5,12 +5,22 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 const testsDirectory = path.resolve(__dirname, '..', 'tests');
-const testFiles = fs.readdirSync(testsDirectory)
-  .filter((name) => name.endsWith('.test.js'))
-  .sort();
 
-for (const fileName of testFiles) {
-  const result = spawnSync(process.execPath, [path.join(testsDirectory, fileName)], {
+function collectTestFiles(directory) {
+  return fs.readdirSync(directory, { withFileTypes: true })
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .flatMap((entry) => {
+      const fullPath = path.join(directory, entry.name);
+      if (entry.isDirectory()) return collectTestFiles(fullPath);
+      if (entry.isFile() && entry.name.endsWith('.test.js')) return [fullPath];
+      return [];
+    });
+}
+
+const testFiles = collectTestFiles(testsDirectory);
+
+for (const filePath of testFiles) {
+  const result = spawnSync(process.execPath, [filePath], {
     stdio: 'inherit',
     env: {
       ...process.env,

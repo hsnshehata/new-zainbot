@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const isLoginPage = window.location.pathname === '/login' || window.location.pathname === '/login.html' || window.location.pathname === '/';
 
   if (token && isLoginPage) {
-    window.location.href = '/dashboard_new';
+          window.location.href = '/dashboard';
     return;
   }
 
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (data.success) {
         saveSession({ token: data.token, role: data.role, userId: data.userId, username: data.username });
-        window.location.href = '/dashboard_new';
+              window.location.href = '/dashboard';
       } else {
         errorDiv.style.display = 'block';
         errorDiv.textContent = data.message || loginText('google_failed');
@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (data.success) {
           saveSession({ token: data.token, role: data.role, userId: data.userId, username: data.username });
-          window.location.href = '/dashboard_new';
+                window.location.href = '/dashboard';
         } else {
           errorDiv.style.display = 'block';
           errorDiv.textContent = data.message || loginText('login_failed');

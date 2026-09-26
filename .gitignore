@@ -26,6 +26,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Legacy platform folder excluded from git
+# Local legacy-platform reference folder (developer machines only, never committed).
+# The folder name below is Arabic (legacy); keep the entry so a local copy can't leak into git.
 المنصة القديمة مش هنعدل فيها حاجة هنقتبص منها/
+*.pem
+*.key
+.npmrc
 

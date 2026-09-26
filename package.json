@@ -1,8 +1,11 @@
 {
-  "name": "ai-chat-controller",
+  "name": "zainbot",
   "version": "1.0.0",
-  "description": "AI Chat Controller with Bot Management for Facebook and WhatsApp",
+  "description": "ZainBot AI — open-source platform for AI sales & support agents across WhatsApp, Messenger, Instagram, Telegram, web chat, and online stores",
   "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
   "main": "server/server.js",
   "bin": "server/server.js",
   "scripts": {

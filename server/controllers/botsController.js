@@ -625,7 +625,9 @@ exports.exchangeInstagramCode = async (req, res) => {
     }
 
     // استخدام redirect_uri ثابت
-    const redirectUri = 'https://zain-ai-a06a.onrender.com/dashboard_new.html';
+    // Configurable for self-hosting; must match the URI registered in the Meta app.
+    const baseUrl = (process.env.BASE_URL || 'https://zainbot.com').replace(/\/$/, '');
+    const redirectUri = process.env.INSTAGRAM_REDIRECT_URI || `${baseUrl}/dashboard`;
     logger.info('instagram_exchange_redirect', { botId, redirectUri });
     logger.info('instagram_exchange_code', { botId });
 

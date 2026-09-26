@@ -2,7 +2,7 @@
 // Canonical service worker. It must live at the site root so its default
 // scope is "/" and it can control every page.
 
-const CACHE_NAME = 'zainbot-v0.0021-fixes'; // pricing plans release (5 tiers + manual subs) + fixes
+const CACHE_NAME = 'zainbot-v0.0022-cleanup'; // open-source cleanup: dead pages/assets removed
 // Pre-cache only real, actively-loaded app shell assets. addAll() is atomic:
 // one missing URL aborts the whole precache, so every entry must exist.
 const urlsToCache = [
@@ -13,7 +13,6 @@ const urlsToCache = [
   '/dashboard',
   '/style.css',
   '/css/common.css',
-  '/css/dashboard.css',
   '/css/login.css',
   '/js/utils.js',
   '/js/script.js',

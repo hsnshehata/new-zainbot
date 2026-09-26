@@ -16,4 +16,6 @@ uploads/*
 tests
 *.log
 npm-debug.log*
+# Local legacy-platform reference folder (developer machines only, never shipped in images).
+# The folder name below is Arabic (legacy); keep the entry so a local copy can't leak into the image.
 المنصة القديمة مش هنعدل فيها حاجة هنقتبص منها

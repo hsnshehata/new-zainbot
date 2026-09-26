@@ -605,19 +605,9 @@ app.get('/dashboard', (req, res) => {
 });
 
 app.get('/dashboard_new', (req, res) => {
-  try {
-    const filePath = path.join(__dirname, '../public/dashboard_new.html');
-    logger.info('serve_dashboard_new_page', { filePath });
-    res.sendFile(filePath, (err) => {
-      if (err) {
-        logger.error('serve_dashboard_new_error', { err: err.message, stack: err.stack });
-        res.status(500).json({ message: 'Failed to load dashboard page' });
-      }
-    });
-  } catch (err) {
-    logger.error('dashboard_new_route_error', { err: err.message, stack: err.stack });
-    res.status(500).json({ message: 'Something went wrong!' });
-  }
+  // Legacy alias: the dashboard lives at /dashboard now.
+  res.redirect(301, '/dashboard');
+});
 });
 
 app.get('/login', (req, res) => {
@@ -653,19 +643,8 @@ app.get('/register', (req, res) => {
 });
 
 app.get('/set-whatsapp', (req, res) => {
-  try {
-    const filePath = path.join(__dirname, '../public/set-whatsapp.html');
-    logger.info('serve_set_whatsapp_page', { filePath });
-    res.sendFile(filePath, (err) => {
-      if (err) {
-        logger.error('serve_set_whatsapp_error', { err: err.message, stack: err.stack });
-        res.status(500).json({ message: 'Failed to load set-whatsapp page' });
-      }
-    });
-  } catch (err) {
-    logger.error('set_whatsapp_route_error', { err: err.message, stack: err.stack });
-    res.status(500).json({ message: 'Something went wrong!' });
-  }
+  // Legacy page removed: WhatsApp linking now lives inside the dashboard.
+  res.redirect(301, '/dashboard');
 });
 
 app.get(['/chat', '/chat.html', '/chat/:linkId'], (req, res) => {
