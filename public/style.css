@@ -244,6 +244,19 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 .nav-signin:hover { color: var(--text); }
 .nav-mobile-actions { display: none; }
+.btn-lang {
+  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text);
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.btn-lang:hover { border-color: var(--glass-border-hover); }
 .hamburger {
   display: none;
   flex-direction: column;
@@ -1829,6 +1842,8 @@ html[dir="rtl"] .testimonial-card::before {
 
 @media (max-width: 768px) {
   .nav-links, .nav-actions { display: none; }
+  .nav-container { gap: 12px; }
+  .btn-lang { padding: 7px 10px; font-size: 13px; }
   .hamburger { display: flex; }
   .nav-links.mobile-open {
     display: flex;

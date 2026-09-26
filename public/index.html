@@ -28,7 +28,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Cairo:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=20260926-fixes">
+  <link rel="stylesheet" href="style.css?v=20260926-langbtn">
 </head>
 <body>
 
@@ -55,10 +55,11 @@
       </ul>
 
       <div class="nav-actions">
-        <button id="langToggle" class="btn-lang" data-i18n-aria="aria_toggle_language" aria-label="Toggle language" style="background:var(--surface); border:1px solid var(--glass-border); padding:8px 12px; border-radius:var(--radius-sm); font-size:14px; font-weight:600; cursor:pointer; color:var(--text); transition:var(--transition); margin-right:12px;">AR</button>
         <a href="/login" class="nav-signin" data-i18n="nav_signin">Sign in</a>
         <a href="/register" class="btn btn-primary btn-sm" data-i18n="nav_start_free">Start free</a>
       </div>
+
+      <button id="langToggle" class="btn-lang" data-i18n-aria="aria_toggle_language" aria-label="Toggle language">AR</button>
 
       <button class="hamburger" id="hamburger" data-i18n-aria="aria_toggle_menu" aria-label="Toggle menu" aria-expanded="false">
         <span></span><span></span><span></span>
@@ -733,7 +734,7 @@
     <i class="fas fa-arrow-up"></i>
   </button>
 
-  <script src="js/script.js?v=20260926-fixes"></script>
+  <script src="js/script.js?v=20260926-langbtn"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
