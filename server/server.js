@@ -608,7 +608,6 @@ app.get('/dashboard_new', (req, res) => {
   // Legacy alias: the dashboard lives at /dashboard now.
   res.redirect(301, '/dashboard');
 });
-});
 
 app.get('/login', (req, res) => {
   try {
