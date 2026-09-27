@@ -36,4 +36,6 @@ test('settings grids fit narrow phone screens', () => {
   assert.match(dashboardHtml, /id="subscriptionRequestForm"[^>]*minmax\(min\(160px,\s*100%\)/);
   // Plan buttons may wrap instead of forcing their track wider (root .btn is nowrap).
   assert.match(dashboardHtml, /\.plan-pick\s*\{[^}]*white-space:\s*normal/);
+  // Grid children must not force tracks wider via automatic minimum size.
+  assert.match(dashboardHtml, /#plansGrid\s*>\s*\*,[^}]*min-width:\s*0/);
 });
