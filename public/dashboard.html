@@ -34,6 +34,9 @@
       min-height: 100vh;
       overflow-x: hidden;
     }
+    html {
+      overflow-x: clip;
+    }
     
     .db-wrapper {
       display: flex;
@@ -735,6 +738,17 @@
       .db-modal-content {
         max-height: calc(100vh - 24px);
         overflow-y: auto;
+      }
+      .plan-pick {
+        min-width: 0;
+        white-space: normal;
+        text-align: center;
+      }
+      #adminUserFilters {
+        grid-template-columns: minmax(0, 1fr) !important;
+      }
+      .chat-customizer-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
       }
     }
   </style>
@@ -1737,14 +1751,14 @@
               </div>
               <span class="badge badge-warning" id="currentPlanBadge" data-i18n="subscription_current_free">Free plan</span>
             </div>
-            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin-bottom:16px;" id="plansGrid">
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr)); gap:8px; margin-bottom:16px;" id="plansGrid">
               <button type="button" class="btn btn-secondary btn-sm plan-pick" data-tier="free" data-i18n="subscription_plan_free">Free • 0</button>
               <button type="button" class="btn btn-secondary btn-sm plan-pick" data-tier="growth_1k" data-i18n="subscription_plan_growth1">Growth Starter • 199</button>
               <button type="button" class="btn btn-secondary btn-sm plan-pick" data-tier="growth_10k" data-i18n="subscription_plan_growth2">Growth Plus • 499</button>
               <button type="button" class="btn btn-secondary btn-sm plan-pick" data-tier="growth_50k" data-i18n="subscription_plan_growth3">Growth Pro • 999</button>
               <button type="button" class="btn btn-secondary btn-sm plan-pick" data-tier="unlimited" data-i18n="subscription_plan_enterprise">Enterprise • 4999</button>
             </div>
-            <form id="subscriptionRequestForm" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; align-items:end;">
+            <form id="subscriptionRequestForm" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr)); gap:10px; align-items:end;">
               <div class="form-group" style="margin-bottom:0;">
                 <label data-i18n="subscription_label_period">Billing period</label>
                 <select id="subBillingPeriod" class="form-control">

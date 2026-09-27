@@ -28,3 +28,12 @@ test('mobile sidebar toggle wiring exists', () => {
   assert.match(dashboardScript, /matchMedia\('\(max-width: 991px\)'\)/);
   assert.match(dashboardHtml, /@media\s*\(max-width:\s*991px\)/);
 });
+
+test('settings grids fit narrow phone screens', () => {
+  // Inline auto-fit grids must collapse with min() so tracks never force a
+  // minimum width wider than the card on ~360px phones (RTL clipping).
+  assert.match(dashboardHtml, /minmax\(min\(150px,\s*100%\)[^>]*id="plansGrid"/);
+  assert.match(dashboardHtml, /id="subscriptionRequestForm"[^>]*minmax\(min\(160px,\s*100%\)/);
+  // Plan buttons may wrap instead of forcing their track wider (root .btn is nowrap).
+  assert.match(dashboardHtml, /\.plan-pick\s*\{[^}]*white-space:\s*normal/);
+});
