@@ -427,6 +427,8 @@ app.use(
 );
 app.use('/api/admin/ai', createAiControlPlaneRouter());
 app.use('/api/idea-council', ideaCouncilRoutes);
+app.use('/api/onboarding-events', require('./routes/onboardingMetrics').onboardingEventsRouter);
+app.use('/api/onboarding-metrics', require('./routes/onboardingMetrics').onboardingMetricsRouter);
 app.use('/', indexRoutes);
 
 // مسار المتركات (حماية اختيارية عبر METRICS_TOKEN)

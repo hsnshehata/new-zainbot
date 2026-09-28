@@ -555,6 +555,59 @@
       color: var(--text-muted);
     }
 
+    /* WhatsApp relink attention banner (top of page-channels) */
+    .wa-relink-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+      padding: 16px 20px;
+      border: 1px solid rgba(245, 158, 11, 0.55);
+      border-radius: var(--radius);
+      background: rgba(245, 158, 11, 0.08);
+    }
+    .wa-relink-banner[hidden] {
+      display: none;
+    }
+    .wa-relink-banner-text {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      min-width: 0;
+      flex: 1 1 240px;
+    }
+    .wa-relink-banner-text i {
+      font-size: 28px;
+      color: var(--green);
+      flex-shrink: 0;
+    }
+    .wa-relink-banner-text strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+    .wa-relink-banner-text p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--text-muted);
+      overflow-wrap: anywhere;
+    }
+    .wa-relink-banner-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 600px) {
+      .wa-relink-banner {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .wa-relink-banner-actions .btn {
+        width: 100%;
+      }
+    }
+
     /* Table styling */
     .custom-table-container {
       overflow-x: auto;
@@ -1591,6 +1644,19 @@
         <!-- ==================== 4. CONNECTIONS WIZARD ==================== -->
         <section id="page-channels" class="db-page">
           <h2 data-i18n="channels_title" style="margin-bottom:24px;">Connect Your Channels</h2>
+
+          <div id="waRelinkBanner" class="wa-relink-banner" hidden role="alert" aria-live="polite">
+            <div class="wa-relink-banner-text">
+              <i class="fab fa-whatsapp" aria-hidden="true"></i>
+              <div>
+                <strong data-i18n="wa_relink_banner_title">WhatsApp needs reconnecting</strong>
+                <p data-i18n="wa_relink_banner_desc">Your WhatsApp session was disconnected or needs attention. Reconnect now to keep receiving messages — your previous settings are kept.</p>
+              </div>
+            </div>
+            <div class="wa-relink-banner-actions">
+              <button id="waRelinkBtn" type="button" class="btn btn-primary btn-sm" data-i18n-aria="wa_relink_banner_action_aria"><span data-i18n="wa_relink_banner_action">Reconnect WhatsApp</span></button>
+            </div>
+          </div>
           
           <div class="channels-grid" style="margin-bottom:32px;">
             <!-- WhatsApp -->

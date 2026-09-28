@@ -237,3 +237,67 @@ test('new owner gets unconfigured GET; first PUT provisions a store, retry reuse
     else process.env.CREDENTIAL_ENCRYPTION_KEY = originalKey;
   }
 });
+
+test('live-check flow end to end against a localhost mock (no external network)', async () => {
+  const http = require('node:http');
+  const { buildProductContext } = require('../server/services/productContext');
+  const catalog = [
+    { id: 101, name: 'Live Check T-Shirt', price: '49.99', stock_quantity: 7, manage_stock: true, status: 'publish', description: 'soft cotton tee' },
+    { id: 102, name: 'Live Check Mug', price: '15', stock_quantity: null, manage_stock: false, status: 'publish', description: 'ceramic mug' },
+  ];
+  const server = http.createServer((req, res) => {
+    const url = new URL(req.url, 'http://127.0.0.1');
+    if (url.pathname !== '/wp-json/wc/v3/products') {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end('{}');
+      return;
+    }
+    const page = Number(url.searchParams.get('page') || '1');
+    res.writeHead(200, { 'Content-Type': 'application/json', 'X-WP-TotalPages': '1' });
+    res.end(JSON.stringify(page === 1 ? catalog : []));
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const port = server.address().port;
+    // Same connector fetch shape, but transported over real HTTP to localhost only.
+    const request = (_origin, path) => new Promise((resolve, reject) => {
+      http.get({ host: '127.0.0.1', port, path, timeout: 5000 }, (res) => {
+        const chunks = [];
+        res.on('data', (chunk) => chunks.push(chunk));
+        res.on('error', reject);
+        res.on('end', () => {
+          try {
+            resolve({
+              body: JSON.parse(Buffer.concat(chunks).toString('utf8')),
+              headers: { 'x-wp-totalpages': res.headers['x-wp-totalpages'] },
+            });
+          } catch (error) { reject(error); }
+        });
+      }).on('error', reject);
+    });
+    const stored = [];
+    const productModel = {
+      async updateOne(filter, update) { stored.push({ filter, doc: update.$set }); },
+    };
+    const mockConfig = { ...config, origin: 'https://mock.invalid' };
+    const importedCount = await importCatalog(
+      mockConfig, { consumerKey: 'ck_mock', consumerSecret: 'cs_mock' }, { request, productModel }
+    );
+    assert.equal(importedCount, 2);
+    // Products API shape served from the imported documents.
+    const productsApi = {
+      products: stored.map((entry, index) => ({
+        _id: String(index + 1).padStart(24, '0'), isActive: true, ...entry.doc,
+      })),
+      total: stored.length,
+    };
+    assert.ok(productsApi.products.length > 0);
+    const firstName = String(productsApi.products[0]?.productName || '');
+    assert.match(firstName, /Live Check T-Shirt/);
+    // Bot context built from the products API payload includes the product name.
+    const context = buildProductContext(productsApi.products, firstName, 'shop');
+    assert.match(context, /Live Check T-Shirt/);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});

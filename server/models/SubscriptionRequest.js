@@ -32,5 +32,9 @@ const subscriptionRequestSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Supports the review queue position lookup ({ status, createdAt }) and the
+// admin status-filtered paginated list.
+subscriptionRequestSchema.index({ status: 1, createdAt: 1 });
+
 module.exports = mongoose.models.SubscriptionRequest
   || mongoose.model('SubscriptionRequest', subscriptionRequestSchema);

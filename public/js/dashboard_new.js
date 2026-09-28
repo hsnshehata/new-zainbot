@@ -202,6 +202,10 @@
       chan_status_wa_connected: 'Session reports connected — delivery unverified',
       chan_status_wa_attention: 'Session needs attention — reconnect or check QR',
       chan_status_tg_linked: 'Account linked — delivery unverified',
+      wa_relink_banner_title: 'WhatsApp needs reconnecting',
+      wa_relink_banner_desc: 'Your WhatsApp session was disconnected or needs attention. Reconnect now to keep receiving messages — your previous settings are kept.',
+      wa_relink_banner_action: 'Reconnect WhatsApp',
+      wa_relink_banner_action_aria: 'Reconnect WhatsApp via QR code',
       btn_configure: 'Configure',
       website_widget_title: 'Website Chat Widget',
       website_widget_desc: 'Copy this script tag and insert it before the closing body tag of your HTML to display the chat icon.',
@@ -1008,6 +1012,10 @@
       chan_status_wa_connected: 'الجلسة تظهر متصلة — تسليم الرسائل غير مؤكد',
       chan_status_wa_attention: 'الجلسة تحتاج متابعة — أعد الربط أو افحص رمز QR',
       chan_status_tg_linked: 'الحساب مربوط — تسليم الرسائل غير مؤكد',
+      wa_relink_banner_title: 'واتساب يحتاج إعادة ربط',
+      wa_relink_banner_desc: 'انقطعت جلسة واتساب أو تحتاج إلى متابعة. أعد الربط الآن لاستمرار استقبال الرسائل — إعداداتك السابقة محفوظة.',
+      wa_relink_banner_action: 'إعادة ربط واتساب',
+      wa_relink_banner_action_aria: 'إعادة ربط واتساب عبر رمز QR',
       btn_configure: 'إعداد وتفعيل',
       website_widget_title: 'دردشة الموقع الإلكتروني',
       website_widget_desc: 'انسخ كود البرمجة التالي وضعه قبل وسم الإغلاق body في موقعك لعرض دردشة زين بوت.',
@@ -2511,6 +2519,8 @@
     if (count) count.textContent = ['whatsapp', 'telegram'].filter(channel =>
       ['wa_connected', 'tg_linked'].includes(states[channel])
     ).length;
+    const waRelinkBanner = document.getElementById('waRelinkBanner');
+    if (waRelinkBanner) waRelinkBanner.hidden = states.whatsapp !== 'wa_attention';
   }
 
   async function refreshChannelStatuses(bot) {
@@ -2553,6 +2563,11 @@
       }
     }
   }
+
+  // WhatsApp disconnect UX: banner relink reuses the existing QR modal flow only.
+  document.getElementById('waRelinkBtn')?.addEventListener('click', () => {
+    if (typeof window.configureChannel === 'function') window.configureChannel('whatsapp');
+  });
 
   const catalogForm = document.getElementById('storeConnectorForm');
   const catalogProvider = document.getElementById('storeProvider');
