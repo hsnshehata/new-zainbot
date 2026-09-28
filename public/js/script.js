@@ -109,7 +109,7 @@
     },
     {
       triggers: ['book', 'appointment', 'schedule', 'meeting', 'demo', 'call'],
-      response: "I'd be happy to help you book an appointment! 📅 Here are some available slots:\n\n• Tuesday at 2:00 PM\n• Wednesday at 11:00 AM\n• Thursday at 4:00 PM\n\nWhich time works best for you?",
+      response: 'This is a chat preview, so I cannot see real appointment availability. In your workspace, add your booking details before testing a booking conversation.',
       confidence: 93
     },
     {
@@ -119,12 +119,12 @@
     },
     {
       triggers: ['refund', 'return', 'cancel', 'money back', 'exchange'],
-      response: 'I understand you need help with a return or refund. No worries — items can be returned within 30 days of delivery. Would you like me to start a return request for you? I just need your order number. 🔄',
+      response: 'This preview has no store return policy or order data. A business can add its own return guidance to its agent before answering customers.',
       confidence: 91
     },
     {
       triggers: ['thank', 'thanks', 'great', 'awesome', 'perfect', 'amazing'],
-      response: "You're very welcome! 😊 Is there anything else I can help you with today? I'm here 24/7 whenever you need me.",
+      response: "You're welcome! 😊 Is there another question you'd like to try in this chat preview?",
       confidence: 98
     }
   ];
@@ -176,7 +176,7 @@
     },
     {
       triggers: ['احجز', 'حجز', 'موعد', 'ميعاد', 'مقابلة'],
-      response: 'أكيد! أقدر أساعدك في حجز موعد. 📅 المواعيد المتاحة:\n\n• الثلاثاء الساعة 2 ظهرًا\n• الأربعاء الساعة 11 صباحًا\n• الخميس الساعة 4 عصرًا\n\nأي ميعاد يناسبك؟',
+      response: 'دي معاينة دردشة ومفيش عندي مواعيد حقيقية متاحة. تقدر تضيف تفاصيل الحجز في مساحة عملك قبل ما تختبر محادثة حجز.',
       confidence: 93
     },
     {
@@ -186,12 +186,12 @@
     },
     {
       triggers: ['استرجاع', 'مرتجع', 'إلغاء', 'الغاء', 'استرداد'],
-      response: 'فاهم إنك محتاج مساعدة في استرجاع أو إلغاء. مفيش مشكلة — الاسترجاع متاح خلال 30 يوم من الاستلام. تحب أبدألك طلب الاسترجاع؟ محتاج رقم الطلب بس. 🔄',
+      response: 'المعاينة دي مش مرتبطة بسياسة استرجاع أو بيانات طلبات. تقدر تضيف سياسة نشاطك للوكيل قبل ما يرد على العملاء.',
       confidence: 91
     },
     {
       triggers: ['شكرا', 'متشكر', 'ممتاز', 'جميل', 'رائع', 'تمام'],
-      response: 'العفو! 😊 في حاجة تانية أقدر أساعدك فيها؟ أنا موجود 24/7 في أي وقت تحتاجني.',
+      response: 'العفو! 😊 في سؤال تاني تحب تجربه في معاينة الدردشة؟',
       confidence: 98
     }
   ];
@@ -365,14 +365,14 @@
       nav_solutions: 'Solutions',
       nav_integrations: 'Integrations',
       nav_pricing: 'Pricing',
-      nav_resources: 'Resources',
+      nav_resources: 'Chat demo',
       nav_signin: 'Sign in',
       nav_start_free: 'Start free',
       hero_pill: '<span class="pill-dot"></span>New workspace experience <i class="fas fa-arrow-right"></i>',
       hero_title: 'Your business deserves an <span class="gradient-text">AI team</span> that never sleeps.',
-      hero_subtitle: 'Deploy intelligent AI agents that answer, sell, follow up, and learn from every customer conversation — across WhatsApp, Instagram, Messenger, your website, and online store. All from one beautifully simple platform.',
+      hero_subtitle: 'Build AI agents for customer conversations across connected channels. Review messages, train replies, and test your agent in one workspace. Import a Shopify or WooCommerce catalog when you need it.',
       hero_btn_primary: 'Build your AI agent <i class="fas fa-arrow-right"></i>',
-      hero_btn_secondary: '<i class="fas fa-play"></i> Watch demo',
+      hero_btn_secondary: '<i class="fas fa-comments"></i> Try interactive chat demo',
       hero_proof: 'Start with a workspace built around your team.',
       hero_chat_status: 'Workspace preview',
       hero_chat_customer_one: 'Do you have this in size M?',
@@ -383,7 +383,7 @@
       hero_floating_one_label: 'ready to automate',
       hero_floating_two: 'Always ready',
       hero_floating_three: 'Workspace view',
-      hero_floating_three_value: 'Your live data',
+      hero_floating_three_value: 'Illustration',
       bento_card2_ready: 'Ready',
       metric_value_conversations: 'Conversations',
       metric_value_channels: 'Channels',
@@ -405,9 +405,9 @@
       cta_desc: 'Build your workspace, connect the channels you use, and start with the free plan. No credit card required.',
       demo_eyebrow: 'Try it live',
       demo_title: 'Meet your new <span class="gradient-text">AI teammate</span>',
-      demo_desc: 'Chat with a real AI agent that knows the platform inside out. This demo never uses customer data.',
+      demo_desc: 'Try the interactive chat preview. Replies may be AI-generated or sample responses when the live demo is unavailable; no store is connected.',
       demo_bot_name: 'ZainBot Assistant',
-      demo_bot_status: 'Live AI',
+      demo_bot_status: 'Chat preview',
       demo_conf_label: 'Reply context',
       demo_welcome_msg: 'Welcome. This is a safe preview of how an agent can guide a customer conversation.',
       demo_chip1: '<i class="fas fa-box"></i> Ask about an order',
@@ -420,6 +420,7 @@
       aria_demo_input: 'Type your message',
       aria_send_message: 'Send message',
       aria_back_to_top: 'Back to top',
+      aria_billing_period: 'Billing period',
       bento_eyebrow: 'Platform',
       bento_title: 'One AI brain. <span class="gradient-text">Every customer channel.</span>',
       bento_desc: 'Bring customer conversations into one workspace where your team can reply, automate, and follow up.',
@@ -465,9 +466,10 @@
       workflow_step3_desc: 'Test replies, monitor conversations, and hand off to your team when needed.',
       int_eyebrow: 'Channels',
       int_title: 'Meet customers where they <span class="gradient-text">already are.</span>',
-      int_desc: 'Choose the channels that suit your business, then connect and monitor each one from your workspace.',
+      int_desc: 'Explore customer channels in your workspace. Import Shopify and WooCommerce catalogs manually using read-only API credentials.',
       int_connected: 'Ready to connect',
       int_available: 'Available',
+      int_manual_import: 'Manual import',
       int_webchat: 'Website chat',
       metrics_eyebrow: 'Workspace',
       metrics_title: 'Less waiting. <span class="gradient-text">More clarity.</span>',
@@ -510,7 +512,7 @@
       plan_growth_f5: '<i class="fas fa-check"></i> Fail-safe backup API key failover',
       plan_growth_f6: '<i class="fas fa-check"></i> Priority customer support',
       plan_growth_f7: '<i class="fas fa-check"></i> 10 Idea Council evaluations / mo + Live Web Research & 3 Defense Rounds',
-      plan_growth_btn: 'Subscribe now',
+      plan_growth_btn: 'Create account to request',
       plan_growth2_title: 'Growth Plus',
       plan_growth2_price: '499',
       plan_growth2_period: 'EGP/mo',
@@ -522,7 +524,7 @@
       plan_growth2_f5: '<i class="fas fa-check"></i> Fail-safe backup API key failover',
       plan_growth2_f6: '<i class="fas fa-check"></i> Priority customer support',
       plan_growth2_f7: '<i class="fas fa-check"></i> 30 Idea Council evaluations / mo + Live Web Research & 3 Defense Rounds',
-      plan_growth2_btn: 'Subscribe now',
+      plan_growth2_btn: 'Create account to request',
       plan_growth3_title: 'Growth Pro',
       plan_growth3_price: '999',
       plan_growth3_period: 'EGP/mo',
@@ -534,10 +536,10 @@
       plan_growth3_f5: '<i class="fas fa-check"></i> Fail-safe backup API key failover',
       plan_growth3_f6: '<i class="fas fa-check"></i> Priority customer support',
       plan_growth3_f7: '<i class="fas fa-check"></i> 100 Idea Council evaluations / mo + Live Web Research & 3 Defense Rounds',
-      plan_growth3_btn: 'Subscribe now',
+      plan_growth3_btn: 'Create account to request',
       pricing_payment_title: 'Manual activation — pay with Instapay or cash wallet',
-      pricing_payment_desc: 'Subscriptions are activated manually for now. Choose your plan, pay with Instapay or a cash wallet (Vodafone Cash / Orange / Etisalat), then contact the owner on WhatsApp with your payment receipt to activate within hours.',
-      pricing_payment_whatsapp: 'Contact on WhatsApp to subscribe',
+      pricing_payment_desc: 'Paid plans require manual activation. Create an account, then review payment instructions in Settings & Billing before paying. Selecting a plan here does not activate it.',
+      pricing_payment_whatsapp: 'Ask about plans on WhatsApp',
       pricing_payment_methods: 'We accept: Instapay • Vodafone Cash • Orange Money • Etisalat Cash',
       plan_scale_title: 'Enterprise / Scale',
       plan_scale_price: '4999',
@@ -547,10 +549,10 @@
       plan_scale_f2: '<i class="fas fa-check"></i> High-volume conversation capacity',
       plan_scale_f3: '<i class="fas fa-check"></i> Unlimited Tools, Skills, and Multi-Recipient Alerts',
       plan_scale_f4: '<i class="fas fa-check"></i> Full API & Webhook integrations',
-      plan_scale_f5: '<i class="fas fa-check"></i> Dedicated account manager & 24/7 VIP support',
-      plan_scale_f6: '<i class="fas fa-check"></i> White-label options & 99.9% uptime SLA',
+      plan_scale_f5: '<i class="fas fa-check"></i> Manage agents and integrations from one dashboard',
+      plan_scale_f6: '<i class="fas fa-check"></i> Manual subscription activation and plan review',
       plan_scale_f7: '<i class="fas fa-check"></i> High-volume Idea Council evaluations + Deep Market Research & Custom Personas',
-      plan_scale_btn: 'Contact sales',
+      plan_scale_btn: 'Create account to request',
       cta_title: 'Ready to make every <span class="gradient-text">conversation count?</span>',
       cta_btn: 'Start building for free <i class="fas fa-arrow-right"></i>',
       cta_note: 'No credit card required. Start from your workspace.',
@@ -568,10 +570,12 @@
       footer_link_healthcare: 'Appointments',
       footer_link_education: 'Education',
       footer_col_resources: 'Resources',
-      footer_link_docs: 'Guides',
+      footer_link_docs: 'Getting started guide',
       footer_link_api: 'Developer tools',
       footer_link_blog: 'Product notes',
-      footer_link_help: 'Help',
+      footer_link_help: 'First conversation guide',
+      footer_link_register: 'Create account',
+      footer_link_signin: 'Sign in',
       footer_link_community: 'Community',
       footer_col_company: 'ZainBot',
       footer_link_about: 'About',
@@ -587,14 +591,14 @@
       nav_solutions: 'الحلول',
       nav_integrations: 'الربط الخارجي',
       nav_pricing: 'الأسعار',
-      nav_resources: 'المصادر',
+      nav_resources: 'تجربة الدردشة',
       nav_signin: 'تسجيل الدخول',
       nav_start_free: 'ابدأ مجاناً',
       hero_pill: '<span class="pill-dot"></span>تجربة مساحة عمل جديدة <i class="fas fa-arrow-left"></i>',
       hero_title: 'عملك يستحق <span class="gradient-text">فريق عمل ذكي</span> لا ينام أبداً.',
-      hero_subtitle: 'قم بنشر عملاء أذكياء يجيبون، يبيعون، يتابعون، ويتعلمون من كل محادثة مع العميل — عبر واتساب، إنستجرام، مسنجر، موقعك الإلكتروني، ومتجرك الإلكتروني. كل ذلك من منصة واحدة بسيطة وجميلة.',
+      hero_subtitle: 'أنشئ وكلاء أذكياء لمحادثات العملاء عبر القنوات المرتبطة. تابع الرسائل ودرّب الردود واختبر وكيلك في مساحة عمل واحدة. واستورد كتالوج Shopify أو WooCommerce وقت ما تحتاج.',
       hero_btn_primary: 'ابنِ عميلك الذكي <i class="fas fa-arrow-left"></i>',
-      hero_btn_secondary: '<i class="fas fa-play"></i> شاهد العرض',
+      hero_btn_secondary: '<i class="fas fa-comments"></i> جرّب الدردشة التفاعلية',
       hero_proof: 'ابدأ بمساحة عمل مصممة حول احتياجات فريقك.',
       hero_chat_status: 'نموذج لمساحة العمل',
       hero_chat_customer_one: 'هل يتوفر هذا المنتج بالمقاس المتوسط؟',
@@ -605,7 +609,7 @@
       hero_floating_one_label: 'جاهزة للأتمتة',
       hero_floating_two: 'جاهز دائمًا',
       hero_floating_three: 'عرض مساحة العمل',
-      hero_floating_three_value: 'بياناتك المباشرة',
+      hero_floating_three_value: 'رسم توضيحي',
       bento_card2_ready: 'جاهز',
       metric_value_conversations: 'المحادثات',
       metric_value_channels: 'القنوات',
@@ -627,9 +631,9 @@
       cta_desc: 'أنشئ مساحة عملك واربط القنوات التي تستخدمها وابدأ بالخطة المجانية دون بطاقة دفع.',
       demo_eyebrow: 'جرّب المثال',
       demo_title: 'تعرّف على <span class="gradient-text">زميلك الذكي</span>',
-      demo_desc: 'تحدث مع وكيل ذكاء اصطناعي حقيقي يعرف كل تفاصيل المنصة. هذه التجربة لا تستخدم بيانات العملاء.',
+      demo_desc: 'جرّب معاينة الدردشة التفاعلية. الردود قد تكون من الذكاء الاصطناعي أو أمثلة جاهزة عند تعذّر التجربة المباشرة؛ لا يوجد متجر مربوط.',
       demo_bot_name: 'مساعد زين بوت',
-      demo_bot_status: 'ذكاء اصطناعي مباشر',
+      demo_bot_status: 'معاينة الدردشة',
       demo_conf_label: 'سياق الرد',
       demo_welcome_msg: 'مرحبًا. هذه معاينة آمنة لكيفية إرشاد الوكيل الذكي لمحادثة العميل.',
       demo_chip1: '<i class="fas fa-box"></i> اسأل عن طلب',
@@ -642,6 +646,7 @@
       aria_demo_input: 'اكتب رسالتك',
       aria_send_message: 'إرسال الرسالة',
       aria_back_to_top: 'العودة إلى أعلى الصفحة',
+      aria_billing_period: 'دورة الدفع',
       bento_eyebrow: 'المنصة',
       bento_title: 'عقل واحد للذكاء الاصطناعي. <span class="gradient-text">لكل قنوات عملائك.</span>',
       bento_desc: 'اجمع محادثات العملاء في مساحة عمل واحدة ليتمكن فريقك من الرد والأتمتة والمتابعة.',
@@ -687,9 +692,10 @@
       workflow_step3_desc: 'اختبر الردود وتابع المحادثات وحوّلها إلى فريقك عند الحاجة.',
       int_eyebrow: 'القنوات',
       int_title: 'قابل عملاءك حيث <span class="gradient-text">يتواجدون.</span>',
-      int_desc: 'اختر القنوات المناسبة لنشاطك ثم اربطها وتابع حالة كل قناة من مساحة عملك.',
+      int_desc: 'استكشف قنوات العملاء في مساحة عملك. استورد كتالوج Shopify وWooCommerce يدويًا بمفاتيح قراءة فقط.',
       int_connected: 'جاهز للربط',
       int_available: 'متاح',
+      int_manual_import: 'استيراد يدوي',
       int_webchat: 'دردشة الموقع',
       metrics_eyebrow: 'مساحة العمل',
       metrics_title: 'انتظار أقل. <span class="gradient-text">وضوح أكبر.</span>',
@@ -732,7 +738,7 @@
       plan_growth_f5: '<i class="fas fa-check"></i> مفتاح احتياطي ذكي لمنع انقطاع الخدمة',
       plan_growth_f6: '<i class="fas fa-check"></i> دعم فني ذو أولوية',
       plan_growth_f7: '<i class="fas fa-check"></i> 10 جلسات تقييم أفكار شهرياً + بحث سوقي مباشر و3 جولات دفاع تفاعلية',
-      plan_growth_btn: 'اشترك الآن',
+      plan_growth_btn: 'أنشئ حسابًا لطلب الباقة',
       plan_growth2_title: 'النمو المتقدم',
       plan_growth2_price: '499',
       plan_growth2_period: 'ج.م/شهرياً',
@@ -744,7 +750,7 @@
       plan_growth2_f5: '<i class="fas fa-check"></i> مفتاح احتياطي ذكي لمنع انقطاع الخدمة',
       plan_growth2_f6: '<i class="fas fa-check"></i> دعم فني ذو أولوية',
       plan_growth2_f7: '<i class="fas fa-check"></i> 30 جلسة تقييم أفكار شهرياً + بحث سوقي مباشر و3 جولات دفاع',
-      plan_growth2_btn: 'اشترك الآن',
+      plan_growth2_btn: 'أنشئ حسابًا لطلب الباقة',
       plan_growth3_title: 'النمو الاحترافي',
       plan_growth3_price: '999',
       plan_growth3_period: 'ج.م/شهرياً',
@@ -756,10 +762,10 @@
       plan_growth3_f5: '<i class="fas fa-check"></i> مفتاح احتياطي ذكي لمنع انقطاع الخدمة',
       plan_growth3_f6: '<i class="fas fa-check"></i> دعم فني ذو أولوية',
       plan_growth3_f7: '<i class="fas fa-check"></i> 100 جلسة تقييم أفكار شهرياً + بحث سوقي مباشر و3 جولات دفاع',
-      plan_growth3_btn: 'اشترك الآن',
+      plan_growth3_btn: 'أنشئ حسابًا لطلب الباقة',
       pricing_payment_title: 'تفعيل يدوي — الدفع عبر انستاباي أو محفظة كاش',
-      pricing_payment_desc: 'الاشتراكات تُفعّل يدوياً حالياً. اختر خطتك، ادفع عبر انستاباي أو محفظة كاش (فودافون كاش / أورانج / اتصالات)، ثم تواصل مع المالك على واتساب بصورة التحويل للتفعيل خلال ساعات.',
-      pricing_payment_whatsapp: 'تواصل واتساب للاشتراك',
+      pricing_payment_desc: 'تفعيل الباقات المدفوعة يدوي حاليًا. أنشئ حسابًا وراجع تعليمات الدفع في الإعدادات والفواتير قبل الدفع. اختيار الباقة هنا لا يفعّلها.',
+      pricing_payment_whatsapp: 'اسأل عن الباقات على واتساب',
       pricing_payment_methods: 'نقبل: انستاباي • فودافون كاش • أورانج موني • اتصالات كاش',
       plan_scale_title: 'الشركات (Enterprise)',
       plan_scale_price: '4999',
@@ -769,10 +775,10 @@
       plan_scale_f2: '<i class="fas fa-check"></i> سعة محادثات ضخمة ومخصصة للاستخدام العالي',
       plan_scale_f3: '<i class="fas fa-check"></i> أدوات ومهارات وقنوات إشعارات غير محدودة',
       plan_scale_f4: '<i class="fas fa-check"></i> تكامل برمجي كامل عبر API و Webhooks',
-      plan_scale_f5: '<i class="fas fa-check"></i> مدير حساب مخصص ودعم فني VIP على مدار الساعة',
-      plan_scale_f6: '<i class="fas fa-check"></i> تخصيص العلامة التجارية وضمان استقرار SLA 99.9%',
+      plan_scale_f5: '<i class="fas fa-check"></i> أدر الوكلاء والتكاملات من لوحة واحدة',
+      plan_scale_f6: '<i class="fas fa-check"></i> مراجعة الباقة وتفعيل الاشتراك يدويًا',
       plan_scale_f7: '<i class="fas fa-check"></i> تقييم أفكار غير محدود ومخصص للشركات + بحث سوقي عميق ونماذج مخصصة',
-      plan_scale_btn: 'تواصل مع المبيعات',
+      plan_scale_btn: 'أنشئ حسابًا لطلب الباقة',
       cta_title: 'هل أنت جاهز لجعل كل <span class="gradient-text">محادثة مهمة؟</span>',
       cta_btn: 'ابدأ مجانًا <i class="fas fa-arrow-left"></i>',
       cta_note: 'لا تحتاج إلى بطاقة دفع. ابدأ من مساحة عملك.',
@@ -790,10 +796,12 @@
       footer_link_healthcare: 'المواعيد',
       footer_link_education: 'التعليم',
       footer_col_resources: 'المصادر',
-      footer_link_docs: 'الأدلة',
+      footer_link_docs: 'دليل البداية',
       footer_link_api: 'أدوات المطورين',
       footer_link_blog: 'ملاحظات المنتج',
-      footer_link_help: 'المساعدة',
+      footer_link_help: 'دليل أول محادثة',
+      footer_link_register: 'إنشاء حساب',
+      footer_link_signin: 'تسجيل الدخول',
       footer_link_community: 'المجتمع',
       footer_col_company: 'زين بوت',
       footer_link_about: 'عن زين بوت',
@@ -904,7 +912,7 @@
       };
       var labelAr = labelsAr[plan] || plan || 'اشتراك';
       var periodAr = currentBilling === 'yearly' ? 'سنوي (وفّر شهرين)' : 'شهري';
-      return 'أهلًا زين بوت، عايز أشترك في باقة ' + labelAr + ' (' + periodAr + '). دفعت عبر انستاباي / محفظة كاش ودي صورة التحويل: ';
+      return 'أهلًا زين بوت، عايز أسأل عن باقة ' + labelAr + ' (' + periodAr + ') وطريقة تفعيلها.';
     }
     var labels = {
       free: 'Free',
@@ -915,7 +923,7 @@
     };
     var label = labels[plan] || plan || 'subscription';
     var period = currentBilling === 'yearly' ? 'yearly (save 2 months)' : 'monthly';
-    return 'Hello ZainBot, I want to subscribe to ' + label + ' (' + period + '). I paid via Instapay / cash wallet and here is my receipt: ';
+    return 'Hello ZainBot, I would like to ask about ' + label + ' (' + period + ') and how to activate it.';
   }
 
   function normalizeWhatsappNumber(raw) {
@@ -930,13 +938,15 @@
     if (!whatsappBtn) return;
     // Number is injected via /api/config (no hard-coded PII in frontend).
     var num = normalizeWhatsappNumber(window.ZAINBOT_SUBSCRIBE_WHATSAPP || '');
-    if (!num) {
-      // No number configured yet: keep the user on the pricing section
-      // instead of a broken wa.me link without a recipient.
-      whatsappBtn.href = '#pricing';
+    if (!/^\d{10,15}$/.test(num)) {
+      whatsappBtn.hidden = true;
+      whatsappBtn.style.display = 'none';
+      whatsappBtn.removeAttribute('href');
       whatsappBtn.removeAttribute('target');
       return;
     }
+    whatsappBtn.hidden = false;
+    whatsappBtn.style.display = '';
     whatsappBtn.setAttribute('target', '_blank');
     whatsappBtn.href = 'https://wa.me/' + num + '?text=' + encodeURIComponent(buildSubscribeMessage('growth_1k'));
   }
@@ -944,6 +954,7 @@
   document.querySelectorAll('.plan-cta').forEach(function (a) {
     a.addEventListener('click', function () {
       try { localStorage.setItem('zainbot_pending_plan', a.getAttribute('data-plan') || ''); } catch (e) {}
+      try { localStorage.setItem('zainbot_pending_plan_time', String(Date.now())); } catch (e) {}
       try { localStorage.setItem('zainbot_pending_billing', currentBilling); } catch (e) {}
     });
   });

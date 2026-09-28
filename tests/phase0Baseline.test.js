@@ -22,10 +22,15 @@ test('readiness endpoint returns database check structure', async () => {
 });
 
 test('page routes serve expected HTML files', async () => {
-  const pages = ['/login', '/register', '/dashboard', '/dashboard_new', '/set-whatsapp'];
+  const pages = ['/login', '/register', '/dashboard', '/help.html'];
   for (const page of pages) {
     const res = await supertest(app).get(page);
     assert.equal(res.status, 200, `Page ${page} should respond with 200`);
     assert.ok(res.text.includes('<!DOCTYPE html>') || res.text.includes('<html'), `Page ${page} should serve HTML content`);
+  }
+  for (const alias of ['/dashboard_new', '/set-whatsapp']) {
+    const res = await supertest(app).get(alias);
+    assert.equal(res.status, 301, `Legacy alias ${alias} should redirect`);
+    assert.equal(res.headers.location, '/dashboard');
   }
 });

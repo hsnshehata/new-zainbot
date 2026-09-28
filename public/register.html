@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="/css/login.css">
+  <link rel="stylesheet" href="/css/login.css?v=20260928-account">
   <link rel="manifest" href="/manifest.json">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -45,6 +45,8 @@
         <span class="login-card-eyebrow" data-register-i18n="card_eyebrow">حساب جديد</span>
         <h2 id="registerTitle" data-register-i18n="card_title">أنشئ مساحة عملك</h2>
         <p class="login-card-description" data-register-i18n="card_description">أدخل بياناتك لإنشاء حسابك والبدء مجاناً.</p>
+        <p id="selectedPlan" class="login-card-description" role="status" data-register-i18n="selected_plan_default">ابدأ مجانًا، ويمكنك اختيار باقة لاحقًا.</p>
+        <p id="selectedPlanNote" class="login-card-description" data-register-i18n="selected_plan_note" hidden>الاختيار مبدئي فقط؛ لن تُفعّل باقة مدفوعة قبل طلبها وتأكيدها.</p>
 
         <p id="success" class="login-success" role="status" aria-live="polite"></p>
         <p id="error" class="login-error" role="alert" aria-live="polite"></p>
@@ -75,6 +77,7 @@
                 <i class="fas fa-lock" aria-hidden="true"></i>
                 <input type="password" id="password" name="password" required data-register-placeholder="password_placeholder" placeholder="8 أحرف على الأقل" data-register-aria="password_label" aria-label="كلمة المرور" autocomplete="new-password">
               </div>
+              <small data-register-i18n="password_help">8 أحرف على الأقل: حرف كبير وصغير ورقم ورمز، بدون مسافات.</small>
             </div>
 
             <div class="login-field">
@@ -110,6 +113,13 @@
           </button>
         </form>
 
+        <button id="resendToggle" class="recovery-toggle" type="button" aria-controls="resendForm" aria-expanded="false" data-register-i18n="resend_toggle">لم يصلك رابط التفعيل؟</button>
+        <form id="resendForm" class="recovery-form" hidden novalidate>
+          <label for="resendEmail" data-register-i18n="resend_label">أدخل بريدك الإلكتروني</label>
+          <input id="resendEmail" type="email" autocomplete="email" required data-register-placeholder="email_placeholder" data-register-aria="email_label" aria-label="البريد الإلكتروني" placeholder="name@example.com">
+          <button class="recovery-submit" type="submit" data-register-i18n="resend_submit">أعد إرسال رابط التفعيل</button>
+        </form>
+
         <div class="login-divider"><span data-register-i18n="or_continue">أو تابع باستخدام</span></div>
         <div class="google-signin-container"><div id="googleSignInButton"></div></div>
 
@@ -135,12 +145,20 @@
           card_eyebrow: 'حساب جديد',
           card_title: 'أنشئ مساحة عملك',
           card_description: 'أدخل بياناتك لإنشاء حسابك والبدء مجاناً.',
+          selected_plan_default: 'ابدأ مجانًا، ويمكنك اختيار باقة لاحقًا.',
+          selected_plan_message: 'الباقة المختارة مبدئيًا: {plan}',
+          selected_plan_note: 'الاختيار مبدئي فقط؛ لن تُفعّل باقة مدفوعة قبل طلبها وتأكيدها.',
+          tier_free: 'المجانية', tier_growth_1k: 'نمو ١٬٠٠٠', tier_growth_10k: 'نمو ١٠٬٠٠٠', tier_growth_50k: 'نمو ٥٠٬٠٠٠', tier_unlimited: 'غير المحدودة',
           username_label: 'اسم المستخدم',
           username_placeholder: 'اكتب اسم المستخدم',
           email_label: 'البريد الإلكتروني',
           email_placeholder: 'name@example.com',
           password_label: 'كلمة المرور',
           password_placeholder: '8 أحرف على الأقل',
+          password_help: '8 أحرف على الأقل: حرف كبير وصغير ورقم ورمز، بدون مسافات.',
+          resend_toggle: 'لم يصلك رابط التفعيل؟',
+          resend_label: 'أدخل بريدك الإلكتروني',
+          resend_submit: 'أعد إرسال رابط التفعيل',
           confirm_password_label: 'تأكيد كلمة المرور',
           confirm_password_placeholder: 'أعد كتابة كلمة المرور',
           bot_name_label: 'اسم الوكيل الذكي الأول',
@@ -164,12 +182,20 @@
           card_eyebrow: 'Get started',
           card_title: 'Create your workspace',
           card_description: 'Enter your details to create your free account.',
+          selected_plan_default: 'Start free; you can choose a plan later.',
+          selected_plan_message: 'Your intended plan: {plan}',
+          selected_plan_note: 'Your choice is only an intention. A paid plan will not activate until requested and confirmed.',
+          tier_free: 'Free', tier_growth_1k: 'Growth 1K', tier_growth_10k: 'Growth 10K', tier_growth_50k: 'Growth 50K', tier_unlimited: 'Unlimited',
           username_label: 'Username',
           username_placeholder: 'Enter username',
           email_label: 'Email address',
           email_placeholder: 'name@example.com',
           password_label: 'Password',
           password_placeholder: 'Min 8 characters',
+          password_help: 'At least 8 characters: uppercase, lowercase, number and symbol, with no spaces.',
+          resend_toggle: 'Didn’t receive the verification link?',
+          resend_label: 'Enter your email address',
+          resend_submit: 'Resend verification link',
           confirm_password_label: 'Confirm password',
           confirm_password_placeholder: 'Re-enter your password',
           bot_name_label: 'First AI Agent Name',
@@ -185,6 +211,10 @@
       };
       const toggle = document.getElementById('registerLanguageToggle');
       const language = () => localStorage.getItem('zainbot_lang') === 'en' ? 'en' : 'ar';
+      const selectedTier = new URLSearchParams(window.location.search).get('plan');
+      const allowedTiers = ['free', 'growth_1k', 'growth_10k', 'growth_50k', 'unlimited'];
+      const intendedTier = allowedTiers.includes(selectedTier) ? selectedTier : null;
+      window.zainbotSignupIntendedTier = intendedTier;
 
       function applyRegisterLanguage(nextLanguage) {
         const strings = copy[nextLanguage];
@@ -194,6 +224,10 @@
         document.querySelectorAll('[data-register-i18n]').forEach((element) => {
           element.textContent = strings[element.dataset.registerI18n];
         });
+        if (intendedTier) {
+          document.getElementById('selectedPlan').textContent = strings.selected_plan_message.replace('{plan}', strings[`tier_${intendedTier}`]);
+          document.getElementById('selectedPlanNote').hidden = intendedTier === 'free';
+        }
         document.querySelectorAll('[data-register-placeholder]').forEach((element) => {
           element.placeholder = strings[element.dataset.registerPlaceholder];
         });
@@ -232,6 +266,6 @@
     })();
   </script>
   <script defer src="/js/utils.js"></script>
-  <script defer src="/js/auth.js"></script>
+  <script defer src="/js/auth.js?v=20260928-account"></script>
 </body>
 </html>

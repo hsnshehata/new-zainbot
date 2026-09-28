@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="/css/login.css">
+  <link rel="stylesheet" href="/css/login.css?v=20260928-account">
   <link rel="manifest" href="/manifest.json">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -64,6 +64,22 @@
           <button class="login-submit" type="submit"><span data-login-i18n="submit_label">تسجيل الدخول</span><i class="fas fa-arrow-left" aria-hidden="true"></i></button>
         </form>
 
+        <button id="forgotToggle" class="recovery-toggle" type="button" aria-controls="forgotForm" aria-expanded="false" data-login-i18n="forgot_link">نسيت كلمة المرور؟</button>
+        <form id="forgotForm" class="recovery-form" hidden novalidate>
+          <label for="recoveryEmail" data-login-i18n="recovery_label">البريد الإلكتروني للحساب</label>
+          <input id="recoveryEmail" type="email" autocomplete="email" required data-login-placeholder="email_placeholder" data-login-aria="recovery_label" aria-label="البريد الإلكتروني للحساب" placeholder="name@example.com">
+          <button class="recovery-submit" type="submit" data-login-i18n="recovery_submit">إرسال رابط الاستعادة</button>
+        </form>
+        <form id="resetForm" class="recovery-form" hidden novalidate>
+          <label for="newPassword" data-login-i18n="new_password">كلمة المرور الجديدة</label>
+          <input id="newPassword" type="password" autocomplete="new-password" required data-login-aria="new_password" aria-label="كلمة المرور الجديدة">
+          <p data-login-i18n="password_help">8 أحرف على الأقل: حرف كبير وصغير ورقم ورمز، بدون مسافات.</p>
+          <label for="resetConfirm" data-login-i18n="confirm_password">تأكيد كلمة المرور</label>
+          <input id="resetConfirm" type="password" autocomplete="new-password" required data-login-aria="confirm_password" aria-label="تأكيد كلمة المرور">
+          <button class="recovery-submit" type="submit" data-login-i18n="reset_submit">حفظ كلمة المرور</button>
+        </form>
+        <p id="success" class="login-success" role="status" aria-live="polite"></p>
+
         <p id="error" class="login-error" role="alert" aria-live="polite"></p>
 
         <div class="login-divider"><span data-login-i18n="or_continue">أو تابع باستخدام</span></div>
@@ -78,10 +94,10 @@
     (() => {
       const copy = {
         ar: {
-          document_title: 'تسجيل الدخول | ZainBot AI', intro_kicker: 'منصة خدمة العملاء الذكية', intro_title: 'كل محادثات عملائك في مكان واحد.', intro_description: 'أدر فريقك ووكلاءك الذكيين وقنوات التواصل من لوحة واحدة مصممة للعمل السريع.', intro_point_one: 'وكلاء ذكاء اصطناعي قابلون للتخصيص', intro_point_two: 'صندوق وارد موحد لكل القنوات', intro_point_three: 'تحكم آمن في فريقك وبياناتك', card_eyebrow: 'مرحبًا بعودتك', card_title: 'سجّل الدخول إلى مساحة عملك', card_description: 'أدخل بياناتك للوصول إلى لوحة التحكم.', username_label: 'اسم المستخدم', username_placeholder: 'اكتب اسم المستخدم', password_label: 'كلمة المرور', password_placeholder: 'اكتب كلمة المرور', submit_label: 'تسجيل الدخول', or_continue: 'أو تابع باستخدام', new_user: 'مستخدم جديد؟', create_account: 'أنشئ حسابك', change_language: 'تغيير اللغة'
+          document_title: 'تسجيل الدخول | ZainBot AI', intro_kicker: 'منصة خدمة العملاء الذكية', intro_title: 'كل محادثات عملائك في مكان واحد.', intro_description: 'أدر فريقك ووكلاءك الذكيين وقنوات التواصل من لوحة واحدة مصممة للعمل السريع.', intro_point_one: 'وكلاء ذكاء اصطناعي قابلون للتخصيص', intro_point_two: 'صندوق وارد موحد لكل القنوات', intro_point_three: 'تحكم آمن في فريقك وبياناتك', card_eyebrow: 'مرحبًا بعودتك', card_title: 'سجّل الدخول إلى مساحة عملك', card_description: 'أدخل بياناتك للوصول إلى لوحة التحكم.', username_label: 'اسم المستخدم', username_placeholder: 'اكتب اسم المستخدم', password_label: 'كلمة المرور', password_placeholder: 'اكتب كلمة المرور', submit_label: 'تسجيل الدخول', or_continue: 'أو تابع باستخدام', new_user: 'مستخدم جديد؟', create_account: 'أنشئ حسابك', change_language: 'تغيير اللغة', forgot_link: 'نسيت كلمة المرور؟', recovery_label: 'البريد الإلكتروني للحساب', email_placeholder: 'name@example.com', recovery_submit: 'إرسال رابط الاستعادة', new_password: 'كلمة المرور الجديدة', confirm_password: 'تأكيد كلمة المرور', reset_submit: 'حفظ كلمة المرور', password_help: '8 أحرف على الأقل: حرف كبير وصغير ورقم ورمز، بدون مسافات.'
         },
         en: {
-          document_title: 'Sign in | ZainBot AI', intro_kicker: 'AI customer operations platform', intro_title: 'Every customer conversation, in one place.', intro_description: 'Manage your team, AI agents, and communication channels from one workspace built for fast work.', intro_point_one: 'Customizable AI agents', intro_point_two: 'One inbox for every channel', intro_point_three: 'Secure control of your team and data', card_eyebrow: 'Welcome back', card_title: 'Sign in to your workspace', card_description: 'Enter your details to access the dashboard.', username_label: 'Username', username_placeholder: 'Enter your username', password_label: 'Password', password_placeholder: 'Enter your password', submit_label: 'Sign in', or_continue: 'or continue with', new_user: 'New here?', create_account: 'Create an account', change_language: 'Change language'
+          document_title: 'Sign in | ZainBot AI', intro_kicker: 'AI customer operations platform', intro_title: 'Every customer conversation, in one place.', intro_description: 'Manage your team, AI agents, and communication channels from one workspace built for fast work.', intro_point_one: 'Customizable AI agents', intro_point_two: 'One inbox for every channel', intro_point_three: 'Secure control of your team and data', card_eyebrow: 'Welcome back', card_title: 'Sign in to your workspace', card_description: 'Enter your details to access the dashboard.', username_label: 'Username', username_placeholder: 'Enter your username', password_label: 'Password', password_placeholder: 'Enter your password', submit_label: 'Sign in', or_continue: 'or continue with', new_user: 'New here?', create_account: 'Create an account', change_language: 'Change language', forgot_link: 'Forgot password?', recovery_label: 'Account email address', email_placeholder: 'name@example.com', recovery_submit: 'Send recovery link', new_password: 'New password', confirm_password: 'Confirm password', reset_submit: 'Save password', password_help: 'At least 8 characters: uppercase, lowercase, number and symbol, with no spaces.'
         }
       };
       const toggle = document.getElementById('loginLanguageToggle');
@@ -133,6 +149,6 @@
     })();
   </script>
   <script defer src="/js/utils.js"></script>
-  <script defer src="/js/auth.js"></script>
+  <script defer src="/js/auth.js?v=20260928-account"></script>
 </body>
 </html>

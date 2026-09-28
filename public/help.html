@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZainBot — Getting started</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body { background: #0a0f1d; color: #f4f5fa; min-height: 100vh; }
+    .guide { max-width: 740px; margin: auto; padding: 48px 24px 80px; line-height: 1.8; }
+    .guide nav { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+    .guide a { color: #66d9e8; }
+    .guide h1 { margin: 50px 0 12px; }
+    .guide ol { padding-inline-start: 28px; }
+    .guide li { margin-block: 20px; }
+    .guide p { color: #b9c4d8; }
+    .guide button { cursor: pointer; padding: 8px 14px; border: 1px solid #66d9e8; border-radius: 8px; background: transparent; color: inherit; }
+  </style>
+</head>
+<body>
+  <main class="guide">
+    <nav>
+      <a href="/" data-i18n="home">ZainBot home</a>
+      <button type="button" id="language" data-i18n-aria="language_label" aria-label="Change language">العربية</button>
+    </nav>
+    <h1 data-i18n="title">Your first conversation</h1>
+    <p data-i18n="intro">Start with a small test in your own workspace before connecting customer channels.</p>
+    <ol>
+      <li><strong data-i18n="step1_title">Create your free account.</strong> <span data-i18n="step1_body">Register and verify your email if requested, then sign in to your dashboard.</span> <a href="/register" data-i18n="register">Create account</a></li>
+      <li><strong data-i18n="step2_title">Set up an agent.</strong> <span data-i18n="step2_body">In AI Agents, add a description or instructions about your business. Add a real question and answer in AI Training so the agent has something to use.</span></li>
+      <li><strong data-i18n="step3_title">Test and review.</strong> <span data-i18n="step3_body">Open your agent's website chat link from the dashboard, ask your test question, and check its reply. Adjust your training if it needs work.</span></li>
+    </ol>
+    <p data-i18n="note">The chat demo on the home page is a preview, not your business agent. Shopify and WooCommerce catalogs can be imported manually from Connections using read-only API credentials.</p>
+    <a href="/login" data-i18n="signin">Sign in</a> · <a href="/#demo" data-i18n="demo">Try interactive chat demo</a>
+  </main>
+  <script>
+    (function () {
+      const translations = {
+        en: {
+          home: 'ZainBot home', language_label: 'Change language', title: 'Your first conversation',
+          intro: 'Start with a small test in your own workspace before connecting customer channels.',
+          step1_title: 'Create your free account.', step1_body: 'Register and verify your email if requested, then sign in to your dashboard.',
+          register: 'Create account', step2_title: 'Set up an agent.',
+          step2_body: 'In AI Agents, add a description or instructions about your business. Add a real question and answer in AI Training so the agent has something to use.',
+          step3_title: 'Test and review.', step3_body: "Open your agent’s website chat link from the dashboard, ask your test question, and check its reply. Adjust your training if it needs work.",
+          note: 'The chat demo on the home page is a preview, not your business agent. Shopify and WooCommerce catalogs can be imported manually from Connections using read-only API credentials.',
+          signin: 'Sign in', demo: 'Try interactive chat demo'
+        },
+        ar: {
+          home: 'الرئيسية لزين بوت', language_label: 'تغيير اللغة', title: 'أول محادثة ليك',
+          intro: 'ابدأ باختبار بسيط في مساحة عملك قبل ربط قنوات العملاء.',
+          step1_title: 'أنشئ حسابًا مجانيًا.', step1_body: 'سجّل وفعّل بريدك الإلكتروني لو طُلب منك، وبعدها ادخل لوحة التحكم.',
+          register: 'إنشاء حساب', step2_title: 'جهّز وكيلًا.',
+          step2_body: 'في قسم الوكلاء الأذكياء أضف وصفًا أو تعليمات لنشاطك. أضف سؤالًا حقيقيًا وإجابته في قسم تدريب الذكاء الاصطناعي.',
+          step3_title: 'اختبر وراجع.', step3_body: 'افتح رابط دردشة الموقع للوكيل من لوحة التحكم، واسأل سؤال التجربة وتحقق من رده. عدّل التدريب لو محتاج تحسين.',
+          note: 'دردشة الصفحة الرئيسية مجرد معاينة وليست وكيل نشاطك. تقدر تستورد كتالوج Shopify أو WooCommerce يدويًا من قسم الربط بمفاتيح قراءة فقط.',
+          signin: 'تسجيل الدخول', demo: 'جرّب الدردشة التفاعلية'
+        }
+      };
+      const button = document.getElementById('language');
+      function apply(lang) {
+        document.documentElement.lang = lang;
+        document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+        document.title = lang === 'ar' ? 'زين بوت — دليل البداية' : 'ZainBot — Getting started';
+        document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = translations[lang][el.dataset.i18n]; });
+        document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', translations[lang][el.dataset.i18nAria]); });
+        button.textContent = lang === 'ar' ? 'English' : 'العربية';
+        try { localStorage.setItem('zainbot_lang', lang); } catch (e) { /* private browsing */ }
+      }
+      let lang;
+      try { lang = localStorage.getItem('zainbot_lang') === 'ar' ? 'ar' : 'en'; } catch (e) { lang = 'en'; }
+      button.addEventListener('click', () => apply(document.documentElement.lang === 'en' ? 'ar' : 'en'));
+      apply(lang);
+    })();
+  </script>
+</body>
+</html>

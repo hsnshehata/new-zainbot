@@ -5,17 +5,21 @@ const Bot = require('../models/Bot');
 const bcrypt = require('bcryptjs');
 const { OAuth2Client } = require('google-auth-library');
 const nodemailer = require('nodemailer');
+const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 const { validateBody, Joi } = require('../middleware/validate');
 const authenticate = require('../middleware/authenticate');
 const logger = require('../logger');
 const { validatePasswordStrength } = require('../utils/passwordPolicy');
 const {
   signAccessToken,
-  signEmailVerificationToken,
   verifyEmailVerificationToken,
 } = require('../utils/authTokens');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync('unusable-password', 10);
+const SIGNUP_TIERS = new Set(['free', 'growth_1k', 'growth_10k', 'growth_50k', 'unlimited']);
+const signupTier = (value) => typeof value === 'string' && SIGNUP_TIERS.has(value) ? value : null;
 
 // مخططات التحقق من البيانات
 const registerSchema = Joi.object({
@@ -26,6 +30,7 @@ const registerSchema = Joi.object({
   confirmPassword: Joi.any().valid(Joi.ref('password')).required()
     .messages({ 'any.only': 'كلمات المرور غير متطابقة' }),
   botName: Joi.string().min(2).max(50).required(),
+  intendedTier: Joi.any().optional(),
   whatsapp: Joi.string().allow(null, '').optional()
 });
 
@@ -36,6 +41,7 @@ const loginSchema = Joi.object({
 
 const googleSchema = Joi.object({
   idToken: Joi.string().required(),
+  intendedTier: Joi.any().optional(),
 });
 
 // إعداد Nodemailer لإرسال ايميلات التفعيل
@@ -47,13 +53,56 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const recoveryLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-7', legacyHeaders: false,
+  message: { success: false, message: 'طلبات كثيرة. حاول لاحقًا. / Too many requests. Try later.' } });
+const emailSchema = Joi.object({ email: Joi.string().email({ tlds: { allow: false } }).required() });
+const resetSchema = Joi.object({ token: Joi.string().hex().length(64).required(), password: registerSchema.extract('password'), confirmPassword: Joi.any().valid(Joi.ref('password')).required() });
+const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+const makeToken = () => crypto.randomBytes(32).toString('hex');
+const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const publicUrl = () => (process.env.BASE_URL || 'https://new.zainbot.com').replace(/\/$/, '');
+const emailHtml = (url, label) => `<p>${label}</p><p><a href="${escapeHtml(url)}">${escapeHtml(url)}</a></p>`;
+
+async function sendVerification(user, token) {
+  const url = `${publicUrl()}/login.html#verify=${token}`;
+  await transporter.sendMail({ to: user.email, subject: 'Activate your ZainBot account | تفعيل حساب زين بوت',
+    html: emailHtml(url, 'Activate your account / فعّل حسابك') });
+}
+
+async function provisionBot(userId, name) {
+  // Claim the empty bot slot on the user document before checking/creating a bot.
+  // A findOne + create race otherwise provisions two agents for simultaneous logins.
+  const claimUntil = new Date(Date.now() + 120000);
+  const claimed = await User.findOneAndUpdate(
+    { _id: userId, bots: { $size: 0 }, $or: [{ botProvisioningUntil: { $exists: false } }, { botProvisioningUntil: { $lt: new Date() } }] },
+    { $set: { botProvisioningUntil: claimUntil } }
+  );
+  if (!claimed) return;
+  try {
+    const bot = await Bot.findOne({ userId }).select('_id') || await Bot.create({ name: name || 'My Agent', userId });
+    await User.updateOne({ _id: userId }, { $addToSet: { bots: bot._id } });
+  } finally {
+    await User.updateOne({ _id: userId, botProvisioningUntil: claimUntil }, { $unset: { botProvisioningUntil: '' } });
+  }
+}
+
+async function restoreFailedDelivery(user, tokenHash, fields) {
+  const set = {};
+  const unset = {};
+  for (const field of fields) {
+    if (user[field] == null) unset[field] = '';
+    else set[field] = user[field];
+  }
+  const update = {};
+  if (Object.keys(set).length) update.$set = set;
+  if (Object.keys(unset).length) update.$unset = unset;
+  // Do not undo a newer resend or a verification completed while SMTP was pending.
+  await User.updateOne({ _id: user._id, isVerified: user.isVerified, [fields[0]]: tokenHash }, update);
+}
+
 // مسار التسجيل
 router.post('/register', validateBody(registerSchema), async (req, res) => {
-  const { email, username, password, confirmPassword, botName, whatsapp } = req.body;
-  if (email.endsWith('@gmail.com')) {
-    logger.warn('❌ Registration failed: Gmail used in regular registration', { email });
-    return res.status(400).json({ message: 'يرجى استخدام زرار تسجيل الدخول بجوجل لبريد Gmail', success: false });
-  }
+  const { email, username, password, botName, whatsapp } = req.body;
   try {
     const passwordCheck = validatePasswordStrength(password);
     if (!passwordCheck.valid) {
@@ -62,85 +111,129 @@ router.post('/register', validateBody(registerSchema), async (req, res) => {
     }
 
     const normalizedUsername = username.toLowerCase();
-    const existingUser = await User.findOne({ $or: [{ username: normalizedUsername }, { email }] });
+    const normalizedEmail = email.toLowerCase();
+    const existingUser = await User.findOne({ $or: [{ username: normalizedUsername }, { email: normalizedEmail }] });
     if (existingUser) {
       logger.warn('❌ Registration failed: username or email exists', { username: normalizedUsername, email });
       return res.status(400).json({ message: 'اسم المستخدم أو البريد الإلكتروني موجود بالفعل', success: false });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({
-      email,
+      email: normalizedEmail,
       username: normalizedUsername,
       password: hashedPassword,
       whatsapp: whatsapp || null,
       role: 'user',
       isVerified: false,
+      pendingBotName: botName,
+      intendedTier: signupTier(req.body.intendedTier),
     });
     await user.save();
 
-    // إنشاء توكن تفعيل
-    const token = signEmailVerificationToken(user._id, botName);
-
-    // إرسال ايميل تفعيل
-    const verificationUrl = `${process.env.BASE_URL}/api/auth/verify/${token}`;
-    await transporter.sendMail({
-      to: email,
-      subject: 'تفعيل حسابك في زين بوت',
-      html: `
-        <p>مرحبًا ${username}،</p>
-        <p>شكرًا لتسجيلك معنا في زين بوت! نحن متحمسون جدًا لوجودك معنا.</p>
-        <p>يرجى النقر على الرابط التالي لتفعيل حسابك:</p>
-        <p><a href="${verificationUrl}">${verificationUrl}</a></p>
-        <p>نتمنى لك تجربة ممتعة مليئة بالإنجازات مع بوتاتنا الذكية!</p>
-        <p>إذا كنت بحاجة إلى أي مساعدة، لا تتردد في التواصل مع فريق الدعم الخاص بنا.</p>
-        <p>مع أطيب التحيات،<br>فريق زين بوت</p>
-      `,
-    });
+    const token = makeToken();
+    await User.updateOne({ _id: user._id }, { $set: { verificationTokenHash: hashToken(token), verificationExpiresAt: new Date(Date.now() + 3600000) } });
+    try {
+      await sendVerification(user, token);
+    } catch (mailError) {
+      logger.error('verification_delivery_failed', { userId: user._id });
+      return res.status(503).json({ message: 'تعذر إرسال البريد الآن. حسابك محفوظ؛ استخدم إعادة إرسال التفعيل لاحقًا. / Email unavailable. Your account is saved; request a new link later.', success: false });
+    }
+    await User.updateOne({ _id: user._id }, { $set: { verificationSentAt: new Date() } });
 
     logger.info('verification_email_sent', { email });
-    res.status(201).json({ message: 'تم إرسال رابط تفعيل إلى بريدك الإلكتروني', success: true });
+    res.status(201).json({ message: 'تم إرسال رابط تفعيل إلى بريدك الإلكتروني', intendedTier: user.intendedTier, success: true });
   } catch (err) {
-    logger.error('registration_failed', { error: err.message, stack: err.stack });
+    logger.error('registration_failed', { error: err.name });
     res.status(500).json({ message: 'خطأ في السيرفر، حاول مرة أخرى', success: false });
   }
 });
 
 // مسار تفعيل الحساب
-router.get('/verify/:token', async (req, res) => {
-  const { token } = req.params;
+async function verifyAccount(req, res, token) {
+  res.set('Referrer-Policy', 'no-referrer');
+  res.set('Cache-Control', 'no-store');
   try {
-    const decoded = verifyEmailVerificationToken(token);
-    const user = await User.findById(decoded.userId);
-    if (!user) {
-      logger.warn('❌ Verification failed: user not found', { userId: decoded.userId });
-      return res.status(404).json({ message: 'المستخدم غير موجود', success: false });
+    let user;
+    if (/^[a-f0-9]{64}$/.test(token)) {
+      user = await User.findOneAndUpdate({ verificationTokenHash: hashToken(token), verificationExpiresAt: { $gt: new Date() }, isVerified: false },
+        { $set: { isVerified: true }, $unset: { verificationTokenHash: '', verificationExpiresAt: '' } }).select('+pendingBotName');
+    } else {
+      // Links issued before the opaque-token migration remain valid until their JWT expiry.
+      const decoded = verifyEmailVerificationToken(token);
+      user = await User.findOneAndUpdate({ _id: decoded.userId, isVerified: false, verificationTokenHash: { $exists: false } }, { $set: { isVerified: true } });
+      if (user) user.pendingBotName = decoded.botName;
     }
-    if (user.isVerified) {
-      logger.warn('❌ Verification failed: already verified', { userId: user._id, username: user.username });
-      return res.status(400).json({ message: 'الحساب مفعل بالفعل', success: false });
-    }
-    user.isVerified = true;
-    await user.save();
-
-    // إنشاء البوت تلقائيًا
-    const bot = new Bot({
-      name: decoded.botName,
-      userId: user._id,
-    });
-    await bot.save();
-
-    // ربط البوت بالمستخدم
-    user.bots.push(bot._id);
-    await user.save();
-
-    // إنشاء توكن تسجيل دخول
-    const authToken = signAccessToken(user);
-
-    logger.info('account_verified', { userId: user._id, botId: bot._id });
-    res.redirect(`/dashboard?token=${encodeURIComponent(authToken)}`);
+    if (!user) return req.method === 'POST' ? res.status(400).json({ success: false, code: 'verification_invalid' }) : res.redirect('/login.html?verification=invalid');
+    try { await provisionBot(user._id, user.pendingBotName); }
+    catch (error) { logger.error('verified_bot_provision_failed', { userId: user._id, error: error.name }); }
+    logger.info('account_verified', { userId: user._id });
+    return req.method === 'POST' ? res.json({ success: true, code: 'verification_success' }) : res.redirect('/login.html?verification=success');
   } catch (err) {
     logger.warn('account_verification_failed', { error: err.name });
-    res.status(400).json({ message: 'رابط التفعيل غير صالح أو منتهي', success: false });
+    return req.method === 'POST' ? res.status(400).json({ success: false, code: 'verification_invalid' }) : res.redirect('/login.html?verification=invalid');
+  }
+}
+
+router.get('/verify/:token', (req, res) => verifyAccount(req, res, req.params.token));
+router.post('/verify', recoveryLimiter, validateBody(Joi.object({ token: Joi.string().hex().length(64).required() })), (req, res) => verifyAccount(req, res, req.body.token));
+
+router.post('/resend-verification', recoveryLimiter, validateBody(emailSchema), async (req, res) => {
+  const response = { success: true, message: 'إذا كان الحساب ينتظر التفعيل، سنرسل رابطًا جديدًا. / If the account awaits verification, we will send a new link.' };
+  try {
+    const token = makeToken();
+    const user = await User.findOneAndUpdate({ email: req.body.email.toLowerCase(), isVerified: false, googleId: { $exists: false },
+      $or: [{ verificationSentAt: { $exists: false } }, { verificationSentAt: { $lt: new Date(Date.now() - 60000) } }] },
+    { $set: { verificationTokenHash: hashToken(token), verificationExpiresAt: new Date(Date.now() + 3600000), verificationSentAt: new Date() } })
+      .select('+verificationTokenHash +verificationExpiresAt +verificationSentAt');
+    if (user) {
+      try { await sendVerification(user, token); }
+      catch (_) {
+        logger.error('verification_resend_delivery_failed', { userId: user._id });
+        await restoreFailedDelivery(user, hashToken(token), ['verificationTokenHash', 'verificationExpiresAt', 'verificationSentAt']);
+      }
+    }
+    return res.json(response);
+  } catch (err) {
+    logger.error('verification_resend_failed', { error: err.name });
+    return res.status(500).json({ success: false, message: 'حاول لاحقًا / Please try again later.' });
+  }
+});
+
+router.post('/forgot-password', recoveryLimiter, validateBody(emailSchema), async (req, res) => {
+  const response = { success: true, message: 'إذا كان البريد مسجلاً، سنرسل رابط استعادة. / If the email is registered, we will send a recovery link.' };
+  try {
+    const token = makeToken();
+    const user = await User.findOneAndUpdate({ email: req.body.email.toLowerCase(), isVerified: true, password: { $exists: true }, status: { $nin: ['suspended', 'deleted'] },
+      $or: [{ resetSentAt: { $exists: false } }, { resetSentAt: { $lt: new Date(Date.now() - 60000) } }] },
+    { $set: { resetTokenHash: hashToken(token), resetExpiresAt: new Date(Date.now() + 3600000), resetSentAt: new Date() } })
+      .select('+resetTokenHash +resetExpiresAt +resetSentAt');
+    if (user) {
+      const url = `${publicUrl()}/login.html#reset=${token}`;
+      try { await transporter.sendMail({ to: user.email, subject: 'Reset your ZainBot password | استعادة كلمة مرور زين بوت',
+        html: emailHtml(url, 'Reset your password / استعد كلمة المرور') }); }
+      catch (_) {
+        logger.error('password_reset_delivery_failed', { userId: user._id });
+        await restoreFailedDelivery(user, hashToken(token), ['resetTokenHash', 'resetExpiresAt', 'resetSentAt']);
+      }
+    }
+    return res.json(response);
+  } catch (err) {
+    logger.error('password_reset_request_failed', { error: err.name });
+    return res.status(500).json({ success: false, message: 'حاول لاحقًا / Please try again later.' });
+  }
+});
+
+router.post('/reset-password', recoveryLimiter, validateBody(resetSchema), async (req, res) => {
+  try {
+    if (!validatePasswordStrength(req.body.password).valid) return res.status(400).json({ success: false, message: 'كلمة مرور ضعيفة / Weak password' });
+    const password = await bcrypt.hash(req.body.password, 10);
+    const user = await User.findOneAndUpdate({ resetTokenHash: hashToken(req.body.token), resetExpiresAt: { $gt: new Date() }, isVerified: true, status: { $nin: ['suspended', 'deleted'] } },
+      { $set: { password }, $inc: { sessionVersion: 1 }, $unset: { resetTokenHash: '', resetExpiresAt: '' } });
+    if (!user) return res.status(400).json({ success: false, message: 'الرابط غير صالح أو منتهي / Invalid or expired link' });
+    return res.json({ success: true, message: 'تم تحديث كلمة المرور / Password updated' });
+  } catch (err) {
+    logger.error('password_reset_failed', { error: err.name });
+    return res.status(500).json({ success: false, message: 'حاول لاحقًا / Please try again later.' });
   }
 });
 
@@ -152,7 +245,13 @@ router.post('/login', validateBody(loginSchema), async (req, res) => {
     const user = await User.findOne({ username: normalizedUsername })
       .select('+password +sessionVersion');
     if (!user) {
+      await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
       logger.warn('❌ Login failed: username not found', { username: normalizedUsername });
+      return res.status(400).json({ message: 'اسم المستخدم أو كلمة المرور غير صحيحة', success: false });
+    }
+    const isMatch = await bcrypt.compare(password, user.password || DUMMY_PASSWORD_HASH);
+    if (!isMatch) {
+      logger.warn('❌ Login failed: incorrect password', { username: normalizedUsername });
       return res.status(400).json({ message: 'اسم المستخدم أو كلمة المرور غير صحيحة', success: false });
     }
     if (!user.isVerified) {
@@ -166,14 +265,17 @@ router.post('/login', validateBody(loginSchema), async (req, res) => {
         success: false,
       });
     }
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      logger.warn('❌ Login failed: incorrect password', { username: normalizedUsername });
-      return res.status(400).json({ message: 'اسم المستخدم أو كلمة المرور غير صحيحة', success: false });
+    if (!user.bots?.length && !user.googleId) {
+      try {
+        const pending = await User.findById(user._id).select('+pendingBotName');
+        if (pending?.pendingBotName) await provisionBot(user._id, pending.pendingBotName);
+      } catch (error) {
+        logger.error('pending_bot_provision_failed', { userId: user._id, error: error.name });
+      }
     }
     const token = signAccessToken(user);
     logger.info('✅ Login successful', { username: normalizedUsername });
-    res.status(200).json({ token, role: user.role, userId: user._id, username: user.username, success: true });
+    res.status(200).json({ token, role: user.role, userId: user._id, username: user.username, intendedTier: user.intendedTier || null, success: true });
   } catch (err) {
     logger.error('login_failed_unexpectedly', { error: err.message, stack: err.stack });
     res.status(500).json({ message: 'خطأ في السيرفر، حاول مرة أخرى', success: false });
@@ -217,10 +319,11 @@ router.post('/google', validateBody(googleSchema), async (req, res) => {
         });
       }
       const token = signAccessToken(user);
-      logger.info('✅ Google login successful', { email });
-      res.json({ token, role: user.role, userId: user._id, username: user.username, newUser: false, success: true });
+      logger.info('✅ Google login successful', { userId: user._id });
+      res.json({ token, role: user.role, userId: user._id, username: user.username, intendedTier: user.intendedTier || null, newUser: false, success: true });
     } else {
-      const existingEmailUser = await User.findOne({ email });
+      if (!payload.email_verified || !email) return res.status(401).json({ message: 'فشل في التحقق من بيانات جوجل، حاول مرة أخرى', success: false });
+      const existingEmailUser = await User.findOne({ email: email.toLowerCase() });
       if (existingEmailUser) {
         logger.warn('❌ Google login failed: email already registered', { email });
         return res.status(400).json({ message: 'البريد الإلكتروني مسجل بالفعل', success: false });
@@ -238,12 +341,13 @@ router.post('/google', validateBody(googleSchema), async (req, res) => {
         count++;
       }
       user = new User({
-        email,
+        email: email.toLowerCase(),
         username,
         whatsapp: null,
         googleId,
         role: 'user',
         isVerified: true,
+        intendedTier: signupTier(req.body.intendedTier),
       });
       await user.save();
 
@@ -259,7 +363,7 @@ router.post('/google', validateBody(googleSchema), async (req, res) => {
 
       const token = signAccessToken(user);
       logger.info('✅ Google registration successful', { email, username });
-      res.json({ token, role: user.role, userId: user._id, username: user.username, newUser: true, success: true });
+      res.json({ token, role: user.role, userId: user._id, username: user.username, intendedTier: user.intendedTier, newUser: true, success: true });
     }
   } catch (error) {
     logger.error('google_login_failed', { error: error.message, stack: error.stack });

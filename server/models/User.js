@@ -25,8 +25,18 @@ const userSchema = new mongoose.Schema({
   whatsapp: { type: String, required: false }, // اختياري
   googleId: { type: String },
   isVerified: { type: Boolean, default: false },
+  pendingBotName: { type: String, select: false },
+  botProvisioningUntil: { type: Date, select: false },
+  verificationTokenHash: { type: String, select: false },
+  verificationExpiresAt: { type: Date, select: false },
+  verificationSentAt: { type: Date, select: false },
+  resetTokenHash: { type: String, select: false },
+  resetExpiresAt: { type: Date, select: false },
+  resetSentAt: { type: Date, select: false },
   subscriptionType: { type: String, enum: ['free', 'monthly', 'yearly'], default: 'free' },
   subscriptionTier: { type: String, enum: ['free', 'growth_1k', 'growth_10k', 'growth_50k', 'unlimited'], default: 'free' },
+  // Requested during signup; never used for entitlements or billing.
+  intendedTier: { type: String, enum: ['free', 'growth_1k', 'growth_10k', 'growth_50k', 'unlimited'], default: null },
   monthlyMessagesUsed: { type: Number, default: 0 },
   dailyMessagesUsed: { type: Number, default: 0 },
   lastUsageReset: { type: Date, default: Date.now },
@@ -50,6 +60,14 @@ const userSchema = new mongoose.Schema({
       delete result.password;
       delete result.sessionVersion;
       delete result.telegramLinkCode;
+      delete result.pendingBotName;
+      delete result.botProvisioningUntil;
+      delete result.verificationTokenHash;
+      delete result.verificationExpiresAt;
+      delete result.verificationSentAt;
+      delete result.resetTokenHash;
+      delete result.resetExpiresAt;
+      delete result.resetSentAt;
       return result;
     }
   },
@@ -58,6 +76,14 @@ const userSchema = new mongoose.Schema({
       delete result.password;
       delete result.sessionVersion;
       delete result.telegramLinkCode;
+      delete result.pendingBotName;
+      delete result.botProvisioningUntil;
+      delete result.verificationTokenHash;
+      delete result.verificationExpiresAt;
+      delete result.verificationSentAt;
+      delete result.resetTokenHash;
+      delete result.resetExpiresAt;
+      delete result.resetSentAt;
       return result;
     }
   }

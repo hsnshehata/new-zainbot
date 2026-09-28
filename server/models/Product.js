@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
   storeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Store', required: true },
+  importSource: { type: String, enum: ['shopify', 'woocommerce'] },
+  importSourceId: { type: String },
   productName: {
     type: String,
     required: true,
@@ -50,6 +52,7 @@ const productSchema = new mongoose.Schema({
     required: true,
     min: [0, 'المخزون يجب أن يكون أكبر من أو يساوي 0']
   },
+  stockTracked: { type: Boolean, default: true },
   lowStockThreshold: {
     type: Number,
     min: [0, 'عتبة المخزون المنخفض يجب أن تكون أكبر من أو يساوي 0'],
@@ -79,6 +82,10 @@ const productSchema = new mongoose.Schema({
 
 // فهرس لتحسين البحث والأداء
 productSchema.index({ storeId: 1 });
+productSchema.index({ storeId: 1, importSource: 1, importSourceId: 1 }, {
+  unique: true,
+  partialFilterExpression: { importSource: { $exists: true }, importSourceId: { $exists: true } }
+});
 productSchema.index({ category: 1 });
 productSchema.index({ salesCount: -1 }); // فهرس لتحسين جلب الأكثر مبيعاً
 

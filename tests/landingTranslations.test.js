@@ -39,7 +39,7 @@ test('landing markup translation keys exist in Arabic and English', () => {
 });
 
 test('landing uses the bilingual script that owns its translation map', () => {
-  assert.match(landingHtml, /<script src="js\/script\.js\?v=20260926-langbtn"><\/script>/);
+  assert.match(landingHtml, /<script src="js\/script\.js\?v=[a-z0-9-]+"><\/script>/);
 });
 
 test('landing does not publish unverified commercial plans or sample social proof', () => {

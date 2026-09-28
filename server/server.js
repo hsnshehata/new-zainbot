@@ -23,6 +23,7 @@ const uploadRoutes = require('./routes/upload');
 const notificationRoutes = require('./routes/notifications');
 const storesRoutes = require('./routes/stores');
 const productsRoutes = require('./routes/products');
+const catalogConnectorRoutes = require('./routes/catalogConnectors');
 const integrationsRoutes = require('./routes/integrations');
 const adminKeysRoutes = require('./routes/adminKeys');
 const landingDemoRoutes = require('./routes/landingDemo');
@@ -263,7 +264,8 @@ app.use((req, res, next) => {
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   }
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  logger.info('request', { requestId: req.requestId, method: req.method, path: req.path, ip: req.ip });
+  const safePath = req.path.startsWith('/api/auth/verify/') ? '/api/auth/verify/:token' : req.path;
+  logger.info('request', { requestId: req.requestId, method: req.method, path: safePath, ip: req.ip });
   next();
 });
 
@@ -398,6 +400,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/stores', storesRoutes);
 app.use('/api/products', productsRoutes);
+app.use('/api/catalog-connectors', catalogConnectorRoutes);
 app.use('/api/categories', categoriesRoutes); // إضافة routes الأقسام
 app.use('/api/customers', customersRoutes);
 app.use('/api/suppliers', suppliersRoutes);

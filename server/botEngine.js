@@ -24,6 +24,7 @@ const { getAiCompletion } = require('./services/aiFailover');
 const { checkPlanLimitsAndIncrement, settleMessageQuota } = require('./services/billingLimits');
 const { dispatchWebhook } = require('./services/webhookDispatcher');
 const { dispatchMultiChannelNotification } = require('./services/notificationDispatcher');
+const { buildProductContext } = require('./services/productContext');
 
 // معرف المساعد الداخلي لتخطي هوكات الطلبات
 const ASSISTANT_BOT_ID = process.env.ASSISTANT_BOT_ID || '688ebdc24f6bd5cf70cb071d';
@@ -889,10 +890,7 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
       if (store) {
         systemPrompt += `\nبيانات المتجر: الاسم: ${store.storeName}، الرابط: zainbot.com/${store.storeLink}.\n`;
         if (products && products.length > 0) {
-          systemPrompt += 'محتويات المتجر:\n';
-          products.forEach((product) => {
-            systemPrompt += `المنتج: ${product.productName}، السعر: ${product.price} ${product.currency}، الرابط: zainbot.com/store/${store.storeLink}?productId=${product._id}، الصورة: ${product.imageUrl || 'غير متوفرة'}، الوصف: ${product.description || 'غير متوفر'}، المخزون: ${product.stock}.\n`;
-          });
+          systemPrompt += buildProductContext(products, message, store.storeLink);
         } else {
           systemPrompt += 'لا توجد منتجات متاحة حاليًا في المتجر.\n';
         }
@@ -1231,10 +1229,15 @@ function invalidateBotCache(botId) {
   botDataCache.del(`bot_${botId}`);
 }
 
+function invalidateStoreCache(storeId) {
+  storeDataCache.del(`store_${storeId}`);
+}
+
 module.exports = {
   processMessage,
   processFeedback,
   invalidateBotCache,
+  invalidateStoreCache,
   extractBookingIntent,
   autoClassifyConversation,
 };

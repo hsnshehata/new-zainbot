@@ -201,14 +201,31 @@
     .account-menu-head span { color: var(--text-muted); font-size: 12px; overflow-wrap: anywhere; }
     .account-menu-quota { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 4px; padding: 10px; border-radius: 10px; color: var(--text-muted); background: rgba(59,130,246,.08); font-size: 12px; }
     .account-menu-quota strong { color: var(--text); font-size: 13px; }
-    .account-menu button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 11px 12px; border: 0; border-radius: 10px; color: var(--text); background: transparent; font: inherit; font-size: 13px; cursor: pointer; text-align: start; }
-    .account-menu button:hover { background: rgba(255,255,255,.06); }
+    .account-menu button, .account-menu a { display: flex; align-items: center; gap: 10px; width: 100%; padding: 11px 12px; border: 0; border-radius: 10px; color: var(--text); background: transparent; font: inherit; font-size: 13px; cursor: pointer; text-align: start; text-decoration: none; }
+    .account-menu button:hover, .account-menu a:hover { background: rgba(255,255,255,.06); }
     .account-menu .account-logout { color: var(--red); }
     .overview-workspace-card p { margin: 8px 0 20px; color: var(--text-muted); font-size: 14px; }
     .overview-status-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
     .overview-status-grid div { display: grid; gap: 7px; padding: 14px; border: 1px solid var(--glass-border); border-radius: 12px; background: rgba(255,255,255,.025); }
     .overview-status-grid span { color: var(--text-muted); font-size: 12px; }
     .overview-status-grid strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .onboarding-guide { margin-bottom: 24px; border-color: rgba(6,182,212,.35); }
+    .onboarding-guide summary { cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px; list-style: none; }
+    .onboarding-guide summary::-webkit-details-marker { display: none; }
+    .onboarding-guide summary::after { content: '⌄'; font-size: 22px; color: var(--cyan); }
+    .onboarding-guide:not([open]) summary::after { transform: rotate(90deg); }
+    .onboarding-guide summary h2 { font-size: 20px; margin: 0 0 4px; }
+    .onboarding-guide summary p { color: var(--text-muted); font-size: 13px; margin: 0; }
+    .onboarding-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+    .onboarding-step { min-width: 0; padding: 16px; border: 1px solid var(--glass-border); border-radius: 12px; background: rgba(255,255,255,.025); }
+    .onboarding-step[data-state="done"] { border-color: rgba(16,185,129,.6); }
+    .onboarding-step h3 { font-size: 15px; margin: 10px 0 6px; overflow-wrap: anywhere; }
+    .onboarding-step p { font-size: 13px; color: var(--text-muted); margin: 0 0 16px; overflow-wrap: anywhere; }
+    .onboarding-step .btn { white-space: normal; text-align: center; }
+    .onboarding-status { font-size: 12px; color: var(--cyan); font-weight: 700; }
+    .onboarding-step[data-state="done"] .onboarding-status { color: var(--green, #10b981); }
+    .onboarding-feedback { margin: 14px 0 0; font-size: 13px; color: var(--text-muted); }
+    @media (max-width: 850px) { .onboarding-steps { grid-template-columns: minmax(0, 1fr); } }
 
     .user-avatar {
       width: 24px;
@@ -355,6 +372,8 @@
       margin-bottom: 8px;
       color: var(--text);
     }
+    #storeConnectorForm label { font-size: 13px; font-weight: 600; }
+    #storeConnectorForm small { color: var(--text-muted); line-height: 1.6; }
     .form-control {
       width: 100%;
       background: rgba(255,255,255,0.03);
@@ -864,6 +883,7 @@
             </div>
             <div class="account-menu-quota"><span data-i18n="account_quota_remaining">Messages remaining</span><strong id="accountMenuQuota">—</strong></div>
             <button id="accountSettingsBtn" type="button" role="menuitem"><i class="fas fa-gear"></i><span data-i18n="account_settings">Account settings</span></button>
+            <a href="/help.html" role="menuitem"><i class="fas fa-circle-question" aria-hidden="true"></i><span data-i18n="account_help_guide">First conversation guide</span></a>
             <button id="accountLogoutBtn" type="button" role="menuitem" class="account-logout"><i class="fas fa-sign-out-alt"></i><span data-i18n="logout">Logout</span></button>
           </div>
         </div>
@@ -874,6 +894,15 @@
         
         <!-- ==================== 1. OVERVIEW PAGE ==================== -->
         <section id="page-overview" class="db-page active">
+          <details id="onboardingGuide" class="glass-card onboarding-guide" open>
+            <summary><div><h2 data-i18n="onboard_title">Get your first real reply</h2><p id="onboardingProgress" aria-live="polite"></p></div></summary>
+            <div id="onboardingSteps" class="onboarding-steps">
+              <article class="onboarding-step" data-step="personalized"><span class="onboarding-status"></span><h3 data-i18n="onboard_personalize_title">1. Personalize your agent</h3><p data-i18n="onboard_personalize_desc">Give your agent a welcome message, description or instructions for your business.</p><button type="button" class="btn btn-secondary btn-sm" id="onboardPersonalize" data-i18n="onboard_personalize_action">Edit agent</button></article>
+              <article class="onboarding-step" data-step="trained"><span class="onboarding-status"></span><h3 data-i18n="onboard_train_title">2. Add a real answer</h3><p data-i18n="onboard_train_desc">Save a question and answer your customers actually ask.</p><button type="button" class="btn btn-secondary btn-sm" id="onboardTrain" data-i18n="onboard_train_action">Add FAQ</button></article>
+              <article class="onboarding-step" data-step="tested"><span class="onboarding-status"></span><h3 data-i18n="onboard_test_title">3. Try the live chat</h3><p data-i18n="onboard_test_desc">Send a question through your agent’s web chat and check its reply. Opening the page alone does not complete this step.</p><button type="button" class="btn btn-primary btn-sm" id="onboardTest" data-i18n="onboard_test_action">Open live chat</button></article>
+            </div>
+            <p id="onboardingFeedback" class="onboarding-feedback" role="status" hidden></p>
+          </details>
           <div class="stats-grid">
             <div class="glass-card stat-card">
               <div class="stat-info">
@@ -1569,6 +1598,7 @@
               <i class="fab fa-whatsapp"></i>
               <h3>WhatsApp Business</h3>
               <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;" data-i18n="chan_desc_wa">Connect official cloud API or gateway.</p>
+              <p class="channel-status" data-i18n="chan_status_checking" role="status">Checking status…</p>
               <button class="btn btn-secondary btn-sm" onclick="configureChannel('whatsapp')"><span data-i18n="btn_configure">Configure</span></button>
             </div>
 
@@ -1577,6 +1607,7 @@
               <i class="fab fa-facebook-messenger"></i>
               <h3>FB Messenger</h3>
               <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;" data-i18n="chan_desc_fb">Automate replies on Facebook pages.</p>
+              <p class="channel-status" data-i18n="chan_status_checking" role="status">Checking status…</p>
               <button class="btn btn-secondary btn-sm" onclick="configureChannel('facebook')"><span data-i18n="btn_configure">Configure</span></button>
             </div>
 
@@ -1585,6 +1616,7 @@
               <i class="fab fa-instagram"></i>
               <h3>Instagram Direct</h3>
               <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;" data-i18n="chan_desc_ig">Direct Messages & Comment automation.</p>
+              <p class="channel-status" data-i18n="chan_status_checking" role="status">Checking status…</p>
               <button class="btn btn-secondary btn-sm" onclick="configureChannel('instagram')"><span data-i18n="btn_configure">Configure</span></button>
             </div>
 
@@ -1593,6 +1625,7 @@
               <i class="fab fa-telegram"></i>
               <h3>Telegram Bot</h3>
               <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;" data-i18n="chan_desc_tg">Integrate custom Telegram chatbot.</p>
+              <p class="channel-status" data-i18n="chan_status_checking" role="status">Checking status…</p>
               <button class="btn btn-secondary btn-sm" onclick="configureChannel('telegram')"><span data-i18n="btn_configure">Configure</span></button>
             </div>
 
@@ -1616,25 +1649,39 @@
               <pre style="background:rgba(0,0,0,0.2); padding:16px; border-radius:8px; overflow-x:auto; font-size:12px; color:var(--cyan); border: 1px solid var(--glass-border);"><code id="widgetSnippetCode">&lt;script src="/widget.js" data-bot-id="loading..."&gt;&lt;/script&gt;</code></pre>
             </div>
 
-            <!-- Shopify / WooCommerce integrations -->
-            <div class="glass-card">
-              <h3 data-i18n="ecommerce_sync_title" style="margin-bottom:16px;">E-commerce Store Catalog</h3>
-              <form id="storeConnectorForm">
-                <div class="form-group">
-                  <label data-i18n="label_store_provider">Platform</label>
-                  <select id="storeProvider" class="form-control">
-                    <option value="none" data-i18n="store_none">Not connected</option>
-                    <option value="shopify">Shopify</option>
-                    <option value="woocommerce">WooCommerce</option>
-                  </select>
+            <!-- Manual store catalog connector -->
+            <div class="glass-card" style="min-width:0;">
+              <h3 data-i18n="ecommerce_sync_title" style="margin-bottom:12px;">Store catalog import</h3>
+              <p data-i18n="store_sync_scope" style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">Import runs only when you press Sync. Up to 500 products per run; Shopify uses the first variant. Imported products become available as store context for the agent.</p>
+              <form id="storeConnectorForm" autocomplete="off" style="display:grid; gap:12px; min-width:0;">
+                <label for="storeProvider" data-i18n="store_provider_label">Platform</label>
+                <select id="storeProvider" class="form-control" required><option value="shopify">Shopify</option><option value="woocommerce">WooCommerce</option></select>
+                <label for="storeUrl" data-i18n="store_url_label">HTTPS store origin (no path)</label>
+                <input id="storeUrl" class="form-control" type="url" inputmode="url" autocomplete="off" required data-i18n-placeholder="store_url_placeholder" placeholder="https://example.myshopify.com" style="width:100%; min-width:0;" aria-describedby="storeUrlHelp">
+                <small id="storeUrlHelp" data-i18n="store_shopify_url_help">Use your https://store.myshopify.com address, without a path or query.</small>
+                <label for="storeCurrency" data-i18n="store_currency_label">Product currency</label>
+                <select id="storeCurrency" class="form-control" required><option value="EGP">EGP</option><option value="USD">USD</option><option value="SAR">SAR</option></select>
+                <div id="shopifyCredentials" style="display:grid; gap:8px; min-width:0;">
+                  <label for="storeToken" data-i18n="store_token_label">Shopify Admin API access token</label>
+                  <input id="storeToken" class="form-control" type="password" autocomplete="off" minlength="8" required aria-describedby="storeTokenHelp" style="width:100%; min-width:0;">
+                  <small id="storeTokenHelp" data-i18n="store_token_help">Enter an Admin API token with read_products permission. Enter it again to update saved settings; it cannot be viewed after saving.</small>
                 </div>
-                <div class="form-group">
-                  <label data-i18n="label_store_url">Store URL</label>
-                  <input type="text" id="storeUrl" class="form-control" data-i18n-placeholder="placeholder_store_url" placeholder="https://my-store.myshopify.com" />
+                <div id="wooCredentials" hidden style="display:none; gap:8px; min-width:0;">
+                  <label for="storeConsumerKey" data-i18n="store_key_label">WooCommerce consumer key</label>
+                  <input id="storeConsumerKey" class="form-control" type="password" autocomplete="off" minlength="8" aria-describedby="storeWooHelp" style="width:100%; min-width:0;">
+                  <label for="storeConsumerSecret" data-i18n="store_secret_label">WooCommerce consumer secret</label>
+                  <input id="storeConsumerSecret" class="form-control" type="password" autocomplete="off" minlength="8" aria-describedby="storeWooHelp" style="width:100%; min-width:0;">
+                  <small id="storeWooHelp" data-i18n="store_woo_help">Create a WooCommerce REST API key with products read access. Enter both credentials again to update saved settings; they cannot be viewed after saving.</small>
                 </div>
-                <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_sync_catalog">Save & Sync Catalog</button>
-                <div id="storeConnectorFeedback" style="display:none; margin-top:12px; padding:10px 14px; border-radius:8px; font-size:12px;"></div>
+                <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                  <button id="saveStoreConnector" type="submit" class="btn btn-primary btn-sm" data-i18n="store_save">Save connection</button>
+                  <button id="syncStoreCatalog" type="button" class="btn btn-secondary btn-sm" data-i18n="store_sync" disabled>Sync saved connection</button>
+                </div>
               </form>
+              <p id="storeConnectorStatus" role="status" aria-live="polite" style="font-size:13px; margin-top:12px; overflow-wrap:anywhere;"></p>
+              <p id="storeConnectorFeedback" role="status" aria-live="polite" style="font-size:13px; margin-top:8px; overflow-wrap:anywhere;"></p>
+              <p data-i18n="store_training_path" style="font-size:13px; color:var(--text-muted); margin:16px 0;">After importing, test an actual product question in chat. Add extra business rules in AI Training.</p>
+              <button type="button" id="openCatalogTrainingBtn" class="btn btn-secondary btn-sm" data-i18n="store_open_training">Open AI Training</button>
             </div>
           </div>
         </section>
@@ -1778,6 +1825,7 @@
               </div>
               <span class="badge badge-warning" id="currentPlanBadge" data-i18n="subscription_current_free">Free plan</span>
             </div>
+            <p id="planIntentHint" data-i18n="subscription_intent_hint" style="color:var(--text-muted); font-size:13px; margin-bottom:12px;" hidden>Your selected plan is {plan}. It is not active yet; review the payment instructions before requesting activation.</p>
             <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr)); gap:8px; margin-bottom:16px;" id="plansGrid">
               <button type="button" class="btn btn-secondary btn-sm plan-pick" data-tier="free" data-i18n="subscription_plan_free">Free • 0</button>
               <button type="button" class="btn btn-secondary btn-sm plan-pick" data-tier="growth_1k" data-i18n="subscription_plan_growth1">Growth Starter • 199</button>
@@ -1808,7 +1856,7 @@
               </div>
               <div style="display:flex; gap:8px; flex-wrap:wrap;">
                 <button type="submit" class="btn btn-primary btn-sm" data-i18n="subscription_btn_request">Submit activation request</button>
-                <a id="subscriptionWhatsappLink" href="#" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" data-i18n="subscription_btn_whatsapp">Contact on WhatsApp</a>
+                <a id="subscriptionWhatsappLink" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" data-i18n="subscription_btn_whatsapp" style="display:none;" hidden>Contact on WhatsApp</a>
               </div>
             </form>
             <p style="font-size:12px; color:var(--text-muted); margin-top:10px;" data-i18n="subscription_payment_hint">We accept: Instapay • Vodafone Cash • Orange Money • Etisalat Cash. Activation is manual within hours after receipt review.</p>
@@ -3151,7 +3199,8 @@
 
   <script src="js/utils.js"></script>
   <!-- Loading script for i18n translations & UI logic -->
-  <script src="js/dashboard_new.js"></script>
+  <script src="js/dashboard-onboarding.js?v=20260928-journey"></script>
+  <script src="js/dashboard_new.js?v=20260928-journey"></script>
   <script src="js/settings-summary.js?v=2"></script>
   <script>
     if ('serviceWorker' in navigator) {
