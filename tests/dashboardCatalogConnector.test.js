@@ -34,6 +34,16 @@ test('requests target the selected bot and provider, and reject unknown errors w
   assert.equal(context.catalogText('unexpected secret'), 'Retry');
   assert.match(script, /catalogRequestJson\(`\$\{catalogEndpoint\(botId, provider\)\}\/sync`, \{ method: 'POST' \}\)/);
   assert.match(script, /catalogRequestJson\(catalogEndpoint\(botId, provider\), \{ method: 'PUT', body: payload \}\)/);
-   assert.match(script, /catalogSyncButton\.disabled = catalogBusy \|\| !currentBot\?\._id \|\| !catalogStatus\?\.configured/);
-   assert.doesNotMatch(script.slice(script.indexOf('  const catalogForm ='), script.indexOf('  \/\/ 5. ORDERS')), /!currentBot\?\.storeId/);
+  assert.match(script, /catalogSyncButton\.disabled = catalogBusy \|\| !canManageCatalog\(\) \|\| !catalogStatus\?\.configured/);
+  assert.doesNotMatch(script.slice(script.indexOf('  const catalogForm ='), script.indexOf('  \/\/ 5. ORDERS')), /!currentBot\?\.storeId/);
+});
+
+test('catalog form is available to bot owner, including a newly created bot without a store', () => {
+  const source = script.slice(script.indexOf('  function canManageCatalog()'), script.indexOf('  function catalogText('));
+  const context = { currentBot: { _id: 'bot-1', userId: 'owner-1' }, currentUser: { _id: 'owner-1' } };
+  vm.createContext(context);
+  vm.runInContext(`${source}\ncanManageCatalog`, context);
+  assert.equal(context.canManageCatalog(), true);
+  context.currentBot.userId = 'another-owner';
+  assert.equal(context.canManageCatalog(), false);
 });

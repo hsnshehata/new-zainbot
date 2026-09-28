@@ -576,7 +576,7 @@
       store_status_failed: 'Last sync failed.',
       store_status_details: 'Imported: {count} · Last successful sync: {time}',
       store_status_no_sync: 'No successful sync yet.',
-      store_no_bot: 'Select an agent with a linked store to configure a catalog.',
+      store_no_bot: 'Select an agent to configure a catalog.',
       store_saving: 'Saving connection…',
       store_saved: 'Connection saved. You can now sync manually.',
       store_syncing: 'Importing products…',
@@ -1382,7 +1382,7 @@
       store_status_failed: 'فشلت آخر مزامنة.',
       store_status_details: 'تم استيراد: {count} · آخر مزامنة ناجحة: {time}',
       store_status_no_sync: 'لم تحدث مزامنة ناجحة بعد.',
-      store_no_bot: 'اختر وكيلاً مرتبطًا بمتجر لإعداد الكتالوج.',
+      store_no_bot: 'اختر وكيلًا لإعداد الكتالوج.',
       store_saving: 'جارٍ حفظ الربط…',
       store_saved: 'تم حفظ الربط. يمكنك المزامنة يدويًا الآن.',
       store_syncing: 'جارٍ استيراد المنتجات…',
@@ -2572,6 +2572,11 @@
   let catalogFeedbackKey = '';
   let catalogFeedbackParams = {};
 
+  function canManageCatalog() {
+    if (!currentBot?._id || !currentUser?._id) return false;
+    return String(currentBot.userId?._id || currentBot.userId) === String(currentUser._id);
+  }
+
   function catalogText(key, params = {}) {
     return (translations[currentLanguage][key] || translations[currentLanguage].store_error_generic)
       .replace(/\{(\w+)\}/g, (_, name) => String(params[name] ?? ''));
@@ -2607,10 +2612,11 @@
     catalogKey.required = catalogSecret.required = woo;
     document.getElementById('storeUrlHelp').textContent = catalogText(woo ? 'store_woo_url_help' : 'store_shopify_url_help');
     catalogUrl.placeholder = catalogText(woo ? 'store_woo_url_placeholder' : 'store_url_placeholder');
-    catalogForm.querySelectorAll('input, select').forEach(el => { el.disabled = catalogBusy || !currentBot?._id; });
-    catalogSaveButton.disabled = catalogBusy || !currentBot?._id;
-    catalogSyncButton.disabled = catalogBusy || !currentBot?._id || !catalogStatus?.configured || catalogStatus.state === 'running';
+    catalogForm.querySelectorAll('input, select').forEach(el => { el.disabled = catalogBusy || !canManageCatalog(); });
+    catalogSaveButton.disabled = catalogBusy || !canManageCatalog();
+    catalogSyncButton.disabled = catalogBusy || !canManageCatalog() || !catalogStatus?.configured || catalogStatus.state === 'running';
     if (!currentBot?._id) catalogStatusEl.textContent = catalogText('store_no_bot');
+    else if (!canManageCatalog()) catalogStatusEl.textContent = catalogText('store_error_owner_only');
     else if (!catalogStatus) catalogStatusEl.textContent = catalogText(catalogLoadFailed ? 'store_load_error' : 'store_status_loading');
     else {
       const stateKey = catalogStatus.configured ? `store_status_${catalogStatus.state}` : 'store_status_unconfigured';
@@ -2656,7 +2662,7 @@
     catalogLoadFailed = false;
     catalogFeedback('', {});
     renderCatalogStatus();
-    if (!currentBot?._id) return;
+    if (!canManageCatalog()) return;
     const botId = String(currentBot._id);
     const provider = catalogProvider.value;
     try {
@@ -2683,7 +2689,7 @@
   });
   catalogForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (catalogBusy || !currentBot?._id) return;
+    if (catalogBusy || !canManageCatalog()) return;
     const botId = String(currentBot._id);
     const provider = catalogProvider.value;
     const request = ++catalogRequest;
@@ -2713,7 +2719,7 @@
     }
   });
   catalogSyncButton?.addEventListener('click', async () => {
-    if (catalogBusy || !catalogStatus?.configured || catalogStatus.state === 'running' || !currentBot?._id) return;
+    if (catalogBusy || !catalogStatus?.configured || catalogStatus.state === 'running' || !canManageCatalog()) return;
     const botId = String(currentBot._id);
     const provider = catalogProvider.value;
     const request = ++catalogRequest;
