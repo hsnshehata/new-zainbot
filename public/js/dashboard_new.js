@@ -29,6 +29,8 @@
     en: {
       menu_overview: 'Overview',
       menu_inbox: 'Omnichannel Inbox',
+      inbox_select_chat: 'Select a chat',
+      inbox_no_channel: 'No active channel',
       menu_training: 'AI Training',
       menu_channels: 'Connections',
       menu_orders: 'Orders & Bookings',
@@ -767,6 +769,8 @@
     ar: {
       menu_overview: 'نظرة عامة',
       menu_inbox: 'صندوق الوارد الموحد',
+      inbox_select_chat: 'اختر محادثة',
+      inbox_no_channel: 'لا توجد قناة نشطة',
       menu_training: 'تدريب الذكاء الاصطناعي',
       menu_channels: 'ربط القنوات',
       menu_orders: 'الطلبات والحجوزات',
@@ -1505,6 +1509,8 @@
   };
 
   // Helper: Get JWT token from storage
+  window.__zainbotSettingsState = () => ({ translations: translations[currentLanguage], bot: currentBot });
+
   function getToken() {
     return localStorage.getItem('token');
   }
@@ -1570,6 +1576,7 @@
     renderWebhookLogs();
     renderAdminKeys();
     renderAccountMenu();
+    if (window.__zainbotRenderSettingsSummary) window.__zainbotRenderSettingsSummary();
   }
 
   // Tab switching handler
@@ -1865,6 +1872,8 @@
     selectedConversationId = chat._id;
     renderChatList(); // refresh active state
 
+    document.getElementById('chatActiveUser').removeAttribute('data-i18n');
+    document.getElementById('chatActiveChannel').removeAttribute('data-i18n');
     document.getElementById('chatActiveUser').textContent = chat.username || 'Customer';
     document.getElementById('chatActiveChannel').textContent = chat.channel ? chat.channel.toUpperCase() : 'Web Chat';
 

@@ -5,11 +5,11 @@
   window.__zainbotSettingsSummaryPatched = true;
 
   function T() {
-    return (window.translations && window.translations[window.currentLanguage]) || {};
+    return window.__zainbotSettingsState?.().translations || {};
   }
 
   function activeAgent() {
-    return window.currentBot || null;
+    return window.__zainbotSettingsState?.().bot || null;
   }
 
   function esc(s) {
