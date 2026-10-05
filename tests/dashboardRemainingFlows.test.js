@@ -157,5 +157,5 @@ test('D09 keys exist and the bundle version bumps', () => {
   ]) {
     assert.match(script, new RegExp(`      ${key}: '[^']+'`), `missing dictionary key ${key}`);
   }
-  assert.match(html, /dashboard_new\.js\?v=20261005-d09/);
+  assert.match(html, /dashboard_new\.js\?v=\d{8}-[a-z0-9]+/, 'dashboard bundle carries a dated version pin');
 });

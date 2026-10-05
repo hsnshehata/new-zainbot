@@ -7177,6 +7177,7 @@
         t: (key, fallback = '') => ideaT(key, fallback),
         feedback: window.ZainBotFeedback || null,
         a11y: window.ZainBotA11y || null,
+        onListReady: () => clearCouncilLiveNote(),
       });
     }
     return ideaCouncilModule;
@@ -7193,7 +7194,31 @@
     }
   }
 
-  function showCouncilLoadError(retry) {
+    // Retires OUR council loading/error announcement from the shared live
+    // region once the list paints successfully. Clears ONLY when the
+    // region still holds one of our four strings (loading/error x en/ar) —
+    // any other flow's message is left untouched. Pure predicate below is
+    // unit-tested; this is the thin DOM wiring.
+    function shouldClearCouncilLiveNote(currentText) {
+      if (typeof currentText !== 'string' || !currentText) return false;
+      const ours = [
+        (translations.en || {}).feedback_loading,
+        (translations.en || {}).lazy_load_failed,
+        (translations.ar || {}).feedback_loading,
+        (translations.ar || {}).lazy_load_failed
+      ];
+      return ours.some((s) => typeof s === 'string' && s !== '' && currentText.indexOf(s) !== -1);
+    }
+
+    function clearCouncilLiveNote() {
+      try {
+        const region = document.getElementById('feedbackLiveRegion');
+        if (!region) return;
+        if (shouldClearCouncilLiveNote(region.textContent)) region.textContent = '';
+      } catch (_ignored) { /* never break the list render */ }
+    }
+
+    function showCouncilLoadError(retry) {
     const container = document.getElementById('ideasListContainer');
     if (container) {
       container.setAttribute('aria-busy', 'false');

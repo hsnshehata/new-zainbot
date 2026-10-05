@@ -9,11 +9,14 @@
   'use strict';
 
   // Contract: window.ZainBotIdeaCouncil.create({ requestJson, fetchBlob,
-  // getLanguage, t, feedback, a11y })
+  // getLanguage, t, feedback, a11y, onListReady })
   //   -> { init, load, dispose, refreshLanguage, ...transitional surface }.
   // requestJson/t/getLanguage/fetchBlob are consumed; feedback is accepted
   // + reserved (confirm/alert stay verbatim per D09-F4); a11y feeds the two
-  // E03-owned modals with live-DOM fallback. The F04c host bridge is gone:
+  // E03-owned modals with live-DOM fallback. onListReady is an optional
+  // host hook fired after a successful list paint so the host can retire
+  // its own loading announcement (the global live region keeps the last
+  // message otherwise). The F04c host bridge is gone:
   // the d-slice lives here now.
   function create(deps) {
     const opts = deps || {};
@@ -21,6 +24,7 @@
     const getLanguage = opts.getLanguage;
     const requestJson = opts.requestJson;
     const fetchBlob = opts.fetchBlob;
+    const onListReady = typeof opts.onListReady === 'function' ? opts.onListReady : null;
     if (typeof t !== 'function') {
       throw new Error('[idea-council] create() requires t(key, fallback?)');
     }
@@ -1069,6 +1073,9 @@
       const ideas = Array.isArray(rawList) ? rawList : [];
       lastIdeas = ideas;
       paintIdeaList(ideas);
+      if (onListReady) {
+        try { onListReady(); } catch (_hookErr) { /* host hook must never break the list */ }
+      }
     } catch (err) {
       console.error('Failed to load Idea Council list:', err);
       renderIdeaListError();

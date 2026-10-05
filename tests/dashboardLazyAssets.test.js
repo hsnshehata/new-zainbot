@@ -76,7 +76,7 @@ test('static map holds versioned same-origin URLs only', () => {
   assert.deepEqual(Object.keys(assets.FEATURES).sort(), ['ideaCouncil', 'settingsSummary']);
   for (const url of Object.values(assets.FEATURES)) {
     assert.ok(url.startsWith('/js/'), `chunk URL must be same-origin static: ${url}`);
-    assert.match(url, /\?v=\d+-f\d+/, `chunk URL must carry a version: ${url}`);
+    assert.match(url, /\?v=\d{8}-[a-z0-9]+/, `chunk URL must carry a dated version: ${url}`);
     assert.ok(!url.includes('..'), 'no path traversal in the static map');
   }
   assert.throws(() => { assets.FEATURES.ideaCouncil = 'x'; }, undefined, 'map mutation attempt');
@@ -91,7 +91,7 @@ test('first load appends one script; concurrent callers share it', async () => {
   const p2 = assets.loadFeature('ideaCouncil');
   const p3 = assets.loadFeature('ideaCouncil');
   assert.equal(doc.appended.length, 1, 'repeated clicks = 1 request');
-  assert.ok(doc.appended[0].src.endsWith('.js?v=20261005-f05'), 'versioned chunk URL requested');
+  assert.ok(doc.appended[0].src.endsWith('.js?v=' + assets.VERSION), 'versioned chunk URL requested (matches loader VERSION)');
   assert.equal(p1, p2, 'concurrent entries share one promise');
   assert.equal(p2, p3);
   fireLoad(doc.scripts[0], scope, 'ZainBotIdeaCouncil', api);

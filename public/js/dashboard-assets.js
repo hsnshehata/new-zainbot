@@ -8,7 +8,7 @@
 (function (global) {
   'use strict';
 
-  var VERSION = '20261005-f05';
+  var VERSION = '20261005-livenote';
 
   // Static same-origin map. Versions bump here (F-owned) when a chunk changes;
   // the SW stays query-blind (one entry per path), so no SW edit is needed.
