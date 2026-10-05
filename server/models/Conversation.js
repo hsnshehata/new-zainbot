@@ -31,6 +31,10 @@ const conversationSchema = new mongoose.Schema({
 // إضافة Index على messages.timestamp لتسريع الـ Sort
 conversationSchema.index({ "messages.timestamp": -1 });
 
+// Index على botId — كل قراءات اللوحة (العدّ والإحصائيات) مفلترة به،
+// وغيابه كان يجبر Mongo على فحص المجموعة كاملة في كل تحميل Overview
+conversationSchema.index({ botId: 1 });
+
 // إضافة unique index على messageId داخل messages
 conversationSchema.index({ "messages.messageId": 1 }, { unique: true, sparse: true });
 

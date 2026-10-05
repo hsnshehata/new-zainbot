@@ -155,7 +155,8 @@ app.use(helmet({
         'https://cdn.jsdelivr.net',
         'https://cdnjs.cloudflare.com',
         'https://connect.facebook.net',
-        'https://accounts.google.com'
+        'https://accounts.google.com',
+        'https://static.cloudflareinsights.com'
       ],
       scriptSrcAttr: ["'unsafe-inline'"], // السماح بـ inline event handlers مثل onclick
       styleSrc: [
