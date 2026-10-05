@@ -77,6 +77,8 @@ curl http://localhost:5000/health   # المتوقع {"status":"ok"}
 | `npm start` | تشغيل السيرفر للإنتاج |
 | `npm run dev` | تشغيل مع إعادة التحميل التلقائي |
 | `npm test` | كل التستات (`node scripts/run-tests.js` شامل `tests/ideaCouncil/`) |
+| `npm run test:browser:dashboard` | smoke المتصفح عبر Chromium بعيد (يحتاج ملف Browserless URL؛ يشغّل التطبيق على بورت مؤقت) |
+| `npm run build:web` | نسخة مصغّرة من `public/` إلى `build/public/` (esbuild حتمي، بدون bundling؛ مجلد `build/` لا يُرفع) |
 | `npm run build:linux` | نسخة standalone عبر `pkg` |
 
 الـ CI بيشغل `npm test` مع كل push/PR.

@@ -77,6 +77,8 @@ curl http://localhost:5000/health   # expect {"status":"ok"}
 | `npm start` | Production server |
 | `npm run dev` | Nodemon auto-reload |
 | `npm test` | Full test suite (`node scripts/run-tests.js`, includes `tests/ideaCouncil/`) |
+| `npm run test:browser:dashboard` | Browser smoke via remote Chromium (needs Browserless URL file; serves the app on an ephemeral port) |
+| `npm run build:web` | Minified mirror of `public/` → `build/public/` (deterministic esbuild, no bundling/mangling; `build/` stays untracked) |
 | `npm run build:linux` | Standalone binary via `pkg` |
 
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) installs deps and runs `npm test` on every push/PR.

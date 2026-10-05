@@ -408,6 +408,9 @@ router.get("/download/:botId", authenticate, loadAccessibleBot, async (req, res)
 // مسار التبديل بين الرد الآلي والتفاعل البشري (Human Handoff)
 router.patch("/conversations/:id/handoff", authenticate, async (req, res) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(404).json({ success: false, message: "المحادثة غير موجودة" });
+    }
     const { isHumanHandling } = req.body;
     const conversation = await Conversation.findById(req.params.id);
     if (!conversation) {
@@ -436,6 +439,9 @@ router.post("/reply", authenticate, async (req, res) => {
     }
     if (text.length > 4000) {
       return res.status(400).json({ success: false, message: "الرسالة طويلة جداً" });
+    }
+    if (!mongoose.isValidObjectId(conversationId)) {
+      return res.status(404).json({ success: false, message: "المحادثة غير موجودة" });
     }
 
     const conversation = await Conversation.findById(conversationId);

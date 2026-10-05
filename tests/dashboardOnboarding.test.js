@@ -35,7 +35,7 @@ test('overview guide is wired to real routes and translated in both languages', 
   assert.ok(html.indexOf('id="onboardingGuide"') < html.indexOf('class="stats-grid"'));
   assert.match(js, /api\/rules\?botId=\$\{encodeURIComponent\(botId\)\}&type=qa&limit=100&page=\$\{page\}/);
   assert.match(js, /api\/messages\/conversations\?botId=\$\{encodeURIComponent\(botId\)\}/);
-  assert.match(js, /switchTab\('page-agents'\)/);
-  assert.match(js, /switchTab\('page-training'\)/);
+  assert.match(js, /switchTab\('page-agents'(, \{ focusHeading: true \})?\)/);
+  assert.match(js, /switchTab\('page-training'(, \{ focusHeading: true \})?\)/);
   assert.match(js, /chatPageLink\(currentBot\._id\)/);
 });

@@ -203,31 +203,69 @@ async function testRecipient(req, res) {
     const userId = req.user.userId;
 
     const recipient = await NotificationRecipient.findOne({ _id: id, userId });
-    if (!recipient) return res.status(404).json({ message: 'مستلم الإشعار غير موجود' });
+    if (!recipient) {
+      return res.status(404).json({
+        success: false,
+        code: 'RECIPIENT_NOT_FOUND',
+        message: 'مستلم الإشعار غير موجود',
+      });
+    }
 
     const testMsg = '🔔 <b>اختبار إشعارات ZainBot AI</b>\n\nتم إرسال هذا الإشعار التجريبي للتأكد من نجاح ربط القناة لتلقي التنبيهات الفورية بنجاح. ✅';
 
+    // Explicit delivery outcome: `delivered` means the provider accepted the
+    // message; `configured` means the channel is saved but delivery was not
+    // confirmed. Frontends must never render `configured` as sent.
     if (recipient.channel === 'telegram') {
       const result = await sendTelegramMessage(recipient.target, testMsg);
-      if (result.ok) {
-        return res.json({ success: true, message: 'تم إرسال الإشعار التجريبي عبر تيليجرام بنجاح' });
+      if (result && result.ok) {
+        return res.json({
+          success: true,
+          outcome: 'delivered',
+          message: 'تم إرسال الإشعار التجريبي عبر تيليجرام بنجاح',
+        });
       }
-      return res.status(400).json({ success: false, message: `فشل الإرسال: ${result.reason || 'تأكد من بدء محادثة مع البوت'}` });
+      return res.status(400).json({
+        success: false,
+        outcome: 'configured',
+        code: 'TELEGRAM_TEST_FAILED',
+        message: 'تعذر تسليم الإشعار التجريبي عبر تيليجرام. تأكد من بدء محادثة مع البوت ثم أعد المحاولة.',
+      });
     }
 
     if (recipient.channel === 'whatsapp') {
-      if (recipient.botId) {
-        const waManager = getWhatsAppSessionManager();
-        await waManager.sendDirectText(recipient.botId, recipient.target, testMsg.replace(/<[^>]*>/g, ''));
-        return res.json({ success: true, message: 'تم إرسال الإشعار التجريبي عبر واتساب بنجاح' });
+      if (!recipient.botId) {
+        // Saved settings only — without a linked bot nothing was delivered.
+        return res.json({
+          success: true,
+          outcome: 'configured',
+          code: 'WHATSAPP_CONFIGURED_WITHOUT_BOT',
+          message: 'تم حفظ إعدادات واتساب للإشعارات. لن يتم التسليم الفعلي قبل ربط وكيل.',
+        });
       }
-      return res.json({ success: true, message: 'تم حفظ إعدادات واتساب للإشعارات بنجاح' });
+      const waManager = getWhatsAppSessionManager();
+      await waManager.sendDirectText(recipient.botId, recipient.target, testMsg.replace(/<[^>]*>/g, ''));
+      return res.json({
+        success: true,
+        outcome: 'delivered',
+        message: 'تم إرسال الإشعار التجريبي عبر واتساب بنجاح',
+      });
     }
 
-    return res.json({ success: true, message: 'تم الاختبار' });
+    return res.status(400).json({
+      success: false,
+      outcome: 'configured',
+      code: 'UNSUPPORTED_CHANNEL',
+      message: 'القناة غير مدعومة للاختبار',
+    });
   } catch (err) {
     logger.error('notification_recipient_test_error', { err: err.message });
-    return res.status(500).json({ message: `خطأ في إرسال الإشعار التجريبي: ${err.message}` });
+    return res.status(500).json({
+      success: false,
+      outcome: 'configured',
+      code: 'RECIPIENT_TEST_FAILED',
+      message: 'خطأ في إرسال الإشعار التجريبي',
+    });
   }
 }
 

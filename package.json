@@ -12,6 +12,8 @@
     "start": "node server/server.js",
     "dev": "nodemon server/server.js",
     "test": "node scripts/run-tests.js",
+    "test:browser:dashboard": "node scripts/run-dashboard-browser-tests.js",
+    "build:web": "node scripts/build-web.js",
     "build:win": "pkg . --targets node18-win-x64 --output dist/zainbot-win.exe",
     "build:linux": "pkg . --targets node18-linux-x64 --output dist/zainbot-linux",
     "build:mac": "pkg . --targets node18-macos-x64 --output dist/zainbot-macos",
@@ -47,6 +49,7 @@
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
+    "esbuild": "0.28.2",
     "jest": "^29.7.0",
     "nodemon": "^3.1.7",
     "pkg": "^5.8.1",

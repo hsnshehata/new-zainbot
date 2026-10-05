@@ -92,6 +92,56 @@
 
   <script>
     (() => {
+      /* <zainbot-lang-persistence> */
+      window.ZainbotLangPersistence = window.ZainbotLangPersistence || (function () {
+        var STORAGE_KEY = 'zainbot_lang';
+        var memoryLanguage = null;
+        function normalizeLanguage(value, defaultLanguage) {
+          if (value === 'ar' || value === 'en') return value;
+          return defaultLanguage;
+        }
+        function getStorage() {
+          try {
+            if (typeof window !== 'undefined' && window.localStorage) return window.localStorage;
+          } catch (err) { /* storage blocked */ }
+          return null;
+        }
+        function readStoredLanguage(defaultLanguage) {
+          if (memoryLanguage === 'ar' || memoryLanguage === 'en') return memoryLanguage;
+          var storage = getStorage();
+          if (!storage) return defaultLanguage;
+          try {
+            return normalizeLanguage(storage.getItem(STORAGE_KEY), defaultLanguage);
+          } catch (err) {
+            return defaultLanguage;
+          }
+        }
+        function writeStoredLanguage(language, defaultLanguage) {
+          var normalized = normalizeLanguage(language, defaultLanguage);
+          memoryLanguage = normalized;
+          var storage = getStorage();
+          if (!storage) return normalized;
+          try {
+            storage.setItem(STORAGE_KEY, normalized);
+          } catch (err) { /* keep in-memory fallback */ }
+          return normalized;
+        }
+        function resolveExternalLanguage(event, currentLanguage, defaultLanguage) {
+          if (!event) return null;
+          if (event.key !== null && event.key !== undefined && event.key !== STORAGE_KEY) return null;
+          var next = normalizeLanguage(event.newValue, defaultLanguage);
+          if (next === currentLanguage) return null;
+          return next;
+        }
+        return {
+          storageKey: STORAGE_KEY,
+          normalizeLanguage: normalizeLanguage,
+          readStoredLanguage: readStoredLanguage,
+          writeStoredLanguage: writeStoredLanguage,
+          resolveExternalLanguage: resolveExternalLanguage
+        };
+      })();
+      /* </zainbot-lang-persistence> */
       const copy = {
         ar: {
           document_title: 'تسجيل الدخول | ZainBot AI', intro_kicker: 'منصة خدمة العملاء الذكية', intro_title: 'كل محادثات عملائك في مكان واحد.', intro_description: 'أدر فريقك ووكلاءك الذكيين وقنوات التواصل من لوحة واحدة مصممة للعمل السريع.', intro_point_one: 'وكلاء ذكاء اصطناعي قابلون للتخصيص', intro_point_two: 'صندوق وارد موحد لكل القنوات', intro_point_three: 'تحكم آمن في فريقك وبياناتك', card_eyebrow: 'مرحبًا بعودتك', card_title: 'سجّل الدخول إلى مساحة عملك', card_description: 'أدخل بياناتك للوصول إلى لوحة التحكم.', username_label: 'اسم المستخدم', username_placeholder: 'اكتب اسم المستخدم', password_label: 'كلمة المرور', password_placeholder: 'اكتب كلمة المرور', submit_label: 'تسجيل الدخول', or_continue: 'أو تابع باستخدام', new_user: 'مستخدم جديد؟', create_account: 'أنشئ حسابك', change_language: 'تغيير اللغة', forgot_link: 'نسيت كلمة المرور؟', recovery_label: 'البريد الإلكتروني للحساب', email_placeholder: 'name@example.com', recovery_submit: 'إرسال رابط الاستعادة', new_password: 'كلمة المرور الجديدة', confirm_password: 'تأكيد كلمة المرور', reset_submit: 'حفظ كلمة المرور', password_help: '8 أحرف على الأقل: حرف كبير وصغير ورقم ورمز، بدون مسافات.'
@@ -101,7 +151,7 @@
         }
       };
       const toggle = document.getElementById('loginLanguageToggle');
-      const language = () => localStorage.getItem('zainbot_lang') === 'en' ? 'en' : 'ar';
+      const language = () => window.ZainbotLangPersistence.readStoredLanguage('ar');
 
       function applyLoginLanguage(nextLanguage) {
         const strings = copy[nextLanguage];
@@ -124,11 +174,27 @@
 
       toggle.addEventListener('click', () => {
         const nextLanguage = language() === 'ar' ? 'en' : 'ar';
-        localStorage.setItem('zainbot_lang', nextLanguage);
+        window.ZainbotLangPersistence.writeStoredLanguage(nextLanguage, 'ar');
         applyLoginLanguage(nextLanguage);
+      });
+      window.addEventListener('storage', (event) => {
+        const next = window.ZainbotLangPersistence.resolveExternalLanguage(event, language(), 'ar');
+        if (next) applyLoginLanguage(next);
       });
       applyLoginLanguage(language());
 
+      // Google button follows the page language. initialize() runs once on
+      // load; language switches only re-render the button (no double-init).
+      let googleReady = false;
+      function renderGoogleButton(forcedLanguage) {
+        const slot = document.getElementById('googleSignInButton');
+        if (!googleReady || !slot || !window.google?.accounts?.id) return;
+        const lang = forcedLanguage === 'ar' || forcedLanguage === 'en' ? forcedLanguage : language();
+        google.accounts.id.renderButton(slot, {
+          type: 'standard', theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill', width: 400,
+          locale: lang === 'ar' ? 'ar' : 'en'
+        });
+      }
       window.addEventListener('load', async () => {
         try {
           const response = await fetch('/api/config');
@@ -138,17 +204,16 @@
             client_id: config.googleClientId,
             callback: (credential) => window.handleGoogleSignIn?.(credential)
           });
-          google.accounts.id.renderButton(document.getElementById('googleSignInButton'), {
-            type: 'standard', theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill', width: 400,
-            locale: language() === 'ar' ? 'ar' : 'en'
-          });
+          googleReady = true;
+          renderGoogleButton();
         } catch (_) {
           // The password sign-in remains available when Google is not configured.
         }
       });
+      document.addEventListener('zainbot:languagechange', (event) => renderGoogleButton(event?.detail?.language));
     })();
   </script>
-  <script defer src="/js/utils.js"></script>
-  <script defer src="/js/auth.js?v=20260928-account"></script>
+  <script defer src="/js/utils.js?v=20261005-f08"></script>
+  <script defer src="/js/auth.js?v=20261005-e07"></script>
 </body>
 </html>

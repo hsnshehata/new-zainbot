@@ -2,6 +2,57 @@
 (function() {
   'use strict';
 
+  /* <zainbot-lang-persistence> */
+  window.ZainbotLangPersistence = window.ZainbotLangPersistence || (function () {
+    var STORAGE_KEY = 'zainbot_lang';
+    var memoryLanguage = null;
+    function normalizeLanguage(value, defaultLanguage) {
+      if (value === 'ar' || value === 'en') return value;
+      return defaultLanguage;
+    }
+    function getStorage() {
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) return window.localStorage;
+      } catch (err) { /* storage blocked */ }
+      return null;
+    }
+    function readStoredLanguage(defaultLanguage) {
+      if (memoryLanguage === 'ar' || memoryLanguage === 'en') return memoryLanguage;
+      var storage = getStorage();
+      if (!storage) return defaultLanguage;
+      try {
+        return normalizeLanguage(storage.getItem(STORAGE_KEY), defaultLanguage);
+      } catch (err) {
+        return defaultLanguage;
+      }
+    }
+    function writeStoredLanguage(language, defaultLanguage) {
+      var normalized = normalizeLanguage(language, defaultLanguage);
+      memoryLanguage = normalized;
+      var storage = getStorage();
+      if (!storage) return normalized;
+      try {
+        storage.setItem(STORAGE_KEY, normalized);
+      } catch (err) { /* keep in-memory fallback */ }
+      return normalized;
+    }
+    function resolveExternalLanguage(event, currentLanguage, defaultLanguage) {
+      if (!event) return null;
+      if (event.key !== null && event.key !== undefined && event.key !== STORAGE_KEY) return null;
+      var next = normalizeLanguage(event.newValue, defaultLanguage);
+      if (next === currentLanguage) return null;
+      return next;
+    }
+    return {
+      storageKey: STORAGE_KEY,
+      normalizeLanguage: normalizeLanguage,
+      readStoredLanguage: readStoredLanguage,
+      writeStoredLanguage: writeStoredLanguage,
+      resolveExternalLanguage: resolveExternalLanguage
+    };
+  })();
+  /* </zainbot-lang-persistence> */
+
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ===== NAVBAR SCROLL EFFECT ===== */
@@ -815,11 +866,10 @@
   };
 
   const langToggleBtn = document.getElementById('langToggle');
-  let currentLang = localStorage.getItem('zainbot_lang') || 'en';
+  let currentLang = window.ZainbotLangPersistence.readStoredLanguage('en');
 
   function applyLanguage(lang) {
-    currentLang = lang;
-    localStorage.setItem('zainbot_lang', lang);
+    currentLang = window.ZainbotLangPersistence.writeStoredLanguage(lang, 'en');
     
     if (lang === 'ar') {
       document.documentElement.setAttribute('dir', 'rtl');
@@ -859,6 +909,12 @@
       applyLanguage(nextLang);
     });
   }
+
+  // Cross-tab sync: adopt language changes from other tabs without write-loops.
+  window.addEventListener('storage', (event) => {
+    const next = window.ZainbotLangPersistence.resolveExternalLanguage(event, currentLang, 'en');
+    if (next) applyLanguage(next);
+  });
 
   /* ===== PRICING: billing toggle + manual subscribe via WhatsApp ===== */
   let currentBilling = 'monthly';

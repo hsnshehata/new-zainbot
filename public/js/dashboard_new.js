@@ -3,12 +3,201 @@
 (function() {
   'use strict';
 
+  /* <zainbot-lang-persistence> */
+  window.ZainbotLangPersistence = window.ZainbotLangPersistence || (function () {
+    var STORAGE_KEY = 'zainbot_lang';
+    var memoryLanguage = null;
+    function normalizeLanguage(value, defaultLanguage) {
+      if (value === 'ar' || value === 'en') return value;
+      return defaultLanguage;
+    }
+    function getStorage() {
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) return window.localStorage;
+      } catch (err) { /* storage blocked */ }
+      return null;
+    }
+    function readStoredLanguage(defaultLanguage) {
+      if (memoryLanguage === 'ar' || memoryLanguage === 'en') return memoryLanguage;
+      var storage = getStorage();
+      if (!storage) return defaultLanguage;
+      try {
+        return normalizeLanguage(storage.getItem(STORAGE_KEY), defaultLanguage);
+      } catch (err) {
+        return defaultLanguage;
+      }
+    }
+    function writeStoredLanguage(language, defaultLanguage) {
+      var normalized = normalizeLanguage(language, defaultLanguage);
+      memoryLanguage = normalized;
+      var storage = getStorage();
+      if (!storage) return normalized;
+      try {
+        storage.setItem(STORAGE_KEY, normalized);
+      } catch (err) { /* keep in-memory fallback */ }
+      return normalized;
+    }
+    function resolveExternalLanguage(event, currentLanguage, defaultLanguage) {
+      if (!event) return null;
+      if (event.key !== null && event.key !== undefined && event.key !== STORAGE_KEY) return null;
+      var next = normalizeLanguage(event.newValue, defaultLanguage);
+      if (next === currentLanguage) return null;
+      return next;
+    }
+    return {
+      storageKey: STORAGE_KEY,
+      normalizeLanguage: normalizeLanguage,
+      readStoredLanguage: readStoredLanguage,
+      writeStoredLanguage: writeStoredLanguage,
+      resolveExternalLanguage: resolveExternalLanguage
+    };
+  })();
+  /* </zainbot-lang-persistence> */
+
+  /* <zainbot-dashboard-i18n> */
+  window.ZainBotDashboardI18n = window.ZainBotDashboardI18n || (function () {
+    var renderers = {};
+    function getLanguage() {
+      var lang = null;
+      try {
+        lang = (typeof currentLanguage !== 'undefined' && currentLanguage) || null;
+      } catch (err) {
+        lang = null;
+      }
+      if (lang !== 'ar' && lang !== 'en') {
+        try {
+          lang = window.ZainbotLangPersistence
+            ? window.ZainbotLangPersistence.readStoredLanguage('ar')
+            : 'ar';
+        } catch (err2) {
+          lang = 'ar';
+        }
+      }
+      return lang;
+    }
+    function table() {
+      try {
+        if (typeof translations !== 'undefined' && translations) return translations;
+      } catch (err) { /* fall through */ }
+      return {};
+    }
+    function lookup(key) {
+      var lang = getLanguage();
+      var dict = table();
+      if (dict[lang] && dict[lang][key] !== undefined && dict[lang][key] !== '') {
+        return { value: dict[lang][key], missing: false };
+      }
+      if (dict.en && dict.en[key] !== undefined && dict.en[key] !== '') {
+        return { value: dict.en[key], missing: true };
+      }
+      return { value: null, missing: true };
+    }
+    function interpolate(template, params) {
+      if (!params) return template;
+      return String(template).replace(/\{([a-zA-Z0-9_]+)\}/g, function (match, name) {
+        return params[name] !== undefined && params[name] !== null ? String(params[name]) : match;
+      });
+    }
+    function t(key, params) {
+      var found = lookup(key);
+      if (!found.missing) return interpolate(found.value, params);
+      var strict = false;
+      try {
+        strict = typeof window !== 'undefined' && window.ZainbotI18nStrict === true;
+      } catch (err) { strict = false; }
+      if (strict) return '[i18n-missing:' + key + ']';
+      if (found.value !== null) return interpolate(found.value, params);
+      return key;
+    }
+    function registerLanguageRenderer(id, render) {
+      if (typeof id !== 'string' || !id || typeof render !== 'function') {
+        throw new Error('registerLanguageRenderer requires (id: string, render: function)');
+      }
+      renderers[id] = render;
+      return function unregister() {
+        if (renderers[id] === render) delete renderers[id];
+      };
+    }
+    function refreshLanguageRenderers() {
+      Object.keys(renderers).forEach(function (id) {
+        try {
+          renderers[id]();
+        } catch (err) {
+          if (typeof console !== 'undefined' && console.error) console.error('language renderer failed:', id, err);
+        }
+      });
+    }
+    return {
+      t: t,
+      getLanguage: getLanguage,
+      registerLanguageRenderer: registerLanguageRenderer,
+      refreshLanguageRenderers: refreshLanguageRenderers
+    };
+  })();
+  /* </zainbot-dashboard-i18n> */
+
+  /* <zainbot-dashboard-locale> */
+  function dashboardLanguage() {
+    try {
+      if (typeof currentLanguage !== 'undefined' && (currentLanguage === 'ar' || currentLanguage === 'en')) {
+        return currentLanguage;
+      }
+    } catch (err) { /* fall through to default */ }
+    return 'en';
+  }
+  function dashboardUnavailableText() {
+    try {
+      if (typeof window !== 'undefined' && window.ZainBotDashboardI18n) {
+        return window.ZainBotDashboardI18n.t('format_date_unavailable');
+      }
+    } catch (err) { /* fall through */ }
+    try {
+      if (typeof translations !== 'undefined' && translations) {
+        var lang = dashboardLanguage();
+        if (translations[lang] && translations[lang].format_date_unavailable) {
+          return translations[lang].format_date_unavailable;
+        }
+        if (translations.en && translations.en.format_date_unavailable) {
+          return translations.en.format_date_unavailable;
+        }
+      }
+    } catch (err2) { /* fall through */ }
+    return 'Unavailable';
+  }
+  function formatDate(value, options) {
+    if (value === undefined || value === null || value === '') {
+      return dashboardUnavailableText();
+    }
+    var date = value instanceof Date ? value : new Date(value);
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+      return dashboardUnavailableText();
+    }
+    try {
+      return date.toLocaleString(dashboardLanguage() === 'ar' ? 'ar-EG' : 'en-US', options);
+    } catch (err) {
+      return dashboardUnavailableText();
+    }
+  }
+  function formatNumber(value, options) {
+    if (value === undefined || value === null || value === '') return '';
+    var num = typeof value === 'number' ? value : Number(value);
+    if (typeof num !== 'number' || Number.isNaN(num)) {
+      return String(value === undefined || value === null ? '' : value);
+    }
+    try {
+      return num.toLocaleString(dashboardLanguage() === 'ar' ? 'ar-EG' : 'en-US', options);
+    } catch (err) {
+      return String(num);
+    }
+  }
+  /* </zainbot-dashboard-locale> */
+
   // State Management
   let currentUser = null;
   let currentBot = null;
   let workspaceBots = [];
   let activeTab = 'page-overview';
-  let currentLanguage = localStorage.getItem('zainbot_lang') || 'ar';
+  let currentLanguage = window.ZainbotLangPersistence.readStoredLanguage('ar');
   let conversations = [];
   let selectedConversationId = null;
 
@@ -58,6 +247,18 @@
       onboard_chat_unavailable: 'Could not load the live chat link. Please try again.',
       agents_desc: 'Build distinct agents for support, sales, and lead qualification. Choose one active agent for the workspace.',
       agents_create: 'Create agent',
+      agent_modal_create: 'Create agent',
+      agent_modal_edit: 'Edit agent',
+      agents_entitlement_unit: 'agents used on',
+      agent_autoreply_off: 'Auto-reply off',
+      agent_autoreply_on: 'Auto-reply on',
+      agent_no_description: 'No description yet.',
+      agent_current: 'Current agent',
+      agent_use_this: 'Use this agent',
+      agent_customize_chat: 'Customize & Chat',
+      agents_empty_create_first: 'Create your first agent to begin.',
+      agent_free_tools_limit: 'Free plan limit: 3 tools max, all skills included',
+      agent_save_failed: 'Could not save agent.',
       agent_name: 'Agent name',
       agent_role: 'Agent role',
       agent_role_support: 'Customer support',
@@ -118,6 +319,53 @@
       admin_apply: 'Apply',
       admin_previous: 'Previous',
       admin_next: 'Next',
+      admin_pagination_unit: 'accounts — page',
+      admin_load_failed: 'Could not load accounts.',
+      admin_empty_match: 'No matching accounts.',
+      admin_role_superadmin_word: 'Super admin',
+      admin_role_user_word: 'User',
+      admin_status_deleted: 'Deleted',
+      admin_bots_unit: 'agent(s)',
+      admin_action_edit: 'Edit',
+      admin_action_agents: 'Agents',
+      admin_action_temp_access: 'Temporary access',
+      admin_action_activate: 'Activate',
+      admin_action_suspend: 'Suspend',
+      admin_action_archive: 'Archive',
+      admin_status_change_confirm: 'Change account status to {status}?',
+      admin_update_failed: 'Could not update account.',
+      admin_archive_confirm: 'Sign-in will stop while conversations and channels are preserved. Continue?',
+      admin_archive_failed: 'Could not archive account.',
+      admin_account_bots_missing: 'No loaded agents for this account. Reload the list.',
+      admin_account_bots_title: `{username}'s agents`,
+      admin_bots_loading: 'Loading...',
+      admin_bot_running: 'Running',
+      admin_bot_stopped: 'Stopped',
+      admin_bot_stop: 'Stop',
+      admin_bot_start: 'Start',
+      admin_bot_update_failed: 'Could not update the agent.',
+      admin_account_no_bots: 'This account has no agents yet.',
+      admin_user_modal_edit: 'Edit account',
+      admin_user_modal_add: 'Add account',
+      admin_account_load_failed: 'Could not load account.',
+      admin_impersonation_banner: 'You are temporarily viewing {username}. Activity is audited.',
+      admin_impersonation_self: 'this account',
+      admin_account_save_failed: 'Could not save account.',
+      admin_impersonation_start_failed: 'Could not start temporary access.',
+      admin_session_expired: 'The admin session is unavailable. Please sign in again.',
+      admin_impersonation_end_failed: 'Could not safely end the temporary session.',
+      admin_exit_impersonation: 'Exit and return to admin',
+      admin_tier_growth_1k: 'Growth 1K',
+      admin_tier_growth_10k: 'Growth 10K',
+      admin_tier_growth_50k: 'Growth 50K',
+      admin_tier_unlimited: 'Unlimited',
+      admin_legacy_status_confirm: 'Are you sure you want to change the merchant/user status to {status}?',
+      admin_legacy_status_failed: 'Could not update the user status.',
+      admin_legacy_impersonate_confirm: 'Switch immediately into this merchant account to browse and manage their bots and channels?',
+      admin_legacy_impersonate_ok: 'Signed in to the merchant account. Loading their dashboard...',
+      admin_legacy_impersonate_failed: 'Direct impersonation failed.',
+      admin_legacy_auth_error: 'An authentication error occurred.',
+      admin_key_delete_confirm: 'Are you sure you want to delete this server key?',
       admin_user_modal: 'Manage user',
       admin_username: 'Username',
       admin_email: 'Email',
@@ -175,6 +423,15 @@
       funnel_closed: 'Closed Won',
       inbox_chat_list_title: 'Conversations Feed',
       inbox_empty: 'No conversations found.',
+      inbox_loading: 'Loading conversations...',
+      inbox_load_error: 'Error loading feed.',
+      inbox_default_name: 'Customer',
+      inbox_default_channel: 'Web Chat',
+      inbox_reply_saved_not_sent: 'Reply saved to the conversation, not yet sent via the channel.',
+      inbox_no_bot: 'Select an agent to view conversations.',
+      inbox_reply_failed: 'Could not confirm sending. Check the conversation before retrying — the message may have been sent.',
+      overview_stats_failed: 'Could not refresh overview stats. Previous values are kept.',
+      bootstrap_load_failed: 'Could not load your profile. Check your connection, then retry — you are still signed in.',
       auto_reply_toggle_label: 'AI Auto-Reply',
       select_chat_instructions: 'Select a conversation from the feed to view history and chat.',
       chat_reply_placeholder: 'Type a message to take over...',
@@ -185,6 +442,17 @@
       training_welcome_placeholder: 'Enter a standard greeting message...',
       training_persona_placeholder: "For example, describe the bot's tone, responsibilities, and escalation rules.",
       training_empty_faqs: 'No FAQ rules yet. Add your first question and answer.',
+      instruction_modal_add: 'Add General Instruction',
+      instruction_modal_edit: 'Edit General Instruction',
+      instruction_delete_confirm: 'Are you sure you want to delete this instruction?',
+      faq_modal_add: 'Create FAQ Rule',
+      faq_modal_edit: 'Edit FAQ Rule',
+      faq_delete_confirm: 'Are you sure you want to delete this FAQ rule?',
+      training_guidelines_saved: 'Settings saved successfully!',
+      training_guidelines_failed: 'Could not save settings. Your edits were kept.',
+      faq_save_failed: 'Could not save the FAQ. Your edits were kept.',
+      instruction_save_failed: 'Could not save the instruction. Your edits were kept.',
+      training_load_failed: 'Could not refresh training data. Previous values are kept.',
       save_guidelines_btn: 'Save Settings',
       training_faqs_title: 'FAQs Rules List',
       btn_add_faq: 'Add FAQ',
@@ -193,6 +461,35 @@
       chan_desc_fb: 'Automate replies on Facebook pages.',
       chan_desc_ig: 'Direct Messages & Comment automation.',
       chan_desc_tg: 'Integrate custom Telegram chatbot.',
+      chan_wa_qr_title: 'Connect WhatsApp via QR Code',
+      chan_wa_qr_generating: 'Generating QR Code...',
+      chan_wa_qr_steps: 'Open WhatsApp on your phone > Linked Devices > Link a Device > Scan the QR code above.',
+      chan_wa_disconnect: 'Disconnect Session',
+      chan_wa_qr_alt: 'WhatsApp QR Code',
+      chan_wa_connected_ok: 'WhatsApp is connected.',
+      chan_wa_preparing_qr: 'Preparing QR code…',
+      chan_wa_session_failed: 'Could not start WhatsApp session.',
+      chan_wa_qr_failed: 'Could not generate the QR code. Try again.',
+      chan_fb_title: 'Facebook Page Direct Connect',
+      chan_fb_token_label: 'Page Access Token',
+      chan_fb_id_label: 'Page ID',
+      chan_fb_steps: '1. Go to developers.facebook.com and select your App.<br>2. Select your FB Page in Graph API Explorer & generate Page Access Token.<br>3. Copy & paste the token below.',
+      chan_ig_title: 'Instagram Direct Connect',
+      chan_ig_token_label: 'Instagram Access Token',
+      chan_ig_id_label: 'Instagram Page ID',
+      chan_ig_steps: '1. Link your IG Business account to your Facebook Page.<br>2. Generate Page/IG Access Token in Meta Developer Console.<br>3. Copy & paste the token and account ID below.',
+      chan_how_to: 'How to get?',
+      chan_save_connection: 'Save Connection',
+      chan_tg_title: 'Connect Telegram',
+      chan_tg_intro: 'Link your agent to the official platform bot on Telegram to receive notifications. Generate a link code, then send it to the official bot.',
+      chan_tg_step_1: 'Click the "Generate link code" button below.',
+      chan_tg_step_2: 'Open the official bot in Telegram and press Start.',
+      chan_tg_step_3: 'Send the code as a single message.',
+      chan_tg_generate_code: 'Generate link code',
+      chan_tg_linked_ok: 'Linked to a Telegram account',
+      chan_tg_active_code: 'Active code already issued:',
+      chan_tg_your_code: 'Your link code:',
+      chan_tg_send_before_expiry: 'Send it to <a href="https://t.me/{u}" target="_blank" rel="noopener" style="color:var(--cyan);">@{u}</a> before it expires.',
       chan_status_checking: 'Checking status…',
       chan_status_unavailable: 'Status unavailable — please retry',
       chan_status_inactive: 'Agent disabled',
@@ -210,18 +507,6 @@
       website_widget_title: 'Website Chat Widget',
       website_widget_desc: 'Copy this script tag and insert it before the closing body tag of your HTML to display the chat icon.',
       ecommerce_sync_title: 'Product information for your agent',
-      orders_bookings_title: 'Orders & Appointments Center',
-      chat_orders_list_title: 'Orders Automatically Generated by AI',
-      th_order_id: 'Order ID',
-      th_customer: 'Customer Name',
-      th_phone: 'Phone',
-      th_items: 'Items',
-      th_total: 'Total',
-      th_status: 'Status',
-      appointments_list_title: 'AI Booked Appointments Calendar',
-      th_booking_customer: 'Customer',
-      th_booking_phone: 'Phone',
-      th_booking_time: 'Date & Time',
       th_booking_notes: 'AI Summary / Notes',
       settings_billing_title: 'Settings & Developer Integrations',
       dev_api_keys_title: 'Developer Access Keys',
@@ -245,15 +530,24 @@
       label_backup_url: 'Custom Endpoint Base URL',
       btn_save_backup_settings: 'Save Key Settings',
       btn_cancel: 'Cancel',
+      btn_close: 'Close',
       btn_save: 'Save Rule',
       label_faq_question: 'Question / Keywords',
       label_faq_answer: 'Expected Answer',
       faq_question_placeholder: 'For example, delivery times',
       faq_answer_placeholder: 'For example, we deliver within three business days across Cairo.',
       orders_empty: 'No orders generated yet.',
-      bookings_empty: 'No appointments booked yet.',
       api_keys_empty: 'No API keys generated.',
       webhook_history_empty: 'No webhook history.',
+      webhook_status_timeout: 'TIMEOUT/ERROR',
+      webhook_retry_action: 'Retry',
+      webhook_saved_ok: 'Webhook settings saved successfully!',
+      webhook_retry_ok: 'Webhook redelivered successfully!',
+      webhook_retry_failed: 'Webhook retry failed.',
+      apikey_name_prompt: 'Enter a name for the access key:',
+      apikey_created_alert: 'Key generated successfully! Your access key is (Please copy it now, you will not see it again):\n\n{key}',
+      apikey_revoke_confirm: 'Are you sure you want to revoke this access key?',
+      backup_saved_ok: 'Backup key settings saved successfully!',
       admin_title: 'Super Admin Control Center',
       admin_desc: 'Full system management: users, merchants, roles, direct impersonation, and global AI failover provider keys.',
       admin_subtab_users: 'Users & Merchants Control',
@@ -442,6 +736,18 @@
       admin_subs_rejected: 'Rejected',
       admin_subs_refresh: 'Refresh',
       admin_subs_loading: 'Loading requests...',
+      subscription_my_requests_empty: 'No requests yet.',
+      subscription_already_free: 'You are already on the free plan.',
+      subscription_request_sent: 'Request sent. Contact us on WhatsApp with your receipt to activate.',
+      subscription_request_failed: 'Could not submit request',
+      subscription_request_pending: 'You already have a request under review. Showing its current status — no new request was sent.',
+      subscription_request_unknown: 'Could not confirm submission — your payment reference was kept. Check your requests before trying again.',
+      subscription_review_conflict: 'This request was already reviewed. Showing the current status — nothing was sent twice.',
+      subscription_list_error: 'Could not load subscription requests.',
+      subscription_admin_empty: 'No requests.',
+      subscription_action_approve: 'Approve',
+      subscription_action_reject: 'Reject',
+      subscription_action_error: 'Error',
       th_rec_channel: 'Channel',
       th_rec_target: 'Target / Destination',
       th_rec_label: 'Label / Description',
@@ -506,14 +812,37 @@
       action_cancel: 'Cancel',
       action_edit: 'Edit',
       action_delete: 'Delete',
+      action_ship: 'Ship',
+      action_deliver: 'Delivered',
       action_test: 'Test Send',
       delete_booking_confirm: 'Are you sure you want to delete this appointment?',
       delete_order_confirm: 'Are you sure you want to delete this order?',
       delete_recipient_confirm: 'Are you sure you want to remove this notification channel?',
       booking_saved_ok: 'Appointment saved successfully!',
       order_saved_ok: 'Order saved successfully!',
+      booking_save_failed: 'Error saving appointment',
+      order_save_failed: 'Error saving order',
+      orders_load_error: 'Could not load orders.',
+      bookings_load_error: 'Could not load appointments.',
+      orders_refresh_failed: 'Saved, but the orders list could not be refreshed.',
+      bookings_refresh_failed: 'Saved, but the appointments list could not be refreshed.',
+      booking_invalid_date: 'The appointment date is invalid. Fix it before saving.',
+      orders_count_unit: 'Orders',
+      bookings_count_unit: 'Appointments',
+      created_label: 'Created',
+      format_date_unavailable: 'Unavailable',
+      chat_order_create_unsupported: 'Manual order creation is not supported yet. Orders are created automatically from chat.',
+      store_order_readonly: 'Store orders are read-only here. Manage them in the store dashboard.',
       recipient_saved_ok: 'Notification channel saved successfully!',
+      recipient_save_failed: 'Could not save recipient channel',
       recipient_test_sent: 'Test notification sent successfully!',
+      recipient_test_failed: 'Failed to send test notification',
+      recipient_test_configured: 'Test not delivered. The channel is saved and configured, but nothing was sent.',
+      recipient_delete_failed: 'Could not remove this notification channel.',
+      recipients_load_error: 'Could not load notification channels.',
+      recipients_loading: 'Loading notification channels.',
+      webhook_retry_confirm: 'Redeliver this webhook payload to the endpoint now?',
+      webhook_logs_refresh_failed: 'Delivery confirmed, but the log list could not be refreshed.',
       chan_webchat_title: 'Dedicated Chat Page',
       chan_desc_webchat: 'Standalone customized chat page and live bot tester.',
       btn_customize_chat: 'Customize & Test',
@@ -600,10 +929,21 @@
       store_error_unsafe: 'The store address or response is not supported. Check the HTTPS site address.',
       store_training_path: 'After importing, test an actual product question in chat. Add extra business rules in AI Training.',
       store_open_training: 'Open AI Training',
+      feedback_loading: 'Loading…',
+      feedback_retry: 'Retry',
+      lazy_load_failed: 'Couldn’t load this section. Check your connection, then retry.',
+      feedback_stale: 'Showing saved data while refreshing…',
+      feedback_no_bot: 'Select an agent to load this section.',
       automation_center_title: 'AI Sales Automation Center',
       automation_center_desc: 'Manage autonomous background tasks: abandoned lead recovery, sales digests, and urgent triage.',
       btn_trigger_recovery: 'Recover Lost Leads Now',
       btn_trigger_digest: 'Send Sales Digest Now',
+      automation_checking: 'Checking...',
+      automation_checked_ok: 'Checked conversations successfully.',
+      automation_check_failed: 'Error triggering check.',
+      automation_sending: 'Sending...',
+      automation_digest_sent: 'Digest sent successfully.',
+      automation_digest_failed: 'Error sending digest.',
       card_recovery_title: 'Abandoned Sales Recovery',
       card_recovery_desc: 'Automatically re-engages leads who showed buying intent but stopped responding.',
       card_digest_title: 'Daily Performance Digest',
@@ -627,6 +967,8 @@
       agent_tool_digest_title: 'Daily Performance & Sales Digest Tool',
       agent_digest_channel_label: 'Notification Channel',
       channel_all: 'Telegram, WhatsApp & Dashboard',
+      channel_telegram_only: 'Telegram Only',
+      channel_whatsapp_only: 'WhatsApp Only',
       channel_inapp: 'Dashboard Notifications Only',
       agent_digest_time_label: 'Delivery Time',
       agent_tool_upsell_title: 'Smart Catalog Upselling & Closing Strategy',
@@ -827,6 +1169,74 @@
       idea_msg_card_saved: 'Structured card saved.',
       idea_msg_followup_prompt: 'Enter context or arguments for this follow-up round:',
       idea_msg_followup_success: 'Follow-up round completed.',
+      idea_desc_min_length: 'Idea description must be at least 100 characters.',
+      idea_structure_failed: 'Failed to structure idea.',
+      idea_structure_error: 'Error structuring idea.',
+      idea_list_error: 'Could not load ideas.',
+      idea_convening: 'Convening...',
+      idea_convene_failed: 'Failed to convene idea council.',
+      idea_run_failed: 'Evaluation run failed.',
+      idea_status_pending: 'Pending',
+      idea_awaiting_evidence: 'Awaiting evidence inspection...',
+      idea_stage_research: 'Conducting live web market research...',
+      idea_stage_parallel: 'Council members analyzing in parallel',
+      idea_stage_synth: 'Chairperson synthesizing verdict and truth board...',
+      idea_round_1: 'Round 1 (Initial)',
+      idea_round_n: 'Round {n}{suffix}',
+      idea_round_input: 'Round input:',
+      idea_round_latest: 'Latest Evaluation Round',
+      idea_round_archive: 'Viewing Past Round',
+      idea_no_sources: 'No external web sources available.',
+      idea_no_critiques: 'No council member critiques recorded yet.',
+      idea_critic_rejection: 'Rejection Reason:',
+      idea_critic_switching: 'Switching Cost:',
+      idea_critic_trigger: 'Trigger to Try:',
+      idea_critic_willingness: 'Willingness to Pay:',
+      idea_weakest_link: 'Weakest Link:',
+      idea_deadliest_assumptions: 'Deadliest Assumptions:',
+      idea_hard_questions: 'Hard Questions to Settle:',
+      idea_complexity_level: 'Complexity Level:',
+      idea_mvp_scope: '7-Day MVP Scope:',
+      idea_cut_deferred: 'Cut / Deferred for V1:',
+      idea_market_saturation: 'Market Saturation:',
+      idea_direct_competitors: 'Direct Market Competitors:',
+      idea_indirect_alternatives: 'Indirect Alternatives & Workarounds:',
+      idea_root_cause: 'Primary Root Cause of Death:',
+      idea_failure_conditions: 'Failure Conditions:',
+      idea_early_warnings: 'Early Warning Signs:',
+      idea_wedge_angle: 'Unique Wedge Angle:',
+      idea_defensibility: 'Defensibility Moat:',
+      idea_copy_ease: 'Ease / Speed of Copying:',
+      idea_first_value_60s: 'First Moment of Value in 60s:',
+      idea_friction_point: 'Biggest Friction / Drop-off Point:',
+      idea_core_strength: 'Core Strength Worth Fighting For:',
+      idea_proceed_reason: 'Single Best Reason to Proceed:',
+      idea_indispensable_asset: 'Indispensable Asset:',
+      idea_critic_verdict_full: 'Full Critic Verdict:',
+      idea_round_analyzed: 'Analyzed',
+      idea_round_review: 'Pending',
+      idea_round_prior: 'Prior Round',
+      idea_first_moment: 'First Moment: {v}',
+      idea_unit_orders_mo: 'orders/mo',
+      idea_unit_orders_day: 'orders/day',
+      idea_econ_critical: 'Critical Warning: Negative contribution margin! You lose money on every order before overhead.',
+      idea_econ_hurdle: 'High Volume Hurdle: Requires {n} orders daily just to break even on fixed costs.',
+      idea_round_initial_short: 'Initial',
+      idea_plan_duration: 'Duration:',
+      idea_plan_metric: 'Success Metric:',
+      idea_plan_stop: 'Stop Condition:',
+      idea_truth_empty: 'No truth items recorded yet.',
+      idea_followup_exhausted: 'All 3 follow-up rounds used for this idea.',
+      idea_followup_launching: 'Launching...',
+      idea_followup_failed: 'Failed to run follow-up round.',
+      idea_followup_error: 'Error during follow-up round.',
+      idea_export_failed: 'Failed to export report.',
+      idea_followup_defend: 'Defend',
+      idea_followup_pivot: 'Pivot',
+      idea_followup_validation: 'Test Plan',
+      idea_followup_vote: 'Vote',
+      idea_followup_compare: 'Competitor',
+      idea_followup_mvp: 'MVP Plan',
       idea_status_draft: 'Draft',
       idea_status_structuring: 'Structuring',
       idea_status_awaiting_conf: 'Awaiting Confirmation',
@@ -868,6 +1278,18 @@
       onboard_chat_unavailable: 'تعذر تحميل رابط الدردشة المباشرة. حاول مجددًا.',
       agents_desc: 'أنشئ وكلاء منفصلين للدعم والمبيعات وتأهيل العملاء، ثم اختر الوكيل النشط لمساحة العمل.',
       agents_create: 'إنشاء وكيل',
+      agent_modal_create: 'إنشاء وكيل',
+      agent_modal_edit: 'تعديل الوكيل',
+      agents_entitlement_unit: 'وكلاء مستخدمون في باقة',
+      agent_autoreply_off: 'الرد الآلي متوقف',
+      agent_autoreply_on: 'الرد الآلي يعمل',
+      agent_no_description: 'لا يوجد وصف بعد.',
+      agent_current: 'الوكيل الحالي',
+      agent_use_this: 'استخدام هذا الوكيل',
+      agent_customize_chat: 'تخصيص ودردشة',
+      agents_empty_create_first: 'أنشئ وكيلك الأول للبدء.',
+      agent_free_tools_limit: 'الحد الأقصى في الباقة المجانية: 3 أدوات فقط وجميع المهارات متاحة',
+      agent_save_failed: 'فشل حفظ الوكيل.',
       agent_name: 'اسم الوكيل',
       agent_role: 'دور الوكيل',
       agent_role_support: 'دعم العملاء',
@@ -928,6 +1350,53 @@
       admin_apply: 'تطبيق',
       admin_previous: 'السابق',
       admin_next: 'التالي',
+      admin_pagination_unit: 'حساب — صفحة',
+      admin_load_failed: 'تعذر تحميل قائمة الحسابات.',
+      admin_empty_match: 'لا توجد حسابات مطابقة.',
+      admin_role_superadmin_word: 'مدير عام',
+      admin_role_user_word: 'مستخدم',
+      admin_status_deleted: 'محذوف',
+      admin_bots_unit: 'وكيل',
+      admin_action_edit: 'تعديل',
+      admin_action_agents: 'الوكلاء',
+      admin_action_temp_access: 'دخول مؤقت',
+      admin_action_activate: 'تفعيل',
+      admin_action_suspend: 'إيقاف',
+      admin_action_archive: 'أرشفة',
+      admin_status_change_confirm: 'هل تريد تغيير حالة الحساب إلى {status}؟',
+      admin_update_failed: 'فشل تحديث الحساب.',
+      admin_archive_confirm: 'ستتوقف إمكانية الدخول مع الاحتفاظ بالمحادثات والقنوات. هل تريد المتابعة؟',
+      admin_archive_failed: 'فشلت أرشفة الحساب.',
+      admin_account_bots_missing: 'لا توجد وكلاء محمّلون لهذا الحساب، أعد تحميل القائمة.',
+      admin_account_bots_title: 'وكلاء {username}',
+      admin_bots_loading: 'جاري التحميل...',
+      admin_bot_running: 'يعمل',
+      admin_bot_stopped: 'متوقف',
+      admin_bot_stop: 'إيقاف',
+      admin_bot_start: 'تشغيل',
+      admin_bot_update_failed: 'فشل تحديث حالة الوكيل.',
+      admin_account_no_bots: 'لا يملك هذا الحساب وكلاء بعد.',
+      admin_user_modal_edit: 'تعديل الحساب',
+      admin_user_modal_add: 'إضافة حساب',
+      admin_account_load_failed: 'تعذر تحميل بيانات الحساب.',
+      admin_impersonation_banner: 'أنت داخل مؤقتاً إلى حساب {username}. كل النشاط مسجل.',
+      admin_impersonation_self: 'هذا الحساب',
+      admin_account_save_failed: 'فشل حفظ الحساب.',
+      admin_impersonation_start_failed: 'فشل بدء الجلسة المؤقتة.',
+      admin_session_expired: 'انتهت جلسة المدير. سجل الدخول من جديد.',
+      admin_impersonation_end_failed: 'تعذر إنهاء الجلسة المؤقتة بأمان.',
+      admin_exit_impersonation: 'خروج والعودة للإدارة',
+      admin_tier_growth_1k: 'النمو 1K',
+      admin_tier_growth_10k: 'النمو 10K',
+      admin_tier_growth_50k: 'النمو 50K',
+      admin_tier_unlimited: 'غير محدودة',
+      admin_legacy_status_confirm: 'هل أنت متأكد من تغيير حالة التاجر/المستخدم إلى {status}؟',
+      admin_legacy_status_failed: 'فشل تحديث حالة المستخدم',
+      admin_legacy_impersonate_confirm: 'هل تريد الانتقال الفوري والدخول المباشر إلى حساب هذا التاجر لتصفح وإدارة بوتاته وقنواته؟',
+      admin_legacy_impersonate_ok: 'تم دخول حساب التاجر بنجاح! جاري تحميل لوحته...',
+      admin_legacy_impersonate_failed: 'فشل الانتحال المباشر',
+      admin_legacy_auth_error: 'حدث خطأ أثناء المصادقة',
+      admin_key_delete_confirm: 'هل أنت متأكد من حذف مفتاح الخادم هذا؟',
       admin_user_modal: 'إدارة الحساب',
       admin_username: 'اسم المستخدم',
       admin_email: 'البريد الإلكتروني',
@@ -985,6 +1454,15 @@
       funnel_closed: 'الطلبات المكتملة',
       inbox_chat_list_title: 'خلاصة المحادثات',
       inbox_empty: 'لا توجد محادثات نشطة.',
+      inbox_loading: 'جاري تحميل المحادثات...',
+      inbox_load_error: 'تعذر تحميل المحادثات.',
+      inbox_default_name: 'عميل',
+      inbox_default_channel: 'دردشة الموقع',
+      inbox_reply_saved_not_sent: 'تم تسجيل الرد في المحادثة، ولم يتم إرساله عبر القناة بعد.',
+      inbox_no_bot: 'اختر وكيلًا لعرض المحادثات.',
+      inbox_reply_failed: 'تعذر تأكيد الإرسال. تحقق من المحادثة قبل إعادة المحاولة — ربما تم إرسال الرسالة.',
+      overview_stats_failed: 'تعذر تحديث إحصاءات النظرة العامة. تم الاحتفاظ بالقيم السابقة.',
+      bootstrap_load_failed: 'تعذر تحميل ملفك الشخصي. تحقق من الاتصال ثم أعد المحاولة — ما زلت مسجلًا للدخول.',
       auto_reply_toggle_label: 'الرد التلقائي للبوت',
       select_chat_instructions: 'اختر محادثة من القائمة الجانبية لعرض السجل والتفاعل البشري المباشر.',
       chat_reply_placeholder: 'اكتب رسالة للتدخل في المحادثة...',
@@ -995,6 +1473,17 @@
       training_welcome_placeholder: 'اكتب رسالة الترحيب التي يراها العميل...',
       training_persona_placeholder: 'مثال: اشرح نبرة البوت ومسؤولياته وقواعد تحويل المحادثة لموظف.',
       training_empty_faqs: 'لا توجد أسئلة شائعة بعد. أضف أول سؤال وجواب.',
+      instruction_modal_add: 'إضافة تعليمات عامة',
+      instruction_modal_edit: 'تعديل التعليمات العامة',
+      instruction_delete_confirm: 'هل أنت متأكد من حذف هذه التعليمات؟',
+      faq_modal_add: 'إضافة سؤال وجواب',
+      faq_modal_edit: 'تعديل القاعدة',
+      faq_delete_confirm: 'هل أنت متأكد من حذف هذه القاعدة؟',
+      training_guidelines_saved: 'تم الحفظ بنجاح!',
+      training_guidelines_failed: 'تعذر حفظ الإعدادات. تم الاحتفاظ بتعديلاتك.',
+      faq_save_failed: 'تعذر حفظ السؤال. تم الاحتفاظ بتعديلاتك.',
+      instruction_save_failed: 'تعذر حفظ التعليمات. تم الاحتفاظ بتعديلاتك.',
+      training_load_failed: 'تعذر تحديث بيانات التدريب. تم الاحتفاظ بالقيم السابقة.',
       save_guidelines_btn: 'حفظ الإعدادات',
       training_faqs_title: 'قائمة الأسئلة الشائعة والأجوبة',
       btn_add_faq: 'إضافة سؤال وجواب',
@@ -1003,6 +1492,35 @@
       chan_desc_fb: 'أتمتة الردود على صفحات فيسبوك مسنجر.',
       chan_desc_ig: 'الرد التلقائي على رسائل وتعليقات إنستجرام.',
       chan_desc_tg: 'ربط وتفعيل بوت تيليجرام مخصص.',
+      chan_wa_qr_title: 'ربط واتساب عبر الرمز (QR Code)',
+      chan_wa_qr_generating: 'جاري توليد الرمز...',
+      chan_wa_qr_steps: 'افتح تطبيق الواتساب على هاتفك > الأجهزة المرتبطة > ربط جهاز > وقم بمسح الرمز أعلاه.',
+      chan_wa_disconnect: 'إلغاء الربط',
+      chan_wa_qr_alt: 'رمز ربط واتساب',
+      chan_wa_connected_ok: 'تم الربط بنجاح.',
+      chan_wa_preparing_qr: 'يتم تجهيز الرمز…',
+      chan_wa_session_failed: 'تعذر بدء جلسة واتساب.',
+      chan_wa_qr_failed: 'تعذر توليد الرمز. حاول مرة أخرى.',
+      chan_fb_title: 'ربط صفحة فيسبوك مباشرة',
+      chan_fb_token_label: 'مفتاح وصول الصفحة (Page Access Token)',
+      chan_fb_id_label: 'معرّف الصفحة (Page ID)',
+      chan_fb_steps: '1. ادخل إلى developers.facebook.com وأنشئ تطبيقا.<br>2. اختر صفحة الفيسبوك الخاصة بك وولّد مفتاح وصول الصفحة (Page Access Token).<br>3. قم بنسخ المفتاح ولصقه في الحقل أدناه.',
+      chan_ig_title: 'ربط حساب إنستجرام مباشرة',
+      chan_ig_token_label: 'مفتاح وصول إنستجرام (Instagram Access Token)',
+      chan_ig_id_label: 'معرّف حساب إنستجرام (Instagram Page ID)',
+      chan_ig_steps: '1. قم بربط حساب إنستجرام التجاري بصفحتك على فيسبوك.<br>2. انسخ مفتاح الوصول المستخرج من Meta Developer Console.<br>3. ضع المفتاح ومعرف الحساب في الحقول أدناه.',
+      chan_how_to: 'كيف أحصل عليه؟',
+      chan_save_connection: 'حفظ الربط',
+      chan_tg_title: 'ربط تيليجرام',
+      chan_tg_intro: 'اربط وكيلك بالبوت الرسمي للمنصة على تيليجرام لتصلك الإشعارات. ولّد كود الربط ثم أرسله للبوت الرسمي.',
+      chan_tg_step_1: 'اضغط زر "توليد كود الربط" بالأسفل.',
+      chan_tg_step_2: 'افتح البوت الرسمي في تيليجرام واضغط Start.',
+      chan_tg_step_3: 'أرسل الكود كما هو في رسالة واحدة.',
+      chan_tg_generate_code: 'توليد كود الربط',
+      chan_tg_linked_ok: 'مربوط بحساب تيليجرام',
+      chan_tg_active_code: 'كود نشط بالفعل:',
+      chan_tg_your_code: 'كود الربط الخاص بك:',
+      chan_tg_send_before_expiry: 'أرسله إلى <a href="https://t.me/{u}" target="_blank" rel="noopener" style="color:var(--cyan);">@{u}</a> قبل انتهاء الصلاحية.',
       chan_status_checking: 'جارٍ فحص الحالة…',
       chan_status_unavailable: 'تعذر جلب الحالة — حاول مجددًا',
       chan_status_inactive: 'الوكيل معطّل',
@@ -1020,18 +1538,6 @@
       website_widget_title: 'دردشة الموقع الإلكتروني',
       website_widget_desc: 'انسخ كود البرمجة التالي وضعه قبل وسم الإغلاق body في موقعك لعرض دردشة زين بوت.',
       ecommerce_sync_title: 'معلومات المنتجات للوكيل',
-      orders_bookings_title: 'لوحة إدارة الطلبات والمواعيد',
-      chat_orders_list_title: 'الطلبات المستخلصة تلقائياً عبر البوت',
-      th_order_id: 'معرف الطلب',
-      th_customer: 'اسم العميل',
-      th_phone: 'الهاتف',
-      th_items: 'المنتجات',
-      th_total: 'الإجمالي',
-      th_status: 'الحالة',
-      appointments_list_title: 'مواعيد العملاء المؤكدة عبر البوت',
-      th_booking_customer: 'العميل',
-      th_booking_phone: 'الهاتف',
-      th_booking_time: 'التاريخ والوقت',
       th_booking_notes: 'ملخص الحجز / ملاحظات البوت',
       settings_billing_title: 'الإعدادات العامة والربط البرمجي للمطورين',
       dev_api_keys_title: 'مفاتيح الوصول الخاصة بالمطورين',
@@ -1055,15 +1561,24 @@
       label_backup_url: 'رابط Endpoint مخصص',
       btn_save_backup_settings: 'حفظ مفتاح الطوارئ',
       btn_cancel: 'إلغاء',
+      btn_close: 'إغلاق',
       btn_save: 'حفظ القاعدة',
       label_faq_question: 'السؤال / الكلمات المفتاحية',
       label_faq_answer: 'الإجابة المتوقعة',
       faq_question_placeholder: 'مثال: مواعيد التوصيل',
       faq_answer_placeholder: 'مثال: نوصل خلال ثلاثة أيام عمل داخل القاهرة.',
       orders_empty: 'لا توجد طلبات أنشأها البوت بعد.',
-      bookings_empty: 'لا توجد مواعيد محجوزة بعد.',
       api_keys_empty: 'لا توجد مفاتيح وصول منشأة بعد.',
       webhook_history_empty: 'لا يوجد سجل لتسليمات الربط البرمجي بعد.',
+      webhook_status_timeout: 'TIMEOUT/ERROR',
+      webhook_retry_action: 'إعادة المحاولة',
+      webhook_saved_ok: 'تم حفظ إعدادات الويب هوك بنجاح!',
+      webhook_retry_ok: 'تم إعادة الإرسال والتسليم بنجاح!',
+      webhook_retry_failed: 'فشل إعادة الإرسال.',
+      apikey_name_prompt: 'أدخل اسماً لمفتاح الوصول:',
+      apikey_created_alert: 'تم إنشاء المفتاح بنجاح! مفتاح الوصول الخاص بك هو (يرجى نسخه الآن فلن تتمكن من رؤيته مجدداً):\n\n{key}',
+      apikey_revoke_confirm: 'هل أنت متأكد من إبطال مفتاح الوصول هذا؟',
+      backup_saved_ok: 'تم حفظ مفتاح الطوارئ بنجاح!',
       admin_title: 'لوحة تحكم مدير النظام الشاملة',
       admin_desc: 'التحكم الكامل في المستخدمين، التجار، الصلاحيات، الانتحال المباشر (Impersonation)، وإدارة مفاتيح الذكاء الاصطناعي الـ Failover.',
       admin_subtab_users: 'إدارة المستخدمين والتجار',
@@ -1252,6 +1767,18 @@
       admin_subs_rejected: 'مرفوض',
       admin_subs_refresh: 'تحديث',
       admin_subs_loading: 'جاري تحميل الطلبات...',
+      subscription_my_requests_empty: 'لا توجد طلبات بعد.',
+      subscription_already_free: 'أنت بالفعل على الباقة المجانية.',
+      subscription_request_sent: 'تم إرسال طلبك بنجاح. تواصل واتساب بصورة التحويل للتفعيل.',
+      subscription_request_failed: 'تعذر إرسال الطلب',
+      subscription_request_pending: 'لديك طلب قيد المراجعة بالفعل. يتم عرض حالته الحالية — لم يُرسل طلب جديد.',
+      subscription_request_unknown: 'تعذر تأكيد الإرسال — تم الاحتفاظ بمرجع الدفع. تحقق من طلباتك قبل إعادة المحاولة.',
+      subscription_review_conflict: 'تمت مراجعة هذا الطلب مسبقًا. يتم عرض الحالة الحالية — لم يُرسل شيء مرتين.',
+      subscription_list_error: 'تعذر تحميل طلبات الاشتراك.',
+      subscription_admin_empty: 'لا توجد طلبات.',
+      subscription_action_approve: 'اعتماد وتفعيل',
+      subscription_action_reject: 'رفض',
+      subscription_action_error: 'خطأ',
       th_rec_channel: 'القناة',
       th_rec_target: 'الرقم / المعرف المستهدف',
       th_rec_label: 'الوصف / الفريق',
@@ -1316,14 +1843,37 @@
       action_cancel: 'إلغاء',
       action_edit: 'تعديل',
       action_delete: 'حذف',
+      action_ship: 'شحن',
+      action_deliver: 'تم التوصيل',
       action_test: 'اختبار الإرسال',
       delete_booking_confirm: 'هل أنت متأكد من رغبتك في حذف هذا الموعد؟',
       delete_order_confirm: 'هل أنت متأكد من رغبتك في حذف هذا الطلب؟',
       delete_recipient_confirm: 'هل أنت متأكد من حذف قناة الإشعارات هذه؟',
       booking_saved_ok: 'تم حفظ الموعد بنجاح!',
       order_saved_ok: 'تم حفظ الطلب بنجاح!',
+      booking_save_failed: 'تعذر حفظ الموعد.',
+      order_save_failed: 'تعذر حفظ الطلب.',
+      orders_load_error: 'تعذر تحميل الطلبات.',
+      bookings_load_error: 'تعذر تحميل المواعيد.',
+      orders_refresh_failed: 'تم الحفظ، لكن تعذر تحديث قائمة الطلبات.',
+      bookings_refresh_failed: 'تم الحفظ، لكن تعذر تحديث قائمة المواعيد.',
+      booking_invalid_date: 'تاريخ الموعد غير صالح. صححه قبل الحفظ.',
+      orders_count_unit: 'طلب',
+      bookings_count_unit: 'موعد',
+      created_label: 'تم الإنشاء',
+      format_date_unavailable: 'غير متاح',
+      chat_order_create_unsupported: 'إنشاء الطلبات يدويًا غير مدعوم حاليًا. تُنشأ الطلبات تلقائيًا من المحادثات.',
+      store_order_readonly: 'طلبات المتجر للعرض فقط هنا. أدرها من لوحة تحكم المتجر.',
       recipient_saved_ok: 'تم حفظ قناة الإشعارات بنجاح!',
+      recipient_save_failed: 'تعذر حفظ قناة الإشعارات',
       recipient_test_sent: 'تم إرسال الإشعار التجريبي بنجاح!',
+      recipient_test_failed: 'فشل إرسال الإشعار التجريبي',
+      recipient_test_configured: 'لم يتم التسليم. القناة محفوظة ومُعدّة، لكن لم يُرسل شيء.',
+      recipient_delete_failed: 'تعذر حذف قناة الإشعارات.',
+      recipients_load_error: 'تعذر تحميل قنوات الإشعارات.',
+      recipients_loading: 'جارٍ تحميل قنوات الإشعارات.',
+      webhook_retry_confirm: 'إعادة إرسال حمولة الويب هوك إلى الرابط الآن؟',
+      webhook_logs_refresh_failed: 'تم تأكيد التسليم، لكن تعذر تحديث قائمة السجل.',
       chan_webchat_title: 'صفحة الدردشة المستقلة',
       chan_desc_webchat: 'صفحة دردشة مخصصة ومستقلة وتجربة تفاعلية للوكيل.',
       btn_customize_chat: 'تخصيص واختبار',
@@ -1410,10 +1960,21 @@
       store_error_unsafe: 'عنوان المتجر أو استجابته غير مدعومين. تحقق من رابط HTTPS.',
       store_training_path: 'بعد الاستيراد جرّب سؤالًا عن منتج حقيقي في الدردشة، وأضف قواعد عملك الإضافية في تدريب الذكاء الاصطناعي.',
       store_open_training: 'فتح تدريب الذكاء الاصطناعي',
+      feedback_loading: 'جارٍ التحميل…',
+      feedback_retry: 'إعادة المحاولة',
+      lazy_load_failed: 'تعذّر تحميل هذا القسم. تحقق من الاتصال ثم أعد المحاولة.',
+      feedback_stale: 'تُعرض بيانات محفوظة أثناء التحديث…',
+      feedback_no_bot: 'اختر وكيلًا لعرض هذا القسم.',
       automation_center_title: 'مركز أتمتة المبيعات والمهام التلقائية',
       automation_center_desc: 'إدارة المهام التلقائية الخلفية: استعادة المبيعات المتروكة، تقرير المبيعات اليومي، وفرز الشكاوى العاجلة.',
       btn_trigger_recovery: 'استعادة العملاء المحتملين الآن',
       btn_trigger_digest: 'إرسال ملخص المبيعات الآن',
+      automation_checking: 'جاري الفحص...',
+      automation_checked_ok: 'تم فحص المحادثات بنجاح.',
+      automation_check_failed: 'حدث خطأ أثناء تشغيل الفحص.',
+      automation_sending: 'جاري الإرسال...',
+      automation_digest_sent: 'تم إرسال الملخص بنجاح.',
+      automation_digest_failed: 'حدث خطأ أثناء إرسال التقرير.',
       card_recovery_title: 'استعادة المبيعات المتروكة',
       card_recovery_desc: 'إعادة استهداف ومتابعة العملاء الذين أبدوا رغبة بالشراء أو سألوا عن الأسعار وتوقفوا عن الرد.',
       card_digest_title: 'تقرير الأداء والمبيعات اليومي',
@@ -1437,6 +1998,8 @@
       agent_tool_digest_title: 'أداة تقرير الأداء والمبيعات اليومي التلقائي',
       agent_digest_channel_label: 'قناة استلام التقرير',
       channel_all: 'تيليجرام وواتساب ولوحة التحكم',
+      channel_telegram_only: 'تيليجرام فقط',
+      channel_whatsapp_only: 'واتساب فقط',
       channel_inapp: 'إشعارات لوحة التحكم فقط',
       agent_digest_time_label: 'وقت الإرسال اليومي',
       agent_tool_upsell_title: 'أداة ترشيح المنتجات التكميلية وإغلاق الصفقات',
@@ -1637,6 +2200,74 @@
       idea_msg_card_saved: 'تم حفظ بطاقة الفكرة.',
       idea_msg_followup_prompt: 'أدخل ملاحظاتك أو حجتك الدفاعية لجولة المتابعة:',
       idea_msg_followup_success: 'تم إكمال جولة المتابعة بنجاح.',
+      idea_desc_min_length: 'يجب أن لا يقل وصف الفكرة عن 100 حرف.',
+      idea_structure_failed: 'فشل تنظيم بطاقة الفكرة.',
+      idea_structure_error: 'حدث خطأ أثناء تنظيم الفكرة.',
+      idea_list_error: 'تعذر تحميل الأفكار.',
+      idea_convening: 'جارٍ الاستدعاء...',
+      idea_convene_failed: 'فشل استدعاء لجنة الأفكار.',
+      idea_run_failed: 'فشل تشغيل جلسة التقييم.',
+      idea_status_pending: 'بانتظار البدء',
+      idea_awaiting_evidence: 'في انتظار فحص الفكرة والأدلة...',
+      idea_stage_research: 'جارٍ إجراء البحث السوقي المباشر وجمع الأدلة...',
+      idea_stage_parallel: 'أعضاء اللجنة يحللون الفكرة بالتوازي',
+      idea_stage_synth: 'رئيس اللجنة يصيغ التقرير النهائي ولوحة الحقيقة...',
+      idea_round_1: 'الجولة 1 (التقييم الأولي)',
+      idea_round_n: 'الجولة {n}{suffix}',
+      idea_round_input: 'مدخلات الجولة:',
+      idea_round_latest: 'أحدث جولة تقييم',
+      idea_round_archive: 'أرشيف جولة سابقة',
+      idea_no_sources: 'لا توجد مصادر خارجية مباشرة.',
+      idea_no_critiques: 'لم يتم حفظ تقارير أعضاء اللجنة بعد.',
+      idea_critic_rejection: 'سبب الرفض والتردد:',
+      idea_critic_switching: 'تكلفة التبديل والانتقال:',
+      idea_critic_trigger: 'محفز التجربة الحقيقي:',
+      idea_critic_willingness: 'الاستعداد للدفع:',
+      idea_weakest_link: 'أضعف نقطة في المفهوم:',
+      idea_deadliest_assumptions: 'أخطر الافتراضات غير المثبتة:',
+      idea_hard_questions: 'أسئلة حاسمة تتطلب إثباتاً بالأرقام:',
+      idea_complexity_level: 'مستوى التعقيد الهندسي:',
+      idea_mvp_scope: 'نطاق MVP القابل للإطلاق خلال 7 أيام:',
+      idea_cut_deferred: 'ما يجب حذفه/تأجيله خارج النسخة الأولى:',
+      idea_market_saturation: 'تشبع السوق:',
+      idea_direct_competitors: 'المنافسون والبدائل المباشرة في السوق:',
+      idea_indirect_alternatives: 'البدائل غير المباشرة وطرق العمل الحالية:',
+      idea_root_cause: 'السبب الجذري الأول الذي قد يقضي على المشروع:',
+      idea_failure_conditions: 'شروط وسيناريوهات الفشل:',
+      idea_early_warnings: 'مؤشرات الخطر المبكرة:',
+      idea_wedge_angle: 'زاوية الدخول الحادة (Unique Wedge):',
+      idea_defensibility: 'القابلية للدفاع ضد المنافسين:',
+      idea_copy_ease: 'سهولة وسرعة النسخ:',
+      idea_first_value_60s: 'أول لحظة قيمة في الـ 60 ثانية الأولى:',
+      idea_friction_point: 'أكبر نقطة احتكاك أو تسرب للمستخدمين:',
+      idea_core_strength: 'الشرارة الحقيقية ونقطة القوة الجوهرية:',
+      idea_proceed_reason: 'أقوى سبب للاستمرار وعدم التراجع:',
+      idea_indispensable_asset: 'الأصل الذي لا يمكن التنازل عنه:',
+      idea_critic_verdict_full: 'البيان النهائي للناقد:',
+      idea_round_analyzed: 'اكتمل التحليل',
+      idea_round_review: 'قيد المراجعة',
+      idea_round_prior: 'الجولة السابقة',
+      idea_first_moment: 'لحظة القيمة الأولى: {v}',
+      idea_unit_orders_mo: 'طلب/شهر',
+      idea_unit_orders_day: 'طلب/يوم',
+      idea_econ_critical: 'تحذير حرج: صافي المساهمة سالب! تخسر أموالاً في كل طلب قبل حساب المصاريف الثابتة.',
+      idea_econ_hurdle: 'مخاطرة حجم مرتفعة: تحتاج لأكثر من {n} طلب يومياً لتغطية النفقات الثابتة.',
+      idea_round_initial_short: 'التقييم الأولي',
+      idea_plan_duration: 'المدة المقترحة:',
+      idea_plan_metric: 'معيار النجاح:',
+      idea_plan_stop: 'شرط التوقف:',
+      idea_truth_empty: 'لا توجد عناصر مسجلة في لوحة الحقيقة.',
+      idea_followup_exhausted: 'لقد استنفدت جميع جولات المتابعة المتاحة لهذه الفكرة (3 جولات).',
+      idea_followup_launching: 'جارٍ الإطلاق...',
+      idea_followup_failed: 'فشل تنفيذ جولة المتابعة.',
+      idea_followup_error: 'حدث خطأ أثناء تنفيذ جولة المتابعة.',
+      idea_export_failed: 'فشل تصدير التقرير.',
+      idea_followup_defend: 'دفاع',
+      idea_followup_pivot: 'تغيير مسار',
+      idea_followup_validation: 'خطة فحص',
+      idea_followup_vote: 'تصويت',
+      idea_followup_compare: 'مقارنة',
+      idea_followup_mvp: 'خطة MVP',
       idea_status_draft: 'مسودة',
       idea_status_structuring: 'قيد الصياغة',
       idea_status_awaiting_conf: 'بانتظار التأكيد',
@@ -1680,31 +2311,66 @@
     return response.json();
   }
 
-  // Language translation handler
-  function applyLanguage(lang) {
-    currentLanguage = lang;
-    localStorage.setItem('zainbot_lang', lang);
+  // D04: request helper for lifecycle flows. Uses the D02 request core when
+  // present (15s read timeout, 401-only session callback, no auto-retry);
+  // falls back to apiFetch otherwise. Login redirect happens ONLY via the
+  // 401 callback or a missing token — never on network/HTTP failures.
+  function dashboardRequest(url, options, policy) {
+    const core = window.ZainBotRequest;
+    if (core && typeof core.requestJson === 'function') {
+      return core.requestJson(url, options || {}, {
+        operation: (policy && policy.operation) || 'read',
+        timeoutMs: policy && policy.timeoutMs,
+        onUnauthorized: () => { window.location.href = '/login'; },
+      });
+    }
+    return apiFetch(url, options);
+  }
 
-    const dir = lang === 'ar' ? 'rtl' : 'ltr';
+  function dashboardT(key, params) {
+    const adapter = window.ZainBotDashboardI18n;
+    if (adapter && typeof adapter.t === 'function') return adapter.t(key, params);
+    const table = translations[currentLanguage] || translations.en;
+    let template = (table && table[key]) || translations.en[key] || key;
+    if (params) {
+      template = String(template).replace(/\{([a-zA-Z0-9_]+)\}/g, (m, name) => (
+        params[name] !== undefined && params[name] !== null ? String(params[name]) : m
+      ));
+    }
+    return template;
+  }
+
+  function notifyDashboard(level, key, params) {
+    if (window.ZainBotFeedback && typeof window.ZainBotFeedback.notify === 'function') {
+      window.ZainBotFeedback.notify({ level, key, params }, dashboardT);
+    }
+  }
+
+  // Language translation handler
+  // C02 review Low-1: every render below uses the NORMALIZED value, never the raw param.
+  function applyLanguage(lang) {
+    currentLanguage = window.ZainbotLangPersistence.writeStoredLanguage(lang, 'ar');
+
+    const dir = currentLanguage === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.setAttribute('dir', dir);
-    document.documentElement.setAttribute('lang', lang);
-    langToggleBtn.textContent = lang === 'ar' ? 'EN' : 'AR';
+    document.documentElement.setAttribute('lang', currentLanguage);
+    langToggleBtn.textContent = currentLanguage === 'ar' ? 'EN' : 'AR';
 
     // Translate all elements with data-i18n
     const elements = document.querySelectorAll('[data-i18n]');
     elements.forEach(el => {
       const key = el.getAttribute('data-i18n');
-      if (translations[lang] && translations[lang][key]) {
-        el.innerHTML = translations[lang][key];
+      if (translations[currentLanguage] && translations[currentLanguage][key]) {
+        el.innerHTML = translations[currentLanguage][key];
       }
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => {
       const key = element.getAttribute('data-i18n-placeholder');
-      if (translations[lang] && translations[lang][key]) element.placeholder = translations[lang][key];
+      if (translations[currentLanguage] && translations[currentLanguage][key]) element.placeholder = translations[currentLanguage][key];
     });
     document.querySelectorAll('[data-i18n-aria]').forEach((element) => {
       const key = element.getAttribute('data-i18n-aria');
-      if (translations[lang] && translations[lang][key]) element.setAttribute('aria-label', translations[lang][key]);
+      if (translations[currentLanguage] && translations[currentLanguage][key]) element.setAttribute('aria-label', translations[currentLanguage][key]);
     });
 
     // Re-render tabular contents or messages since they are translated dynamically
@@ -1722,15 +2388,35 @@
     if (window.__zainbotRenderSettingsSummary) window.__zainbotRenderSettingsSummary();
     renderOnboarding();
     renderCatalogStatus();
+    // Registry renderers (agents, recipients, admin table, inbox list) re-render
+    // from in-memory state only: no fetch, no selectChat history load, and
+    // filters/pagination/selection/drafts survive the switch.
+    window.ZainBotDashboardI18n.refreshLanguageRenderers();
   }
 
+  // Render registry wiring. Function declarations hoist, so these resolve to the
+  // live definitions below — notably the paginated/DOM-based renderAdminUsers,
+  // NOT the superseded legacy table renderer. Re-registering an id replaces it,
+  // so switches never accumulate callbacks.
+  window.ZainBotDashboardI18n.registerLanguageRenderer('agents', renderAgents);
+  window.ZainBotDashboardI18n.registerLanguageRenderer('notification-recipients', renderNotificationRecipients);
+  window.ZainBotDashboardI18n.registerLanguageRenderer('admin-users', renderAdminUsers);
+  window.ZainBotDashboardI18n.registerLanguageRenderer('chat-list', renderChatList);
+  // D03: feedback primitive re-renders its tracked states/notifications from
+  // the C03 adapter on language switch — no refetch, no state loss. Single
+  // line so line-sliced wiring harnesses can execute it standalone.
+  window.ZainBotDashboardI18n.registerLanguageRenderer('feedback', function () { if (window.ZainBotFeedback) window.ZainBotFeedback.refreshLanguage(window.ZainBotDashboardI18n.t); });
+
   // Tab switching handler
-  function switchTab(tabId) {
+  function switchTab(tabId, opts) {
     activeTab = tabId;
-    
+
     // Update active tab class in menu
     document.querySelectorAll('.menu-item').forEach(item => {
-      item.classList.toggle('active', item.getAttribute('data-target') === tabId);
+      const isActive = item.getAttribute('data-target') === tabId;
+      item.classList.toggle('active', isActive);
+      if (isActive) item.setAttribute('aria-current', 'page');
+      else item.removeAttribute('aria-current');
     });
 
     // Display appropriate content area
@@ -1738,13 +2424,17 @@
       page.classList.toggle('active', page.getAttribute('id') === tabId);
     });
 
+    // E04: user navigation moves focus to the page heading. Background
+    // refresh call sites omit the flag, so data reloads never steal focus.
+    if (opts && opts.focusHeading) focusPageHeading(tabId);
+
     // Load data specific to this page
     if (tabId === 'page-overview') {
       loadOverviewData();
     } else if (tabId === 'page-agents') {
       loadAgents();
     } else if (tabId === 'page-idea-council') {
-      loadIdeaCouncilData();
+      enterCouncilTab();
     } else if (tabId === 'page-inbox') {
       loadInboxData();
     } else if (tabId === 'page-training') {
@@ -1754,12 +2444,26 @@
     } else if (tabId === 'page-orders') {
       loadOrdersData();
     } else if (tabId === 'page-settings') {
-      loadSettingsData();
-      if (window.__zainbotRenderSettingsSummary) setTimeout(window.__zainbotRenderSettingsSummary, 80);
+      enterSettingsTab();
     } else if (tabId === 'page-admin') {
       loadAdminUsers();
       loadAdminKeys();
     }
+  }
+
+  // E04: move focus to the page heading on USER navigation only. Pages
+  // without a heading (page-inbox today — C-track copy owns a future
+  // heading) fall back to the page section itself.
+  function focusPageHeading(tabId) {
+    const page = document.getElementById(tabId);
+    if (!page) return;
+    const target = page.querySelector('h1, h2') || page;
+    try {
+      if (typeof target.hasAttribute === 'function' && !target.hasAttribute('tabindex')) {
+        target.setAttribute('tabindex', '-1');
+      }
+      if (typeof target.focus === 'function') target.focus();
+    } catch (err) { /* focus is best-effort */ }
   }
 
   // Initialize Language Toggle Event
@@ -1770,10 +2474,51 @@
     });
   }
 
+  // Cross-tab sync: adopt language changes from other tabs. The resolver never
+  // writes, and echoes carry an unchanged value so receiving tabs resolve null.
+  window.addEventListener('storage', (event) => {
+    const next = window.ZainbotLangPersistence.resolveExternalLanguage(event, currentLanguage, 'ar');
+    if (next) applyLanguage(next);
+  });
+
   function setMobileMenuOpen(open, restoreToggleFocus = false) {
     if (!sidebar || !menuMobileToggle) return;
 
     const shouldOpen = Boolean(open) && mobileSidebarMedia.matches;
+    setDrawerVisual(shouldOpen);
+
+    // E04: the open drawer traps focus and isolates the background via the
+    // shared lifecycle (E01); close releases both. All close paths funnel
+    // through here, so no stuck scrim, scroll-lock, or inert remains.
+    try {
+      const a11y = window.ZainBotA11y;
+      if (shouldOpen) {
+        if (a11y && typeof a11y.openDialog === 'function') {
+          a11y.openDialog(sidebar, {
+            opener: document.activeElement && document.activeElement.nodeType === 1
+              ? document.activeElement
+              : undefined,
+            background: document.querySelector('.db-main'),
+            onClose: () => setDrawerVisual(false),
+          });
+        }
+      } else if (a11y && typeof a11y.closeDialog === 'function') {
+        a11y.closeDialog(sidebar);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      if (!shouldOpen) setDrawerVisual(false);
+    }
+
+    if (restoreToggleFocus) menuMobileToggle.focus();
+  }
+
+  // E04: drawer visuals only (class/aria/scroll-lock). Kept separate from
+  // the lifecycle above so onClose and every close path converge here and
+  // the helper-missing fallback behaves identically.
+  function setDrawerVisual(shouldOpen) {
+    if (!sidebar || !menuMobileToggle) return;
     sidebar.classList.toggle('mobile-open', shouldOpen);
     document.body.classList.toggle('sidebar-open', shouldOpen);
     menuMobileToggle.setAttribute('aria-expanded', String(shouldOpen));
@@ -1788,8 +2533,6 @@
       sidebarScrim.classList.toggle('active', shouldOpen);
       sidebarScrim.setAttribute('aria-hidden', String(!shouldOpen));
     }
-
-    if (restoreToggleFocus) menuMobileToggle.focus();
   }
 
   // Sidebar navigation click
@@ -1798,6 +2541,11 @@
       const target = item.getAttribute('data-target');
       switchTab(target);
       setMobileMenuOpen(false);
+      // E04 fix round 1 (coordinator decision): selection-commit ends on
+      // the page heading — asserted AFTER the close restores the opener
+      // (single heading focus; no double move). Cancel/Escape/scrim paths
+      // keep standard restore-to-opener and never call focusPageHeading.
+      focusPageHeading(target);
     });
   });
 
@@ -1829,6 +2577,16 @@
   setMobileMenuOpen(false);
 
   // User Auth and Load Details
+  // D04a: bootstrap. Login redirect happens ONLY for a missing token or a
+  // 401 (via the request core's session callback). Network/500 failures show
+  // a recoverable error with manual retry — the session is kept.
+  let bootstrapBusy = false;
+  function showBootstrapError() {
+    document.getElementById('bootstrapError')?.removeAttribute('hidden');
+  }
+  function hideBootstrapError() {
+    document.getElementById('bootstrapError')?.setAttribute('hidden', '');
+  }
   async function checkAuthAndLoad() {
     applyLanguage(currentLanguage);
     const token = getToken();
@@ -1836,10 +2594,13 @@
       window.location.href = '/login';
       return;
     }
+    if (bootstrapBusy) return;
+    bootstrapBusy = true;
+    hideBootstrapError();
 
     try {
       // Fetch user profile info
-      const res = await apiFetch('/api/users/profile');
+      const res = await dashboardRequest('/api/users/profile');
       if (res && res.success) {
         currentUser = res.data;
         
@@ -1854,6 +2615,9 @@
           const adminMenu = document.getElementById('menu-admin');
           if (adminMenu) {
             adminMenu.style.display = 'flex';
+            // E04: hidden admin stays out of the tab order (display:none);
+            // never leave a stray tabindex behind when revealing it.
+            adminMenu.removeAttribute('tabindex');
             adminMenu.style.borderTop = '1px solid var(--glass-border)';
             adminMenu.style.marginTop = '12px';
             adminMenu.style.paddingTop = '16px';
@@ -1863,13 +2627,18 @@
         // Fetch bots list to pick active bot
         await loadBots();
       } else {
-        window.location.href = '/login';
+        showBootstrapError();
       }
     } catch (e) {
       console.error(e);
-      window.location.href = '/login';
+      // A 401 already redirected via the session callback; anything else is
+      // recoverable with a manual retry.
+      if (!e || e.status !== 401) showBootstrapError();
+    } finally {
+      bootstrapBusy = false;
     }
   }
+  document.getElementById('bootstrapRetryBtn')?.addEventListener('click', () => checkAuthAndLoad());
 
   async function loadBots() {
     try {
@@ -2001,11 +2770,11 @@
 
   document.getElementById('onboardPersonalize')?.addEventListener('click', () => {
     const bot = currentBot;
-    switchTab('page-agents');
+    switchTab('page-agents', { focusHeading: true });
     openAgentModal(bot);
   });
   document.getElementById('onboardTrain')?.addEventListener('click', () => {
-    switchTab('page-training');
+    switchTab('page-training', { focusHeading: true });
     document.getElementById('addFaqBtn')?.click();
   });
   document.getElementById('onboardTest')?.addEventListener('click', async () => {
@@ -2024,22 +2793,30 @@
     }
   });
 
+  // D04b: overview. A per-call generation plus a bot-id guard drops stale
+  // replies (slow bot A never paints over selected bot B). Failed stats are
+  // never written — previous values (or the initial "—") stay, with an error
+  // announcement instead of fake zero stats.
+  let overviewRun = 0;
   async function loadOverviewData() {
     loadOnboarding();
     if (!currentBot) return;
+    const run = ++overviewRun;
+    const botId = String(currentBot._id);
 
     try {
       // Fetch stats
-      const res = await apiFetch(`/api/analytics/summary?botId=${currentBot._id}`);
-      if (res && res.success) {
-        const stats = res.data;
-        document.getElementById('statConversations').textContent = stats.conversationsCount || 0;
-        document.getElementById('statMessages').textContent = stats.messagesCount || 0;
-        document.getElementById('statTrainingRules').textContent = stats.activeRules || 0;
-        document.getElementById('overviewOrders').textContent = stats.chatOrdersCount || 0;
-      }
+      const res = await dashboardRequest(`/api/analytics/summary?botId=${currentBot._id}`);
+      if (run !== overviewRun || String(currentBot?._id) !== botId) return;
+      if (!(res && res.success)) throw new Error('Overview stats unavailable');
+      const stats = res.data;
+      document.getElementById('statConversations').textContent = stats.conversationsCount || 0;
+      document.getElementById('statMessages').textContent = stats.messagesCount || 0;
+      document.getElementById('statTrainingRules').textContent = stats.activeRules || 0;
+      document.getElementById('overviewOrders').textContent = stats.chatOrdersCount || 0;
 
       await refreshChannelStatuses(currentBot);
+      if (run !== overviewRun || String(currentBot?._id) !== botId) return;
       document.getElementById('overviewActiveBot').textContent = currentBot.name || '—';
       document.getElementById('overviewAutoReply').textContent = (translations[currentLanguage] || translations.en)[currentBot.autoReplyEnabled === false ? 'status_disabled' : 'status_enabled'];
 
@@ -2056,31 +2833,87 @@
       renderAccountMenu();
     } catch (e) {
       console.error(e);
+      if (run !== overviewRun || String(currentBot?._id) !== botId) return;
+      notifyDashboard('error', 'overview_stats_failed');
     }
   }
 
   // 2. OMNICHANNEL INBOX LOADER
-  async function loadInboxData() {
-    if (!currentBot) return;
+  // D04c: generation-guarded chat reads (a slow bot-A reply never paints over
+  // selected bot B). A failed response never renders as empty — it renders a
+  // persistent error with a READ-only retry. With no bot, selection resets
+  // and the composer disables instead of stranding a dead draft.
+  let inboxRun = 0;
+  function setComposerEnabled(on) {
+    const input = document.getElementById('chatReplyInput');
+    const send = document.getElementById('chatSendBtn');
+    const toggle = document.getElementById('autoReplyToggle');
+    if (input) input.disabled = !on;
+    if (send) send.disabled = !on;
+    if (toggle) toggle.disabled = !on;
+  }
+  function resetInboxForNoBot() {
+    selectedConversationId = null;
+    conversations = [];
     const chatListContainer = document.getElementById('chatListContainer');
-    chatListContainer.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-muted);">Loading conversations...</div>';
+    if (chatListContainer && window.ZainBotFeedback) {
+      window.ZainBotFeedback.renderState(chatListContainer, { phase: 'no-bot', key: 'inbox_no_bot' }, { t: dashboardT });
+    }
+    const msgContainer = document.getElementById('chatMessagesContainer');
+    if (msgContainer) msgContainer.innerHTML = '';
+    const t = translations[currentLanguage] || translations.en;
+    const nameEl = document.getElementById('chatActiveUser');
+    if (nameEl) nameEl.textContent = t.inbox_select_chat;
+    setComposerEnabled(false);
+  }
+  async function loadInboxData() {
+    const run = ++inboxRun;
+    const t = translations[currentLanguage] || translations.en;
+    const chatListContainer = document.getElementById('chatListContainer');
+    if (!currentBot) {
+      resetInboxForNoBot();
+      return;
+    }
+    const botId = String(currentBot._id);
+    if (window.ZainBotFeedback) {
+      window.ZainBotFeedback.renderState(chatListContainer, { phase: 'loading', key: 'inbox_loading' }, { t: dashboardT });
+    } else {
+      chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:var(--text-muted);">${t.inbox_loading}</div>`;
+    }
 
     try {
-      const res = await apiFetch(`/api/messages/conversations?botId=${currentBot._id}`);
-      if (res && res.success && res.data.length > 0) {
+      const res = await dashboardRequest(`/api/messages/conversations?botId=${currentBot._id}`);
+      if (run !== inboxRun || String(currentBot?._id) !== botId) return;
+      if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
         conversations = res.data;
         renderChatList();
+      } else if (res && res.success) {
+        conversations = [];
+        selectedConversationId = null;
+        setComposerEnabled(false);
+        if (window.ZainBotFeedback) {
+          window.ZainBotFeedback.renderState(chatListContainer, { phase: 'empty', key: 'inbox_empty' }, { t: dashboardT });
+        } else {
+          chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:var(--text-muted);">${t.inbox_empty}</div>`;
+        }
       } else {
-        chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:var(--text-muted);">${translations[currentLanguage].inbox_empty}</div>`;
+        throw new Error('Inbox unavailable');
       }
     } catch (e) {
-      chatListContainer.innerHTML = '<div style="padding:20px; text-align:center; color:var(--red);">Error loading feed.</div>';
+      console.error(e);
+      if (run !== inboxRun || String(currentBot?._id) !== botId) return;
+      if (window.ZainBotFeedback) {
+        window.ZainBotFeedback.renderState(chatListContainer, { phase: 'error', key: 'inbox_load_error' }, { t: dashboardT, onRetry: () => loadInboxData() });
+      } else {
+        chatListContainer.innerHTML = `<div style="padding:20px; text-align:center; color:var(--red);">${t.inbox_load_error}</div>`;
+      }
     }
   }
 
   function renderChatList() {
     const chatListContainer = document.getElementById('chatListContainer');
     chatListContainer.innerHTML = '';
+    const t = translations[currentLanguage] || translations.en;
 
     conversations.forEach(chat => {
       const item = document.createElement('div');
@@ -2102,12 +2935,12 @@
 
       item.innerHTML = `
         <div class="chat-item-avatar">
-          ${chat.username ? chat.username.slice(0, 1).toUpperCase() : 'C'}
+          ${(chat.username || t.inbox_default_name).slice(0, 1).toUpperCase()}
           <span class="chat-channel-badge" style="background:${channelColor};"><i class="${channelIcon}"></i></span>
         </div>
         <div class="chat-item-details" style="flex:1; min-width:0;">
           <div class="chat-item-name" style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(chat.username || 'Customer')}</span>
+            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(chat.username || t.inbox_default_name)}</span>
             ${categoryBadge}
           </div>
           <div class="chat-item-preview">${escapeHtml(lastMsg)}</div>
@@ -2126,10 +2959,11 @@
     selectedConversationId = chat._id;
     renderChatList(); // refresh active state
 
+    const t = translations[currentLanguage] || translations.en;
     document.getElementById('chatActiveUser').removeAttribute('data-i18n');
     document.getElementById('chatActiveChannel').removeAttribute('data-i18n');
-    document.getElementById('chatActiveUser').textContent = chat.username || 'Customer';
-    document.getElementById('chatActiveChannel').textContent = chat.channel ? chat.channel.toUpperCase() : 'Web Chat';
+    document.getElementById('chatActiveUser').textContent = chat.username || t.inbox_default_name;
+    document.getElementById('chatActiveChannel').textContent = chat.channel ? chat.channel.toUpperCase() : t.inbox_default_channel;
 
     // Enable inputs
     document.getElementById('chatReplyInput').removeAttribute('disabled');
@@ -2168,55 +3002,89 @@
   }
 
   // Handle take-over manual reply
+  // D04d: single-flight via runExclusive (Enter+click = ONE POST) with a
+  // bot/chat/text snapshot taken at send time. A delayed response never
+  // clears a NEW draft and never bubbles into another conversation.
+  // delivered:false is surfaced distinctly; failures notify once with an
+  // outcome-unknown-safe message and NEVER auto-resend.
   const chatReplyInput = document.getElementById('chatReplyInput');
   const chatSendBtn = document.getElementById('chatSendBtn');
 
+  function appendReplyBubble(text, showNotSentNote, t) {
+    const msgContainer = document.getElementById('chatMessagesContainer');
+    const bubbleRow = document.createElement('div');
+    bubbleRow.style.display = 'flex';
+    bubbleRow.style.justifyContent = 'flex-start';
+    bubbleRow.style.marginBottom = '12px';
+
+    const bubble = document.createElement('div');
+    bubble.style.padding = '10px 16px';
+    bubble.style.borderRadius = '12px 12px 12px 0';
+    bubble.style.background = 'rgba(255,255,255,0.04)';
+    bubble.style.border = '1px solid var(--glass-border)';
+    bubble.style.maxWidth = '70%';
+    bubble.style.fontSize = '14px';
+    bubble.textContent = text;
+
+    bubbleRow.appendChild(bubble);
+    msgContainer.appendChild(bubbleRow);
+    if (showNotSentNote) {
+      const note = document.createElement('div');
+      note.style.cssText = 'font-size:11px; color:var(--text-muted); margin:-6px 0 12px 4px;';
+      note.textContent = t.inbox_reply_saved_not_sent;
+      msgContainer.appendChild(note);
+    }
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+  }
+
+  async function postManualReply(snapshot) {
+    const t = translations[currentLanguage] || translations.en;
+    const res = await dashboardRequest('/api/messages/reply', {
+      method: 'POST',
+      body: JSON.stringify({
+        conversationId: snapshot.chatId,
+        content: snapshot.text
+      })
+    }, { operation: 'mutation' });
+
+    if (!res || !res.success) {
+      notifyDashboard('error', 'inbox_reply_failed');
+      throw new Error('Manual reply failed');
+    }
+
+    // Record into the SNAPSHOT conversation, never the currently selected one.
+    const target = conversations.find(c => String(c._id) === snapshot.chatId);
+    if (target) {
+      target.messages = target.messages || [];
+      target.messages.push({ role: 'assistant', content: snapshot.text, manual: true, timestamp: new Date().toISOString() });
+    }
+    if (String(selectedConversationId) === snapshot.chatId) {
+      // Clear only the sent text: a NEW draft typed meanwhile is kept.
+      if (chatReplyInput.value.trim() === snapshot.text) chatReplyInput.value = '';
+      appendReplyBubble(snapshot.text, res.delivered === false, t);
+      renderChatList();
+    } else if (target) {
+      renderChatList();
+    }
+  }
+
   async function sendManualReply() {
     const text = chatReplyInput.value.trim();
-    if (!text || !selectedConversationId) return;
-
+    const chatId = selectedConversationId ? String(selectedConversationId) : '';
+    const botId = currentBot ? String(currentBot._id) : '';
+    if (!text || !chatId || !botId) return;
+    const snapshot = { botId, chatId, text };
+    const key = `manual-reply:${botId}:${chatId}`;
+    const core = window.ZainBotRequest;
+    const run = core && typeof core.runExclusive === 'function'
+      ? (k, op) => core.runExclusive(k, op)
+      : (k, op) => op();
+    const feedback = window.ZainBotFeedback;
+    const guarded = feedback && typeof feedback.withPending === 'function'
+      ? () => feedback.withPending(key, [chatSendBtn], () => postManualReply(snapshot))
+      : () => postManualReply(snapshot);
     try {
-      const res = await apiFetch(`/api/messages/reply`, {
-        method: 'POST',
-        body: JSON.stringify({
-          conversationId: selectedConversationId,
-          content: text
-        })
-      });
-
-      if (res && res.success) {
-        chatReplyInput.value = '';
-
-        // Append manually
-        const msgContainer = document.getElementById('chatMessagesContainer');
-        const bubbleRow = document.createElement('div');
-        bubbleRow.style.display = 'flex';
-        bubbleRow.style.justifyContent = 'flex-start';
-        bubbleRow.style.marginBottom = '12px';
-
-        const bubble = document.createElement('div');
-        bubble.style.padding = '10px 16px';
-        bubble.style.borderRadius = '12px 12px 12px 0';
-        bubble.style.background = 'rgba(255,255,255,0.04)';
-        bubble.style.border = '1px solid var(--glass-border)';
-        bubble.style.maxWidth = '70%';
-        bubble.style.fontSize = '14px';
-        bubble.textContent = text;
-
-        bubbleRow.appendChild(bubble);
-        if (res.delivered === false) {
-          const note = document.createElement('div');
-          note.style.cssText = 'font-size:11px; color:var(--text-muted); margin:-6px 0 12px 4px;';
-          note.textContent = currentLanguage === 'ar'
-            ? 'تم تسجيل الرد في المحادثة، ولم يتم إرساله عبر القناة بعد.'
-            : 'Reply saved to the conversation, not yet sent via the channel.';
-          msgContainer.appendChild(bubbleRow);
-          msgContainer.appendChild(note);
-        } else {
-          msgContainer.appendChild(bubbleRow);
-        }
-        msgContainer.scrollTop = msgContainer.scrollHeight;
-      }
+      await run(key, guarded);
     } catch (e) {
       console.error(e);
     }
@@ -2256,14 +3124,14 @@
 
     try {
       // Get bot guidelines
-      const res = await apiFetch(`/api/bots/${currentBot._id}`);
+      const res = await dashboardRequest(`/api/bots/${currentBot._id}`);
       if (res && res.success) {
         document.getElementById('botWelcomeMessage').value = res.data.welcomeMessage || '';
         document.getElementById('botCustomPrompt').value = res.data.customInstructions || '';
       }
 
       // Get FAQs (type qa only)
-      const faqRes = await apiFetch(`/api/rules?botId=${currentBot._id}&type=qa`);
+      const faqRes = await dashboardRequest(`/api/rules?botId=${currentBot._id}&type=qa`);
       if (faqRes && faqRes.success) {
         faqs = faqRes.data;
         renderFaqs();
@@ -2274,7 +3142,7 @@
       }
 
       // Get general agent instructions (legacy "عامة" rules — bot identity)
-      const instrRes = await apiFetch(`/api/rules?botId=${currentBot._id}&type=general`);
+      const instrRes = await dashboardRequest(`/api/rules?botId=${currentBot._id}&type=general`);
       if (instrRes && instrRes.success) {
         generalInstructions = instrRes.data;
         renderGeneralInstructions();
@@ -2287,6 +3155,9 @@
       }
     } catch (e) {
       console.error(e);
+      // Reads keep previously loaded data; the failure announces instead of
+      // wiping the lists into a misleading empty state.
+      notifyDashboard('error', 'training_load_failed');
     }
   }
 
@@ -2366,15 +3237,47 @@
   const instructionForm = document.getElementById('instructionForm');
   const instructionModal = document.getElementById('instructionModal');
 
-  document.getElementById('addInstructionBtn')?.addEventListener('click', () => {
-    document.getElementById('instructionModalTitle').textContent = currentLanguage === 'ar' ? 'إضافة تعليمات عامة' : 'Add General Instruction';
+  // E02a: instructionModal runs on the shared focus lifecycle
+  // (window.ZainBotA11y, §7.3). The helper owns focus/stack/inert only;
+  // `.active` stays the visual switch — removed by onClose and by the
+  // explicit fallback in closeInstructionModal. No timers belong here.
+  const openInstructionModal = (opener) => {
+    if (!instructionModal) return;
+    instructionModal.classList.add('active');
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.openDialog === 'function') {
+        window.ZainBotA11y.openDialog(instructionModal, {
+          opener: opener && opener.nodeType === 1 ? opener : undefined,
+          background: document.querySelector('.db-wrapper'),
+          onClose: () => instructionModal.classList.remove('active'),
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  const closeInstructionModal = () => {
+    if (!instructionModal) return;
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.closeDialog === 'function') {
+        window.ZainBotA11y.closeDialog(instructionModal);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      instructionModal.classList.remove('active');
+    }
+  };
+
+  document.getElementById('addInstructionBtn')?.addEventListener('click', (event) => {
+    document.getElementById('instructionModalTitle').textContent = (translations[currentLanguage] || translations.en).instruction_modal_add;
     document.getElementById('instructionIdInput').value = '';
     document.getElementById('instructionContentInput').value = '';
-    instructionModal?.classList.add('active');
+    openInstructionModal(event?.currentTarget);
   });
 
   instructionModal?.querySelectorAll('.modal-close-btn').forEach(btn => {
-    btn.addEventListener('click', () => instructionModal.classList.remove('active'));
+    btn.addEventListener('click', () => closeInstructionModal());
   });
 
   if (instructionForm) {
@@ -2382,18 +3285,40 @@
       e.preventDefault();
       const content = document.getElementById('instructionContentInput').value.trim();
       if (!content) return;
-      const instrId = document.getElementById('instructionIdInput').value;
-      const url = instrId ? `/api/rules/${instrId}` : '/api/rules';
-      const method = instrId ? 'PUT' : 'POST';
+      // D09: single-flight save (no duplicate instructions); drafts stay in
+      // the open modal on every failure path.
+      const core = window.ZainBotRequest;
+      const run = core && typeof core.runExclusive === 'function'
+        ? (k, op) => core.runExclusive(k, op)
+        : (k, op) => op();
+      const feedback = window.ZainBotFeedback;
+      const submitBtn = instructionForm.querySelector('[type="submit"]');
+      const guarded = feedback && typeof feedback.withPending === 'function' && submitBtn
+        ? () => feedback.withPending('instruction-save', [submitBtn], () => saveInstruction(content))
+        : () => saveInstruction(content);
       try {
-        const payload = instrId ? { content } : { botId: currentBot._id, type: 'general', content };
-        const res = await apiFetch(url, { method, body: JSON.stringify(payload) });
-        if (res && res.success) {
-          instructionModal.classList.remove('active');
-          loadTrainingData();
-        }
+        await run('instruction-save', guarded);
       } catch (err) {
         console.error(err);
+      }
+
+      async function saveInstruction(body) {
+        const instrId = document.getElementById('instructionIdInput').value;
+        const url = instrId ? `/api/rules/${instrId}` : '/api/rules';
+        const method = instrId ? 'PUT' : 'POST';
+        try {
+          const payload = instrId ? { content: body } : { botId: currentBot._id, type: 'general', content: body };
+          const res = await dashboardRequest(url, { method, body: JSON.stringify(payload) }, { operation: 'mutation' });
+          if (res && res.success) {
+            closeInstructionModal();
+            loadTrainingData();
+          } else {
+            alert((translations[currentLanguage] || translations.en).instruction_save_failed);
+          }
+        } catch (err) {
+          console.error(err);
+          alert((translations[currentLanguage] || translations.en).instruction_save_failed);
+        }
       }
     });
   }
@@ -2402,27 +3327,65 @@
     const rule = generalInstructions.find(r => r._id === id);
     if (!rule) return;
     const raw = typeof rule.content === 'string' ? rule.content : (rule.content?.value || '');
-    document.getElementById('instructionModalTitle').textContent = currentLanguage === 'ar' ? 'تعديل التعليمات العامة' : 'Edit General Instruction';
+    document.getElementById('instructionModalTitle').textContent = (translations[currentLanguage] || translations.en).instruction_modal_edit;
     document.getElementById('instructionIdInput').value = rule._id;
     document.getElementById('instructionContentInput').value = raw;
-    instructionModal?.classList.add('active');
+    openInstructionModal(document.activeElement);
   };
 
   window.deleteInstruction = async function(id) {
-    if (!confirm(currentLanguage === 'ar' ? 'هل أنت متأكد من حذف هذه التعليمات؟' : 'Are you sure you want to delete this instruction?')) return;
+    if (!confirm((translations[currentLanguage] || translations.en).instruction_delete_confirm)) return;
     try {
-      const res = await apiFetch(`/api/rules/${id}`, { method: 'DELETE' });
-      if (res && res.success) {
-        loadTrainingData();
-      }
+      await withEntityLock(`training-rule:${id}`, id, async () => {
+        const res = await dashboardRequest(`/api/rules/${id}`, { method: 'DELETE' }, { operation: 'mutation' });
+        if (res && res.success) {
+          loadTrainingData();
+        } else {
+          alert((translations[currentLanguage] || translations.en).instruction_save_failed);
+        }
+      });
     } catch (e) {
       console.error(e);
+      alert((translations[currentLanguage] || translations.en).instruction_save_failed);
     }
   };
 
   // FAQ Forms submission
   const faqForm = document.getElementById('faqForm');
   const faqModal = document.getElementById('faqModal');
+
+  // E02b: faqModal runs on the shared focus lifecycle
+  // (window.ZainBotA11y, §7.3), same pattern as E02a. The helper owns
+  // focus/stack/inert only; `.active` stays the visual switch — removed by
+  // onClose and by the explicit fallback in closeFaqModal. FAQ owns no
+  // timers or polling, so onClose has nothing else to clean up.
+  const openFaqModal = (opener) => {
+    if (!faqModal) return;
+    faqModal.classList.add('active');
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.openDialog === 'function') {
+        window.ZainBotA11y.openDialog(faqModal, {
+          opener: opener && opener.nodeType === 1 ? opener : undefined,
+          background: document.querySelector('.db-wrapper'),
+          onClose: () => faqModal.classList.remove('active'),
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  const closeFaqModal = () => {
+    if (!faqModal) return;
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.closeDialog === 'function') {
+        window.ZainBotA11y.closeDialog(faqModal);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      faqModal.classList.remove('active');
+    }
+  };
 
   if (faqForm) {
     faqForm.addEventListener('submit', async (e) => {
@@ -2431,25 +3394,46 @@
       const answer = document.getElementById('faqAnswerInput').value.trim();
       const faqId = document.getElementById('faqIdInput').value;
 
-      const url = faqId ? `/api/rules/${faqId}` : '/api/rules';
-      const method = faqId ? 'PUT' : 'POST';
-
+      // D09: single-flight save (no duplicate FAQs); drafts stay in the open
+      // modal on every failure path.
+      const core = window.ZainBotRequest;
+      const run = core && typeof core.runExclusive === 'function'
+        ? (k, op) => core.runExclusive(k, op)
+        : (k, op) => op();
+      const feedback = window.ZainBotFeedback;
+      const submitBtn = faqForm.querySelector('[type="submit"]');
+      const guarded = feedback && typeof feedback.withPending === 'function' && submitBtn
+        ? () => feedback.withPending('faq-save', [submitBtn], () => saveFaq(question, answer, faqId))
+        : () => saveFaq(question, answer, faqId);
       try {
-        const res = await apiFetch(url, {
-          method,
-          body: JSON.stringify({
-            botId: currentBot._id,
-            type: 'qa',
-            content: { question, answer }
-          })
-        });
-
-        if (res && res.success) {
-          faqModal.classList.remove('active');
-          loadTrainingData();
-        }
+        await run('faq-save', guarded);
       } catch (err) {
         console.error(err);
+      }
+
+      async function saveFaq(q, a, id) {
+        const url = id ? `/api/rules/${id}` : '/api/rules';
+        const method = id ? 'PUT' : 'POST';
+        try {
+          const res = await dashboardRequest(url, {
+            method,
+            body: JSON.stringify({
+              botId: currentBot._id,
+              type: 'qa',
+              content: { question: q, answer: a }
+            })
+          }, { operation: 'mutation' });
+
+          if (res && res.success) {
+            closeFaqModal();
+            loadTrainingData();
+          } else {
+            alert((translations[currentLanguage] || translations.en).faq_save_failed);
+          }
+        } catch (err) {
+          console.error(err);
+          alert((translations[currentLanguage] || translations.en).faq_save_failed);
+        }
       }
     });
   }
@@ -2462,19 +3446,40 @@
       const welcomeMessage = document.getElementById('botWelcomeMessage').value.trim();
       const customInstructions = document.getElementById('botCustomPrompt').value.trim();
 
+      // D09: single-flight save; inputs are untouched on failure.
+      const core = window.ZainBotRequest;
+      const run = core && typeof core.runExclusive === 'function'
+        ? (k, op) => core.runExclusive(k, op)
+        : (k, op) => op();
+      const feedback = window.ZainBotFeedback;
+      const submitBtn = promptTrainingForm.querySelector('[type="submit"]');
+      const guarded = feedback && typeof feedback.withPending === 'function' && submitBtn
+        ? () => feedback.withPending('guidelines-save', [submitBtn], () => saveGuidelines(welcomeMessage, customInstructions))
+        : () => saveGuidelines(welcomeMessage, customInstructions);
       try {
-        const res = await apiFetch(`/api/bots/${currentBot._id}`, {
-          method: 'PUT',
-          body: JSON.stringify({
-            welcomeMessage,
-            customInstructions
-          })
-        });
-        if (res && res.success) {
-          alert(currentLanguage === 'ar' ? 'تم الحفظ بنجاح!' : 'Settings saved successfully!');
-        }
+        await run('guidelines-save', guarded);
       } catch (err) {
         console.error(err);
+      }
+
+      async function saveGuidelines(welcome, instructions) {
+        try {
+          const res = await dashboardRequest(`/api/bots/${currentBot._id}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              welcomeMessage: welcome,
+              customInstructions: instructions
+            })
+          }, { operation: 'mutation' });
+          if (res && res.success) {
+            alert((translations[currentLanguage] || translations.en).training_guidelines_saved);
+          } else {
+            alert((translations[currentLanguage] || translations.en).training_guidelines_failed);
+          }
+        } catch (err) {
+          console.error(err);
+          alert((translations[currentLanguage] || translations.en).training_guidelines_failed);
+        }
       }
     });
   }
@@ -2641,8 +3646,8 @@
         if (catalogStatus.lastSucceededAt) {
           const time = new Date(catalogStatus.lastSucceededAt);
           if (!Number.isNaN(time.getTime())) parts.push(catalogText('store_status_details', {
-            count: Number(catalogStatus.lastImportedCount) || 0,
-            time: new Intl.DateTimeFormat(currentLanguage === 'ar' ? 'ar-EG' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(time)
+            count: formatNumber(Number(catalogStatus.lastImportedCount) || 0),
+            time: formatDate(time, { dateStyle: 'medium', timeStyle: 'short' })
           }));
         } else parts.push(catalogText('store_status_no_sync'));
         if (catalogStatus.lastError) parts.push(catalogText(catalogErrorKey(catalogStatus.lastError)));
@@ -2762,43 +3767,118 @@
     if (request === catalogRequest) renderCatalogStatus();
   }
 
-  document.getElementById('openCatalogTrainingBtn')?.addEventListener('click', () => switchTab('page-training'));
+  document.getElementById('openCatalogTrainingBtn')?.addEventListener('click', () => switchTab('page-training', { focusHeading: true }));
 
   // 5. ORDERS & APPOINTMENTS LOADER
   let ordersList = [];
   let bookingsList = [];
   let notificationRecipientsList = [];
 
-  async function loadOrdersData() {
-    if (!currentBot) return;
-
+  // D05a/b: the two lists load INDEPENDENTLY — a bookings failure never
+  // blocks orders, and each list retries alone. A per-call generation plus a
+  // bot-id guard drops stale replies; switching bots clears both lists first
+  // so previous-bot data is never kept. A same-bot refresh failure keeps the
+  // old data with a stale warning instead of wiping it.
+  // Returns true (loaded), false (failed), or 'stale' (superseded: a newer
+  // run owns the UI, so callers must not report it as a failure).
+  let ordersRun = 0;
+  let ordersBotId = null;
+  function ordersListErrorRow(tbody, message, retryFnName, t) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--red); padding:24px;">${message} <button class="btn btn-sm btn-secondary" type="button" onclick="window.${retryFnName}()">${t.feedback_retry}</button></td></tr>`;
+  }
+  async function loadOrdersList(run, botId) {
+    const t = translations[currentLanguage] || translations.en;
+    const ordersTableBody = document.getElementById('ordersTableBody');
     try {
-      const [orderRes, bookingRes] = await Promise.all([
-        apiFetch(`/api/chat-orders?botId=${currentBot._id}`),
-        apiFetch(`/api/bookings?botId=${currentBot._id}`)
-      ]);
-
-      if (orderRes && orderRes.success) {
-        ordersList = orderRes.data || [];
-      } else {
-        ordersList = [];
+      const orderRes = await dashboardRequest(`/api/chat-orders?botId=${botId}`);
+      if (run !== ordersRun || String(currentBot?._id) !== botId) return 'stale';
+      if (!(orderRes && orderRes.success)) throw new Error('Orders unavailable');
+      ordersList = orderRes.data || [];
+      renderOrders();
+      updateOrdersAndBookingsKPIs();
+      return true;
+    } catch (e) {
+      console.error('loadOrdersList_error', e);
+      if (run !== ordersRun || String(currentBot?._id) !== botId) return 'stale';
+      if (ordersTableBody) {
+        if (ordersList.length > 0) {
+          notifyDashboard('error', 'orders_refresh_failed');
+        } else {
+          ordersListErrorRow(ordersTableBody, t.orders_load_error, 'retryOrdersList', t);
+        }
       }
-
-      if (bookingRes && bookingRes.success) {
-        bookingsList = bookingRes.data || [];
-      } else {
-        bookingsList = [];
+      return false;
+    }
+  }
+  async function loadBookingsList(run, botId) {
+    const t = translations[currentLanguage] || translations.en;
+    const bookingsTableBody = document.getElementById('bookingsTableBody');
+    try {
+      const bookingRes = await dashboardRequest(`/api/bookings?botId=${botId}`);
+      if (run !== ordersRun || String(currentBot?._id) !== botId) return 'stale';
+      if (!(bookingRes && bookingRes.success)) throw new Error('Bookings unavailable');
+      bookingsList = bookingRes.data || [];
+      renderBookings();
+      updateOrdersAndBookingsKPIs();
+      return true;
+    } catch (e) {
+      console.error('loadBookingsList_error', e);
+      if (run !== ordersRun || String(currentBot?._id) !== botId) return 'stale';
+      if (bookingsTableBody) {
+        if (bookingsList.length > 0) {
+          notifyDashboard('error', 'bookings_refresh_failed');
+        } else {
+          ordersListErrorRow(bookingsTableBody, t.bookings_load_error, 'retryBookingsList', t);
+        }
       }
-
+      return false;
+    }
+  }
+  window.retryOrdersList = function() {
+    if (!currentBot) return Promise.resolve(false);
+    const run = ++ordersRun;
+    const botId = String(currentBot._id);
+    return loadOrdersList(run, botId);
+  };
+  window.retryBookingsList = function() {
+    if (!currentBot) return Promise.resolve(false);
+    const run = ++ordersRun;
+    const botId = String(currentBot._id);
+    return loadBookingsList(run, botId);
+  };
+  async function loadOrdersData() {
+    if (!currentBot) {
+      ordersList = [];
+      bookingsList = [];
+      ordersBotId = null;
       updateOrdersAndBookingsKPIs();
       renderOrders();
       renderBookings();
-    } catch (e) {
-      console.error('loadOrdersData_error', e);
+      return { orders: false, bookings: false };
     }
+    const botId = String(currentBot._id);
+    const run = ++ordersRun;
+    if (ordersBotId !== botId) {
+      ordersBotId = botId;
+      ordersList = [];
+      bookingsList = [];
+      updateOrdersAndBookingsKPIs();
+      renderOrders();
+      renderBookings();
+    }
+    const [ordersRes, bookingsRes] = await Promise.all([
+      loadOrdersList(run, botId),
+      loadBookingsList(run, botId)
+    ]);
+    updateOrdersAndBookingsKPIs();
+    return {
+      orders: ordersRes === 'stale' ? null : ordersRes,
+      bookings: bookingsRes === 'stale' ? null : bookingsRes,
+    };
   }
 
   function updateOrdersAndBookingsKPIs() {
+    const t = translations[currentLanguage] || translations.en;
     const totalOrders = ordersList.length;
     const pendingOrders = ordersList.filter(o => o.status === 'pending' || o.status === 'processing').length;
     const totalBookings = bookingsList.length;
@@ -2814,9 +3894,9 @@
     if (elBookingsConfirmed) elBookingsConfirmed.textContent = confirmedBookings;
 
     const elOrderBadge = document.getElementById('ordersCountBadge');
-    if (elOrderBadge) elOrderBadge.textContent = `${totalOrders} ${currentLanguage === 'ar' ? 'طلب' : 'Orders'}`;
+    if (elOrderBadge) elOrderBadge.textContent = `${totalOrders} ${t.orders_count_unit}`;
     const elBookingBadge = document.getElementById('bookingsCountBadge');
-    if (elBookingBadge) elBookingBadge.textContent = `${totalBookings} ${currentLanguage === 'ar' ? 'موعد' : 'Appointments'}`;
+    if (elBookingBadge) elBookingBadge.textContent = `${totalBookings} ${t.bookings_count_unit}`;
   }
 
   function getFilteredOrders() {
@@ -2857,7 +3937,7 @@
 
     const filtered = getFilteredOrders();
     if (filtered.length === 0) {
-      ordersTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:24px;">${t.orders_empty || 'No orders generated yet.'}</td></tr>`;
+      ordersTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:24px;">${t.orders_empty}</td></tr>`;
       return;
     }
 
@@ -2880,13 +3960,13 @@
         <td><strong>${escapeHtml(order.customerName || 'Customer')}</strong></td>
         <td>${escapeHtml(order.customerPhone || 'N/A')}</td>
         <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(itemsStr)}</td>
-        <td><strong>${order.totalAmount ? Number(order.totalAmount).toLocaleString() + ' EGP' : '-'}</strong></td>
+        <td><strong><bdi>${order.totalAmount ? formatNumber(order.totalAmount) + ' EGP' : '-'}</bdi></strong></td>
         <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
         <td style="text-align:center;">
           <div style="display:inline-flex; gap:6px; flex-wrap:wrap; justify-content:center;">
             ${order.status === 'pending' ? `<button class="btn btn-sm btn-primary" onclick="window.changeOrderStatus('${order._id}', 'confirmed')" title="${t.action_confirm}"><i class="fas fa-check"></i></button>` : ''}
-            ${order.status === 'confirmed' ? `<button class="btn btn-sm btn-info" onclick="window.changeOrderStatus('${order._id}', 'shipped')" title="Ship"><i class="fas fa-shipping-fast"></i></button>` : ''}
-            ${order.status === 'shipped' ? `<button class="btn btn-sm btn-success" onclick="window.changeOrderStatus('${order._id}', 'delivered')" title="Delivered"><i class="fas fa-box-check"></i></button>` : ''}
+            ${order.status === 'confirmed' ? `<button class="btn btn-sm btn-info" onclick="window.changeOrderStatus('${order._id}', 'shipped')" title="${t.action_ship}"><i class="fas fa-shipping-fast"></i></button>` : ''}
+            ${order.status === 'shipped' ? `<button class="btn btn-sm btn-success" onclick="window.changeOrderStatus('${order._id}', 'delivered')" title="${t.action_deliver}"><i class="fas fa-box-check"></i></button>` : ''}
             <button class="btn btn-sm btn-secondary" onclick="window.openOrderModal('${order._id}')" title="${t.action_edit}"><i class="fas fa-edit"></i></button>
             <button class="btn btn-sm btn-danger" onclick="window.deleteOrder('${order._id}')" title="${t.action_delete}"><i class="fas fa-trash"></i></button>
           </div>
@@ -2904,7 +3984,7 @@
 
     const filtered = getFilteredBookings();
     if (filtered.length === 0) {
-      bookingsTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:24px;">${t.bookings_empty || 'No appointments scheduled yet.'}</td></tr>`;
+      bookingsTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:24px;">${t.bookings_empty}</td></tr>`;
       return;
     }
 
@@ -2916,7 +3996,7 @@
       if (booking.status === 'rescheduled') badgeClass = 'badge-purple';
       if (booking.status === 'cancelled') badgeClass = 'badge-danger';
 
-      const dateStr = booking.bookingDate ? new Date(booking.bookingDate).toLocaleString(currentLanguage === 'ar' ? 'ar-EG' : 'en-US', {
+      const dateStr = booking.bookingDate ? formatDate(booking.bookingDate, {
         month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
       }) : 'N/A';
 
@@ -2942,16 +4022,44 @@
     });
   }
 
+  // D05c: shared per-row entity lock for status + delete. Both actions on
+  // the same row share one lock key, so the second attempt attaches to the
+  // in-flight request instead of sending a duplicate mutation. Conflicting
+  // row controls disable for the flight and restore their original states.
+  // The disable/restore runs INSIDE the exclusive operation (single
+  // execution), so concurrent attachers can never wedge the controls.
+  function rowActionButtons(id) {
+    return Array.from(document.querySelectorAll(`button[onclick*="${id}"]`));
+  }
+  async function withEntityLock(key, id, operation) {
+    const core = window.ZainBotRequest;
+    const run = core && typeof core.runExclusive === 'function'
+      ? (k, op) => core.runExclusive(k, op)
+      : (k, op) => op();
+    return run(key, async () => {
+      const buttons = rowActionButtons(id);
+      const previous = buttons.map((b) => b.disabled);
+      buttons.forEach((b) => { b.disabled = true; });
+      try {
+        return await operation();
+      } finally {
+        buttons.forEach((b, i) => { b.disabled = previous[i]; });
+      }
+    });
+  }
+
   // Quick Action Handlers for Bookings
   window.changeBookingStatus = async function(bookingId, status) {
     try {
-      const res = await apiFetch(`/api/bookings/${bookingId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status })
+      await withEntityLock(`booking:${bookingId}`, bookingId, async () => {
+        const res = await dashboardRequest(`/api/bookings/${bookingId}`, {
+          method: 'PUT',
+          body: JSON.stringify({ status })
+        });
+        if (res && res.success) {
+          await loadOrdersData();
+        }
       });
-      if (res && res.success) {
-        await loadOrdersData();
-      }
     } catch (e) {
       console.error(e);
     }
@@ -2959,14 +4067,35 @@
 
   window.deleteBooking = async function(bookingId) {
     const t = translations[currentLanguage] || translations.en;
-    if (!confirm(t.delete_booking_confirm || 'Are you sure you want to delete this appointment?')) return;
+    if (!confirm(t.delete_booking_confirm)) return;
     try {
-      const res = await apiFetch(`/api/bookings/${bookingId}`, { method: 'DELETE' });
-      if (res && res.success) {
-        await loadOrdersData();
-      }
+      await withEntityLock(`booking:${bookingId}`, bookingId, async () => {
+        const res = await dashboardRequest(`/api/bookings/${bookingId}`, { method: 'DELETE' });
+        if (res && res.success) {
+          await loadOrdersData();
+        }
+      });
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  // E02c: bookingModal runs on the shared focus lifecycle
+  // (window.ZainBotA11y, §7.3), same pattern as E02a/E02b. The helper owns
+  // focus/stack/inert only; `.active` stays the visual switch — removed by
+  // onClose and by the explicit fallback in closeBookingModal. Booking owns
+  // no QR/polling; date handling stays exactly as D05 owns it.
+  const closeBookingModal = () => {
+    const bookingModalEl = document.getElementById('bookingModal');
+    if (!bookingModalEl) return;
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.closeDialog === 'function') {
+        window.ZainBotA11y.closeDialog(bookingModalEl);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      bookingModalEl.classList.remove('active');
     }
   };
 
@@ -3002,18 +4131,41 @@
       document.getElementById('bookingDateTime').value = now.toISOString().slice(0, 16);
     }
     modal.classList.add('active');
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.openDialog === 'function') {
+        window.ZainBotA11y.openDialog(modal, {
+          opener: document.activeElement && document.activeElement.nodeType === 1
+            ? document.activeElement
+            : undefined,
+          background: document.querySelector('.db-wrapper'),
+          onClose: () => modal.classList.remove('active'),
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // Quick Action Handlers for Orders
+  // Server exposes PUT (raw updated document, no success wrapper) and DELETE
+  // ({ message }, no success wrapper): both shapes are handled locally here.
   window.changeOrderStatus = async function(orderId, status) {
+    const t = translations[currentLanguage] || translations.en;
+    const row = ordersList.find(o => String(o._id) === String(orderId));
+    if (row && row.isStoreOrder) {
+      alert(t.store_order_readonly);
+      return;
+    }
     try {
-      const res = await apiFetch(`/api/chat-orders/${orderId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status })
+      await withEntityLock(`order:${orderId}`, orderId, async () => {
+        const res = await dashboardRequest(`/api/chat-orders/${orderId}`, {
+          method: 'PUT',
+          body: JSON.stringify({ status })
+        });
+        if (res && (res.success || res._id)) {
+          await loadOrdersData();
+        }
       });
-      if (res && res.success) {
-        await loadOrdersData();
-      }
     } catch (e) {
       console.error(e);
     }
@@ -3021,29 +4173,69 @@
 
   window.deleteOrder = async function(orderId) {
     const t = translations[currentLanguage] || translations.en;
-    if (!confirm(t.delete_order_confirm || 'Are you sure you want to delete this order?')) return;
+    const row = ordersList.find(o => String(o._id) === String(orderId));
+    if (row && row.isStoreOrder) {
+      alert(t.store_order_readonly);
+      return;
+    }
+    if (!confirm(t.delete_order_confirm)) return;
     try {
-      const res = await apiFetch(`/api/chat-orders/${orderId}`, { method: 'DELETE' });
-      if (res && res.success) {
-        await loadOrdersData();
-      }
+      await withEntityLock(`order:${orderId}`, orderId, async () => {
+        const res = await dashboardRequest(`/api/chat-orders/${orderId}`, { method: 'DELETE' });
+        if (res && (res.success || res.message)) {
+          await loadOrdersData();
+        }
+      });
     } catch (e) {
       console.error(e);
     }
   };
 
+  // E02d: chatOrderModal runs on the shared focus lifecycle
+  // (window.ZainBotA11y, §7.3), same pattern as E02a/b/c. The helper owns
+  // focus/stack/inert only; `.active` stays the visual switch — removed by
+  // onClose and by the explicit fallback in closeOrderModal. D01's route
+  // contract (PUT shapes, store-row guard, disabled creation path) is
+  // untouched; order owns no polling.
+  const closeOrderModal = () => {
+    const orderModalEl = document.getElementById('chatOrderModal');
+    if (!orderModalEl) return;
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.closeDialog === 'function') {
+        window.ZainBotA11y.closeDialog(orderModalEl);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      orderModalEl.classList.remove('active');
+    }
+  };
+
   window.openOrderModal = function(orderId = null) {
+    const t = translations[currentLanguage] || translations.en;
+    // Manual chat-order creation has no server route: the path stays disabled
+    // and reports a translated unsupported-action state instead of inventing
+    // a POST that would 404.
+    if (!orderId) {
+      alert(t.chat_order_create_unsupported);
+      return;
+    }
     const modal = document.getElementById('chatOrderModal');
     if (!modal) return;
+    const order = ordersList.find(o => String(o._id) === String(orderId));
+    // Store rows are Order documents, not ChatOrders: block ChatOrder
+    // mutations on them locally (the server would 404 the lookup anyway).
+    if (order && order.isStoreOrder) {
+      alert(t.store_order_readonly);
+      return;
+    }
     const form = document.getElementById('chatOrderForm');
     form.reset();
 
-    const t = translations[currentLanguage] || translations.en;
     document.getElementById('chatOrderIdInput').value = orderId || '';
     document.getElementById('chatOrderModalTitle').innerHTML = `<i class="fas fa-shopping-cart"></i> ${orderId ? t.chat_order_modal_title : t.btn_new_order}`;
 
     if (orderId) {
-      const order = ordersList.find(o => o._id === orderId);
       if (order) {
         document.getElementById('orderCustomerName').value = order.customerName || '';
         document.getElementById('orderCustomerPhone').value = order.customerPhone || '';
@@ -3054,8 +4246,26 @@
         const itemsStr = order.items ? order.items.map(it => `${it.title} x${it.quantity}`).join(', ') : '';
         document.getElementById('orderItemsSummary').value = itemsStr;
       }
+      // The server update route only honors status/note/items/deliveryFee/
+      // totalAmount: customer identity fields are display-only in the editor.
+      document.getElementById('orderCustomerName').readOnly = true;
+      document.getElementById('orderCustomerPhone').readOnly = true;
+      document.getElementById('orderCustomerAddress').readOnly = true;
     }
     modal.classList.add('active');
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.openDialog === 'function') {
+        window.ZainBotA11y.openDialog(modal, {
+          opener: document.activeElement && document.activeElement.nodeType === 1
+            ? document.activeElement
+            : undefined,
+          background: document.querySelector('.db-wrapper'),
+          onClose: () => modal.classList.remove('active'),
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // Setup Booking Form Submit
@@ -3066,12 +4276,21 @@
       const id = document.getElementById('bookingIdInput').value;
       const t = translations[currentLanguage] || translations.en;
 
+      // D05d: validate BEFORE toISOString — an invalid date never sends.
+      // Inputs are retained on every failure path below (nothing clears them).
+      const dateRaw = document.getElementById('bookingDateTime').value;
+      const parsedDate = new Date(dateRaw);
+      if (!dateRaw || isNaN(parsedDate.getTime())) {
+        alert(t.booking_invalid_date);
+        return;
+      }
+
       const payload = {
         botId: currentBot._id,
         customerName: document.getElementById('bookingCustomerName').value.trim(),
         customerPhone: document.getElementById('bookingCustomerPhone').value.trim(),
         serviceType: document.getElementById('bookingServiceType').value.trim() || 'استشارة / موعد',
-        bookingDate: new Date(document.getElementById('bookingDateTime').value).toISOString(),
+        bookingDate: parsedDate.toISOString(),
         slotDurationMinutes: parseInt(document.getElementById('bookingDuration').value) || 30,
         status: document.getElementById('bookingStatusSelect').value,
         notes: document.getElementById('bookingNotes').value.trim(),
@@ -3080,28 +4299,38 @@
       try {
         const url = id ? `/api/bookings/${id}` : '/api/bookings';
         const method = id ? 'PUT' : 'POST';
-        const res = await apiFetch(url, { method, body: JSON.stringify(payload) });
+        const res = await dashboardRequest(url, { method, body: JSON.stringify(payload) }, { operation: 'mutation' });
 
         if (res && res.success) {
-          document.getElementById('bookingModal')?.classList.remove('active');
-          alert(t.booking_saved_ok || 'Appointment saved successfully!');
-          await loadOrdersData();
+          closeBookingModal();
+          alert(t.booking_saved_ok);
+          // The save outcome is already reported: a refresh failure is a
+          // SECOND, separate outcome — never a silent rewrite of the save.
+          const refresh = await loadOrdersData();
+          if (refresh.orders === false) alert(t.orders_refresh_failed);
+          if (refresh.bookings === false) alert(t.bookings_refresh_failed);
         } else {
-          alert(res?.message || 'Error saving appointment');
+          alert(res?.message || t.booking_save_failed);
         }
       } catch (err) {
         console.error(err);
+        alert(t.booking_save_failed);
       }
     });
   }
 
-  // Setup Order Form Submit
+  // Setup Order Form Submit (edit-only: no POST /api/chat-orders route exists)
   const chatOrderForm = document.getElementById('chatOrderForm');
   if (chatOrderForm) {
     chatOrderForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const id = document.getElementById('chatOrderIdInput').value;
       const t = translations[currentLanguage] || translations.en;
+
+      if (!id) {
+        alert(t.chat_order_create_unsupported);
+        return;
+      }
 
       const itemsText = document.getElementById('orderItemsSummary').value.trim();
       const items = itemsText ? [{ title: itemsText, quantity: 1, price: parseFloat(document.getElementById('orderTotalAmount').value) || 0 }] : [];
@@ -3114,23 +4343,25 @@
         items,
         totalAmount: parseFloat(document.getElementById('orderTotalAmount').value) || 0,
         status: document.getElementById('orderStatusSelect').value,
-        notes: document.getElementById('orderCustomerNote').value.trim(),
+        note: document.getElementById('orderCustomerNote').value.trim(),
       };
 
       try {
-        const url = id ? `/api/chat-orders/${id}` : '/api/chat-orders';
-        const method = id ? 'PUT' : 'POST';
-        const res = await apiFetch(url, { method, body: JSON.stringify(payload) });
+        const res = await dashboardRequest(`/api/chat-orders/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, { operation: 'mutation' });
 
-        if (res && res.success) {
-          document.getElementById('chatOrderModal')?.classList.remove('active');
-          alert(t.order_saved_ok || 'Order saved successfully!');
-          await loadOrdersData();
+        if (res && (res.success || res._id)) {
+          closeOrderModal();
+          alert(t.order_saved_ok);
+          // Save and refresh are TWO separate outcomes.
+          const refresh = await loadOrdersData();
+          if (refresh.orders === false) alert(t.orders_refresh_failed);
+          if (refresh.bookings === false) alert(t.bookings_refresh_failed);
         } else {
-          alert(res?.message || 'Error saving order');
+          alert(res?.message || t.order_save_failed);
         }
       } catch (err) {
         console.error(err);
+        alert(t.order_save_failed);
       }
     });
   }
@@ -3138,6 +4369,13 @@
   // Toolbar & Filter Event Listeners
   document.getElementById('createBookingBtn')?.addEventListener('click', () => window.openBookingModal());
   document.getElementById('createOrderBtn')?.addEventListener('click', () => window.openOrderModal());
+  // No POST /api/chat-orders route exists: keep the creation path disabled
+  // (the click guard above still reports the translated reason if reached).
+  const createOrderBtn = document.getElementById('createOrderBtn');
+  if (createOrderBtn) {
+    createOrderBtn.disabled = true;
+    createOrderBtn.title = (translations[currentLanguage] || translations.en).chat_order_create_unsupported || '';
+  }
   document.getElementById('refreshOrdersBtn')?.addEventListener('click', () => loadOrdersData());
   document.getElementById('ordersSearchInput')?.addEventListener('input', () => { renderOrders(); renderBookings(); });
   document.getElementById('ordersStatusFilter')?.addEventListener('change', () => { renderOrders(); renderBookings(); });
@@ -3150,28 +4388,41 @@
   });
 
   document.querySelectorAll('.booking-modal-close').forEach(btn => btn.addEventListener('click', () => {
-    document.getElementById('bookingModal')?.classList.remove('active');
+    closeBookingModal();
   }));
   document.querySelectorAll('.order-modal-close').forEach(btn => btn.addEventListener('click', () => {
-    document.getElementById('chatOrderModal')?.classList.remove('active');
+    closeOrderModal();
   }));
   document.querySelectorAll('.recipient-modal-close').forEach(btn => btn.addEventListener('click', () => {
-    document.getElementById('recipientModal')?.classList.remove('active');
+    closeRecipientModal();
   }));
 
   // ==================== NOTIFICATION RECIPIENTS SECTION ====================
+  // D07b: loading/error/empty states with a manual retry for reads only.
   async function loadNotificationRecipients() {
-    if (!currentBot) return;
+    const tbody = document.getElementById('notificationRecipientsTableBody');
+    if (!tbody) return false;
+    if (!currentBot) return false;
+    const t = translations[currentLanguage] || translations.en;
+    const botId = String(currentBot._id);
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:20px;">${t.recipients_loading}</td></tr>`;
     try {
-      const res = await apiFetch(`/api/notifications/recipients?botId=${currentBot._id}`);
-      if (res && res.success) {
-        notificationRecipientsList = res.data || [];
-        renderNotificationRecipients();
-      }
+      const res = await dashboardRequest(`/api/notifications/recipients?botId=${botId}`);
+      if (String(currentBot?._id) !== botId) return 'stale';
+      if (!(res && res.success)) throw new Error('Recipients unavailable');
+      notificationRecipientsList = res.data || [];
+      renderNotificationRecipients();
+      return true;
     } catch (e) {
       console.error('loadNotificationRecipients_error', e);
+      if (String(currentBot?._id) !== botId) return 'stale';
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--red); padding:20px;">${t.recipients_load_error} <button class="btn btn-sm btn-secondary" type="button" onclick="window.retryRecipientsList()">${t.feedback_retry}</button></td></tr>`;
+      return false;
     }
   }
+  window.retryRecipientsList = function() {
+    return loadNotificationRecipients();
+  };
 
   function renderNotificationRecipients() {
     const tbody = document.getElementById('notificationRecipientsTableBody');
@@ -3180,7 +4431,7 @@
     const t = translations[currentLanguage] || translations.en;
 
     if (notificationRecipientsList.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:20px;">${t.recipients_empty || 'No notification channels connected yet.'}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:20px;">${t.recipients_empty}</td></tr>`;
       return;
     }
 
@@ -3197,7 +4448,7 @@
         <td><strong>${escapeHtml(rec.target)}</strong></td>
         <td>${escapeHtml(rec.label || '-')}</td>
         <td>${eventsStr}</td>
-        <td><span class="badge ${rec.isActive !== false ? 'badge-success' : 'badge-danger'}">${rec.isActive !== false ? (t.admin_active || 'Active') : (t.admin_suspended || 'Disabled')}</span></td>
+        <td><span class="badge ${rec.isActive !== false ? 'badge-success' : 'badge-danger'}">${rec.isActive !== false ? t.admin_active : t.admin_suspended}</span></td>
         <td style="text-align:center;">
           <div style="display:inline-flex; gap:6px; justify-content:center;">
             <button class="btn btn-sm btn-info" onclick="window.testNotificationRecipient('${rec._id}')" title="${t.action_test}"><i class="fas fa-paper-plane"></i></button>
@@ -3209,38 +4460,84 @@
     });
   }
 
+  // E02e: recipientModal runs on the shared focus lifecycle
+  // (window.ZainBotA11y, §7.3), same pattern as E02a/b/c/d. The helper owns
+  // focus/stack/inert only; `.active` stays the visual switch — removed by
+  // onClose and by the explicit fallback in closeRecipientModal. Create/
+  // test/delete flows (D07) are untouched; recipient owns no polling.
+  const closeRecipientModal = () => {
+    const recipientModalEl = document.getElementById('recipientModal');
+    if (!recipientModalEl) return;
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.closeDialog === 'function') {
+        window.ZainBotA11y.closeDialog(recipientModalEl);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      recipientModalEl.classList.remove('active');
+    }
+  };
+
   window.openRecipientModal = function() {
     const modal = document.getElementById('recipientModal');
     if (!modal) return;
     document.getElementById('recipientForm').reset();
     document.getElementById('recipientIdInput').value = '';
     modal.classList.add('active');
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.openDialog === 'function') {
+        window.ZainBotA11y.openDialog(modal, {
+          opener: document.activeElement && document.activeElement.nodeType === 1
+            ? document.activeElement
+            : undefined,
+          background: document.querySelector('.db-wrapper'),
+          onClose: () => modal.classList.remove('active'),
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
+  // D07c: test + delete share one lock per recipient row (D06 outcome
+  // contract: `delivered` means sent; `configured` renders as
+  // configured-not-sent, never as sent). A free-plan 403 surfaces its message
+  // and never logs out (redirect happens on 401 only).
   window.testNotificationRecipient = async function(id) {
     const t = translations[currentLanguage] || translations.en;
     try {
-      const res = await apiFetch(`/api/notifications/recipients/${id}/test`, { method: 'POST' });
-      if (res && res.success) {
-        alert(t.recipient_test_sent || 'Test notification sent successfully!');
-      } else {
-        alert(res?.message || 'Failed to send test notification');
-      }
+      await withEntityLock(`recipient:${id}`, id, async () => {
+        const res = await dashboardRequest(`/api/notifications/recipients/${id}/test`, { method: 'POST' }, { operation: 'mutation' });
+        if (res && res.success && res.outcome === 'delivered') {
+          alert(t.recipient_test_sent);
+        } else if (res && res.outcome === 'configured') {
+          alert(t.recipient_test_configured);
+        } else {
+          alert(res?.message || t.recipient_test_failed);
+        }
+      });
     } catch (e) {
       console.error(e);
+      alert(t.recipient_test_failed);
     }
   };
 
   window.deleteNotificationRecipient = async function(id) {
     const t = translations[currentLanguage] || translations.en;
-    if (!confirm(t.delete_recipient_confirm || 'Are you sure you want to remove this notification channel?')) return;
+    if (!confirm(t.delete_recipient_confirm)) return;
     try {
-      const res = await apiFetch(`/api/notifications/recipients/${id}`, { method: 'DELETE' });
-      if (res && res.success) {
-        await loadNotificationRecipients();
-      }
+      await withEntityLock(`recipient:${id}`, id, async () => {
+        const res = await dashboardRequest(`/api/notifications/recipients/${id}`, { method: 'DELETE' }, { operation: 'mutation' });
+        if (res && res.success) {
+          await loadNotificationRecipients();
+        } else {
+          alert(res?.message || t.recipient_delete_failed);
+        }
+      });
     } catch (e) {
       console.error(e);
+      alert(t.recipient_delete_failed);
     }
   };
 
@@ -3260,21 +4557,43 @@
         events: selectedEvents,
       };
 
+      // D07b: create guard — one in-flight create (no duplicate channels),
+      // submit conflicting control disabled, inputs retained on failure.
+      const core = window.ZainBotRequest;
+      const run = core && typeof core.runExclusive === 'function'
+        ? (k, op) => core.runExclusive(k, op)
+        : (k, op) => op();
+      const feedback = window.ZainBotFeedback;
+      const submitBtn = recipientForm.querySelector('[type="submit"]');
+      const guarded = feedback && typeof feedback.withPending === 'function' && submitBtn
+        ? () => feedback.withPending('recipient-create', [submitBtn], () => saveRecipient(payload))
+        : () => saveRecipient(payload);
       try {
-        const res = await apiFetch('/api/notifications/recipients', {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
-
-        if (res && res.success) {
-          document.getElementById('recipientModal')?.classList.remove('active');
-          alert(t.recipient_saved_ok || 'Notification channel saved successfully!');
-          await loadNotificationRecipients();
-        } else {
-          alert(res?.message || 'Could not save recipient channel');
-        }
+        await run('recipient-create', guarded);
       } catch (err) {
         console.error(err);
+      }
+
+      async function saveRecipient(body) {
+        try {
+          const res = await dashboardRequest('/api/notifications/recipients', {
+            method: 'POST',
+            body: JSON.stringify(body)
+          }, { operation: 'mutation' });
+
+          if (res && res.success) {
+            closeRecipientModal();
+            alert(t.recipient_saved_ok);
+            await loadNotificationRecipients();
+          } else {
+            // Free-plan 403 and validation errors surface their message here
+            // and never log out (redirect happens on 401 only).
+            alert(res?.message || t.recipient_save_failed);
+          }
+        } catch (err) {
+          console.error(err);
+          alert(t.recipient_save_failed);
+        }
       }
     });
   }
@@ -3494,6 +4813,13 @@
     const modal = document.getElementById('chatPageModal');
     if (!modal) return;
 
+    // E03d pre-fetch opener capture (E03b lesson): the customizer load
+    // below awaits the network, and activeElement may move meanwhile —
+    // snapshot the opener before the first await.
+    const opener = document.activeElement && document.activeElement.nodeType === 1
+      ? document.activeElement
+      : undefined;
+
     try {
       const res = await apiFetch(`/api/chat-page/bot/${targetBot._id}`);
       if (res && (res.success || res.link)) {
@@ -3563,7 +4889,7 @@
       console.error('Error fetching chat page:', e);
     }
 
-    modal.classList.add('active');
+    openChatPageDialog(opener);
   };
 
   window.copyChatPageDirectLink = function() {
@@ -3601,9 +4927,46 @@
     }
   };
 
+  // E03d: chatPageModal runs on the shared focus lifecycle (§7.3), same
+  // pattern as E03a/b/c. The helper owns focus/stack/inert only; `.active`
+  // stays the visual switch — removed by onClose and by the explicit
+  // fallback in closeChatPageDialog. Customizer population, preview,
+  // payload and layout hooks are untouched and move no focus, so a late
+  // load/save response never refocuses a closed dialog (close on a
+  // non-open dialog is a no-op). No layout/CSS changes (B03 owns sizing).
+  const openChatPageDialog = (opener) => {
+    const chatPageModalEl = document.getElementById('chatPageModal');
+    if (!chatPageModalEl) return;
+    chatPageModalEl.classList.add('active');
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.openDialog === 'function') {
+        window.ZainBotA11y.openDialog(chatPageModalEl, {
+          opener: opener && opener.nodeType === 1 ? opener : undefined,
+          background: document.querySelector('.db-wrapper'),
+          onClose: () => chatPageModalEl.classList.remove('active'),
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  const closeChatPageDialog = () => {
+    const chatPageModalEl = document.getElementById('chatPageModal');
+    if (!chatPageModalEl) return;
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.closeDialog === 'function') {
+        window.ZainBotA11y.closeDialog(chatPageModalEl);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      chatPageModalEl.classList.remove('active');
+    }
+  };
+
   document.querySelectorAll('.chat-page-modal-close').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.getElementById('chatPageModal')?.classList.remove('active');
+      closeChatPageDialog();
     });
   });
 
@@ -3611,7 +4974,7 @@
   if (chatModalEl) {
     chatModalEl.addEventListener('click', (e) => {
       if (e.target === chatModalEl) {
-        chatModalEl.classList.remove('active');
+        closeChatPageDialog();
       }
     });
   }
@@ -3683,7 +5046,7 @@
           } catch (cErr) {}
 
           alert(t.chat_page_saved_ok || 'Chat page settings saved successfully!');
-          document.getElementById('chatPageModal')?.classList.remove('active');
+          closeChatPageDialog();
           if (res.link) {
             const liveLinkEl = document.getElementById('chatPageLiveLink');
             if (liveLinkEl) { liveLinkEl.href = res.link; liveLinkEl.textContent = res.link; }
@@ -3703,58 +5066,83 @@
   let devApiKeys = [];
   let webhookLogs = [];
 
-  async function loadSettingsData() {
-    if (!currentBot) return;
-
+  // D07a: settings resources load INDEPENDENTLY — each section has its own
+  // try/catch, so an early failure never blocks recipients/logs. Every
+  // section returns true (loaded), false (failed), or 'stale' (superseded).
+  let settingsRun = 0;
+  async function loadSettingsApiKeys() {
     try {
-      // Load keys
-      const keysRes = await apiFetch('/api/integrations/keys');
-      if (keysRes && keysRes.success) {
-        devApiKeys = keysRes.data;
-        renderApiKeys();
-      }
-
-      // Load webhooks config
-      const whRes = await apiFetch(`/api/integrations/webhooks?botId=${currentBot._id}`);
+      const keysRes = await dashboardRequest('/api/integrations/keys');
+      if (!(keysRes && keysRes.success)) throw new Error('Keys unavailable');
+      devApiKeys = keysRes.data;
+      renderApiKeys();
+      return true;
+    } catch (e) {
+      console.error('loadSettingsApiKeys_error', e);
+      return false;
+    }
+  }
+  async function loadSettingsWebhookConfig(botId) {
+    try {
+      const whRes = await dashboardRequest(`/api/integrations/webhooks?botId=${botId}`);
       if (whRes && whRes.success && whRes.data) {
         const config = whRes.data;
         document.getElementById('webhookUrlInput').value = config.url || '';
         document.getElementById('webhookSecretInput').value = config.secret || '';
-        
+
         // Toggles checkbox events
         const checkboxes = document.getElementsByName('webhookEvents');
         checkboxes.forEach(chk => {
           chk.checked = config.events ? config.events.includes(chk.value) : false;
         });
       }
-
-      // Load webhook logs history
-      const logsRes = await apiFetch(`/api/integrations/webhooks/logs?botId=${currentBot._id}`);
-      if (logsRes && logsRes.success) {
-        webhookLogs = logsRes.data;
-        renderWebhookLogs();
-      }
-
-      // Load backup key settings
-      const backupKeysSec = document.getElementById('backupKeysSection');
-      if (backupKeysSec) {
-        const isGrowth = currentUser && currentUser.subscriptionTier && currentUser.subscriptionTier.startsWith('growth');
-        backupKeysSec.style.display = isGrowth ? 'block' : 'none';
-      }
-
-      document.getElementById('backupProvider').value = currentBot.backupProvider || 'openai';
-      document.getElementById('backupApiKey').value = currentBot.backupApiKey || '';
-      document.getElementById('backupModel').value = currentBot.backupModel || '';
-      document.getElementById('backupBaseUrl').value = currentBot.backupBaseUrl || '';
-
-      // Load the model selector for this account's entitlements
-      await loadPrimaryModelSelect();
-
-      // Load multi-channel notification recipients
-      await loadNotificationRecipients();
+      return true;
     } catch (e) {
-      console.error(e);
+      console.error('loadSettingsWebhookConfig_error', e);
+      return false;
     }
+  }
+  async function loadSettingsWebhookLogs(botId) {
+    try {
+      const logsRes = await dashboardRequest(`/api/integrations/webhooks/logs?botId=${botId}`);
+      if (!(logsRes && logsRes.success)) throw new Error('Webhook logs unavailable');
+      webhookLogs = logsRes.data;
+      renderWebhookLogs();
+      return true;
+    } catch (e) {
+      console.error('loadSettingsWebhookLogs_error', e);
+      return false;
+    }
+  }
+  async function loadSettingsData() {
+    if (!currentBot) return;
+    const botId = String(currentBot._id);
+    const run = ++settingsRun;
+
+    await loadSettingsApiKeys();
+    if (run !== settingsRun || String(currentBot?._id) !== botId) return;
+    await loadSettingsWebhookConfig(botId);
+    if (run !== settingsRun || String(currentBot?._id) !== botId) return;
+    await loadSettingsWebhookLogs(botId);
+    if (run !== settingsRun || String(currentBot?._id) !== botId) return;
+
+    // Local bot-direct paints (no fetch).
+    const backupKeysSec = document.getElementById('backupKeysSection');
+    if (backupKeysSec) {
+      const isGrowth = currentUser && currentUser.subscriptionTier && currentUser.subscriptionTier.startsWith('growth');
+      backupKeysSec.style.display = isGrowth ? 'block' : 'none';
+    }
+
+    document.getElementById('backupProvider').value = currentBot.backupProvider || 'openai';
+    document.getElementById('backupApiKey').value = currentBot.backupApiKey || '';
+    document.getElementById('backupModel').value = currentBot.backupModel || '';
+    document.getElementById('backupBaseUrl').value = currentBot.backupBaseUrl || '';
+
+    // Load the model selector for this account's entitlements
+    await loadPrimaryModelSelect();
+
+    // Load multi-channel notification recipients
+    await loadNotificationRecipients();
   }
 
   function modelOptionValue(provider, modelId) {
@@ -3866,7 +5254,7 @@
       card.innerHTML = `
         <div>
           <h4 style="font-size:13px; font-weight:600; margin-bottom:2px;">${key.name}</h4>
-          <span style="font-size:11px; color:var(--text-muted);">Created: ${new Date(key.createdAt).toLocaleDateString()}</span>
+          <span style="font-size:11px; color:var(--text-muted);">${(translations[currentLanguage] || translations.en).created_label}: ${formatDate(key.createdAt, { year: 'numeric', month: 'short', day: 'numeric' })}</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="revokeApiKey('${key._id}')" style="padding:6px 10px; border-color:rgba(239, 68, 68, 0.3); color:var(--red);"><i class="fas fa-trash"></i></button>
       `;
@@ -3887,14 +5275,15 @@
     webhookLogs.forEach(log => {
       const row = document.createElement('tr');
       const badge = log.success ? 'badge-success' : 'badge-danger';
-      const statusText = log.responseStatus ? log.responseStatus : 'TIMEOUT/ERROR';
+      const t = translations[currentLanguage] || translations.en;
+      const statusText = log.responseStatus ? log.responseStatus : t.webhook_status_timeout;
 
       row.innerHTML = `
-        <td>${new Date(log.timestamp).toLocaleString()}</td>
+        <td>${formatDate(log.timestamp)}</td>
         <td><code>${log.event}</code></td>
         <td>${log.url}</td>
         <td><span class="badge ${badge}">${statusText}</span></td>
-        <td><button class="btn btn-secondary btn-sm" onclick="retryWebhook('${log._id}')" style="padding:4px 8px;"><i class="fas fa-redo"></i> Retry</button></td>
+        <td><button class="btn btn-secondary btn-sm" onclick="retryWebhook('${log._id}')" style="padding:4px 8px;"><i class="fas fa-redo"></i> ${t.webhook_retry_action}</button></td>
       `;
       tableBody.appendChild(row);
     });
@@ -3904,7 +5293,8 @@
   const generateKeyBtn = document.getElementById('generateKeyBtn');
   if (generateKeyBtn) {
     generateKeyBtn.addEventListener('click', async () => {
-      const name = prompt(currentLanguage === 'ar' ? 'أدخل اسماً لمفتاح الوصول:' : 'Enter a name for the access key:');
+      const t = translations[currentLanguage] || translations.en;
+      const name = prompt(t.apikey_name_prompt);
       if (!name) return;
 
       try {
@@ -3913,7 +5303,7 @@
           body: JSON.stringify({ name })
         });
         if (res && res.success) {
-          alert(`${currentLanguage === 'ar' ? 'تم إنشاء المفتاح بنجاح! مفتاح الوصول الخاص بك هو (يرجى نسخه الآن فلن تتمكن من رؤيته مجدداً):' : 'Key generated successfully! Your access key is (Please copy it now, you will not see it again):'}\n\n${res.data.key}`);
+          alert(t.apikey_created_alert.split('{key}').join(res.data.key));
           loadSettingsData();
         }
       } catch (err) {
@@ -3945,7 +5335,7 @@
         });
         if (res && res.success) {
           document.getElementById('webhookSecretInput').value = res.data.secret;
-          alert(currentLanguage === 'ar' ? 'تم حفظ إعدادات الويب هوك بنجاح!' : 'Webhook settings saved successfully!');
+          alert((translations[currentLanguage] || translations.en).webhook_saved_ok);
           loadSettingsData();
         }
       } catch (err) {
@@ -3976,7 +5366,7 @@
         });
 
         if (res && res.success) {
-          alert(currentLanguage === 'ar' ? 'تم حفظ مفتاح الطوارئ بنجاح!' : 'Backup key settings saved successfully!');
+          alert((translations[currentLanguage] || translations.en).backup_saved_ok);
         }
       } catch (e) {
         console.error(e);
@@ -3988,6 +5378,9 @@
   let adminUsersList = [];
   let adminKeys = [];
 
+  // C03: SUPERSEDED legacy pair (kept without cleanup per plan). Function hoisting
+  // means the paginated loader + DOM-based renderer below are the live ones that
+  // every caller — and the language render registry — actually invoke.
   async function loadAdminUsers() {
     try {
       const res = await apiFetch('/api/users?populate=bots');
@@ -4052,7 +5445,8 @@
   }
 
   window.toggleUserStatus = async function(userId, newStatus) {
-    if (!confirm(`هل أنت متأكد من تغيير حالة التاجر/المستخدم إلى ${newStatus === 'active' ? 'نشط' : 'موقوف'}؟`)) return;
+    const t = translations[currentLanguage] || translations.en;
+    if (!confirm(t.admin_legacy_status_confirm.replace('{status}', newStatus === 'active' ? t.admin_active : t.admin_suspended))) return;
     try {
       await apiFetch(`/api/users/${userId}`, {
         method: 'PUT',
@@ -4060,12 +5454,13 @@
       });
       loadAdminUsers();
     } catch (e) {
-      alert('فشل تحديث حالة المستخدم');
+      alert(t.admin_legacy_status_failed);
     }
   };
 
   window.impersonateUser = async function(userId) {
-    if (!confirm('هل تريد الانتقال الفوري والدخول المباشر إلى حساب هذا التاجر لتصفح وإدارة بوتاته وقنواته؟')) return;
+    const t = translations[currentLanguage] || translations.en;
+    if (!confirm(t.admin_legacy_impersonate_confirm)) return;
     try {
       const res = await apiFetch('/api/admin/impersonation/sessions', {
         method: 'POST',
@@ -4073,13 +5468,13 @@
       });
       if (res && res.token) {
         localStorage.setItem('token', res.token);
-        alert('تم دخول حساب التاجر بنجاح! جاري تحميل لوحته...');
+        alert(t.admin_legacy_impersonate_ok);
         window.location.reload();
       } else {
-        alert(res?.message || 'فشل الانتحال المباشر');
+        alert(res?.message || t.admin_legacy_impersonate_failed);
       }
     } catch (e) {
-      alert('حدث خطأ أثناء المصادقة');
+      alert(t.admin_legacy_auth_error);
     }
   };
 
@@ -4087,8 +5482,43 @@
   // nodes for user data so a username or email can never become HTML markup.
   const adminUsersPageState = { page: 1, pages: 1, total: 0, limit: 25 };
   const adminUserModal = document.getElementById('adminUserModal');
+  // E03b: adminUserModal runs on the shared focus lifecycle (§7.3), same
+  // pattern as E03a. The helper owns focus/stack/inert only; `.active`
+  // stays the visual switch — removed by onClose and by the explicit
+  // fallback in closeAdminUserDialog. Role/tier/status population, payloads
+  // and the post-save reload are untouched and move no focus, so a late
+  // edit-fetch or save response never refocuses a closed dialog (close on
+  // a non-open dialog is a no-op).
+  const openAdminUserDialog = () => {
+    if (!adminUserModal) return;
+    adminUserModal.classList.add('active');
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.openDialog === 'function') {
+        window.ZainBotA11y.openDialog(adminUserModal, {
+          opener: document.activeElement && document.activeElement.nodeType === 1
+            ? document.activeElement
+            : undefined,
+          background: document.querySelector('.db-wrapper'),
+          onClose: () => adminUserModal.classList.remove('active'),
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  const closeAdminUserDialog = () => {
+    if (!adminUserModal) return;
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.closeDialog === 'function') {
+        window.ZainBotA11y.closeDialog(adminUserModal);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      adminUserModal.classList.remove('active');
+    }
+  };
   const impersonationModal = document.getElementById('impersonationModal');
-  const adminCopy = (arabic, english) => currentLanguage === 'ar' ? arabic : english;
 
   function adminCell(row, value, style = '') {
     const cell = document.createElement('td');
@@ -4128,9 +5558,10 @@
     const list = document.getElementById('agentsList');
     const entitlement = document.getElementById('agentsEntitlement');
     if (!list || !entitlement) return;
+    const t = translations[currentLanguage] || translations.en;
     const tier = currentUser?.subscriptionTier || 'free';
     const limit = clientAgentLimit(tier);
-    entitlement.textContent = `${workspaceBots.length} / ${limit === Infinity ? '∞' : limit} ${currentLanguage === 'ar' ? 'وكلاء مستخدمون في باقة' : 'agents used on'} ${tier}`;
+    entitlement.textContent = `${workspaceBots.length} / ${limit === Infinity ? '∞' : limit} ${t.agents_entitlement_unit} ${tier}`;
     list.replaceChildren();
     workspaceBots.forEach((bot) => {
       const card = document.createElement('article');
@@ -4140,26 +5571,26 @@
       title.textContent = bot.name;
       title.style.marginBottom = '6px';
       const meta = document.createElement('p');
-      meta.textContent = `${String(bot.agentType || 'customer_support').replaceAll('_', ' ')} · ${bot.autoReplyEnabled === false ? (currentLanguage === 'ar' ? 'الرد الآلي متوقف' : 'Auto-reply off') : (currentLanguage === 'ar' ? 'الرد الآلي يعمل' : 'Auto-reply on')}`;
+      meta.textContent = `${String(bot.agentType || 'customer_support').replaceAll('_', ' ')} · ${bot.autoReplyEnabled === false ? t.agent_autoreply_off : t.agent_autoreply_on}`;
       meta.style.cssText = 'font-size:12px; color:var(--text-muted); margin-bottom:12px;';
       const description = document.createElement('p');
-      description.textContent = bot.description || bot.welcomeMessage || (currentLanguage === 'ar' ? 'لا يوجد وصف بعد.' : 'No description yet.');
+      description.textContent = bot.description || bot.welcomeMessage || t.agent_no_description;
       description.style.cssText = 'font-size:13px; color:var(--text-muted); min-height:40px;';
       const actions = document.createElement('div');
       actions.style.cssText = 'display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;';
       const select = document.createElement('button');
-      select.type = 'button'; select.className = 'btn btn-secondary btn-sm'; select.textContent = String(currentBot?._id) === String(bot._id) ? (currentLanguage === 'ar' ? 'الوكيل الحالي' : 'Current agent') : (currentLanguage === 'ar' ? 'استخدام هذا الوكيل' : 'Use this agent');
+      select.type = 'button'; select.className = 'btn btn-secondary btn-sm'; select.textContent = String(currentBot?._id) === String(bot._id) ? t.agent_current : t.agent_use_this;
       select.disabled = String(currentBot?._id) === String(bot._id);
       select.addEventListener('click', () => refreshActiveBot(bot));
       const edit = document.createElement('button');
-      edit.type = 'button'; edit.className = 'btn btn-secondary btn-sm'; edit.textContent = currentLanguage === 'ar' ? 'تعديل' : 'Edit'; edit.addEventListener('click', () => openAgentModal(bot));
+      edit.type = 'button'; edit.className = 'btn btn-secondary btn-sm'; edit.textContent = t.action_edit; edit.addEventListener('click', () => openAgentModal(bot));
       const chatBtn = document.createElement('button');
-      chatBtn.type = 'button'; chatBtn.className = 'btn btn-primary btn-sm'; chatBtn.innerHTML = `<i class="fas fa-comments"></i> ${currentLanguage === 'ar' ? 'تخصيص ودردشة' : 'Customize & Chat'}`;
+      chatBtn.type = 'button'; chatBtn.className = 'btn btn-primary btn-sm'; chatBtn.innerHTML = `<i class="fas fa-comments"></i> ${t.agent_customize_chat}`;
       chatBtn.addEventListener('click', () => window.openChatPageModal(bot));
       actions.append(select, edit, chatBtn); card.append(title, meta, description, actions); list.appendChild(card);
     });
     if (workspaceBots.length === 0) {
-      const empty = document.createElement('div'); empty.className = 'glass-card'; empty.textContent = currentLanguage === 'ar' ? 'أنشئ وكيلك الأول للبدء.' : 'Create your first agent to begin.'; list.appendChild(empty);
+      const empty = document.createElement('div'); empty.className = 'glass-card'; empty.textContent = t.agents_empty_create_first; list.appendChild(empty);
     }
   }
 
@@ -4217,7 +5648,7 @@
         if (chk.parentElement) {
           chk.parentElement.style.opacity = toolsMaxReached ? '0.45' : '1';
           chk.parentElement.style.cursor = toolsMaxReached ? 'not-allowed' : 'pointer';
-          chk.parentElement.title = toolsMaxReached ? (currentLanguage === 'ar' ? 'الحد الأقصى في الباقة المجانية: 3 أدوات فقط وجميع المهارات متاحة' : 'Free plan limit: 3 tools max, all skills included') : '';
+          chk.parentElement.title = toolsMaxReached ? (translations[currentLanguage] || translations.en).agent_free_tools_limit : '';
         }
       } else {
         chk.disabled = false;
@@ -4231,12 +5662,48 @@
   }
 
   const agentModal = document.getElementById('agentModal');
+  // E03a: agentModal runs on the shared focus lifecycle (§7.3), same
+  // pattern as E02. The helper owns focus/stack/inert only; `.active`
+  // stays the visual switch — removed by onClose and by the explicit
+  // fallback in closeAgentDialog. Permissions, tier limits, payloads and
+  // the delayed post-save paths (loadAgents/refreshActiveBot/summary
+  // timer) are untouched and move no focus, so a late response never
+  // refocuses a closed dialog (close on a non-open dialog is a no-op).
+  const openAgentDialog = () => {
+    if (!agentModal) return;
+    agentModal.classList.add('active');
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.openDialog === 'function') {
+        window.ZainBotA11y.openDialog(agentModal, {
+          opener: document.activeElement && document.activeElement.nodeType === 1
+            ? document.activeElement
+            : undefined,
+          background: document.querySelector('.db-wrapper'),
+          onClose: () => agentModal.classList.remove('active'),
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  const closeAgentDialog = () => {
+    if (!agentModal) return;
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.closeDialog === 'function') {
+        window.ZainBotA11y.closeDialog(agentModal);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      agentModal.classList.remove('active');
+    }
+  };
   function openAgentModal(bot = null) {
     const form = document.getElementById('agentForm');
     if (!agentModal || !form) return;
     form.reset();
     document.getElementById('agentId').value = bot?._id || '';
-    document.getElementById('agentModalTitle').textContent = bot ? (currentLanguage === 'ar' ? 'تعديل الوكيل' : 'Edit agent') : (currentLanguage === 'ar' ? 'إنشاء وكيل' : 'Create agent');
+    document.getElementById('agentModalTitle').textContent = bot ? (translations[currentLanguage] || translations.en).agent_modal_edit : (translations[currentLanguage] || translations.en).agent_modal_create;
     
     const isFree = !currentUser?.subscriptionTier || currentUser.subscriptionTier === 'free';
 
@@ -4346,7 +5813,7 @@
     }
 
     enforceToolAndSkillTierLimits();
-    agentModal.classList.add('active');
+    openAgentDialog();
   }
 
   // Bind change listeners to lock/unlock on user click
@@ -4358,14 +5825,13 @@
   });
 
   document.getElementById('createAgentBtn')?.addEventListener('click', () => openAgentModal());
-  document.querySelectorAll('.agent-modal-close').forEach((button) => button.addEventListener('click', () => agentModal?.classList.remove('active')));
+  document.querySelectorAll('.agent-modal-close').forEach((button) => button.addEventListener('click', () => closeAgentDialog()));
   document.getElementById('agentForm')?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const id = document.getElementById('agentId').value;
     const splitValues = (value, separator) => value.split(separator).map((item) => item.trim()).filter(Boolean);
 
     const selectedSkills = Array.from(document.querySelectorAll('input[name="agentSkill"]:checked')).map(el => el.value);
-
     const agentTools = {
       bookingTool: {
         enabled: document.getElementById('agentToolBooking')?.checked === true,
@@ -4414,12 +5880,33 @@
       agentTools,
       agentSkills: selectedSkills,
     };
-    const result = await apiFetch(id ? `/api/bots/${id}` : '/api/bots', { method: id ? 'PUT' : 'POST', body: JSON.stringify(payload) });
-    if (!result || result.error || result.message && !result._id && !result.success) return alert(result?.message || (currentLanguage === 'ar' ? 'فشل حفظ الوكيل.' : 'Could not save agent.'));
-    agentModal?.classList.remove('active');
-    await loadAgents();
-    if (!id && result._id) refreshActiveBot(result);
-    if (window.__zainbotRenderSettingsSummary) setTimeout(window.__zainbotRenderSettingsSummary, 150);
+    // D09: single-flight agent save (no duplicate agents on double submit);
+    // the dialog stays open with the draft on every failure path.
+    const agentCore = window.ZainBotRequest;
+    const agentRun = agentCore && typeof agentCore.runExclusive === 'function'
+      ? (k, op) => agentCore.runExclusive(k, op)
+      : (k, op) => op();
+    const agentFeedback = window.ZainBotFeedback;
+    const agentFormEl = document.getElementById('agentForm');
+    const agentSubmitBtn = agentFormEl ? agentFormEl.querySelector('[type="submit"]') : null;
+    const agentGuarded = agentFeedback && typeof agentFeedback.withPending === 'function' && agentSubmitBtn
+      ? () => agentFeedback.withPending(id ? `agent-save:${id}` : 'agent-save:new', [agentSubmitBtn], () => saveAgent(payload, id))
+      : () => saveAgent(payload, id);
+    try {
+      await agentRun(id ? `agent-save:${id}` : 'agent-save:new', agentGuarded);
+    } catch (err) {
+      console.error(err);
+      alert((translations[currentLanguage] || translations.en).agent_save_failed);
+    }
+
+    async function saveAgent(body, id) {
+      const result = await apiFetch(id ? `/api/bots/${id}` : '/api/bots', { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });
+      if (!result || result.error || result.message && !result._id && !result.success) return alert(result?.message || (translations[currentLanguage] || translations.en).agent_save_failed);
+      closeAgentDialog();
+      await loadAgents();
+      if (!id && result._id) refreshActiveBot(result);
+      if (window.__zainbotRenderSettingsSummary) setTimeout(window.__zainbotRenderSettingsSummary, 150);
+    }
   });
 
   // Wire AI Sales Automation Center trigger buttons
@@ -4427,9 +5914,10 @@
   if (triggerRecoveryBtn) {
     triggerRecoveryBtn.addEventListener('click', async () => {
       if (!currentBot) return;
+      const t = translations[currentLanguage] || translations.en;
       const feedbackBox = document.getElementById('automationFeedbackBox');
       triggerRecoveryBtn.disabled = true;
-      triggerRecoveryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (currentLanguage === 'ar' ? 'جاري الفحص...' : 'Checking...');
+      triggerRecoveryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + t.automation_checking;
       try {
         const res = await apiFetch(`/api/bots/${currentBot._id}/trigger-automation`, {
           method: 'POST',
@@ -4440,7 +5928,7 @@
           feedbackBox.style.background = 'rgba(16, 185, 129, 0.15)';
           feedbackBox.style.border = '1px solid var(--green)';
           feedbackBox.style.color = 'var(--green)';
-          feedbackBox.textContent = res?.message || (currentLanguage === 'ar' ? 'تم فحص المحادثات بنجاح.' : 'Checked conversations successfully.');
+          feedbackBox.textContent = res?.message || t.automation_checked_ok;
         }
       } catch (err) {
         if (feedbackBox) {
@@ -4448,7 +5936,7 @@
           feedbackBox.style.background = 'rgba(239, 68, 68, 0.15)';
           feedbackBox.style.border = '1px solid var(--red)';
           feedbackBox.style.color = 'var(--red)';
-          feedbackBox.textContent = currentLanguage === 'ar' ? 'حدث خطأ أثناء تشغيل الفحص.' : 'Error triggering check.';
+          feedbackBox.textContent = t.automation_check_failed;
         }
       } finally {
         triggerRecoveryBtn.disabled = false;
@@ -4461,9 +5949,10 @@
   if (triggerDigestBtn) {
     triggerDigestBtn.addEventListener('click', async () => {
       if (!currentBot) return;
+      const t = translations[currentLanguage] || translations.en;
       const feedbackBox = document.getElementById('automationFeedbackBox');
       triggerDigestBtn.disabled = true;
-      triggerDigestBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (currentLanguage === 'ar' ? 'جاري الإرسال...' : 'Sending...');
+      triggerDigestBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + t.automation_sending;
       try {
         const res = await apiFetch(`/api/bots/${currentBot._id}/trigger-automation`, {
           method: 'POST',
@@ -4474,7 +5963,7 @@
           feedbackBox.style.background = 'rgba(6, 182, 212, 0.15)';
           feedbackBox.style.border = '1px solid var(--cyan)';
           feedbackBox.style.color = 'var(--cyan)';
-          feedbackBox.textContent = res?.message || (currentLanguage === 'ar' ? 'تم إرسال الملخص بنجاح.' : 'Digest sent successfully.');
+          feedbackBox.textContent = res?.message || t.automation_digest_sent;
         }
       } catch (err) {
         if (feedbackBox) {
@@ -4482,7 +5971,7 @@
           feedbackBox.style.background = 'rgba(239, 68, 68, 0.15)';
           feedbackBox.style.border = '1px solid var(--red)';
           feedbackBox.style.color = 'var(--red)';
-          feedbackBox.textContent = currentLanguage === 'ar' ? 'حدث خطأ أثناء إرسال التقرير.' : 'Error sending digest.';
+          feedbackBox.textContent = t.automation_digest_failed;
         }
       } finally {
         triggerDigestBtn.disabled = false;
@@ -4505,7 +5994,8 @@
     const info = document.getElementById('adminUsersPaginationInfo');
     const previous = document.getElementById('adminUsersPrevBtn');
     const next = document.getElementById('adminUsersNextBtn');
-    if (info) info.textContent = `${adminUsersPageState.total} ${adminCopy('حساب — صفحة', 'accounts — page')} ${adminUsersPageState.page} / ${adminUsersPageState.pages}`;
+    const t = translations[currentLanguage] || translations.en;
+    if (info) info.textContent = `${adminUsersPageState.total} ${t.admin_pagination_unit} ${adminUsersPageState.page} / ${adminUsersPageState.pages}`;
     if (previous) previous.disabled = adminUsersPageState.page <= 1;
     if (next) next.disabled = adminUsersPageState.page >= adminUsersPageState.pages;
   }
@@ -4521,13 +6011,13 @@
       if (role) params.set('role', role);
       if (status) params.set('status', status);
       if (tier) params.set('tier', tier);
-      const res = await apiFetch(`/api/users?${params.toString()}`);
+      const res = await dashboardRequest(`/api/users?${params.toString()}`);
       adminUsersList = Array.isArray(res?.data) ? res.data : [];
       Object.assign(adminUsersPageState, res?.pagination || { page: 1, pages: 1, total: adminUsersList.length, limit: 25 });
       renderAdminUsers();
     } catch (error) {
       console.error('admin_users_load_failed', error);
-      alert(adminCopy('تعذر تحميل قائمة الحسابات.', 'Could not load accounts.'));
+      alert((translations[currentLanguage] || translations.en).admin_load_failed);
     }
   }
 
@@ -4535,12 +6025,13 @@
     const tbody = document.getElementById('adminUsersTableBody');
     if (!tbody) return;
     tbody.replaceChildren();
+    const t = translations[currentLanguage] || translations.en;
     if (adminUsersList.length === 0) {
       const row = document.createElement('tr');
       const cell = document.createElement('td');
       cell.colSpan = 7;
       cell.style.cssText = 'padding:24px; text-align:center; color:var(--text-muted);';
-      cell.textContent = adminCopy('لا توجد حسابات مطابقة.', 'No matching accounts.');
+      cell.textContent = t.admin_empty_match;
       row.appendChild(cell);
       tbody.appendChild(row);
       renderAdminPagination();
@@ -4551,20 +6042,20 @@
       row.style.borderBottom = '1px solid var(--glass-border)';
       adminCell(row, user.username, 'font-weight:600;');
       adminCell(row, user.email, 'font-size:12px; color:var(--cyan);');
-      adminCell(row, user.role === 'superadmin' ? adminCopy('مدير عام', 'Super admin') : adminCopy('مستخدم', 'User'));
+      adminCell(row, user.role === 'superadmin' ? t.admin_role_superadmin_word : t.admin_role_user_word);
       adminCell(row, user.subscriptionTier || 'free', 'font-size:12px;');
-      adminCell(row, user.status === 'suspended' ? adminCopy('موقوف', 'Suspended') : (user.status === 'deleted' ? adminCopy('محذوف', 'Deleted') : adminCopy('نشط', 'Active')));
-      adminCell(row, `${Array.isArray(user.bots) ? user.bots.length : 0} ${adminCopy('وكيل', 'agent(s)')}`, 'font-size:12px;');
+      adminCell(row, user.status === 'suspended' ? t.admin_suspended : (user.status === 'deleted' ? t.admin_status_deleted : t.admin_active));
+      adminCell(row, `${Array.isArray(user.bots) ? user.bots.length : 0} ${t.admin_bots_unit}`, 'font-size:12px;');
       const actions = document.createElement('td');
       actions.style.cssText = 'padding:12px; text-align:center; display:flex; justify-content:center; gap:5px; flex-wrap:wrap;';
-      actions.appendChild(adminAction(adminCopy('تعديل', 'Edit'), () => openAdminUserModal(user._id)));
-      actions.appendChild(adminAction(adminCopy('الوكلاء', 'Agents'), () => openUserBotsModal(user._id)));
+      actions.appendChild(adminAction(t.admin_action_edit, () => openAdminUserModal(user._id)));
+      actions.appendChild(adminAction(t.admin_action_agents, () => openUserBotsModal(user._id)));
       if (user.status !== 'deleted' && String(user._id) !== String(currentUser?._id)) {
-        actions.appendChild(adminAction(adminCopy('دخول مؤقت', 'Temporary access'), () => openImpersonationModal(user._id), 'border-color:var(--orange); color:var(--orange);'));
+        actions.appendChild(adminAction(t.admin_action_temp_access, () => openImpersonationModal(user._id), 'border-color:var(--orange); color:var(--orange);'));
       }
       if (user.status !== 'deleted' && user.role !== 'superadmin') {
-        actions.appendChild(adminAction(user.status === 'suspended' ? adminCopy('تفعيل', 'Activate') : adminCopy('إيقاف', 'Suspend'), () => updateAdminUserStatus(user._id, user.status === 'suspended' ? 'active' : 'suspended')));
-        actions.appendChild(adminAction(adminCopy('أرشفة', 'Archive'), () => archiveAdminUser(user._id), 'border-color:var(--red); color:var(--red);'));
+        actions.appendChild(adminAction(user.status === 'suspended' ? t.admin_action_activate : t.admin_action_suspend, () => updateAdminUserStatus(user._id, user.status === 'suspended' ? 'active' : 'suspended')));
+        actions.appendChild(adminAction(t.admin_action_archive, () => archiveAdminUser(user._id), 'border-color:var(--red); color:var(--red);'));
       }
       row.appendChild(actions);
       tbody.appendChild(row);
@@ -4573,46 +6064,85 @@
   }
 
   async function updateAdminUserStatus(userId, status) {
-    if (!confirm(adminCopy(`هل تريد تغيير حالة الحساب إلى ${status === 'active' ? 'نشط' : 'موقوف'}؟`, `Change account status to ${status}?`))) return;
-    const result = await apiFetch(`/api/users/${userId}`, { method: 'PUT', body: JSON.stringify({ status }) });
-    if (!result?.data) return alert(result?.message || adminCopy('فشل تحديث الحساب.', 'Could not update account.'));
-    loadAdminUsers();
+    const t = translations[currentLanguage] || translations.en;
+    if (!confirm(t.admin_status_change_confirm.replace('{status}', status === 'active' ? t.admin_active : t.admin_suspended))) return;
+    // D09: one lock per account row — double confirm clicks attach instead
+    // of sending duplicate status mutations. Permissions untouched.
+    try {
+      await withEntityLock(`admin-user:${userId}`, userId, async () => {
+        const result = await dashboardRequest(`/api/users/${userId}`, { method: 'PUT', body: JSON.stringify({ status }) }, { operation: 'mutation' });
+        if (!result?.data) {
+          alert(result?.message || t.admin_update_failed);
+          return;
+        }
+        loadAdminUsers();
+      });
+    } catch (err) {
+      console.error(err);
+      alert(t.admin_update_failed);
+    }
   }
 
   async function archiveAdminUser(userId) {
-    if (!confirm(adminCopy('ستتوقف إمكانية الدخول مع الاحتفاظ بالمحادثات والقنوات. هل تريد المتابعة؟', 'Sign-in will stop while conversations and channels are preserved. Continue?'))) return;
-    const result = await apiFetch(`/api/users/${userId}`, { method: 'DELETE' });
-    if (!result?.data) return alert(result?.message || adminCopy('فشلت أرشفة الحساب.', 'Could not archive account.'));
-    loadAdminUsers();
+    const t = translations[currentLanguage] || translations.en;
+    if (!confirm(t.admin_archive_confirm)) return;
+    try {
+      await withEntityLock(`admin-user:${userId}`, userId, async () => {
+        const result = await dashboardRequest(`/api/users/${userId}`, { method: 'DELETE' }, { operation: 'mutation' });
+        if (!result?.data) {
+          alert(result?.message || t.admin_archive_failed);
+          return;
+        }
+        loadAdminUsers();
+      });
+    } catch (err) {
+      console.error(err);
+      alert(t.admin_archive_failed);
+    }
   }
 
   // Remote agent (bot) administration for a specific account
   async function openUserBotsModal(userId) {
-    if (!modal) return;
+    // E03c prerequisite fix (pre-existing defect, proven by vm repro:
+    // `modal`/`modalTitle`/`modalBody` had no binding in scope, so every
+    // call threw `ReferenceError: modal is not defined` before reaching
+    // the guard). They address channelModal — the only dialog owning
+    // `channelModalTitle`/`channelModalBody` — so bind them explicitly.
+    const modal = document.getElementById('channelModal');
+    const modalTitle = document.getElementById('channelModalTitle');
+    const modalBody = document.getElementById('channelModalBody');
+    if (!modal || !modalTitle || !modalBody) return;
+    const t = translations[currentLanguage] || translations.en;
     const user = adminUsersList.find((entry) => String(entry._id) === String(userId));
     if (!user || !Array.isArray(user.bots)) {
-      alert(adminCopy('لا توجد وكلاء محمّلون لهذا الحساب، أعد تحميل القائمة.', 'No loaded agents for this account. Reload the list.'));
+      alert(t.admin_account_bots_missing);
       return;
     }
-    modalTitle.innerHTML = `<i class="fas fa-robot" style="color:var(--orange)"></i> ${adminCopy(`وكلاء ${user.username}`, `${user.username}'s agents`)}`;
-    modalBody.innerHTML = `<div id="adminBotsList" style="font-size:13px;">${adminCopy('جاري التحميل...', 'Loading...')}</div>`;
-    modal.classList.add('active');
+    modalTitle.innerHTML = `<i class="fas fa-robot" style="color:var(--orange)"></i> ${t.admin_account_bots_title.split('{username}').join(user.username)}`;
+    modalBody.innerHTML = `<div id="adminBotsList" style="font-size:13px;">${t.admin_bots_loading}</div>`;
+    // E03c: this opener drives channelModal (already on the lifecycle since
+    // E02f) — route it through the shared open so focus is trapped and
+    // Escape works here too; content is injected synchronously above, so
+    // the helper opens on fresh nodes. Missing-user/missing-bots guards
+    // and toggle logic untouched.
+    openChannelModal();
 
     const listEl = document.getElementById('adminBotsList');
     const bots = user.bots;
 
     const renderBots = () => {
+      const t = translations[currentLanguage] || translations.en;
       listEl.innerHTML = bots.map((botItem) => {
         const running = botItem.isActive !== false;
         return `
         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--glass-border);">
           <div style="min-width:0;">
             <div style="font-weight:600; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${botItem.name}</div>
-            <div style="font-size:11px; color:${running ? 'var(--green)' : 'var(--red)'};">${running ? adminCopy('يعمل', 'Running') : adminCopy('متوقف', 'Stopped')}</div>
+            <div style="font-size:11px; color:${running ? 'var(--green)' : 'var(--red)'};">${running ? t.admin_bot_running : t.admin_bot_stopped}</div>
           </div>
           <button type="button" class="btn btn-secondary btn-sm" data-bot-toggle="${botItem._id}"
             style="flex-shrink:0; ${running ? 'border-color:var(--red); color:var(--red);' : 'border-color:var(--green); color:var(--green);'}">
-            ${running ? adminCopy('إيقاف', 'Stop') : adminCopy('تشغيل', 'Start')}
+            ${running ? t.admin_bot_stop : t.admin_bot_start}
           </button>
         </div>`;
       }).join('');
@@ -4631,14 +6161,14 @@
             target.isActive = res.data.isActive;
             renderBots();
           } else {
-            alert(res?.message || adminCopy('فشل تحديث حالة الوكيل.', 'Could not update the agent.'));
+            alert(res?.message || (translations[currentLanguage] || translations.en).admin_bot_update_failed);
           }
         });
       });
     };
 
     if (bots.length === 0) {
-      listEl.textContent = adminCopy('لا يملك هذا الحساب وكلاء بعد.', 'This account has no agents yet.');
+      listEl.textContent = (translations[currentLanguage] || translations.en).admin_account_no_bots;
       return;
     }
     renderBots();
@@ -4647,16 +6177,17 @@
   async function openAdminUserModal(userId = '') {
     const form = document.getElementById('adminUserForm');
     if (!adminUserModal || !form) return;
+    const t = translations[currentLanguage] || translations.en;
     form.reset();
     document.getElementById('adminUserId').value = userId;
     document.getElementById('adminUserMode').value = userId ? 'edit' : 'create';
-    document.getElementById('adminUserModalTitle').textContent = userId ? adminCopy('تعديل الحساب', 'Edit account') : adminCopy('إضافة حساب', 'Add account');
+    document.getElementById('adminUserModalTitle').textContent = userId ? t.admin_user_modal_edit : t.admin_user_modal_add;
     document.getElementById('adminUserPassword').required = !userId;
     document.getElementById('adminUserConfirmPassword').required = !userId;
     if (userId) {
       const response = await apiFetch(`/api/users/${userId}`);
       const user = response?.data;
-      if (!user) return alert(adminCopy('تعذر تحميل بيانات الحساب.', 'Could not load account.'));
+      if (!user) return alert(t.admin_account_load_failed);
       document.getElementById('adminUserUsername').value = user.username || '';
       document.getElementById('adminUserEmail').value = user.email || '';
       document.getElementById('adminUserWhatsapp').value = user.whatsapp || '';
@@ -4668,7 +6199,7 @@
       document.getElementById('adminUserDailyUsage').value = user.dailyMessagesUsed || 0;
       document.getElementById('adminUserMonthlyUsage').value = user.monthlyMessagesUsed || 0;
     }
-    adminUserModal.classList.add('active');
+    openAdminUserDialog();
   }
 
   function openImpersonationModal(userId) {
@@ -4676,20 +6207,59 @@
     if (!impersonationModal || !form) return;
     form.reset();
     document.getElementById('impersonationSubjectId').value = userId;
-    impersonationModal.classList.add('active');
+    openImpersonationDialog();
   }
 
   function renderImpersonationBanner() {
     const sessionId = sessionStorage.getItem('zainbot_impersonation_session_id');
     const banner = document.getElementById('impersonationBanner');
     if (!sessionId || !banner) return;
-    document.getElementById('impersonationBannerText').textContent = adminCopy(`أنت داخل مؤقتاً إلى حساب ${currentUser?.username || ''}. كل النشاط مسجل.`, `You are temporarily viewing ${currentUser?.username || 'this account'}. Activity is audited.`);
+    const t = translations[currentLanguage] || translations.en;
+    document.getElementById('impersonationBannerText').textContent = t.admin_impersonation_banner.split('{username}').join(currentUser?.username || t.admin_impersonation_self);
     banner.style.display = 'block';
   }
 
   document.getElementById('adminAddUserBtn')?.addEventListener('click', () => openAdminUserModal());
-  document.querySelectorAll('.admin-user-modal-close').forEach((button) => button.addEventListener('click', () => adminUserModal?.classList.remove('active')));
-  document.querySelectorAll('.impersonation-modal-close').forEach((button) => button.addEventListener('click', () => impersonationModal?.classList.remove('active')));
+  document.querySelectorAll('.admin-user-modal-close').forEach((button) => button.addEventListener('click', () => closeAdminUserDialog()));
+  // E03c: impersonationModal runs on the shared focus lifecycle (§7.3),
+  // same pattern as E03a/b. The helper owns focus/stack/inert only;
+  // `.active` stays the visual switch — removed by onClose and by the
+  // explicit fallback in closeImpersonationDialog. The session workflow
+  // (start/stop, scoping, subject handling, reload) is byte-identical and
+  // moves no focus. Both openers are fully synchronous (no pre-open
+  // fetch), so the helper's activeElement-default opener is exact — the
+  // E03b pre-fetch-capture lesson does not apply here.
+  const openImpersonationDialog = () => {
+    if (!impersonationModal) return;
+    impersonationModal.classList.add('active');
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.openDialog === 'function') {
+        window.ZainBotA11y.openDialog(impersonationModal, {
+          opener: document.activeElement && document.activeElement.nodeType === 1
+            ? document.activeElement
+            : undefined,
+          background: document.querySelector('.db-wrapper'),
+          onClose: () => impersonationModal.classList.remove('active'),
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  const closeImpersonationDialog = () => {
+    if (!impersonationModal) return;
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.closeDialog === 'function') {
+        window.ZainBotA11y.closeDialog(impersonationModal);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      impersonationModal.classList.remove('active');
+    }
+  };
+
+  document.querySelectorAll('.impersonation-modal-close').forEach((button) => button.addEventListener('click', () => closeImpersonationDialog()));
   document.getElementById('adminUserFilters')?.addEventListener('submit', (event) => { event.preventDefault(); loadAdminUsers(1); });
   document.getElementById('adminUsersPrevBtn')?.addEventListener('click', () => loadAdminUsers(Math.max(1, adminUsersPageState.page - 1)));
   document.getElementById('adminUsersNextBtn')?.addEventListener('click', () => loadAdminUsers(Math.min(adminUsersPageState.pages, adminUsersPageState.page + 1)));
@@ -4705,15 +6275,15 @@
     };
     if (password) { payload.password = password; payload.confirmPassword = document.getElementById('adminUserConfirmPassword').value; }
     const result = await apiFetch(id ? `/api/users/${id}` : '/api/users', { method: id ? 'PUT' : 'POST', body: JSON.stringify(payload) });
-    if (!result?.data) return alert(result?.message || adminCopy('فشل حفظ الحساب.', 'Could not save account.'));
-    adminUserModal?.classList.remove('active');
+    if (!result?.data) return alert(result?.message || (translations[currentLanguage] || translations.en).admin_account_save_failed);
+    closeAdminUserDialog();
     loadAdminUsers(id ? adminUsersPageState.page : 1);
   });
   document.getElementById('impersonationForm')?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const response = await apiFetch('/api/admin/impersonation/sessions', { method: 'POST', body: JSON.stringify({ subjectUserId: document.getElementById('impersonationSubjectId').value, reason: document.getElementById('impersonationReason').value.trim() }) });
     const data = response?.data;
-    if (!data?.token || !data?.session?.id) return alert(response?.message || adminCopy('فشل بدء الجلسة المؤقتة.', 'Could not start temporary access.'));
+    if (!data?.token || !data?.session?.id) return alert(response?.message || (translations[currentLanguage] || translations.en).admin_impersonation_start_failed);
     sessionStorage.setItem('zainbot_admin_session', JSON.stringify({ token: localStorage.getItem('token'), tokenExpiry: localStorage.getItem('tokenExpiry'), role: localStorage.getItem('role'), userId: localStorage.getItem('userId'), username: localStorage.getItem('username') }));
     sessionStorage.setItem('zainbot_impersonation_session_id', data.session.id);
     localStorage.setItem('token', data.token);
@@ -4726,10 +6296,10 @@
     let admin;
     try { admin = JSON.parse(sessionStorage.getItem('zainbot_admin_session') || '{}'); } catch (_error) { admin = {}; }
     const sessionId = sessionStorage.getItem('zainbot_impersonation_session_id');
-    if (!admin.token || !sessionId) return alert(adminCopy('انتهت جلسة المدير. سجل الدخول من جديد.', 'The admin session is unavailable. Please sign in again.'));
+    if (!admin.token || !sessionId) return alert((translations[currentLanguage] || translations.en).admin_session_expired);
     const response = await fetch(`/api/admin/impersonation/sessions/${encodeURIComponent(sessionId)}/end`, { method: 'POST', headers: { Authorization: `Bearer ${admin.token}` } });
     const result = await response.json();
-    if (!response.ok || !result?.success) return alert(result?.message || adminCopy('تعذر إنهاء الجلسة المؤقتة بأمان.', 'Could not safely end the temporary session.'));
+    if (!response.ok || !result?.success) return alert(result?.message || (translations[currentLanguage] || translations.en).admin_impersonation_end_failed);
     Object.entries(admin).forEach(([key, value]) => value === null || value === undefined ? localStorage.removeItem(key) : localStorage.setItem(key, value));
     sessionStorage.removeItem('zainbot_admin_session');
     sessionStorage.removeItem('zainbot_impersonation_session_id');
@@ -4813,8 +6383,8 @@
           <td style="padding:10px;">${s.subject?.username || '—'}</td>
           <td style="padding:10px; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${(s.reason || '').replace(/"/g, '&quot;')}">${s.reason || '—'}</td>
           <td style="padding:10px; color:${color}; font-weight:600;">${s.status}</td>
-          <td style="padding:10px;">${s.createdAt ? new Date(s.createdAt).toLocaleString() : '—'}</td>
-          <td style="padding:10px;">${s.expiresAt ? new Date(s.expiresAt).toLocaleString() : '—'}</td>
+        <td style="padding:10px;">${s.createdAt ? formatDate(s.createdAt) : '—'}</td>
+        <td style="padding:10px;">${s.expiresAt ? formatDate(s.expiresAt) : '—'}</td>
         </tr>`;
       }).join('');
     } catch (e) {
@@ -4854,7 +6424,7 @@
         const color = outcomeColors[ev.outcome] || 'var(--text-muted)';
         const actionText = [ev.method, ev.path].filter(Boolean).join(' ') || ev.action || '—';
         return `<tr style="border-bottom:1px solid var(--glass-border);">
-          <td style="padding:10px; white-space:nowrap;">${ev.createdAt ? new Date(ev.createdAt).toLocaleString() : '—'}</td>
+          <td style="padding:10px; white-space:nowrap;">${ev.createdAt ? formatDate(ev.createdAt) : '—'}</td>
           <td style="padding:10px;">${ev.eventType}</td>
           <td style="padding:10px;">${ev.actorUsername || '—'} → ${ev.subjectUsername || '—'}</td>
           <td style="padding:10px; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${actionText.replace(/"/g, '&quot;')}">${actionText}</td>
@@ -5060,7 +6630,7 @@
       if (updatedEl) {
         const t = translations[currentLanguage] || translations.en;
         updatedEl.textContent = cfg.updatedAt
-          ? `${t.landing_demo_updated_at}: ${new Date(cfg.updatedAt).toLocaleString()}`
+          ? `${t.landing_demo_updated_at}: ${formatDate(cfg.updatedAt)}`
           : '';
       }
     } catch (e) {
@@ -5088,7 +6658,7 @@
           }
           const updatedEl = document.getElementById('landingDemoUpdatedAt');
           if (updatedEl && res.data && res.data.updatedAt) {
-            updatedEl.textContent = `${t.landing_demo_updated_at}: ${new Date(res.data.updatedAt).toLocaleString()}`;
+            updatedEl.textContent = `${t.landing_demo_updated_at}: ${formatDate(res.data.updatedAt)}`;
           }
         } else {
           if (statusEl) {
@@ -5114,28 +6684,33 @@
     const faq = faqs.find(f => f._id === id);
     if (!faq) return;
 
-    document.getElementById('faqModalTitle').textContent = currentLanguage === 'ar' ? 'تعديل القاعدة' : 'Edit FAQ Rule';
+    document.getElementById('faqModalTitle').textContent = (translations[currentLanguage] || translations.en).faq_modal_edit;
     document.getElementById('faqIdInput').value = faq._id;
     document.getElementById('faqQuestionInput').value = faq.content?.question || '';
     document.getElementById('faqAnswerInput').value = faq.content?.answer || '';
-    
-    faqModal.classList.add('active');
+
+    openFaqModal(document.activeElement);
   };
 
   window.deleteFaq = async function(id) {
-    if (!confirm(currentLanguage === 'ar' ? 'هل أنت متأكد من حذف هذه القاعدة؟' : 'Are you sure you want to delete this FAQ rule?')) return;
+    if (!confirm((translations[currentLanguage] || translations.en).faq_delete_confirm)) return;
     try {
-      const res = await apiFetch(`/api/rules/${id}`, { method: 'DELETE' });
-      if (res && res.success) {
-        loadTrainingData();
-      }
+      await withEntityLock(`training-rule:${id}`, id, async () => {
+        const res = await dashboardRequest(`/api/rules/${id}`, { method: 'DELETE' }, { operation: 'mutation' });
+        if (res && res.success) {
+          loadTrainingData();
+        } else {
+          alert((translations[currentLanguage] || translations.en).faq_save_failed);
+        }
+      });
     } catch (e) {
       console.error(e);
+      alert((translations[currentLanguage] || translations.en).faq_save_failed);
     }
   };
 
   window.revokeApiKey = async function(id) {
-    if (!confirm(currentLanguage === 'ar' ? 'هل أنت متأكد من إبطال مفتاح الوصول هذا؟' : 'Are you sure you want to revoke this access key?')) return;
+    if (!confirm((translations[currentLanguage] || translations.en).apikey_revoke_confirm)) return;
     try {
       const res = await apiFetch(`/api/integrations/keys/${id}`, { method: 'DELETE' });
       if (res && res.success) {
@@ -5146,17 +6721,32 @@
     }
   };
 
+  // D07d: webhook redelivery. Translated confirmation FIRST; one in-flight
+  // redelivery per log id (double-click attaches, never resends); the
+  // request is a mutation with NO timeout, so a timeout can never trigger a
+  // resend. HTTP-200 success:false (D06 WEBHOOK_DELIVERY_FAILED) renders as
+  // delivery failure. A refresh failure after a confirmed send is reported
+  // distinctly and never rewrites the confirmed outcome.
   window.retryWebhook = async function(id) {
+    const t = translations[currentLanguage] || translations.en;
+    if (!confirm(t.webhook_retry_confirm)) return;
     try {
-      const res = await apiFetch(`/api/integrations/webhooks/logs/${id}/retry`, { method: 'POST' });
-      if (res && res.success) {
-        alert(currentLanguage === 'ar' ? 'تم إعادة الإرسال والتسليم بنجاح!' : 'Webhook redelivered successfully!');
-        loadSettingsData();
-      } else {
-        alert(currentLanguage === 'ar' ? 'فشل إعادة الإرسال.' : 'Webhook retry failed.');
-      }
+      await withEntityLock(`webhook-log:${id}`, id, async () => {
+        const res = await dashboardRequest(`/api/integrations/webhooks/logs/${id}/retry`, { method: 'POST' }, { operation: 'mutation' });
+        if (res && res.success) {
+          alert(t.webhook_retry_ok);
+          const botId = currentBot ? String(currentBot._id) : null;
+          if (botId) {
+            const logsOk = await loadSettingsWebhookLogs(botId);
+            if (!logsOk) notifyDashboard('error', 'webhook_logs_refresh_failed');
+          }
+        } else {
+          alert(res?.message || t.webhook_retry_failed);
+        }
+      });
     } catch (e) {
       console.error(e);
+      alert(t.webhook_retry_failed);
     }
   };
 
@@ -5175,7 +6765,7 @@
   };
 
   window.deleteAdminKey = async function(id) {
-    if (!confirm('Are you sure you want to delete this server key?')) return;
+    if (!confirm((translations[currentLanguage] || translations.en).admin_key_delete_confirm)) return;
     try {
       const res = await apiFetch(`/api/admin/keys/${id}`, { method: 'DELETE' });
       if (res && res.success) {
@@ -5189,26 +6779,74 @@
   // Setup FAQ Modal Buttons Click
   const addFaqBtn = document.getElementById('addFaqBtn');
   if (addFaqBtn) {
-    addFaqBtn.addEventListener('click', () => {
-      document.getElementById('faqModalTitle').textContent = currentLanguage === 'ar' ? 'إضافة سؤال وجواب' : 'Create FAQ Rule';
+    addFaqBtn.addEventListener('click', (event) => {
+      document.getElementById('faqModalTitle').textContent = (translations[currentLanguage] || translations.en).faq_modal_add;
       document.getElementById('faqIdInput').value = '';
       document.getElementById('faqQuestionInput').value = '';
       document.getElementById('faqAnswerInput').value = '';
-      faqModal.classList.add('active');
+      openFaqModal(event?.currentTarget);
     });
   }
 
-  document.querySelectorAll('.modal-close-btn').forEach(btn => {
+  // E02b fix round 1: a close button closes ONLY its dialog — no global
+  // `.modal-close-btn` fan-out. faqModal's buttons run the shared lifecycle.
+  faqModal?.querySelectorAll('.modal-close-btn').forEach(btn => {
+    btn.addEventListener('click', () => closeFaqModal());
+  });
+
+  // E02f: channelModal runs on the shared focus lifecycle (§7.3).
+  // The helper owns focus/stack/inert only; `.active` stays BOTH the visual
+  // switch AND the QR session-poll gate
+  // (`while (... && modal.classList.contains('active'))`): onClose plus every
+  // explicit close path remove it, so closing (including Escape) stops the
+  // poll loop at the next 2s check. Dynamic content is injected
+  // synchronously per branch and openChannelModal() runs on each branch's
+  // fresh nodes; the helper queries focusables live, so late content never
+  // traps stale focus. No doubled listeners: the static X wires once here,
+  // dynamic buttons re-wire on fresh nodes per open (innerHTML replaces
+  // them), exactly as before.
+  const openChannelModal = () => {
+    const channelModalEl = document.getElementById('channelModal');
+    if (!channelModalEl) return;
+    channelModalEl.classList.add('active');
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.openDialog === 'function') {
+        window.ZainBotA11y.openDialog(channelModalEl, {
+          // No event param flows into the configureChannel branches (relink
+          // + row buttons call it directly): the helper defaults the opener
+          // to document.activeElement.
+          background: document.querySelector('.db-wrapper'),
+          onClose: () => channelModalEl.classList.remove('active'),
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  const closeChannelModal = () => {
+    const channelModalEl = document.getElementById('channelModal');
+    if (!channelModalEl) return;
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.closeDialog === 'function') {
+        window.ZainBotA11y.closeDialog(channelModalEl);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      channelModalEl.classList.remove('active');
+    }
+  };
+
+  document.getElementById('channelModal')?.querySelectorAll('.modal-close-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      faqModal.classList.remove('active');
-      const channelModal = document.getElementById('channelModal');
-      if (channelModal) channelModal.classList.remove('active');
+      closeChannelModal();
     });
   });
 
   // Global Channel Configuration Modal Handler
   window.configureChannel = async function(type) {
     if (!currentBot) return;
+    const t = translations[currentLanguage] || translations.en;
     const modal = document.getElementById('channelModal');
     const modalTitle = document.getElementById('channelModalTitle');
     const modalBody = document.getElementById('channelModalBody');
@@ -5217,18 +6855,21 @@
     modal.classList.add('active');
 
     if (type === 'whatsapp') {
-      modalTitle.innerHTML = `<i class="fab fa-whatsapp" style="color:var(--green)"></i> ${currentLanguage === 'ar' ? 'ربط واتساب عبر الرمز (QR Code)' : 'Connect WhatsApp via QR Code'}`;
+      modalTitle.innerHTML = `<i class="fab fa-whatsapp" style="color:var(--green)"></i> ${t.chan_wa_qr_title}`;
       modalBody.innerHTML = `
         <div style="text-align:center; padding:16px;">
-          <div id="waQrContainer" style="background:rgba(255,255,255,0.03); padding:20px; border-radius:16px; border:1px solid var(--glass-border); display:inline-block; margin-bottom:16px;">
-            <div style="color:var(--cyan); font-weight:600;"><i class="fas fa-spinner fa-spin"></i> ${currentLanguage === 'ar' ? 'جاري توليد الرمز...' : 'Generating QR Code...'}</div>
+          <div id="waQrContainer" role="status" style="background:rgba(255,255,255,0.03); padding:20px; border-radius:16px; border:1px solid var(--glass-border); display:inline-block; margin-bottom:16px;">
+            <div style="color:var(--cyan); font-weight:600;"><i class="fas fa-spinner fa-spin"></i> ${t.chan_wa_qr_generating}</div>
           </div>
           <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px; line-height:1.6;">
-            ${currentLanguage === 'ar' ? 'افتح تطبيق الواتساب على هاتفك > الأجهزة المرتبطة > ربط جهاز > وقم بمسح الرمز أعلاه.' : 'Open WhatsApp on your phone > Linked Devices > Link a Device > Scan the QR code above.'}
+            ${t.chan_wa_qr_steps}
           </p>
-          <button id="waDisconnectBtn" class="btn btn-secondary btn-sm" style="border-color:var(--red); color:var(--red);">${currentLanguage === 'ar' ? 'إلغاء الربط' : 'Disconnect Session'}</button>
+          <button id="waDisconnectBtn" class="btn btn-secondary btn-sm" style="border-color:var(--red); color:var(--red);">${t.chan_wa_disconnect}</button>
         </div>
       `;
+
+      // Fresh nodes injected above — open on them, never on stale content.
+      openChannelModal();
 
       try {
         const res = await apiFetch('/api/whatsapp/connect-qr', {
@@ -5247,7 +6888,7 @@
           ) {
             const image = document.createElement('img');
             image.src = qrCode;
-            image.alt = currentLanguage === 'ar' ? 'رمز ربط واتساب' : 'WhatsApp QR Code';
+            image.alt = t.chan_wa_qr_alt;
             image.width = 220;
             image.height = 220;
             image.style.borderRadius = '12px';
@@ -5256,18 +6897,25 @@
             return true;
           }
           container.textContent = data?.status === 'connected'
-            ? (currentLanguage === 'ar' ? 'تم الربط بنجاح.' : 'WhatsApp is connected.')
-            : (currentLanguage === 'ar' ? 'يتم تجهيز الرمز…' : 'Preparing QR code…');
+            ? t.chan_wa_connected_ok
+            : t.chan_wa_preparing_qr;
           return false;
         };
 
         if (res?.success) {
           let data = res.data;
+          // D09: the QR poll loop stops on modal close AND on bot switch, so
+          // a switched bot never inherits another bot's QR/session paint.
+          // The pinned qrBotId is queried (not the live selection), and any
+          // response arriving after a switch is dropped before painting.
+          const qrBotId = String(currentBot._id);
           if (!renderQr(data) && !['connected', 'error', 'relink_required'].includes(data?.status)) {
             const deadline = Date.now() + 90_000;
             while (Date.now() < deadline && modal.classList.contains('active')) {
               await new Promise((resolve) => setTimeout(resolve, 2_000));
-              const status = await apiFetch(`/api/whatsapp/session?botId=${encodeURIComponent(currentBot._id)}`);
+              if (String(currentBot?._id) !== qrBotId) break;
+              const status = await apiFetch(`/api/whatsapp/session?botId=${encodeURIComponent(qrBotId)}`);
+              if (String(currentBot?._id) !== qrBotId) break;
               if (!status?.success) break;
               data = status.data;
               if (renderQr(data) || ['connected', 'error', 'relink_required', 'degraded'].includes(data?.status)) break;
@@ -5276,47 +6924,47 @@
         } else {
           const container = document.getElementById('waQrContainer');
           if (container) {
-            container.textContent = currentLanguage === 'ar' ? 'تعذر بدء جلسة واتساب.' : 'Could not start WhatsApp session.';
+            container.textContent = t.chan_wa_session_failed;
           }
         }
       } catch (e) {
         console.error(e);
         const container = document.getElementById('waQrContainer');
         if (container) {
-          container.textContent = currentLanguage === 'ar' ? 'تعذر توليد الرمز. حاول مرة أخرى.' : 'Could not generate the QR code. Try again.';
+          container.textContent = t.chan_wa_qr_failed;
         }
       }
 
       document.getElementById('waDisconnectBtn')?.addEventListener('click', async () => {
         await apiFetch('/api/whatsapp/disconnect', { method: 'POST', body: JSON.stringify({ botId: currentBot._id }) });
-        modal.classList.remove('active');
+        closeChannelModal();
         loadChannelsData();
       });
     }
 
     else if (type === 'facebook') {
-      modalTitle.innerHTML = `<i class="fab fa-facebook-messenger" style="color:var(--blue)"></i> ${currentLanguage === 'ar' ? 'ربط صفحة فيسبوك مباشرة' : 'Facebook Page Direct Connect'}`;
+      modalTitle.innerHTML = `<i class="fab fa-facebook-messenger" style="color:var(--blue)"></i> ${t.chan_fb_title}`;
       modalBody.innerHTML = `
         <form id="fbDirectForm">
           <div class="form-group">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <label>${currentLanguage === 'ar' ? 'مفتاح وصول الصفحة (Page Access Token)' : 'Page Access Token'}</label>
-              <button type="button" class="btn btn-secondary btn-sm info-hint-toggle" style="padding:2px 8px; font-size:11px; color:var(--cyan); border-color:var(--cyan);"><i class="fas fa-info-circle"></i> ${currentLanguage === 'ar' ? 'كيف أحصل عليه؟' : 'How to get?'}</button>
+              <label>${t.chan_fb_token_label}</label>
+              <button type="button" class="btn btn-secondary btn-sm info-hint-toggle" style="padding:2px 8px; font-size:11px; color:var(--cyan); border-color:var(--cyan);"><i class="fas fa-info-circle"></i> ${t.chan_how_to}</button>
             </div>
             <div class="info-hint-box" style="display:none; background:rgba(0,240,255,0.06); border:1px solid var(--cyan); padding:10px 14px; border-radius:8px; font-size:12px; color:var(--text); margin-bottom:10px;">
-              ${currentLanguage === 'ar' ? '1. ادخل إلى developers.facebook.com وأنشئ تطبيقا.<br>2. اختر صفحة الفيسبوك الخاصة بك وولّد مفتاح وصول الصفحة (Page Access Token).<br>3. قم بنسخ المفتاح ولصقه في الحقل أدناه.' : '1. Go to developers.facebook.com and select your App.<br>2. Select your FB Page in Graph API Explorer & generate Page Access Token.<br>3. Copy & paste the token below.'}
+              ${t.chan_fb_steps}
             </div>
             <input type="password" id="fbTokenInput" class="form-control" placeholder="EAA..." value="${currentBot.facebookApiKey || ''}" required />
           </div>
           <div class="form-group">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <label>${currentLanguage === 'ar' ? 'معرّف الصفحة (Page ID)' : 'Page ID'}</label>
+              <label>${t.chan_fb_id_label}</label>
             </div>
             <input type="text" id="fbPageIdInput" class="form-control" placeholder="1023948574..." value="${currentBot.facebookPageId || ''}" required />
           </div>
           <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
-            <button type="button" class="btn btn-secondary btn-sm modal-close-btn">${currentLanguage === 'ar' ? 'إلغاء' : 'Cancel'}</button>
-            <button type="submit" class="btn btn-primary btn-sm">${currentLanguage === 'ar' ? 'حفظ الربط' : 'Save Connection'}</button>
+      <button type="button" class="btn btn-secondary btn-sm modal-close-btn">${t.btn_cancel}</button>
+      <button type="submit" class="btn btn-primary btn-sm">${t.chan_save_connection}</button>
           </div>
         </form>
       `;
@@ -5325,6 +6973,9 @@
         const box = document.querySelector('.info-hint-box');
         box.style.display = box.style.display === 'none' ? 'block' : 'none';
       });
+
+      // Fresh nodes injected above — open on them, never on stale content.
+      openChannelModal();
 
       document.getElementById('fbDirectForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -5336,35 +6987,35 @@
           body: JSON.stringify({ facebookApiKey, facebookPageId })
         });
         if (res && res.success) {
-          modal.classList.remove('active');
+          closeChannelModal();
           loadChannelsData();
         }
       });
     }
 
     else if (type === 'instagram') {
-      modalTitle.innerHTML = `<i class="fab fa-instagram" style="color:var(--purple-light)"></i> ${currentLanguage === 'ar' ? 'ربط حساب إنستجرام مباشرة' : 'Instagram Direct Connect'}`;
+      modalTitle.innerHTML = `<i class="fab fa-instagram" style="color:var(--purple-light)"></i> ${t.chan_ig_title}`;
       modalBody.innerHTML = `
         <form id="igDirectForm">
           <div class="form-group">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <label>${currentLanguage === 'ar' ? 'مفتاح وصول إنستجرام (Instagram Access Token)' : 'Instagram Access Token'}</label>
-              <button type="button" class="btn btn-secondary btn-sm info-hint-toggle" style="padding:2px 8px; font-size:11px; color:var(--cyan); border-color:var(--cyan);"><i class="fas fa-info-circle"></i> ${currentLanguage === 'ar' ? 'كيف أحصل عليه؟' : 'How to get?'}</button>
+              <label>${t.chan_ig_token_label}</label>
+              <button type="button" class="btn btn-secondary btn-sm info-hint-toggle" style="padding:2px 8px; font-size:11px; color:var(--cyan); border-color:var(--cyan);"><i class="fas fa-info-circle"></i> ${t.chan_how_to}</button>
             </div>
             <div class="info-hint-box" style="display:none; background:rgba(0,240,255,0.06); border:1px solid var(--cyan); padding:10px 14px; border-radius:8px; font-size:12px; color:var(--text); margin-bottom:10px;">
-              ${currentLanguage === 'ar' ? '1. قم بربط حساب إنستجرام التجاري بصفحتك على فيسبوك.<br>2. انسخ مفتاح الوصول المستخرج من Meta Developer Console.<br>3. ضع المفتاح ومعرف الحساب في الحقول أدناه.' : '1. Link your IG Business account to your Facebook Page.<br>2. Generate Page/IG Access Token in Meta Developer Console.<br>3. Copy & paste the token and account ID below.'}
+              ${t.chan_ig_steps}
             </div>
             <input type="password" id="igTokenInput" class="form-control" placeholder="EAA..." value="${currentBot.instagramApiKey || ''}" required />
           </div>
           <div class="form-group">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <label>${currentLanguage === 'ar' ? 'معرّف حساب إنستجرام (Instagram Page ID)' : 'Instagram Page ID'}</label>
+              <label>${t.chan_ig_id_label}</label>
             </div>
             <input type="text" id="igPageIdInput" class="form-control" placeholder="178414..." value="${currentBot.instagramPageId || ''}" required />
           </div>
           <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
-            <button type="button" class="btn btn-secondary btn-sm modal-close-btn">${currentLanguage === 'ar' ? 'إلغاء' : 'Cancel'}</button>
-            <button type="submit" class="btn btn-primary btn-sm">${currentLanguage === 'ar' ? 'حفظ الربط' : 'Save Connection'}</button>
+      <button type="button" class="btn btn-secondary btn-sm modal-close-btn">${t.btn_cancel}</button>
+      <button type="submit" class="btn btn-primary btn-sm">${t.chan_save_connection}</button>
           </div>
         </form>
       `;
@@ -5373,6 +7024,9 @@
         const box = document.querySelector('.info-hint-box');
         box.style.display = box.style.display === 'none' ? 'block' : 'none';
       });
+
+      // Fresh nodes injected above — open on them, never on stale content.
+      openChannelModal();
 
       document.getElementById('igDirectForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -5384,41 +7038,41 @@
           body: JSON.stringify({ instagramApiKey, instagramPageId })
         });
         if (res && res.success) {
-          modal.classList.remove('active');
+          closeChannelModal();
           loadChannelsData();
         }
       });
     }
 
     else if (type === 'telegram') {
-      modalTitle.innerHTML = `<i class="fab fa-telegram" style="color:var(--cyan)"></i> ${currentLanguage === 'ar' ? 'ربط تيليجرام' : 'Connect Telegram'}`;
+      modalTitle.innerHTML = `<i class="fab fa-telegram" style="color:var(--cyan)"></i> ${t.chan_tg_title}`;
       modalBody.innerHTML = `
         <div id="tgLinkFlow">
-          <p style="font-size:13px; color:var(--text); margin-bottom:10px;">${currentLanguage === 'ar'
-            ? 'اربط وكيلك بالبوت الرسمي للمنصة على تيليجرام لتصلك الإشعارات. ولّد كود الربط ثم أرسله للبوت الرسمي.'
-            : 'Link your agent to the official platform bot on Telegram to receive notifications. Generate a link code, then send it to the official bot.'}</p>
+          <p style="font-size:13px; color:var(--text); margin-bottom:10px;">${t.chan_tg_intro}</p>
           <ol style="font-size:13px; color:var(--text-muted); margin:0 0 14px; padding-inline-start:18px;">
-            <li>${currentLanguage === 'ar' ? 'اضغط زر "توليد كود الربط" بالأسفل.' : 'Click the "Generate link code" button below.'}</li>
-            <li>${currentLanguage === 'ar' ? 'افتح البوت الرسمي في تيليجرام واضغط Start.' : 'Open the official bot in Telegram and press Start.'}</li>
-            <li>${currentLanguage === 'ar' ? 'أرسل الكود كما هو في رسالة واحدة.' : 'Send the code as a single message.'}</li>
+      <li>${t.chan_tg_step_1}</li>
+      <li>${t.chan_tg_step_2}</li>
+      <li>${t.chan_tg_step_3}</li>
           </ol>
           <div id="tgStatusBox"></div>
           <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
-            <button type="button" class="btn btn-secondary btn-sm modal-close-btn">${currentLanguage === 'ar' ? 'إغلاق' : 'Close'}</button>
-            <button type="button" id="tgGenerateCodeBtn" class="btn btn-primary btn-sm">${currentLanguage === 'ar' ? 'توليد كود الربط' : 'Generate link code'}</button>
+      <button type="button" class="btn btn-secondary btn-sm modal-close-btn">${t.btn_close}</button>
+      <button type="button" id="tgGenerateCodeBtn" class="btn btn-primary btn-sm">${t.chan_tg_generate_code}</button>
           </div>
         </div>
       `;
 
       const tgStatusBox = document.getElementById('tgStatusBox');
+      // Fresh nodes injected above — open on them, never on stale content.
+      openChannelModal();
       const renderTgStatus = async () => {
         if (!tgStatusBox) return;
         const st = await apiFetch(`/api/telegram/status?botId=${currentBot._id}`);
         if (!st) { tgStatusBox.innerHTML = ''; return; }
         if (st.linked) {
-          tgStatusBox.innerHTML = `<div style="background:rgba(16,185,129,0.08); border:1px solid var(--green); padding:10px 14px; border-radius:8px; font-size:13px;">✅ ${currentLanguage === 'ar' ? 'مربوط بحساب تيليجرام' : 'Linked to a Telegram account'}${st.username ? ` (${st.username})` : ''}</div>`;
+          tgStatusBox.innerHTML = `<div style="background:rgba(16,185,129,0.08); border:1px solid var(--green); padding:10px 14px; border-radius:8px; font-size:13px;">✅ ${t.chan_tg_linked_ok}${st.username ? ` (${st.username})` : ''}</div>`;
         } else if (st.linkCode && st.linkExpiresAt && new Date(st.linkExpiresAt) > new Date()) {
-          tgStatusBox.innerHTML = `<div style="background:rgba(59,130,246,0.08); border:1px solid var(--blue); padding:10px 14px; border-radius:8px; font-size:13px;">${currentLanguage === 'ar' ? 'كود نشط بالفعل:' : 'Active code already issued:'} <strong>${st.linkCode}</strong></div>`;
+          tgStatusBox.innerHTML = `<div style="background:rgba(59,130,246,0.08); border:1px solid var(--blue); padding:10px 14px; border-radius:8px; font-size:13px;">${t.chan_tg_active_code} <strong>${st.linkCode}</strong></div>`;
         } else {
           tgStatusBox.innerHTML = '';
         }
@@ -5437,11 +7091,9 @@
         if (res && res.code && tgStatusBox) {
           tgStatusBox.innerHTML = `
             <div style="background:rgba(6,182,212,0.08); border:1px solid var(--cyan); padding:12px 14px; border-radius:8px;">
-              <div style="font-size:13px; color:var(--text-muted);">${currentLanguage === 'ar' ? 'كود الربط الخاص بك:' : 'Your link code:'}</div>
+              <div style="font-size:13px; color:var(--text-muted);">${t.chan_tg_your_code}</div>
               <div style="font-size:24px; font-weight:700; letter-spacing:3px; color:var(--cyan); margin:4px 0;">${res.code}</div>
-              <div style="font-size:12px; color:var(--text-muted);">${currentLanguage === 'ar'
-                ? `أرسله إلى <a href="https://t.me/${res.botUsername}" target="_blank" rel="noopener" style="color:var(--cyan);">@${res.botUsername}</a> قبل انتهاء الصلاحية.`
-                : `Send it to <a href="https://t.me/${res.botUsername}" target="_blank" rel="noopener" style="color:var(--cyan);">@${res.botUsername}</a> before it expires.`}</div>
+              <div style="font-size:12px; color:var(--text-muted);">${t.chan_tg_send_before_expiry.split('{u}').join(res.botUsername)}</div>
             </div>`;
         }
       });
@@ -5449,7 +7101,7 @@
 
     modal.querySelectorAll('.modal-close-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        modal.classList.remove('active');
+        closeChannelModal();
       });
     });
   };
@@ -5460,6 +7112,12 @@
   }
 
   if (accountMenuToggle && accountMenu) {
+    const closeAccountMenu = (returnFocus) => {
+      if (accountMenu.hidden) return;
+      accountMenu.hidden = true;
+      accountMenuToggle.setAttribute('aria-expanded', 'false');
+      if (returnFocus) accountMenuToggle.focus();
+    };
     accountMenuToggle.addEventListener('click', () => {
       const isOpen = accountMenu.hidden;
       accountMenu.hidden = !isOpen;
@@ -5467,14 +7125,20 @@
     });
     document.addEventListener('click', (event) => {
       if (!accountMenu.hidden && !accountMenu.contains(event.target) && !accountMenuToggle.contains(event.target)) {
-        accountMenu.hidden = true;
-        accountMenuToggle.setAttribute('aria-expanded', 'false');
+        closeAccountMenu(false);
+      }
+    });
+    // E04: plain disclosure — Escape closes and returns focus to the
+    // trigger (no menu/menuitem arrow-key semantics are implemented).
+    document.addEventListener('keydown', (event) => {
+      if ((event.key === 'Escape' || event.key === 'Esc') && !accountMenu.hidden) {
+        closeAccountMenu(true);
       }
     });
     document.getElementById('accountSettingsBtn').addEventListener('click', () => {
       accountMenu.hidden = true;
       accountMenuToggle.setAttribute('aria-expanded', 'false');
-      switchTab('page-settings');
+      switchTab('page-settings', { focusHeading: true });
     });
     document.getElementById('accountLogoutBtn').addEventListener('click', logout);
   }
@@ -5485,21 +7149,99 @@
   // IDEA COUNCIL FRONTEND CONTROLLER
   // ==========================================
 
-  let currentIdea = null;
-  let currentIdeaRunId = null;
-  let ideaPollTimer = null;
-  let ideaAutoSaveTimer = null;
-  let ideaCurrentFilter = 'ALL';
-  let ideaUsageData = null;
+  // F05: lazy council bootstrap. The chunk loads on FIRST tab entry via
+  // window.ZainBotDashboardAssets (dedupe + evict-on-fail); init+load run
+  // only while the tab is still active (stale guard). Loading/error surface
+  // via D03 notify plus an untracked inline note — deliberately NOT
+  // renderState-tracked, so a later language switch never repaints over
+  // council content. Dictionaries + t/getLanguage adapters stay here.
+  let ideaCouncilModule = null;
+  let councilChunkReady = false;
+  let councilLoadToken = 0;
 
-  function escapeIdeaHtml(str) {
-    if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+  function ensureCouncilModule() {
+    if (!ideaCouncilModule) {
+      if (!window.ZainBotIdeaCouncil || typeof window.ZainBotIdeaCouncil.create !== 'function') {
+        throw new Error('[F05] dashboard-idea-council.js must load before use (via dashboard-assets.js)');
+      }
+      if (!window.ZainBotRequest || typeof window.ZainBotRequest.requestJson !== 'function') {
+        throw new Error('[F05] dashboard-request.js must load before dashboard_new.js');
+      }
+      if (typeof window.ZainBotRequest.fetchBlob !== 'function') {
+        throw new Error('[F05] dashboard-request.js must provide fetchBlob before dashboard_new.js');
+      }
+      ideaCouncilModule = window.ZainBotIdeaCouncil.create({
+        requestJson: (...args) => window.ZainBotRequest.requestJson(...args),
+        fetchBlob: (...args) => window.ZainBotRequest.fetchBlob(...args),
+        getLanguage: () => currentLanguage,
+        t: (key, fallback = '') => ideaT(key, fallback),
+        feedback: window.ZainBotFeedback || null,
+        a11y: window.ZainBotA11y || null,
+      });
+    }
+    return ideaCouncilModule;
+  }
+
+  function showCouncilLoading() {
+    const container = document.getElementById('ideasListContainer');
+    if (container) {
+      container.setAttribute('aria-busy', 'true');
+      container.innerHTML = '<p data-council-note style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;"><i class="fas fa-spinner fa-spin" style="margin-inline-end:8px;"></i>' + ideaT('feedback_loading') + '</p>';
+    }
+    if (window.ZainBotFeedback && typeof window.ZainBotFeedback.notify === 'function') {
+      window.ZainBotFeedback.notify({ level: 'info', key: 'feedback_loading' }, (key) => ideaT(key));
+    }
+  }
+
+  function showCouncilLoadError(retry) {
+    const container = document.getElementById('ideasListContainer');
+    if (container) {
+      container.setAttribute('aria-busy', 'false');
+      container.innerHTML = '<p data-council-note style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">' + ideaT('lazy_load_failed') + '</p><p style="padding:0 24px 24px;text-align:center;"><button type="button" id="ideaChunkRetryBtn" class="btn btn-secondary btn-sm">' + ideaT('feedback_retry') + '</button></p>';
+      const retryBtn = document.getElementById('ideaChunkRetryBtn');
+      if (retryBtn && typeof retry === 'function') {
+        retryBtn.addEventListener('click', retry);
+      }
+    }
+    if (window.ZainBotFeedback && typeof window.ZainBotFeedback.notify === 'function') {
+      window.ZainBotFeedback.notify({ level: 'error', key: 'lazy_load_failed' }, (key) => ideaT(key));
+    }
+  }
+
+  function enterCouncilTab() {
+    const myToken = ++councilLoadToken;
+    const stillActive = () => myToken === councilLoadToken && activeTab === 'page-idea-council';
+    if (!window.ZainBotDashboardAssets || typeof window.ZainBotDashboardAssets.loadFeature !== 'function') {
+      showCouncilLoadError(() => enterCouncilTab());
+      return;
+    }
+    if (!councilChunkReady) showCouncilLoading();
+    window.ZainBotDashboardAssets.loadFeature('ideaCouncil').then(() => {
+      if (!stillActive()) return;
+      councilChunkReady = true;
+      ensureCouncilModule().init();
+      ensureCouncilModule().load();
+    }).catch(() => {
+      if (!stillActive()) return;
+      showCouncilLoadError(() => enterCouncilTab());
+    });
+  }
+
+  // F05: summary chunk loads on FIRST settings entry; init() wires once and
+  // repaints every entry (replaces the refreshActiveBot-patch freshness).
+  // Rendering into hidden boxes on a late resolve is benign (correct data).
+  function enterSettingsTab() {
+    loadSettingsData();
+    if (!window.ZainBotDashboardAssets || typeof window.ZainBotDashboardAssets.loadFeature !== 'function') return;
+    window.ZainBotDashboardAssets.loadFeature('settingsSummary').then(() => {
+      if (window.ZainBotSettingsSummary && typeof window.ZainBotSettingsSummary.init === 'function') {
+        window.ZainBotSettingsSummary.init();
+      }
+    }).catch(() => {
+      if (window.ZainBotFeedback && typeof window.ZainBotFeedback.notify === 'function') {
+        window.ZainBotFeedback.notify({ level: 'error', key: 'lazy_load_failed' }, (key) => ideaT(key));
+      }
+    });
   }
 
   function ideaT(key, fallback = '') {
@@ -5510,1832 +7252,6 @@
       return translations.en[key];
     }
     return fallback || key;
-  }
-
-  const COUNCIL_MEMBERS = [
-    { key: 'COLD_CUSTOMER', icon: 'fa-user-check', labelKey: 'member_cold_customer', roleKey: 'member_cold_customer_role' },
-    { key: 'HARSH_AUDITOR', icon: 'fa-shield-halved', labelKey: 'member_harsh_auditor', roleKey: 'member_harsh_auditor_role' },
-    { key: 'EXECUTION_EXPERT', icon: 'fa-laptop-code', labelKey: 'member_execution_expert', roleKey: 'member_execution_expert_role' },
-    { key: 'MARKET_RESEARCHER', icon: 'fa-chart-line', labelKey: 'member_market_researcher', roleKey: 'member_market_researcher_role' },
-    { key: 'DEVILS_ADVOCATE', icon: 'fa-fire', labelKey: 'member_devils_advocate', roleKey: 'member_devils_advocate_role' },
-    { key: 'WEDGE_HUNTER', icon: 'fa-bullseye', labelKey: 'member_wedge_hunter', roleKey: 'member_wedge_hunter_role' },
-    { key: 'UX_DESIGNER', icon: 'fa-compass-drafting', labelKey: 'member_ux_designer', roleKey: 'member_ux_designer_role' },
-    { key: 'CANDID_CHAMPION', icon: 'fa-award', labelKey: 'member_candid_champion', roleKey: 'member_candid_champion_role' }
-  ];
-
-  function showIdeaView(viewName) {
-    const viewMap = {
-      list: document.getElementById('ideaListView'),
-      input: document.getElementById('ideaInputView'),
-      card: document.getElementById('ideaCardView'),
-      session: document.getElementById('ideaSessionView'),
-      report: document.getElementById('ideaReportView')
-    };
-    Object.keys(viewMap).forEach(key => {
-      if (viewMap[key]) {
-        viewMap[key].style.display = (key === viewName ? 'block' : 'none');
-      }
-    });
-  }
-
-  async function loadIdeaCouncilData() {
-    await Promise.all([
-      loadIdeaCouncilUsage(),
-      loadIdeaCouncilList(ideaCurrentFilter)
-    ]);
-  }
-
-  async function loadIdeaCouncilUsage() {
-    try {
-      const res = await apiFetch('/api/idea-council/usage');
-      if (res && res.success && res.data) {
-        ideaUsageData = res.data;
-        const remainingEl = document.getElementById('ideaQuotaRemaining');
-        const limitEl = document.getElementById('ideaQuotaLimit');
-        if (remainingEl) remainingEl.textContent = ideaUsageData.ideasRemaining;
-        if (limitEl) limitEl.textContent = ideaUsageData.monthlyLimit;
-      }
-    } catch (err) {
-      console.error('Failed to load Idea Council usage:', err);
-    }
-  }
-
-  async function loadIdeaCouncilList(filter = 'ALL') {
-    ideaCurrentFilter = filter;
-    const container = document.getElementById('ideasListContainer');
-    const emptyEl = document.getElementById('ideaListEmpty');
-    if (!container) return;
-
-    try {
-      const query = filter !== 'ALL' ? `?status=${encodeURIComponent(filter)}` : '';
-      const res = await apiFetch(`/api/idea-council/ideas${query}`);
-      const rawList = res && res.success ? (Array.isArray(res.data) ? res.data : (res.data?.ideas || [])) : [];
-      const ideas = Array.isArray(rawList) ? rawList : [];
-
-      if (ideas.length === 0) {
-        container.innerHTML = '';
-        container.style.display = 'none';
-        if (emptyEl) emptyEl.style.display = 'block';
-        return;
-      }
-
-      if (emptyEl) emptyEl.style.display = 'none';
-      container.style.display = 'grid';
-
-      const statusColors = {
-        DRAFT: { bg: 'rgba(148, 163, 184, 0.15)', text: 'var(--text-muted)' },
-        STRUCTURING: { bg: 'rgba(59, 130, 246, 0.15)', text: 'var(--blue)' },
-        AWAITING_CONFIRMATION: { bg: 'rgba(245, 158, 11, 0.15)', text: 'var(--orange)' },
-        QUEUED: { bg: 'rgba(6, 182, 212, 0.15)', text: 'var(--cyan)' },
-        RUNNING: { bg: 'rgba(6, 182, 212, 0.15)', text: 'var(--cyan)' },
-        COMPLETED: { bg: 'rgba(16, 185, 129, 0.15)', text: 'var(--green)' },
-        PARTIAL: { bg: 'rgba(245, 158, 11, 0.15)', text: 'var(--orange)' },
-        FAILED: { bg: 'rgba(239, 68, 68, 0.15)', text: 'var(--red)' },
-        CANCELED: { bg: 'rgba(148, 163, 184, 0.15)', text: 'var(--text-muted)' }
-      };
-
-      container.innerHTML = ideas.map(idea => {
-        const ideaId = idea._id || idea.id;
-        const title = idea.structuredCard?.title || idea.structuredIdea?.title || idea.rawIdea?.title || idea.title || ideaT('idea_card_title');
-        const pitch = idea.structuredCard?.elevatorPitch || idea.structuredIdea?.elevatorPitch || (idea.rawIdea?.rawText ? (idea.rawIdea.rawText.slice(0, 120) + '...') : '');
-        const date = new Date(idea.createdAt || Date.now()).toLocaleDateString(currentLanguage === 'ar' ? 'ar-EG' : 'en-US', {
-          year: 'numeric', month: 'short', day: 'numeric'
-        });
-
-        const sc = statusColors[idea.status] || statusColors.DRAFT;
-        const statusKey = 'idea_status_' + (idea.status || 'draft').toLowerCase();
-        const statusLabel = ideaT(statusKey, idea.status || 'DRAFT');
-
-        const actionLabel = (idea.status === 'COMPLETED' || idea.status === 'PARTIAL')
-          ? ideaT('idea_action_view')
-          : ideaT('idea_action_resume');
-
-        return `
-          <div class="glass-card idea-item-card" data-id="${ideaId}" style="display:flex; flex-direction:column; justify-content:space-between; cursor:pointer; padding:20px;">
-            <div>
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <span class="badge" style="background:${sc.bg}; color:${sc.text}; font-size:11px; padding:4px 8px; border-radius:10px;">
-                  ${idea.status === 'RUNNING' ? '<i class="fas fa-spinner fa-spin" style="margin-inline-end:4px;"></i>' : ''}${escapeIdeaHtml(statusLabel)}
-                </span>
-                <span style="font-size:11px; color:var(--text-muted);">${date}</span>
-              </div>
-              <h4 style="font-size:15px; margin-bottom:8px; line-height:1.4; color:#fff;">${escapeIdeaHtml(title)}</h4>
-              <p style="font-size:12px; color:var(--text-muted); line-height:1.5; margin-bottom:16px;">${escapeIdeaHtml(pitch)}</p>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--glass-border); padding-top:12px; margin-top:auto;">
-              <button class="btn btn-secondary btn-sm idea-open-card-btn" data-id="${ideaId}" type="button" style="font-size:12px;">
-                ${escapeIdeaHtml(actionLabel)} <i class="fas ${currentLanguage === 'ar' ? 'fa-arrow-left' : 'fa-arrow-right'}" style="margin-inline-start:4px;"></i>
-              </button>
-              ${(idea.status === 'DRAFT' || idea.status === 'FAILED') ? `
-                <button class="btn btn-sm idea-delete-btn" data-id="${ideaId}" type="button" title="${ideaT('idea_action_delete')}" style="background:transparent; border:none; color:var(--text-muted); padding:6px 8px;">
-                  <i class="fas fa-trash-alt"></i>
-                </button>
-              ` : ''}
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      container.querySelectorAll('.idea-item-card').forEach(card => {
-        card.addEventListener('click', (e) => {
-          if (e.target.closest('.idea-delete-btn')) return;
-          const id = card.getAttribute('data-id');
-          openIdea(id);
-        });
-      });
-
-      container.querySelectorAll('.idea-delete-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          const id = btn.getAttribute('data-id');
-          if (!confirm(ideaT('idea_msg_confirm_delete'))) return;
-          try {
-            await apiFetch(`/api/idea-council/ideas/${id}`, { method: 'DELETE' });
-            await loadIdeaCouncilList(ideaCurrentFilter);
-            await loadIdeaCouncilUsage();
-          } catch (err) {
-            console.error('Failed to delete idea:', err);
-          }
-        });
-      });
-
-    } catch (err) {
-      console.error('Failed to load Idea Council list:', err);
-    }
-  }
-
-  async function openIdea(ideaId) {
-    try {
-      const res = await apiFetch(`/api/idea-council/ideas/${ideaId}`);
-      if (!res || !res.success || !res.data) return;
-      currentIdea = res.data;
-
-      if (currentIdea.status === 'DRAFT') {
-        const rawInput = document.getElementById('ideaRawText');
-        const mktInput = document.getElementById('ideaTargetMarket');
-        const audInput = document.getElementById('ideaTargetAudience');
-        const conInput = document.getElementById('ideaPrimaryConcern');
-        const langSelect = document.getElementById('ideaOutputLang');
-
-        if (rawInput) rawInput.value = currentIdea.rawIdea?.rawText || '';
-        if (mktInput) mktInput.value = currentIdea.rawIdea?.targetMarket || '';
-        if (audInput) audInput.value = currentIdea.rawIdea?.targetAudience || '';
-        if (conInput) conInput.value = currentIdea.rawIdea?.primaryConcern || '';
-        if (langSelect) langSelect.value = currentIdea.reportLanguage || currentLanguage || 'ar';
-        updateIdeaCharCount();
-        showIdeaView('input');
-      } else if (currentIdea.status === 'STRUCTURING' || currentIdea.status === 'AWAITING_CONFIRMATION') {
-        populateStructuredCardForm(currentIdea.structuredCard || {});
-        showIdeaView('card');
-      } else if (currentIdea.status === 'QUEUED' || currentIdea.status === 'RUNNING') {
-        showIdeaView('session');
-        if (currentIdea.activeRunId) {
-          startIdeaPolling(currentIdea.activeRunId);
-        }
-      } else if (currentIdea.status === 'COMPLETED' || currentIdea.status === 'PARTIAL') {
-        renderIdeaReport(currentIdea);
-        showIdeaView('report');
-      }
-    } catch (err) {
-      console.error('Failed to open idea:', err);
-    }
-  }
-
-  function populateStructuredCardForm(card) {
-    if (!card) return;
-    const alternativesVal = Array.isArray(card.currentAlternatives || card.alternatives)
-      ? (card.currentAlternatives || card.alternatives).join(', ')
-      : (card.currentAlternatives || card.alternatives || '');
-
-    const flds = {
-      ideaCardFldTitle: card.title || '',
-      ideaCardFldPitch: card.elevatorPitch || card.valueProposition || '',
-      ideaCardFldCustomer: card.targetCustomer || '',
-      ideaCardFldRevenue: card.revenueModel || card.businessModel || '',
-      ideaCardFldProblem: card.coreProblem || card.problem || '',
-      ideaCardFldSolution: card.proposedSolution || card.solution || '',
-      ideaCardFldValue: card.valueProposition || card.elevatorPitch || '',
-      ideaCardFldAlternatives: alternativesVal,
-      ideaCardFldCoreQuestion: card.coreEvaluationQuestion || card.criticalQuestion || card.criticalQuestionToSettle || ''
-    };
-    Object.keys(flds).forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = flds[id];
-    });
-    const chk = document.getElementById('ideaConfirmCheckbox');
-    if (chk) chk.checked = false;
-  }
-
-  function updateIdeaCharCount() {
-    const rawEl = document.getElementById('ideaRawText');
-    const charEl = document.getElementById('ideaCharCount');
-    if (!rawEl || !charEl) return;
-    const len = rawEl.value.length;
-    charEl.textContent = `${len} / 8,000`;
-    charEl.style.color = (len >= 100 && len <= 8000) ? 'var(--cyan)' : 'var(--text-muted)';
-  }
-
-  async function saveIdeaDraft(silent = false) {
-    const rawEl = document.getElementById('ideaRawText');
-    const mktEl = document.getElementById('ideaTargetMarket');
-    const audEl = document.getElementById('ideaTargetAudience');
-    const conEl = document.getElementById('ideaPrimaryConcern');
-    const langEl = document.getElementById('ideaOutputLang');
-    const statusEl = document.getElementById('ideaAutoSaveStatus');
-
-    const rawText = rawEl ? rawEl.value.trim() : '';
-    const targetMarket = mktEl ? mktEl.value.trim() : '';
-    const targetAudience = audEl ? audEl.value.trim() : '';
-    const primaryConcern = conEl ? conEl.value.trim() : '';
-    const reportLanguage = langEl ? langEl.value : 'ar';
-
-    if (rawText.length < 100) {
-      if (!silent) {
-        alert(currentLanguage === 'ar' ? 'يجب أن لا يقل وصف الفكرة عن 100 حرف.' : 'Idea description must be at least 100 characters.');
-      }
-      return null;
-    }
-
-    if (statusEl) statusEl.textContent = ideaT('idea_msg_saving');
-
-    const payload = {
-      rawText,
-      originalText: rawText,
-      targetMarket,
-      targetAudience,
-      primaryConcern,
-      reportLanguage,
-      outputLanguage: reportLanguage
-    };
-
-    try {
-      let res;
-      const curId = currentIdea?._id || currentIdea?.id;
-      if (curId) {
-        res = await apiFetch(`/api/idea-council/draft/${curId}`, {
-          method: 'PUT',
-          body: JSON.stringify(payload)
-        });
-      } else {
-        res = await apiFetch('/api/idea-council/draft', {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
-      }
-
-      if (res && res.success && res.data) {
-        currentIdea = res.data;
-        if (statusEl) {
-          statusEl.textContent = ideaT('idea_msg_saved');
-          setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000);
-        }
-        return currentIdea;
-      }
-    } catch (err) {
-      console.error('Failed to save idea draft:', err);
-      if (statusEl) statusEl.textContent = '';
-    }
-    return null;
-  }
-
-  async function handleIdeaStructureSubmit(e) {
-    if (e) e.preventDefault();
-    const rawEl = document.getElementById('ideaRawText');
-    const rawText = rawEl ? rawEl.value.trim() : '';
-
-    if (rawText.length < 100) {
-      alert(currentLanguage === 'ar' ? 'يجب أن لا يقل وصف الفكرة عن 100 حرف.' : 'Idea description must be at least 100 characters.');
-      return;
-    }
-
-    const btn = document.getElementById('ideaSubmitStructureBtn');
-    const originalText = btn ? btn.innerHTML : '';
-    if (btn) {
-      btn.disabled = true;
-      btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${ideaT('idea_btn_structuring')}`;
-    }
-
-    try {
-      const curId = currentIdea?._id || currentIdea?.id;
-      if (!curId) {
-        const saved = await saveIdeaDraft(true);
-        if (!saved) return;
-      } else {
-        await saveIdeaDraft(true);
-      }
-
-      const activeId = currentIdea?._id || currentIdea?.id;
-      const res = await apiFetch(`/api/idea-council/ideas/${activeId}/structure`, {
-        method: 'POST'
-      });
-
-      if (res && res.success && res.data) {
-        currentIdea = { ...currentIdea, ...res.data };
-        populateStructuredCardForm(currentIdea.structuredCard || currentIdea.structuredIdea || {});
-        showIdeaView('card');
-      } else {
-        alert(res?.error || (currentLanguage === 'ar' ? 'فشل تنظيم بطاقة الفكرة.' : 'Failed to structure idea.'));
-      }
-    } catch (err) {
-      console.error('Error structuring idea:', err);
-      alert(currentLanguage === 'ar' ? 'حدث خطأ أثناء تنظيم الفكرة.' : 'Error structuring idea.');
-    } finally {
-      if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-      }
-    }
-  }
-
-  async function handleConveneCouncilSubmit(e) {
-    if (e) e.preventDefault();
-    const confirmCheck = document.getElementById('ideaConfirmCheckbox');
-    if (!confirmCheck || !confirmCheck.checked) {
-      alert(ideaT('idea_msg_confirm_checkbox_req'));
-      return;
-    }
-
-    const ideaId = currentIdea?._id || currentIdea?.id;
-    if (!ideaId) return;
-
-    const titleVal = document.getElementById('ideaCardFldTitle')?.value.trim() || '';
-    const pitchVal = document.getElementById('ideaCardFldPitch')?.value.trim() || '';
-    const customerVal = document.getElementById('ideaCardFldCustomer')?.value.trim() || '';
-    const revenueVal = document.getElementById('ideaCardFldRevenue')?.value.trim() || '';
-    const problemVal = document.getElementById('ideaCardFldProblem')?.value.trim() || '';
-    const solutionVal = document.getElementById('ideaCardFldSolution')?.value.trim() || '';
-    const valueVal = document.getElementById('ideaCardFldValue')?.value.trim() || '';
-    const altVal = document.getElementById('ideaCardFldAlternatives')?.value.trim() || '';
-    const questionVal = document.getElementById('ideaCardFldCoreQuestion')?.value.trim() || '';
-
-    const card = {
-      title: titleVal,
-      elevatorPitch: pitchVal,
-      targetCustomer: customerVal,
-      revenueModel: revenueVal,
-      businessModel: revenueVal,
-      coreProblem: problemVal,
-      problem: problemVal,
-      proposedSolution: solutionVal,
-      solution: solutionVal,
-      valueProposition: valueVal,
-      currentAlternatives: altVal,
-      alternatives: altVal,
-      coreEvaluationQuestion: questionVal,
-      criticalQuestion: questionVal
-    };
-
-    const btn = document.getElementById('ideaStartCouncilBtn');
-    const originalText = btn ? btn.innerHTML : '';
-    if (btn) {
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (currentLanguage === 'ar' ? 'جارٍ الاستدعاء...' : 'Convening...');
-    }
-
-    try {
-      await apiFetch(`/api/idea-council/ideas/${ideaId}/card`, {
-        method: 'PUT',
-        body: JSON.stringify(card)
-      });
-
-      const idempotencyKey = `convene-${ideaId}-${Date.now()}`;
-      const res = await apiFetch(`/api/idea-council/ideas/${ideaId}/convene`, {
-        method: 'POST',
-        headers: { 'Idempotency-Key': idempotencyKey },
-        body: JSON.stringify({ idempotencyKey })
-      });
-
-      const runId = res?.runId || res?.data?.runId;
-      if (res && res.success && runId) {
-        currentIdeaRunId = runId;
-        showIdeaView('session');
-        renderCouncilAgentsGrid([]);
-        startIdeaPolling(currentIdeaRunId);
-        loadIdeaCouncilUsage();
-      } else {
-        alert(res?.error || ideaT('idea_msg_quota_exceeded'));
-      }
-    } catch (err) {
-      console.error('Failed to convene council:', err);
-      alert(currentLanguage === 'ar' ? 'فشل استدعاء لجنة الأفكار.' : 'Failed to convene idea council.');
-    } finally {
-      if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-      }
-    }
-  }
-
-  function renderCouncilAgentsGrid(agents = []) {
-    const grid = document.getElementById('ideaAgentsGrid');
-    if (!grid) return;
-
-    grid.innerHTML = COUNCIL_MEMBERS.map(member => {
-      const agentResult = agents.find(a => a.role === member.key);
-      const status = agentResult?.status || 'PENDING';
-      const output = agentResult?.output;
-      const insight = output?.summary || agentResult?.keyInsight || agentResult?.recommendation || '';
-
-      const statusMap = {
-        PENDING: { label: currentLanguage === 'ar' ? 'بانتظار البدء' : 'Pending', color: 'var(--text-muted)', icon: 'fa-clock' },
-        RUNNING: { label: currentLanguage === 'ar' ? 'جارٍ التحليل...' : 'Analyzing...', color: 'var(--cyan)', icon: 'fa-spinner fa-spin' },
-        COMPLETED: { label: currentLanguage === 'ar' ? 'اكتمل' : 'Completed', color: 'var(--green)', icon: 'fa-check' },
-        FAILED: { label: currentLanguage === 'ar' ? 'فشل' : 'Failed', color: 'var(--red)', icon: 'fa-times' }
-      };
-
-      const sm = statusMap[status] || statusMap.PENDING;
-      const roleName = ideaT(member.labelKey, member.key);
-
-      return `
-        <div class="glass-card" style="padding:16px; display:flex; flex-direction:column; justify-content:space-between; border-inline-start:3px solid ${sm.color};">
-          <div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-              <div style="display:flex; align-items:center; gap:8px;">
-                <i class="fas ${member.icon}" style="color:var(--cyan); font-size:16px;"></i>
-                <strong style="font-size:13px; color:#fff;">${escapeIdeaHtml(roleName)}</strong>
-              </div>
-              <span style="font-size:11px; color:${sm.color}; display:flex; align-items:center; gap:4px;">
-                <i class="fas ${sm.icon}"></i> ${escapeIdeaHtml(sm.label)}
-              </span>
-            </div>
-            <p style="font-size:12px; color:var(--text-muted); margin:0; line-height:1.4;">
-              ${insight ? escapeIdeaHtml(insight) : (currentLanguage === 'ar' ? 'في انتظار فحص الفكرة والأدلة...' : 'Awaiting evidence inspection...')}
-            </p>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
-
-  function startIdeaPolling(runId) {
-    if (ideaPollTimer) clearInterval(ideaPollTimer);
-
-    const progressBar = document.getElementById('ideaSessionProgressBar');
-    const stageText = document.getElementById('ideaSessionStageText');
-
-    async function poll() {
-      try {
-        const res = await apiFetch(`/api/idea-council/runs/${runId}`);
-        if (!res || !res.success || !res.data) return;
-        const run = res.data;
-
-        let pct = 15;
-        let stg = ideaT('idea_step_research', 'Conducting live web market research...');
-
-        if (run.stage === 'RESEARCH') {
-          pct = 20;
-          stg = currentLanguage === 'ar' ? 'جارٍ إجراء البحث السوقي المباشر وجمع الأدلة...' : 'Conducting live web market research...';
-        } else if (run.stage === 'AGENT_ANALYSIS' || run.stage === 'ANALYSIS') {
-          const completed = (run.agents || []).filter(a => a.status === 'COMPLETED').length;
-          const total = run.stageProgress?.agentsTotal || (run.agents || []).length || 8;
-          pct = 25 + Math.round((completed / Math.max(1, total)) * 55);
-          stg = (currentLanguage === 'ar' ? 'أعضاء اللجنة يحللون الفكرة بالتوازي' : 'Council members analyzing in parallel') + ` (${completed}/${total})...`;
-        } else if (run.stage === 'SYNTHESIS') {
-          pct = 88;
-          stg = currentLanguage === 'ar' ? 'رئيس اللجنة يصيغ التقرير النهائي ولوحة الحقيقة...' : 'Chairperson synthesizing verdict and truth board...';
-        }
-
-        if (progressBar) progressBar.style.width = `${pct}%`;
-        if (stageText) stageText.textContent = stg;
-
-        renderCouncilAgentsGrid(run.agents || []);
-
-        if (run.status === 'COMPLETED' || run.status === 'PARTIAL') {
-          clearInterval(ideaPollTimer);
-          ideaPollTimer = null;
-          if (progressBar) progressBar.style.width = '100%';
-          setTimeout(async () => {
-            await openIdea(run.projectId);
-          }, 800);
-        } else if (run.status === 'FAILED') {
-          clearInterval(ideaPollTimer);
-          ideaPollTimer = null;
-          if (stageText) {
-            stageText.textContent = currentLanguage === 'ar' ? 'فشل تشغيل جلسة التقييم.' : 'Evaluation run failed.';
-            stageText.style.color = 'var(--red)';
-          }
-        }
-      } catch (err) {
-        console.error('Idea polling error:', err);
-      }
-    }
-
-    poll();
-    ideaPollTimer = setInterval(poll, 2000);
-  }
-
-  let activeIdeaRunId = null;
-
-  function renderRunsHistoryBar(runs = [], activeId = null) {
-    const historyBar = document.getElementById('ideaRoundsHistoryBar');
-    const buttonsContainer = document.getElementById('ideaRunsButtons');
-    const bannerEl = document.getElementById('ideaCurrentRoundBanner');
-    if (!historyBar || !buttonsContainer) return;
-
-    if (!Array.isArray(runs) || runs.length <= 1) {
-      historyBar.style.display = 'none';
-      return;
-    }
-
-    historyBar.style.display = 'flex';
-    buttonsContainer.innerHTML = '';
-
-    const followupTypeNames = {
-      DEFEND: { en: 'Defend', ar: 'دفاع' },
-      PIVOT: { en: 'Pivot', ar: 'تغيير مسار' },
-      VALIDATION_PLAN: { en: 'Test Plan', ar: 'خطة فحص' },
-      VOTE: { en: 'Vote', ar: 'تصويت' },
-      COMPARE: { en: 'Competitor', ar: 'مقارنة' },
-      MVP: { en: 'MVP Plan', ar: 'خطة MVP' }
-    };
-
-    let activeRunObj = null;
-
-    runs.forEach((run, idx) => {
-      const runId = run.runId || run._id;
-      const roundNum = run.roundNumber || (idx + 1);
-      const isSelected = String(runId) === String(activeId) || (!activeId && idx === runs.length - 1);
-      if (isSelected) activeRunObj = run;
-
-      let roundLabel = '';
-      if (idx === 0) {
-        roundLabel = currentLanguage === 'ar' ? 'الجولة 1 (التقييم الأولي)' : 'Round 1 (Initial)';
-      } else {
-        const typeInfo = followupTypeNames[run.followupType];
-        const typeLabel = typeInfo ? (currentLanguage === 'ar' ? typeInfo.ar : typeInfo.en) : (run.followupType || '');
-        const suffix = typeLabel ? ` (${typeLabel})` : '';
-        roundLabel = currentLanguage === 'ar' ? `الجولة ${roundNum}${suffix}` : `Round ${roundNum}${suffix}`;
-      }
-
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = `btn btn-sm ${isSelected ? 'btn-primary' : 'btn-secondary'}`;
-      btn.style.fontSize = '12px';
-      btn.style.padding = '6px 12px';
-      btn.innerHTML = `${isSelected ? '<i class="fas fa-check-circle" style="margin-inline-end:4px;"></i>' : ''}${escapeIdeaHtml(roundLabel)}`;
-      btn.addEventListener('click', () => {
-        renderIdeaReport(currentIdea, runId);
-      });
-      buttonsContainer.appendChild(btn);
-    });
-
-    const compareBtn = document.getElementById('ideaCompareRoundsBtn');
-    if (compareBtn) {
-      compareBtn.style.display = runs.length >= 2 ? 'inline-flex' : 'none';
-    }
-
-    if (bannerEl) {
-      if (activeRunObj && activeRunObj.followupPrompt) {
-        const promptSnippet = activeRunObj.followupPrompt.length > 70 ? activeRunObj.followupPrompt.slice(0, 70) + '...' : activeRunObj.followupPrompt;
-        bannerEl.innerHTML = `<span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'مدخلات الجولة:' : 'Round input:'}</span> <strong style="color:var(--cyan); font-weight:500;">"${escapeIdeaHtml(promptSnippet)}"</strong>`;
-      } else {
-        const isLatest = activeRunObj && runs.length > 0 && String(activeRunObj.runId || activeRunObj._id) === String(runs[runs.length - 1].runId || runs[runs.length - 1]._id);
-        bannerEl.innerHTML = isLatest 
-          ? `<span class="badge" style="background:rgba(16,185,129,0.15); color:var(--green); font-size:11px;">${currentLanguage === 'ar' ? 'أحدث جولة تقييم' : 'Latest Evaluation Round'}</span>`
-          : `<span class="badge" style="background:rgba(245,158,11,0.15); color:var(--orange); font-size:11px;">${currentLanguage === 'ar' ? 'أرشيف جولة سابقة' : 'Viewing Past Round'}</span>`;
-      }
-    }
-  }
-
-  function renderIdeaReport(idea, selectedRunId = null) {
-    currentIdea = idea;
-
-    // Resolve completed runs history
-    const runs = Array.isArray(idea.runs) && idea.runs.length > 0 ? idea.runs : (idea.latestRun ? [idea.latestRun] : []);
-
-    let currentRun = null;
-    if (selectedRunId) {
-      currentRun = runs.find(rn => String(rn.runId || rn._id) === String(selectedRunId));
-    }
-    if (!currentRun && activeIdeaRunId) {
-      currentRun = runs.find(rn => String(rn.runId || rn._id) === String(activeIdeaRunId));
-    }
-    if (!currentRun && runs.length > 0) {
-      currentRun = runs[runs.length - 1];
-    }
-
-    activeIdeaRunId = currentRun?.runId || currentRun?._id || idea.latestRunId || null;
-
-    renderRunsHistoryBar(runs, activeIdeaRunId);
-
-    const r = currentRun?.finalReport || idea.synthesisReport || {};
-
-    const vBadge = document.getElementById('ideaVerdictBadge');
-    if (vBadge) {
-      const vColors = {
-        BUILD: { bg: 'rgba(16, 185, 129, 0.2)', text: 'var(--green)', labelKey: 'idea_verdict_build' },
-        VALIDATE_FIRST: { bg: 'rgba(6, 182, 212, 0.2)', text: 'var(--cyan)', labelKey: 'idea_verdict_validate' },
-        PIVOT: { bg: 'rgba(245, 158, 11, 0.2)', text: 'var(--orange)', labelKey: 'idea_verdict_pivot' },
-        DO_NOT_BUILD: { bg: 'rgba(239, 68, 68, 0.2)', text: 'var(--red)', labelKey: 'idea_verdict_do_not_build' }
-      };
-      const vc = vColors[r.verdict] || vColors.VALIDATE_FIRST;
-      vBadge.style.background = vc.bg;
-      vBadge.style.color = vc.text;
-      vBadge.textContent = ideaT(vc.labelKey, r.verdict || 'VALIDATE_FIRST');
-    }
-
-    const titleEl = document.getElementById('ideaReportTitle');
-    if (titleEl) titleEl.textContent = r.summary || idea.structuredCard?.title || idea.title || '—';
-
-    const execEl = document.getElementById('ideaExecSummary');
-    if (execEl) execEl.textContent = r.executiveSummary || '—';
-
-    const explEl = document.getElementById('ideaVerdictExplanation');
-    if (explEl) explEl.textContent = r.verdictExplanation || '—';
-
-    const sevenDayEl = document.getElementById('idea7DayVerdictText');
-    if (sevenDayEl) {
-      sevenDayEl.textContent = r.sevenDayBuildVerdict?.recommendation || (r.sevenDayBuildVerdict?.canBuildIn7Days ? 'YES' : 'NO') || '—';
-    }
-
-    const oppEl = document.getElementById('ideaStrongestOpportunity');
-    if (oppEl) oppEl.textContent = r.strongestOpportunity || '—';
-
-    const riskEl = document.getElementById('ideaBiggestRisk');
-    if (riskEl) riskEl.textContent = r.biggestRisk || '—';
-
-    const assumpList = document.getElementById('ideaTopAssumptionsList');
-    if (assumpList) {
-      const items = Array.isArray(r.top3Assumptions) ? r.top3Assumptions : [];
-      assumpList.innerHTML = items.map(a => `<li>${escapeIdeaHtml(a)}</li>`).join('') || '<li>—</li>';
-    }
-
-    const questEl = document.getElementById('ideaCriticalQuestion');
-    if (questEl) questEl.textContent = r.criticalQuestionToSettle || r.criticalQuestion || '—';
-
-    const cutList = document.getElementById('ideaCutList');
-    if (cutList) {
-      const items = (Array.isArray(r.cutListForV1) && r.cutListForV1.length > 0)
-        ? r.cutListForV1
-        : (Array.isArray(r.killOrDeferList) ? r.killOrDeferList : []);
-      cutList.innerHTML = items.map(c => `<li>${escapeIdeaHtml(c)}</li>`).join('') || '<li>—</li>';
-    }
-
-    const vp = r.validationPlan || {};
-    const valFields = {
-      ideaValHypothesis: vp.coreHypothesis || vp.hypothesis || '—',
-      ideaValAudience: vp.targetAudience || vp.audience || '—',
-      ideaValChannel: vp.testingChannel || vp.channel || '—',
-      ideaValDuration: vp.suggestedDuration || vp.duration || '—',
-      ideaValMetric: vp.successMetric || vp.metric || '—',
-      ideaValStop: vp.stopCondition || vp.stopCriteria || '—'
-    };
-    Object.keys(valFields).forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = valFields[id];
-    });
-
-    const mvpList = document.getElementById('ideaMvpScopeList');
-    if (mvpList) {
-      let feats = [];
-      if (Array.isArray(r.sevenDayMvpScope)) {
-        feats = r.sevenDayMvpScope;
-      } else if (Array.isArray(r.sevenDayMvpScope?.coreFeatures)) {
-        feats = r.sevenDayMvpScope.coreFeatures;
-      }
-      mvpList.innerHTML = feats.map(f => `<li>${escapeIdeaHtml(f)}</li>`).join('') || '<li>—</li>';
-    }
-
-    const wedgeVal = r.sevenDayMvpScope?.uniqueWedge || r.uniqueWedge || '—';
-    const wedgeEl = document.getElementById('ideaUniqueWedge');
-    if (wedgeEl) wedgeEl.textContent = wedgeVal;
-
-    const firstVal = r.sevenDayMvpScope?.firstMomentOfValue || r.firstMomentOfValue || '';
-    const firstValEl = document.getElementById('ideaFirstMomentOfValue');
-    if (firstValEl) {
-      if (firstVal) {
-        firstValEl.textContent = currentLanguage === 'ar' ? `لحظة القيمة الأولى: ${firstVal}` : `First Moment: ${firstVal}`;
-      } else {
-        firstValEl.textContent = '';
-      }
-    }
-
-    const sourcesList = document.getElementById('ideaSourcesList');
-    if (sourcesList) {
-      const sources = Array.isArray(currentRun?.sourceReferences) && currentRun.sourceReferences.length > 0
-        ? currentRun.sourceReferences
-        : (Array.isArray(idea.marketResearchPack?.sources) ? idea.marketResearchPack.sources : (r.sources || []));
-      if (sources.length === 0) {
-        sourcesList.innerHTML = `<span style="font-size:12px; color:var(--text-muted);">${currentLanguage === 'ar' ? 'لا توجد مصادر خارجية مباشرة.' : 'No external web sources available.'}</span>`;
-      } else {
-        sourcesList.innerHTML = sources.map(s => `
-          <div style="font-size:12px; padding:8px 12px; background:rgba(255,255,255,0.02); border-radius:6px; border:1px solid var(--glass-border);">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <a href="${escapeIdeaHtml(s.url)}" target="_blank" rel="noopener" style="color:var(--cyan); font-weight:600;">
-                ${escapeIdeaHtml(s.title || s.url)}
-              </a>
-              <span class="badge" style="background:rgba(6,182,212,0.15); color:var(--cyan); font-size:10px;">${escapeIdeaHtml(s.credibilityScore || 'WEB')}</span>
-            </div>
-            ${s.snippet ? `<p style="margin:4px 0 0 0; color:var(--text-muted); font-size:11px;">${escapeIdeaHtml(s.snippet)}</p>` : ''}
-          </div>
-        `).join('');
-      }
-    }
-
-    const followCountEl = document.getElementById('ideaFollowupCountText');
-    const isSuperadmin = Boolean(ideaUsageData?.isSuperadmin || idea.isSuperadmin);
-    const roundsRem = isSuperadmin ? '∞' : (idea.followupRoundsRemaining ?? idea.followUpRoundsRemaining ?? Math.max(0, 3 - (idea.followupRoundsUsed || 0)));
-    if (followCountEl) followCountEl.textContent = roundsRem;
-
-    document.querySelectorAll('.idea-followup-btn').forEach(btn => {
-      btn.disabled = !isSuperadmin && (Number(roundsRem) <= 0);
-    });
-
-    const agents = currentRun?.agents || idea.agents || idea.latestRun?.agents || [];
-    renderUnitEconomics(r.unitEconomics);
-    renderCriticsBreakdown(agents);
-
-    const truthItems = currentRun?.truthBoard || idea.truthBoardItems || r.truthBoardItems || [];
-    renderTruthBoard(truthItems);
-  }
-
-  function renderCriticsBreakdown(agents = []) {
-    const container = document.getElementById('ideaCriticsBreakdownList');
-    if (!container) return;
-
-    if (!Array.isArray(agents) || agents.length === 0) {
-      container.innerHTML = `<div style="padding:16px; text-align:center; color:var(--text-muted); font-size:13px;">${currentLanguage === 'ar' ? 'لم يتم حفظ تقارير أعضاء اللجنة بعد.' : 'No council member critiques recorded yet.'}</div>`;
-      return;
-    }
-
-    const cardsHtml = COUNCIL_MEMBERS.map(member => {
-      const agent = agents.find(a => a.role === member.key);
-      const output = agent?.output || {};
-      const status = agent?.status || (output && Object.keys(output).length > 0 ? 'COMPLETED' : 'PENDING');
-      const roleTitle = ideaT(member.labelKey, member.key);
-      const roleDesc = ideaT(member.roleKey, '');
-
-      let metricsHtml = '';
-      if (member.key === 'COLD_CUSTOMER') {
-        metricsHtml = `
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:12px; font-size:12px;">
-            <div style="background:rgba(239, 68, 68, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(239, 68, 68, 0.2);">
-              <strong style="color:var(--red); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'سبب الرفض والتردد:' : 'Rejection Reason:'}</strong>
-              <span style="color:#e2e8f0;">${escapeIdeaHtml(output.rejectionReason || '—')}</span>
-            </div>
-            <div style="background:rgba(245, 158, 11, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(245, 158, 11, 0.2);">
-              <strong style="color:var(--orange); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'تكلفة التبديل والانتقال:' : 'Switching Cost:'}</strong>
-              <span style="color:#e2e8f0;">${escapeIdeaHtml(output.switchingCost || '—')}</span>
-            </div>
-            <div style="background:rgba(6, 182, 212, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(6, 182, 212, 0.2);">
-              <strong style="color:var(--cyan); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'محفز التجربة الحقيقي:' : 'Trigger to Try:'}</strong>
-              <span style="color:#e2e8f0;">${escapeIdeaHtml(output.triggerToTry || '—')}</span>
-            </div>
-            ${output.willingnessToPay ? `
-            <div style="background:rgba(16, 185, 129, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(16, 185, 129, 0.2);">
-              <strong style="color:var(--green); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'الاستعداد للدفع:' : 'Willingness to Pay:'}</strong>
-              <span style="color:#e2e8f0;">${escapeIdeaHtml(output.willingnessToPay)}</span>
-            </div>` : ''}
-          </div>
-        `;
-      } else if (member.key === 'HARSH_AUDITOR') {
-        const assumptions = Array.isArray(output.top3Assumptions) ? output.top3Assumptions : [];
-        const hardQuestions = Array.isArray(output.hardQuestions) ? output.hardQuestions : [];
-        metricsHtml = `
-          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
-            ${output.weakestLink ? `
-            <div style="background:rgba(239, 68, 68, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(239, 68, 68, 0.2);">
-              <strong style="color:var(--red);">${currentLanguage === 'ar' ? 'أضعف نقطة في المفهوم:' : 'Weakest Link:'}</strong>
-              <span style="color:#e2e8f0; margin-inline-start:4px;">${escapeIdeaHtml(output.weakestLink)}</span>
-            </div>` : ''}
-            ${assumptions.length > 0 ? `
-            <div>
-              <strong style="color:var(--orange); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'أخطر الافتراضات غير المثبتة:' : 'Deadliest Assumptions:'}</strong>
-              <ul style="margin:0; padding-inline-start:18px; color:#cbd5e1;">
-                ${assumptions.map(a => `<li>${escapeIdeaHtml(a)}</li>`).join('')}
-              </ul>
-            </div>` : ''}
-            ${hardQuestions.length > 0 ? `
-            <div>
-              <strong style="color:var(--cyan); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'أسئلة حاسمة تتطلب إثباتاً بالأرقام:' : 'Hard Questions to Settle:'}</strong>
-              <ul style="margin:0; padding-inline-start:18px; color:#cbd5e1;">
-                ${hardQuestions.map(q => `<li>${escapeIdeaHtml(q)}</li>`).join('')}
-              </ul>
-            </div>` : ''}
-          </div>
-        `;
-      } else if (member.key === 'EXECUTION_EXPERT') {
-        const mvpScope = Array.isArray(output.mvpScope7Days) ? output.mvpScope7Days : [];
-        const deferred = Array.isArray(output.deferredItems) ? output.deferredItems : [];
-        metricsHtml = `
-          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
-            <div style="display:flex; gap:12px; align-items:center;">
-              <span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'مستوى التعقيد الهندسي:' : 'Complexity Level:'}</span>
-              <span class="badge" style="background:rgba(6,182,212,0.15); color:var(--cyan); font-weight:700;">${escapeIdeaHtml(output.complexityLevel || 'MEDIUM')}</span>
-            </div>
-            ${mvpScope.length > 0 ? `
-            <div>
-              <strong style="color:var(--purple-light); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'نطاق MVP القابل للإطلاق خلال 7 أيام:' : '7-Day MVP Scope:'}</strong>
-              <ul style="margin:0; padding-inline-start:18px; color:#cbd5e1;">
-                ${mvpScope.map(item => `<li>${escapeIdeaHtml(item)}</li>`).join('')}
-              </ul>
-            </div>` : ''}
-            ${deferred.length > 0 ? `
-            <div>
-              <strong style="color:var(--text-muted); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'ما يجب حذفه/تأجيله خارج النسخة الأولى:' : 'Cut / Deferred for V1:'}</strong>
-              <ul style="margin:0; padding-inline-start:18px; color:var(--text-muted);">
-                ${deferred.map(item => `<li>${escapeIdeaHtml(item)}</li>`).join('')}
-              </ul>
-            </div>` : ''}
-          </div>
-        `;
-      } else if (member.key === 'MARKET_RESEARCHER') {
-        const directAlts = Array.isArray(output.directAlternatives) ? output.directAlternatives : [];
-        const indirectAlts = Array.isArray(output.indirectAlternatives) ? output.indirectAlternatives : [];
-        metricsHtml = `
-          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
-            <div style="display:flex; gap:12px; align-items:center;">
-              <span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'تشبع السوق:' : 'Market Saturation:'}</span>
-              <strong style="color:#fff;">${escapeIdeaHtml(output.marketSaturation || '—')}</strong>
-            </div>
-            ${directAlts.length > 0 ? `
-            <div>
-              <strong style="color:var(--cyan); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'المنافسون والبدائل المباشرة في السوق:' : 'Direct Market Competitors:'}</strong>
-              <div style="display:flex; flex-wrap:wrap; gap:6px;">
-                ${directAlts.map(alt => `<span class="badge" style="background:rgba(6,182,212,0.15); color:var(--cyan);">${escapeIdeaHtml(alt)}</span>`).join('')}
-              </div>
-            </div>` : ''}
-            ${indirectAlts.length > 0 ? `
-            <div>
-              <strong style="color:var(--text-muted); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'البدائل غير المباشرة وطرق العمل الحالية:' : 'Indirect Alternatives & Workarounds:'}</strong>
-              <div style="display:flex; flex-wrap:wrap; gap:6px;">
-                ${indirectAlts.map(alt => `<span class="badge" style="background:rgba(255,255,255,0.06); color:var(--text-muted);">${escapeIdeaHtml(alt)}</span>`).join('')}
-              </div>
-            </div>` : ''}
-          </div>
-        `;
-      } else if (member.key === 'DEVILS_ADVOCATE') {
-        const conditions = Array.isArray(output.failureConditions) ? output.failureConditions : [];
-        const warnings = Array.isArray(output.earlyWarningSigns) ? output.earlyWarningSigns : [];
-        metricsHtml = `
-          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
-            ${output.primaryFailureReason ? `
-            <div style="background:rgba(239, 68, 68, 0.1); border-radius:6px; padding:10px 12px; border:1px solid rgba(239, 68, 68, 0.3);">
-              <strong style="color:var(--red); display:block; margin-bottom:3px;">${currentLanguage === 'ar' ? 'السبب الجذري الأول الذي قد يقضي على المشروع:' : 'Primary Root Cause of Death:'}</strong>
-              <span style="color:#fff; font-weight:600;">${escapeIdeaHtml(output.primaryFailureReason)}</span>
-            </div>` : ''}
-            ${conditions.length > 0 ? `
-            <div>
-              <strong style="color:var(--red); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'شروط وسيناريوهات الفشل:' : 'Failure Conditions:'}</strong>
-              <ul style="margin:0; padding-inline-start:18px; color:#cbd5e1;">
-                ${conditions.map(c => `<li>${escapeIdeaHtml(c)}</li>`).join('')}
-              </ul>
-            </div>` : ''}
-            ${warnings.length > 0 ? `
-            <div>
-              <strong style="color:var(--orange); display:block; margin-bottom:4px;">${currentLanguage === 'ar' ? 'مؤشرات الخطر المبكرة:' : 'Early Warning Signs:'}</strong>
-              <ul style="margin:0; padding-inline-start:18px; color:#cbd5e1;">
-                ${warnings.map(w => `<li>${escapeIdeaHtml(w)}</li>`).join('')}
-              </ul>
-            </div>` : ''}
-          </div>
-        `;
-      } else if (member.key === 'WEDGE_HUNTER') {
-        metricsHtml = `
-          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
-            ${output.uniqueWedge ? `
-            <div style="background:rgba(168, 85, 247, 0.1); border-radius:6px; padding:10px 12px; border:1px solid rgba(168, 85, 247, 0.3);">
-              <strong style="color:var(--purple-light); display:block; margin-bottom:3px;">${currentLanguage === 'ar' ? 'زاوية الدخول الحادة (Unique Wedge):' : 'Unique Wedge Angle:'}</strong>
-              <span style="color:#fff;">${escapeIdeaHtml(output.uniqueWedge)}</span>
-            </div>` : ''}
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-              <div>
-                <strong style="color:var(--cyan); display:block;">${currentLanguage === 'ar' ? 'القابلية للدفاع ضد المنافسين:' : 'Defensibility Moat:'}</strong>
-                <span style="color:#cbd5e1;">${escapeIdeaHtml(output.defensibility || '—')}</span>
-              </div>
-              <div>
-                <strong style="color:var(--orange); display:block;">${currentLanguage === 'ar' ? 'سهولة وسرعة النسخ:' : 'Ease / Speed of Copying:'}</strong>
-                <span style="color:#cbd5e1;">${escapeIdeaHtml(output.easeOfCopying || '—')}</span>
-              </div>
-            </div>
-          </div>
-        `;
-      } else if (member.key === 'UX_DESIGNER') {
-        metricsHtml = `
-          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
-            ${output.firstMomentOfValue60s ? `
-            <div style="background:rgba(6, 182, 212, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(6, 182, 212, 0.2);">
-              <strong style="color:var(--cyan); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'أول لحظة قيمة في الـ 60 ثانية الأولى:' : 'First Moment of Value in 60s:'}</strong>
-              <span style="color:#fff;">${escapeIdeaHtml(output.firstMomentOfValue60s)}</span>
-            </div>` : ''}
-            ${output.biggestFriction ? `
-            <div style="background:rgba(239, 68, 68, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(239, 68, 68, 0.2);">
-              <strong style="color:var(--red); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'أكبر نقطة احتكاك أو تسرب للمستخدمين:' : 'Biggest Friction / Drop-off Point:'}</strong>
-              <span style="color:#e2e8f0;">${escapeIdeaHtml(output.biggestFriction)}</span>
-            </div>` : ''}
-          </div>
-        `;
-      } else if (member.key === 'CANDID_CHAMPION') {
-        metricsHtml = `
-          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:12px;">
-            ${output.coreStrength ? `
-            <div style="background:rgba(16, 185, 129, 0.08); border-radius:6px; padding:8px 10px; border:1px solid rgba(16, 185, 129, 0.2);">
-              <strong style="color:var(--green); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'الشرارة الحقيقية ونقطة القوة الجوهرية:' : 'Core Strength Worth Fighting For:'}</strong>
-              <span style="color:#fff;">${escapeIdeaHtml(output.coreStrength)}</span>
-            </div>` : ''}
-            ${output.reasonToProceed ? `
-            <div>
-              <strong style="color:var(--cyan); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'أقوى سبب للاستمرار وعدم التراجع:' : 'Single Best Reason to Proceed:'}</strong>
-              <span style="color:#cbd5e1;">${escapeIdeaHtml(output.reasonToProceed)}</span>
-            </div>` : ''}
-            ${output.indispensableAsset ? `
-            <div>
-              <strong style="color:var(--orange); display:block; margin-bottom:2px;">${currentLanguage === 'ar' ? 'الأصل الذي لا يمكن التنازل عنه:' : 'Indispensable Asset:'}</strong>
-              <span style="color:#cbd5e1;">${escapeIdeaHtml(output.indispensableAsset)}</span>
-            </div>` : ''}
-          </div>
-        `;
-      }
-
-      return `
-        <div class="glass-card" style="padding:16px 20px; border-inline-start:4px solid var(--cyan); background:rgba(15, 23, 42, 0.65);">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div style="width:36px; height:36px; border-radius:8px; background:rgba(6,182,212,0.12); display:flex; align-items:center; justify-content:center; color:var(--cyan); font-size:16px;">
-                <i class="fas ${member.icon}"></i>
-              </div>
-              <div>
-                <strong style="font-size:14px; color:#fff; display:block;">${escapeIdeaHtml(roleTitle)}</strong>
-                <span style="font-size:12px; color:var(--text-muted);">${escapeIdeaHtml(roleDesc)}</span>
-              </div>
-            </div>
-            ${(() => {
-              const isCarryover = Boolean(agent?.isFromPreviousRound);
-              let bLabel = currentLanguage === 'ar' ? 'اكتمل التحليل' : 'Analyzed';
-              let bBg = 'rgba(16, 185, 129, 0.15)';
-              let bColor = 'var(--green)';
-
-              if (status !== 'COMPLETED') {
-                bLabel = currentLanguage === 'ar' ? 'قيد المراجعة' : 'Pending';
-                bBg = 'rgba(245, 158, 11, 0.15)';
-                bColor = 'var(--orange)';
-              } else if (isCarryover) {
-                bLabel = currentLanguage === 'ar' ? 'الجولة السابقة' : 'Prior Round';
-                bBg = 'rgba(6, 182, 212, 0.15)';
-                bColor = 'var(--cyan)';
-              }
-
-              return `<span class="badge" style="background:${bBg}; color:${bColor}; font-size:11px;">${escapeIdeaHtml(bLabel)}</span>`;
-            })()}
-          </div>
-
-          ${metricsHtml}
-
-          ${output.summary ? `
-          <div style="border-top:1px solid var(--glass-border); padding-top:10px; margin-top:8px;">
-            <span style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:600; display:block; margin-bottom:4px;">
-              ${currentLanguage === 'ar' ? 'البيان النهائي للناقد:' : 'Full Critic Verdict:'}
-            </span>
-            <p style="font-size:13px; color:#f1f5f9; line-height:1.6; margin:0;">
-              ${escapeIdeaHtml(output.summary)}
-            </p>
-          </div>` : ''}
-        </div>
-      `;
-    }).join('');
-
-    container.innerHTML = cardsHtml;
-  }
-
-  function updateUnitEconomicsDisplay(currency = 'EGP') {
-    const aovInput = document.getElementById('ideaCalcRangeAov');
-    const marginInput = document.getElementById('ideaCalcRangeMargin');
-    const directInput = document.getElementById('ideaCalcRangeDirectCosts');
-    const fixedInput = document.getElementById('ideaCalcRangeFixedCosts');
-
-    if (!aovInput || !marginInput || !directInput || !fixedInput) return;
-
-    const aov = parseFloat(aovInput.value) || 0;
-    const marginPct = parseFloat(marginInput.value) || 0;
-    const directCosts = parseFloat(directInput.value) || 0;
-    const fixedCosts = parseFloat(fixedInput.value) || 0;
-
-    const valAov = document.getElementById('ideaCalcValAov');
-    const valMargin = document.getElementById('ideaCalcValMargin');
-    const valDirect = document.getElementById('ideaCalcValDirectCosts');
-    const valFixed = document.getElementById('ideaCalcValFixedCosts');
-
-    if (valAov) valAov.textContent = `${aov} ${currency}`;
-    if (valMargin) valMargin.textContent = `${marginPct}%`;
-    if (valDirect) valDirect.textContent = `${directCosts} ${currency}`;
-    if (valFixed) valFixed.textContent = `${fixedCosts.toLocaleString()} ${currency}`;
-
-    const grossMarginPerUnit = aov * (marginPct / 100);
-    const netContributionPerUnit = grossMarginPerUnit - directCosts;
-
-    const netEl = document.getElementById('ideaCalcNetContribution');
-    const beEl = document.getElementById('ideaCalcBreakevenOrders');
-    const dailyEl = document.getElementById('ideaCalcDailyOrders');
-    const riskBox = document.getElementById('ideaCalcFinancialRiskBox');
-    const riskText = document.getElementById('ideaCalcFinancialRiskText');
-
-    if (netEl) {
-      netEl.textContent = `${netContributionPerUnit >= 0 ? '+' : ''}${netContributionPerUnit.toFixed(1)} ${currency}`;
-      netEl.style.color = netContributionPerUnit > 0 ? 'var(--green)' : 'var(--red)';
-    }
-
-    if (netContributionPerUnit <= 0) {
-      if (beEl) {
-        beEl.textContent = '∞';
-        beEl.style.color = 'var(--red)';
-      }
-      if (dailyEl) {
-        dailyEl.textContent = '—';
-        dailyEl.style.color = 'var(--red)';
-      }
-      if (riskBox && riskText) {
-        riskBox.style.display = 'flex';
-        riskBox.style.background = 'rgba(239, 68, 68, 0.12)';
-        riskBox.style.borderColor = 'rgba(239, 68, 68, 0.4)';
-        riskText.textContent = currentLanguage === 'ar'
-          ? 'تحذير حرج: صافي المساهمة سالب! تخسر أموالاً في كل طلب قبل حساب المصاريف الثابتة.'
-          : 'Critical Warning: Negative contribution margin! You lose money on every order before overhead.';
-      }
-    } else {
-      const monthlyOrders = Math.ceil(fixedCosts / netContributionPerUnit);
-      const dailyOrders = Math.ceil(monthlyOrders / 30);
-
-      if (beEl) {
-        beEl.textContent = `${monthlyOrders.toLocaleString()} ${currentLanguage === 'ar' ? 'طلب/شهر' : 'orders/mo'}`;
-        beEl.style.color = 'var(--cyan)';
-      }
-      if (dailyEl) {
-        dailyEl.textContent = `${dailyOrders.toLocaleString()} ${currentLanguage === 'ar' ? 'طلب/يوم' : 'orders/day'}`;
-        dailyEl.style.color = 'var(--purple-light)';
-      }
-
-      if (riskBox && riskText) {
-        if (dailyOrders > 250) {
-          riskBox.style.display = 'flex';
-          riskBox.style.background = 'rgba(245, 158, 11, 0.12)';
-          riskBox.style.borderColor = 'rgba(245, 158, 11, 0.4)';
-          riskText.style.color = '#fca5a5';
-          riskText.textContent = currentLanguage === 'ar'
-            ? `مخاطرة حجم مرتفعة: تحتاج لأكثر من ${dailyOrders} طلب يومياً لتغطية النفقات الثابتة.`
-            : `High Volume Hurdle: Requires ${dailyOrders} orders daily just to break even on fixed costs.`;
-        } else {
-          riskBox.style.display = 'flex';
-          riskBox.style.background = 'rgba(16, 185, 129, 0.08)';
-          riskBox.style.borderColor = 'rgba(16, 185, 129, 0.3)';
-          riskText.style.color = 'var(--green)';
-          riskText.textContent = ideaT('idea_unit_econ_risk_none', 'Healthy margin profile at current parameters.');
-        }
-      }
-    }
-  }
-
-  function renderUnitEconomics(ueData = null) {
-    const card = document.getElementById('ideaUnitEconomicsCard');
-    if (!card) return;
-
-    const currency = ueData?.currency || 'EGP';
-    const badge = document.getElementById('ideaUnitEconCurrencyBadge');
-    if (badge) badge.textContent = currency;
-
-    const aovInput = document.getElementById('ideaCalcRangeAov');
-    const marginInput = document.getElementById('ideaCalcRangeMargin');
-    const directInput = document.getElementById('ideaCalcRangeDirectCosts');
-    const fixedInput = document.getElementById('ideaCalcRangeFixedCosts');
-
-    if (aovInput && typeof ueData?.averageOrderValue === 'number' && ueData.averageOrderValue > 0) aovInput.value = ueData.averageOrderValue;
-    if (marginInput && typeof ueData?.takeRatePercent === 'number' && ueData.takeRatePercent > 0) marginInput.value = ueData.takeRatePercent;
-    if (directInput && typeof ueData?.directCostsPerUnit === 'number') directInput.value = ueData.directCostsPerUnit;
-    if (fixedInput && typeof ueData?.estimatedMonthlyFixedCosts === 'number' && ueData.estimatedMonthlyFixedCosts > 0) fixedInput.value = ueData.estimatedMonthlyFixedCosts;
-
-    updateUnitEconomicsDisplay(currency);
-
-    if (!card.dataset.eventsBound) {
-      card.dataset.eventsBound = 'true';
-      ['ideaCalcRangeAov', 'ideaCalcRangeMargin', 'ideaCalcRangeDirectCosts', 'ideaCalcRangeFixedCosts'].forEach(id => {
-        const input = document.getElementById(id);
-        if (input) {
-          input.addEventListener('input', () => {
-            const currentCurrency = document.getElementById('ideaUnitEconCurrencyBadge')?.textContent || 'EGP';
-            updateUnitEconomicsDisplay(currentCurrency);
-          });
-        }
-      });
-    }
-
-    if (ueData?.keyFinancialRisk) {
-      const riskText = document.getElementById('ideaCalcFinancialRiskText');
-      const riskBox = document.getElementById('ideaCalcFinancialRiskBox');
-      if (riskText && riskBox) {
-        riskBox.style.display = 'flex';
-        riskText.textContent = ueData.keyFinancialRisk;
-      }
-    }
-  }
-
-  function openIdeaCompareModal() {
-    const modal = document.getElementById('ideaRoundsComparisonModal');
-    if (!modal) return;
-    const runs = Array.isArray(currentIdea?.runs) ? currentIdea.runs : [];
-    if (runs.length < 2) {
-      alert(ideaT('idea_compare_no_rounds'));
-      return;
-    }
-
-    const selectA = document.getElementById('ideaCompareSelectA');
-    const selectB = document.getElementById('ideaCompareSelectB');
-    if (selectA && selectB) {
-      selectA.innerHTML = '';
-      selectB.innerHTML = '';
-
-      runs.forEach((r, idx) => {
-        const roundNum = r.roundNumber || (idx + 1);
-        const label = idx === 0 
-          ? `${ideaT('idea_round_prefix', 'Round')} 1 (${currentLanguage === 'ar' ? 'التقييم الأولي' : 'Initial'})`
-          : `${ideaT('idea_round_prefix', 'Round')} ${roundNum} (${r.followupType || 'FOLLOW_UP'})`;
-        
-        const optA = document.createElement('option');
-        optA.value = r.runId || r._id;
-        optA.textContent = label;
-        selectA.appendChild(optA);
-
-        const optB = document.createElement('option');
-        optB.value = r.runId || r._id;
-        optB.textContent = label;
-        selectB.appendChild(optB);
-      });
-
-      selectA.value = runs[0].runId || runs[0]._id;
-      selectB.value = runs[runs.length - 1].runId || runs[runs.length - 1]._id;
-    }
-
-    const runA = runs[0];
-    const runB = runs[runs.length - 1];
-    renderRoundsComparison(runA, runB);
-
-    modal.classList.add('active');
-  }
-
-  function closeIdeaCompareModal() {
-    const modal = document.getElementById('ideaRoundsComparisonModal');
-    if (modal) modal.classList.remove('active');
-  }
-
-  function handleCompareSelectChange() {
-    const runs = Array.isArray(currentIdea?.runs) ? currentIdea.runs : [];
-    const valA = document.getElementById('ideaCompareSelectA')?.value;
-    const valB = document.getElementById('ideaCompareSelectB')?.value;
-
-    const runA = runs.find(r => String(r.runId || r._id) === String(valA));
-    const runB = runs.find(r => String(r.runId || r._id) === String(valB));
-
-    renderRoundsComparison(runA, runB);
-  }
-
-  function renderRoundsComparison(runA, runB) {
-    const container = document.getElementById('ideaCompareDeltaContent');
-    if (!container) return;
-
-    if (!runA || !runB) {
-      container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">${ideaT('idea_compare_no_rounds')}</div>`;
-      return;
-    }
-
-    const rA = runA.finalReport || {};
-    const rB = runB.finalReport || {};
-
-    const numA = runA.roundNumber || 1;
-    const numB = runB.roundNumber || 2;
-    const labelA = `${ideaT('idea_round_prefix', 'Round')} ${numA}`;
-    const labelB = `${ideaT('idea_round_prefix', 'Round')} ${numB}`;
-
-    const assumpA = Array.isArray(rA.top3Assumptions) ? rA.top3Assumptions : [];
-    const assumpB = Array.isArray(rB.top3Assumptions) ? rB.top3Assumptions : [];
-
-    const vpA = rA.validationPlan || {};
-    const vpB = rB.validationPlan || {};
-
-    let defenseHtml = '';
-    if (runB.followupPrompt) {
-      defenseHtml = `
-        <div class="glass-card" style="border-inline-start:3px solid var(--purple-light); padding:14px;">
-          <h4 style="font-size:13px; color:var(--purple-light); margin-bottom:6px;">
-            <i class="fas fa-shield-halved" style="margin-inline-end:6px;"></i>
-            ${ideaT('idea_compare_founder_defense', 'Founder Defense & Arguments')} (${labelB})
-          </h4>
-          <p style="font-size:13px; color:#fff; margin:0; line-height:1.5;">"${escapeIdeaHtml(runB.followupPrompt)}"</p>
-          ${runB.strategicAngles && runB.strategicAngles.length > 0 ? `
-            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
-              ${runB.strategicAngles.map(a => `<span class="badge" style="font-size:10px; background:rgba(124,58,237,0.2); color:var(--purple-light);">${escapeIdeaHtml(a)}</span>`).join('')}
-            </div>
-          ` : ''}
-        </div>
-      `;
-    }
-
-    container.innerHTML = `
-      ${defenseHtml}
-
-      <!-- Verdict Comparison -->
-      <div class="glass-card" style="padding:16px;">
-        <h4 style="font-size:13px; color:var(--cyan); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
-          <i class="fas fa-gavel"></i> ${ideaT('idea_compare_verdict', 'Executive Verdict')}
-        </h4>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <strong style="color:var(--text-muted); font-size:12px;">${escapeIdeaHtml(labelA)}</strong>
-              <span class="badge" style="background:rgba(6,182,212,0.15); color:var(--cyan); font-size:11px;">${escapeIdeaHtml(rA.verdict || '—')}</span>
-            </div>
-            <p style="font-size:12px; color:#e2e8f0; margin:0; line-height:1.5;">${escapeIdeaHtml(rA.verdictExplanation || rA.executiveSummary || '—')}</p>
-          </div>
-          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px; border-inline-start:3px solid var(--green);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <strong style="color:var(--text-muted); font-size:12px;">${escapeIdeaHtml(labelB)}</strong>
-              <span class="badge" style="background:rgba(16,185,129,0.15); color:var(--green); font-size:11px;">${escapeIdeaHtml(rB.verdict || '—')}</span>
-            </div>
-            <p style="font-size:12px; color:#e2e8f0; margin:0; line-height:1.5;">${escapeIdeaHtml(rB.verdictExplanation || rB.executiveSummary || '—')}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Assumptions Delta -->
-      <div class="glass-card" style="padding:16px;">
-        <h4 style="font-size:13px; color:var(--orange); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
-          <i class="fas fa-layer-group"></i> ${ideaT('idea_compare_assumptions', 'Assumptions Evolution')}
-        </h4>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px;">
-            <strong style="color:var(--text-muted); font-size:12px; display:block; margin-bottom:8px;">${escapeIdeaHtml(labelA)}</strong>
-            <ul style="padding-inline-start:18px; margin:0; font-size:12px; color:#e2e8f0;">
-              ${assumpA.map(a => `<li>${escapeIdeaHtml(a)}</li>`).join('') || '<li>—</li>'}
-            </ul>
-          </div>
-          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px; border-inline-start:3px solid var(--orange);">
-            <strong style="color:var(--text-muted); font-size:12px; display:block; margin-bottom:8px;">${escapeIdeaHtml(labelB)}</strong>
-            <ul style="padding-inline-start:18px; margin:0; font-size:12px; color:#e2e8f0;">
-              ${assumpB.map(a => `<li>${escapeIdeaHtml(a)}</li>`).join('') || '<li>—</li>'}
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <!-- Critical Question Delta -->
-      <div class="glass-card" style="padding:16px;">
-        <h4 style="font-size:13px; color:var(--cyan); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
-          <i class="fas fa-circle-question"></i> ${ideaT('idea_compare_question', 'Critical Question to Settle')}
-        </h4>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px;">
-            <strong style="color:var(--text-muted); font-size:12px; display:block; margin-bottom:6px;">${escapeIdeaHtml(labelA)}</strong>
-            <p style="font-size:12px; color:#e2e8f0; margin:0;">${escapeIdeaHtml(rA.criticalQuestionToSettle || rA.criticalQuestion || '—')}</p>
-          </div>
-          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px; border-inline-start:3px solid var(--cyan);">
-            <strong style="color:var(--text-muted); font-size:12px; display:block; margin-bottom:6px;">${escapeIdeaHtml(labelB)}</strong>
-            <p style="font-size:12px; color:#fff; font-weight:600; margin:0;">${escapeIdeaHtml(rB.criticalQuestionToSettle || rB.criticalQuestion || '—')}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Validation Plan Delta -->
-      <div class="glass-card" style="padding:16px;">
-        <h4 style="font-size:13px; color:var(--green); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
-          <i class="fas fa-vial"></i> ${ideaT('idea_compare_validation', 'Validation Plan Progression')}
-        </h4>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px; font-size:12px;">
-            <strong style="color:var(--text-muted); display:block; margin-bottom:6px;">${escapeIdeaHtml(labelA)}</strong>
-            <div><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'المدة المقترحة:' : 'Duration:'}</span> <strong style="color:var(--cyan);">${escapeIdeaHtml(vpA.suggestedDuration || vpA.duration || '—')}</strong></div>
-            <div style="margin-top:4px;"><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'معيار النجاح:' : 'Success Metric:'}</span> <span>${escapeIdeaHtml(vpA.successMetric || vpA.metric || '—')}</span></div>
-            <div style="margin-top:4px;"><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'شرط التوقف:' : 'Stop Condition:'}</span> <span>${escapeIdeaHtml(vpA.stopCondition || vpA.stopCriteria || '—')}</span></div>
-          </div>
-          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:8px; padding:12px; font-size:12px; border-inline-start:3px solid var(--green);">
-            <strong style="color:var(--text-muted); display:block; margin-bottom:6px;">${escapeIdeaHtml(labelB)}</strong>
-            <div><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'المدة المقترحة:' : 'Duration:'}</span> <strong style="color:var(--cyan);">${escapeIdeaHtml(vpB.suggestedDuration || vpB.duration || '—')}</strong></div>
-            <div style="margin-top:4px;"><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'معيار النجاح:' : 'Success Metric:'}</span> <strong style="color:var(--green);">${escapeIdeaHtml(vpB.successMetric || vpB.metric || '—')}</strong></div>
-            <div style="margin-top:4px;"><span style="color:var(--text-muted);">${currentLanguage === 'ar' ? 'شرط التوقف:' : 'Stop Condition:'}</span> <strong style="color:var(--red);">${escapeIdeaHtml(vpB.stopCondition || vpB.stopCriteria || '—')}</strong></div>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  function renderTruthBoard(items = []) {
-    const container = document.getElementById('truthBoardItemsList');
-    if (!container) return;
-
-    if (!items || items.length === 0) {
-      container.innerHTML = `<div style="font-size:13px; color:var(--text-muted); text-align:center; padding:20px;">${currentLanguage === 'ar' ? 'لا توجد عناصر مسجلة في لوحة الحقيقة.' : 'No truth items recorded yet.'}</div>`;
-      return;
-    }
-
-    const catColors = {
-      ASSUMPTION: { bg: 'rgba(168, 85, 247, 0.15)', text: 'var(--purple-light)', labelKey: 'idea_tb_cat_assumption' },
-      MARKET_FACT: { bg: 'rgba(59, 130, 246, 0.15)', text: 'var(--blue)', labelKey: 'idea_tb_cat_market_fact' },
-      VALIDATION_TEST: { bg: 'rgba(6, 182, 212, 0.15)', text: 'var(--cyan)', labelKey: 'idea_tb_cat_validation_test' },
-      CRITICAL_RISK: { bg: 'rgba(239, 68, 68, 0.15)', text: 'var(--red)', labelKey: 'idea_tb_cat_critical_risk' }
-    };
-
-    container.innerHTML = items.map(item => {
-      const itemId = item.id || item._id;
-      const category = item.category || item.type || 'ASSUMPTION';
-      const cc = catColors[category] || catColors.ASSUMPTION;
-      const catLabel = ideaT(cc.labelKey, category);
-      const currentStatus = item.status || item.workflowState || 'UNVERIFIED';
-
-      return `
-        <div class="glass-card truth-board-card" data-id="${escapeIdeaHtml(String(itemId))}" style="padding:14px; background:rgba(255,255,255,0.02);">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <span class="badge" style="background:${cc.bg}; color:${cc.text}; font-size:11px;">
-              ${escapeIdeaHtml(catLabel)}
-            </span>
-            <select class="form-control form-control-sm truth-item-status-select" data-id="${escapeIdeaHtml(String(itemId))}" style="width:auto; padding:4px 28px 4px 10px; font-size:11px; height:auto;">
-              <option value="UNVERIFIED" ${currentStatus === 'UNVERIFIED' || currentStatus === 'OPEN' ? 'selected' : ''}>${ideaT('idea_tb_status_open')}</option>
-              <option value="IN_PROGRESS" ${currentStatus === 'IN_PROGRESS' ? 'selected' : ''}>${ideaT('idea_tb_status_validating')}</option>
-              <option value="VALIDATED" ${currentStatus === 'VALIDATED' ? 'selected' : ''}>${ideaT('idea_tb_status_verified')}</option>
-              <option value="INVALIDATED" ${currentStatus === 'INVALIDATED' ? 'selected' : ''}>${ideaT('idea_tb_status_dismissed')}</option>
-              <option value="BLOCKED" ${currentStatus === 'BLOCKED' ? 'selected' : ''}>${ideaT('idea_tb_status_blocked')}</option>
-            </select>
-          </div>
-          <p style="font-size:13px; color:#fff; margin:0 0 10px 0; line-height:1.4;">${escapeIdeaHtml(item.statement || '')}</p>
-          <input type="text" class="form-control form-control-sm truth-item-notes-input" data-id="${escapeIdeaHtml(String(itemId))}" value="${escapeIdeaHtml(item.notes || item.userNotes || '')}" placeholder="${ideaT('idea_tb_notes_placeholder')}" style="font-size:11px; padding:6px 10px;" />
-        </div>
-      `;
-    }).join('');
-
-    container.querySelectorAll('.truth-item-status-select').forEach(sel => {
-      sel.addEventListener('change', async () => {
-        const id = sel.getAttribute('data-id');
-        await updateTruthItem(id, { status: sel.value, workflowState: sel.value }, sel);
-      });
-    });
-
-    container.querySelectorAll('.truth-item-notes-input').forEach(inp => {
-      inp.addEventListener('blur', async () => {
-        const id = inp.getAttribute('data-id');
-        await updateTruthItem(id, { notes: inp.value.trim(), userNotes: inp.value.trim() }, inp);
-      });
-    });
-  }
-
-  async function updateTruthItem(itemId, patchData, triggerEl) {
-    try {
-      const ideaId = currentIdea?._id || currentIdea?.id;
-      const url = ideaId
-        ? `/api/idea-council/ideas/${ideaId}/truth-items/${itemId}`
-        : `/api/idea-council/truth-items/${itemId}`;
-      const res = await apiFetch(url, {
-        method: 'PATCH',
-        body: JSON.stringify(patchData)
-      });
-      if (res && res.success && triggerEl) {
-        const card = triggerEl.closest('.truth-board-card');
-        if (card) {
-          card.style.borderColor = 'var(--green)';
-          setTimeout(() => { card.style.borderColor = ''; }, 1200);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to update truth item:', err);
-    }
-  }
-
-  let activeFollowupType = 'DEFEND';
-
-  function openIdeaFollowupModal(type = 'DEFEND') {
-    const modal = document.getElementById('ideaFollowupModal');
-    if (!modal) return;
-
-    const ideaId = currentIdea?._id || currentIdea?.id;
-    if (!ideaId) return;
-
-    const isSuperadmin = Boolean(ideaUsageData?.isSuperadmin || currentIdea?.isSuperadmin);
-    const roundsRem = isSuperadmin ? '∞' : (currentIdea.followupRoundsRemaining ?? currentIdea.followUpRoundsRemaining ?? Math.max(0, 3 - (currentIdea.followupRoundsUsed || 0)));
-    if (!isSuperadmin && Number(roundsRem) <= 0) {
-      alert(currentLanguage === 'ar' ? 'لقد استنفدت جميع جولات المتابعة المتاحة لهذه الفكرة (3 جولات).' : 'All 3 follow-up rounds used for this idea.');
-      return;
-    }
-
-    activeFollowupType = type || 'DEFEND';
-
-    // Update Round Badge
-    const roundBadge = document.getElementById('ideaFollowupRoundBadge');
-    if (roundBadge) {
-      const nextRound = (currentIdea.followupRoundsUsed || 0) + 2;
-      roundBadge.textContent = currentLanguage === 'ar' ? `الجولة ${nextRound}` : `Round ${nextRound}`;
-    }
-
-    // Update Rounds Left text
-    const roundsLeftEl = document.getElementById('ideaFollowupModalRoundsLeft');
-    if (roundsLeftEl) {
-      roundsLeftEl.textContent = roundsRem;
-    }
-
-    // Update active button in type grid
-    updateFollowupTypeButtons(activeFollowupType);
-
-    // Reset chips to inactive
-    document.querySelectorAll('.idea-strategy-chip').forEach(chip => {
-      chip.classList.remove('active');
-      chip.style.background = 'rgba(255,255,255,0.05)';
-      chip.style.borderColor = 'var(--glass-border)';
-      chip.style.color = '#e2e8f0';
-      chip.style.fontWeight = 'normal';
-    });
-
-    // Reset prompt and inputs
-    const promptInput = document.getElementById('ideaFollowupPromptInput');
-    const evidenceInput = document.getElementById('ideaFollowupEvidenceInput');
-    const charCount = document.getElementById('ideaFollowupCharCount');
-    const criticSelect = document.getElementById('ideaFollowupTargetCritic');
-    const modeSelect = document.getElementById('ideaFollowupReviewMode');
-
-    if (promptInput) promptInput.value = '';
-    if (evidenceInput) evidenceInput.value = '';
-    if (charCount) charCount.textContent = '0';
-    if (criticSelect) criticSelect.value = 'ALL';
-    if (modeSelect) modeSelect.value = 'BALANCED';
-
-    modal.classList.add('active');
-    if (promptInput) setTimeout(() => promptInput.focus(), 100);
-  }
-
-  function closeIdeaFollowupModal() {
-    const modal = document.getElementById('ideaFollowupModal');
-    if (modal) modal.classList.remove('active');
-  }
-
-  function updateFollowupTypeButtons(selectedType) {
-    activeFollowupType = selectedType;
-    document.querySelectorAll('.idea-fup-type-btn').forEach(btn => {
-      const btnType = btn.getAttribute('data-type');
-      if (btnType === selectedType) {
-        btn.classList.add('active');
-        btn.style.background = 'rgba(124, 58, 237, 0.25)';
-        btn.style.borderColor = 'var(--purple-light)';
-        btn.style.color = '#fff';
-      } else {
-        btn.classList.remove('active');
-        btn.style.background = '';
-        btn.style.borderColor = '';
-        btn.style.color = '';
-      }
-    });
-
-    const iconEl = document.getElementById('ideaFollowupModalIcon');
-    if (iconEl) {
-      const iconMap = {
-        DEFEND: 'fa-shield-halved',
-        PIVOT: 'fa-shuffle',
-        VALIDATION_PLAN: 'fa-vial',
-        VOTE: 'fa-check-to-slot',
-        COMPARE: 'fa-code-compare',
-        MVP: 'fa-rocket'
-      };
-      iconEl.className = `fas ${iconMap[selectedType] || 'fa-shield-halved'}`;
-    }
-  }
-
-  async function submitFollowupModal() {
-    const ideaId = currentIdea?._id || currentIdea?.id;
-    if (!ideaId) return;
-
-    const promptInput = document.getElementById('ideaFollowupPromptInput');
-    const evidenceInput = document.getElementById('ideaFollowupEvidenceInput');
-    const criticSelect = document.getElementById('ideaFollowupTargetCritic');
-    const modeSelect = document.getElementById('ideaFollowupReviewMode');
-    const submitBtn = document.getElementById('ideaFollowupSubmitBtn');
-
-    const mainDefense = promptInput ? promptInput.value.trim() : '';
-    const selectedChips = Array.from(document.querySelectorAll('.idea-strategy-chip.active')).map(c => c.textContent.trim());
-
-    if (!mainDefense && selectedChips.length === 0) {
-      alert(ideaT('idea_followup_err_empty'));
-      if (promptInput) promptInput.focus();
-      return;
-    }
-
-    const criticLabel = criticSelect ? criticSelect.options[criticSelect.selectedIndex].text : '';
-    const modeLabel = modeSelect ? modeSelect.options[modeSelect.selectedIndex].text : '';
-    const extraEvidence = evidenceInput ? evidenceInput.value.trim() : '';
-
-    const parts = [];
-    if (selectedChips.length > 0) {
-      parts.push(`[Strategic Angles / ميزات استراتيجية]: ${selectedChips.join(' | ')}`);
-    }
-    if (criticSelect && criticSelect.value !== 'ALL') {
-      parts.push(`[Target Critic Focus / الناقد المستهدف]: ${criticLabel}`);
-    }
-    if (modeLabel) {
-      parts.push(`[Review Tone / أسلوب المراجعة]: ${modeLabel}`);
-    }
-    if (extraEvidence) {
-      parts.push(`[Extra Evidence / أدلة وأرقام إضافية]: ${extraEvidence}`);
-    }
-    if (mainDefense) {
-      parts.push(`[Founder Defense & Details / حجج وتفاصيل المؤسس]:\n${mainDefense}`);
-    }
-
-    const combinedPrompt = parts.join('\n\n');
-
-    const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-inline-end:6px;"></i> ' + (currentLanguage === 'ar' ? 'جارٍ الإطلاق...' : 'Launching...');
-    }
-
-    try {
-      const idempotencyKey = `followup-${ideaId}-${Date.now()}`;
-      const res = await apiFetch(`/api/idea-council/ideas/${ideaId}/follow-up`, {
-        method: 'POST',
-        headers: { 'Idempotency-Key': idempotencyKey },
-        body: JSON.stringify({
-          type: activeFollowupType,
-          followupType: activeFollowupType,
-          targetCritic: criticSelect ? criticSelect.value : 'ALL',
-          userPrompt: combinedPrompt,
-          followupPrompt: combinedPrompt,
-          idempotencyKey
-        })
-      });
-
-      const runId = res?.runId || res?.data?.runId;
-      if (res && res.success && runId) {
-        closeIdeaFollowupModal();
-        currentIdeaRunId = runId;
-        showIdeaView('session');
-        renderCouncilAgentsGrid([]);
-        startIdeaPolling(currentIdeaRunId);
-        loadIdeaCouncilUsage();
-      } else if (res && res.success && res.data) {
-        closeIdeaFollowupModal();
-        currentIdea = res.data;
-        renderIdeaReport(currentIdea);
-      } else {
-        alert(res?.error || res?.message || (currentLanguage === 'ar' ? 'فشل تنفيذ جولة المتابعة.' : 'Failed to run follow-up round.'));
-      }
-    } catch (err) {
-      console.error('Follow-up submit error:', err);
-      alert(currentLanguage === 'ar' ? 'حدث خطأ أثناء تنفيذ جولة المتابعة.' : 'Error during follow-up round.');
-    } finally {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnHtml;
-      }
-    }
-  }
-
-  function handleFollowUpClick(type) {
-    openIdeaFollowupModal(type);
-  }
-
-  async function exportIdeaReport(format) {
-    if (!currentIdea || !currentIdea._id) return;
-    try {
-      const token = getToken();
-      const res = await fetch(`/api/idea-council/ideas/${currentIdea._id}/export?format=${format}`, {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      });
-      if (!res.ok) throw new Error('Export failed');
-      const blob = await res.blob();
-      if (format === 'html') {
-        const url = window.URL.createObjectURL(blob);
-        const printWin = window.open(url, '_blank');
-        if (printWin) printWin.focus();
-      } else {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        const filename = (currentIdea.structuredCard?.title || currentIdea.title || 'idea_report')
-          .replace(/[^a-zA-Z0-9_\u0600-\u06FF]/g, '_') + '.md';
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-      }
-    } catch (err) {
-      console.error('Export error:', err);
-      alert(currentLanguage === 'ar' ? 'فشل تصدير التقرير.' : 'Failed to export report.');
-    }
-  }
-
-  function initIdeaCouncil() {
-    const ideaNewBtn = document.getElementById('ideaNewBtn');
-    if (ideaNewBtn) {
-      ideaNewBtn.addEventListener('click', () => {
-        if (ideaUsageData && !ideaUsageData.isSuperadmin && !ideaUsageData.isUnlimited && Number(ideaUsageData.ideasRemaining) <= 0) {
-          alert(ideaT('idea_msg_quota_exceeded'));
-          return;
-        }
-        currentIdea = null;
-        currentIdeaRunId = null;
-        const rawEl = document.getElementById('ideaRawText');
-        const mktEl = document.getElementById('ideaTargetMarket');
-        const audEl = document.getElementById('ideaTargetAudience');
-        const conEl = document.getElementById('ideaPrimaryConcern');
-        const langEl = document.getElementById('ideaOutputLang');
-
-        if (rawEl) rawEl.value = '';
-        if (mktEl) mktEl.value = '';
-        if (audEl) audEl.value = '';
-        if (conEl) conEl.value = '';
-        if (langEl) langEl.value = currentLanguage === 'en' ? 'en' : 'ar';
-        updateIdeaCharCount();
-        showIdeaView('input');
-      });
-    }
-
-    const cancelInputBtn = document.getElementById('ideaCancelInputBtn');
-    if (cancelInputBtn) {
-      cancelInputBtn.addEventListener('click', () => {
-        showIdeaView('list');
-        loadIdeaCouncilList(ideaCurrentFilter);
-      });
-    }
-
-    const rawTextEl = document.getElementById('ideaRawText');
-    if (rawTextEl) {
-      rawTextEl.addEventListener('input', () => {
-        updateIdeaCharCount();
-        clearTimeout(ideaAutoSaveTimer);
-        const len = rawTextEl.value.length;
-        if (len >= 100 && len <= 8000) {
-          ideaAutoSaveTimer = setTimeout(() => {
-            saveIdeaDraft(true);
-          }, 2000);
-        }
-      });
-    }
-
-    const saveDraftBtn = document.getElementById('ideaSaveDraftBtn');
-    if (saveDraftBtn) {
-      saveDraftBtn.addEventListener('click', () => {
-        saveIdeaDraft(false);
-      });
-    }
-
-    const createForm = document.getElementById('ideaCreateForm');
-    if (createForm) {
-      createForm.addEventListener('submit', handleIdeaStructureSubmit);
-    }
-
-    const cardBackBtn = document.getElementById('ideaCardBackBtn');
-    if (cardBackBtn) {
-      cardBackBtn.addEventListener('click', () => {
-        showIdeaView('list');
-        loadIdeaCouncilList(ideaCurrentFilter);
-      });
-    }
-
-    const saveCardBtn = document.getElementById('ideaSaveCardBtn');
-    if (saveCardBtn) {
-      saveCardBtn.addEventListener('click', async () => {
-        if (!currentIdea || !currentIdea._id) return;
-        const titleVal = document.getElementById('ideaCardFldTitle')?.value.trim() || '';
-        const pitchVal = document.getElementById('ideaCardFldPitch')?.value.trim() || '';
-        const customerVal = document.getElementById('ideaCardFldCustomer')?.value.trim() || '';
-        const revenueVal = document.getElementById('ideaCardFldRevenue')?.value.trim() || '';
-        const problemVal = document.getElementById('ideaCardFldProblem')?.value.trim() || '';
-        const solutionVal = document.getElementById('ideaCardFldSolution')?.value.trim() || '';
-        const valueVal = document.getElementById('ideaCardFldValue')?.value.trim() || '';
-        const altVal = document.getElementById('ideaCardFldAlternatives')?.value.trim() || '';
-        const questionVal = document.getElementById('ideaCardFldCoreQuestion')?.value.trim() || '';
-
-        const card = {
-          title: titleVal,
-          elevatorPitch: pitchVal,
-          targetCustomer: customerVal,
-          revenueModel: revenueVal,
-          businessModel: revenueVal,
-          coreProblem: problemVal,
-          problem: problemVal,
-          proposedSolution: solutionVal,
-          solution: solutionVal,
-          valueProposition: valueVal,
-          currentAlternatives: altVal,
-          alternatives: altVal,
-          coreEvaluationQuestion: questionVal,
-          criticalQuestion: questionVal
-        };
-        try {
-          await apiFetch(`/api/idea-council/ideas/${currentIdea._id}/card`, {
-            method: 'PUT',
-            body: JSON.stringify(card)
-          });
-          alert(ideaT('idea_msg_card_saved'));
-        } catch (err) {
-          console.error('Failed to save card:', err);
-        }
-      });
-    }
-
-    const cardEditForm = document.getElementById('ideaCardEditForm');
-    if (cardEditForm) {
-      cardEditForm.addEventListener('submit', handleConveneCouncilSubmit);
-    }
-
-    const reportBackBtn = document.getElementById('ideaReportBackBtn');
-    if (reportBackBtn) {
-      reportBackBtn.addEventListener('click', () => {
-        showIdeaView('list');
-        loadIdeaCouncilList(ideaCurrentFilter);
-      });
-    }
-
-    const exportMdBtn = document.getElementById('ideaExportMdBtn');
-    if (exportMdBtn) {
-      exportMdBtn.addEventListener('click', () => exportIdeaReport('markdown'));
-    }
-
-    const exportPdfBtn = document.getElementById('ideaExportPdfBtn');
-    if (exportPdfBtn) {
-      exportPdfBtn.addEventListener('click', () => exportIdeaReport('html'));
-    }
-
-    document.querySelectorAll('.idea-filter-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.idea-filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const st = btn.getAttribute('data-status') || 'ALL';
-        loadIdeaCouncilList(st);
-      });
-    });
-
-    document.querySelectorAll('.idea-followup-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const type = btn.getAttribute('data-type');
-        handleFollowUpClick(type);
-      });
-    });
-
-    document.querySelectorAll('.idea-followup-modal-close').forEach(btn => {
-      btn.addEventListener('click', closeIdeaFollowupModal);
-    });
-
-    const followupModalEl = document.getElementById('ideaFollowupModal');
-    if (followupModalEl) {
-      followupModalEl.addEventListener('click', (e) => {
-        if (e.target === followupModalEl) closeIdeaFollowupModal();
-      });
-    }
-
-    document.querySelectorAll('.idea-strategy-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        chip.classList.toggle('active');
-        if (chip.classList.contains('active')) {
-          chip.style.background = 'rgba(6, 182, 212, 0.2)';
-          chip.style.borderColor = 'var(--cyan)';
-          chip.style.color = 'var(--cyan)';
-          chip.style.fontWeight = '600';
-        } else {
-          chip.style.background = 'rgba(255, 255, 255, 0.05)';
-          chip.style.borderColor = 'var(--glass-border)';
-          chip.style.color = '#e2e8f0';
-          chip.style.fontWeight = 'normal';
-        }
-      });
-    });
-
-    document.querySelectorAll('.idea-fup-type-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const btnType = btn.getAttribute('data-type');
-        updateFollowupTypeButtons(btnType);
-      });
-    });
-
-    const followupPromptInput = document.getElementById('ideaFollowupPromptInput');
-    const followupCharCount = document.getElementById('ideaFollowupCharCount');
-    if (followupPromptInput && followupCharCount) {
-      followupPromptInput.addEventListener('input', () => {
-        followupCharCount.textContent = followupPromptInput.value.length;
-      });
-    }
-
-    const followupSubmitBtn = document.getElementById('ideaFollowupSubmitBtn');
-    if (followupSubmitBtn) {
-      followupSubmitBtn.addEventListener('click', submitFollowupModal);
-    }
-
-    const compareBtn = document.getElementById('ideaCompareRoundsBtn');
-    if (compareBtn) {
-      compareBtn.addEventListener('click', openIdeaCompareModal);
-    }
-
-    document.querySelectorAll('.idea-compare-modal-close').forEach(btn => {
-      btn.addEventListener('click', closeIdeaCompareModal);
-    });
-
-    const compareModalEl = document.getElementById('ideaRoundsComparisonModal');
-    if (compareModalEl) {
-      compareModalEl.addEventListener('click', (e) => {
-        if (e.target === compareModalEl) closeIdeaCompareModal();
-      });
-    }
-
-    const compareSelectA = document.getElementById('ideaCompareSelectA');
-    if (compareSelectA) {
-      compareSelectA.addEventListener('change', handleCompareSelectChange);
-    }
-
-    const compareSelectB = document.getElementById('ideaCompareSelectB');
-    if (compareSelectB) {
-      compareSelectB.addEventListener('change', handleCompareSelectChange);
-    }
   }
 
   // Expose minimal hooks for settings-summary module
@@ -7385,10 +7301,22 @@
     return digits;
   }
 
+  let subscriptionConfigSnapshot = null;
+  let subscriptionConfigRequest = null;
   async function refreshSubscriptionMeta() {
     try {
-      const res = await fetch('/api/config');
-      const cfg = res.ok ? await res.json() : {};
+      // C03: memoize /api/config so language switches (and concurrent calls)
+      // re-paint from cache with zero new requests. Boot warms the cache.
+      if (!subscriptionConfigSnapshot) {
+        if (!subscriptionConfigRequest) {
+          subscriptionConfigRequest = fetch('/api/config')
+            .then((res) => (res.ok ? res.json() : {}))
+            .catch(() => ({}));
+        }
+        subscriptionConfigSnapshot = await subscriptionConfigRequest;
+        subscriptionConfigRequest = null;
+      }
+      const cfg = subscriptionConfigSnapshot || {};
       const num = normalizeWhatsappNumber(cfg.subscribeWhatsapp || '');
       const link = document.getElementById('subscriptionWhatsappLink');
       if (link) {
@@ -7404,22 +7332,34 @@
     paintSelectedPlan();
   }
 
+  // D08a: own requests list with clear loading/error/empty states — a load
+  // failure renders an error row with a manual retry, never a silent empty.
   async function loadMySubscriptionRequests() {
     const body = document.getElementById('mySubscriptionRequestsBody');
-    if (!body) return;
+    if (!body) return false;
+    const t = translations[currentLanguage] || translations.en;
+    body.replaceChildren();
+    const loadingTr = document.createElement('tr');
+    const loadingTd = document.createElement('td');
+    loadingTd.colSpan = 5;
+    loadingTd.style.cssText = 'padding:14px; text-align:center; color:var(--text-muted);';
+    loadingTd.textContent = t.admin_subs_loading;
+    loadingTr.appendChild(loadingTd);
+    body.appendChild(loadingTr);
     try {
-      const res = await apiFetch('/api/subscriptions/mine');
-      const rows = (res && res.data) || [];
+      const res = await dashboardRequest('/api/subscriptions/mine');
+      if (!(res && res.success)) throw new Error('My requests unavailable');
+      const rows = res.data || [];
       body.replaceChildren();
       if (!rows.length) {
         const tr = document.createElement('tr');
         const td = document.createElement('td');
         td.colSpan = 5;
         td.style.cssText = 'padding:14px; text-align:center; color:var(--text-muted);';
-        td.textContent = currentLanguage === 'ar' ? 'لا توجد طلبات بعد.' : 'No requests yet.';
+        td.textContent = t.subscription_my_requests_empty;
         tr.appendChild(td);
         body.appendChild(tr);
-        return;
+        return true;
       }
       rows.forEach(function (r) {
         const tr = document.createElement('tr');
@@ -7431,48 +7371,116 @@
         });
         body.appendChild(tr);
       });
-    } catch (e) {}
+      return true;
+    } catch (e) {
+      console.error('loadMySubscriptionRequests_error', e);
+      body.replaceChildren();
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 5;
+      td.style.cssText = 'padding:14px; text-align:center; color:var(--red);';
+      td.textContent = t.subscription_list_error + ' ';
+      const retry = document.createElement('button');
+      retry.className = 'btn btn-sm btn-secondary';
+      retry.type = 'button';
+      retry.textContent = t.feedback_retry;
+      retry.addEventListener('click', () => loadMySubscriptionRequests());
+      td.appendChild(retry);
+      tr.appendChild(td);
+      body.appendChild(tr);
+      return false;
+    }
   }
 
   document.getElementById('subscriptionRequestForm')?.addEventListener('submit', async function (ev) {
     ev.preventDefault();
+    const t = translations[currentLanguage] || translations.en;
     if (selectedPlanTier === 'free') {
-      alert(currentLanguage === 'ar' ? 'أنت بالفعل على الباقة المجانية.' : 'You are already on the free plan.');
+      alert(t.subscription_already_free);
       return;
     }
-    const payload = {
-      tier: selectedPlanTier,
-      billingPeriod: document.getElementById('subBillingPeriod')?.value || 'monthly',
-      paymentMethod: document.getElementById('subPaymentMethod')?.value || 'instapay',
-      paymentReference: document.getElementById('subPaymentReference')?.value || '',
-    };
-    const res = await apiFetch('/api/subscriptions/request', { method: 'POST', body: JSON.stringify(payload) });
-    if (res && res.success) {
-      alert(currentLanguage === 'ar' ? 'تم إرسال طلبك بنجاح. تواصل واتساب بصورة التحويل للتفعيل.' : 'Request sent. Contact us on WhatsApp with your receipt to activate.');
-      document.getElementById('subPaymentReference').value = '';
-      loadMySubscriptionRequests();
-    } else {
-      alert((res && (res.message || res.error)) || (currentLanguage === 'ar' ? 'تعذر إرسال الطلب' : 'Could not submit request'));
+    // D08b: submit guard — one in-flight POST (Enter+click = ONE request).
+    // The payment reference clears ONLY on a confirmed success; on conflict,
+    // timeout, or unknown outcome it is retained and reconciled via GET.
+    const core = window.ZainBotRequest;
+    const run = core && typeof core.runExclusive === 'function'
+      ? (k, op) => core.runExclusive(k, op)
+      : (k, op) => op();
+    const feedback = window.ZainBotFeedback;
+    const submitBtn = document.querySelector('#subscriptionRequestForm [type="submit"]');
+    const guarded = feedback && typeof feedback.withPending === 'function' && submitBtn
+      ? () => feedback.withPending('subscription-request', [submitBtn], () => postSubscriptionRequest())
+      : () => postSubscriptionRequest();
+    try {
+      await run('subscription-request', guarded);
+    } catch (err) {
+      console.error(err);
+    }
+
+    async function postSubscriptionRequest() {
+      const refEl = document.getElementById('subPaymentReference');
+      const payload = {
+        tier: selectedPlanTier,
+        billingPeriod: document.getElementById('subBillingPeriod')?.value || 'monthly',
+        paymentMethod: document.getElementById('subPaymentMethod')?.value || 'instapay',
+        paymentReference: refEl?.value || '',
+      };
+      try {
+        const res = await dashboardRequest('/api/subscriptions/request', { method: 'POST', body: JSON.stringify(payload) }, { operation: 'mutation' });
+        if (res && res.success) {
+          alert(t.subscription_request_sent);
+          if (refEl) refEl.value = '';
+          await loadMySubscriptionRequests();
+          return;
+        }
+        alert((res && (res.message || res.error)) || t.subscription_request_failed);
+      } catch (err) {
+        console.error('subscription_request_error', err);
+        if (err && (err.code === 'PENDING_REQUEST_EXISTS' || err.status === 409)) {
+          // A pending request already exists: show its state, reconcile via
+          // GET — never re-POST.
+          alert(t.subscription_request_pending);
+          await loadMySubscriptionRequests();
+        } else if (err && (err.kind === 'timeout' || err.kind === 'network')) {
+          // Outcome unknown after a mutation: the reference is retained and
+          // the list reconciles via GET — never a blind re-POST.
+          alert(t.subscription_request_unknown);
+          await loadMySubscriptionRequests();
+        } else {
+          alert((err && err.message) || t.subscription_request_failed);
+        }
+      }
     }
   });
 
+  // D08a: admin requests list with clear loading/error/empty states.
   async function loadAdminSubs() {
     const body = document.getElementById('adminSubsTableBody');
-    if (!body) return;
+    if (!body) return false;
+    const t = translations[currentLanguage] || translations.en;
     const status = document.getElementById('adminSubsStatusFilter')?.value || '';
+    body.replaceChildren();
+    const loadingTr = document.createElement('tr');
+    const loadingTd = document.createElement('td');
+    loadingTd.colSpan = 6;
+    loadingTd.style.cssText = 'padding:20px; text-align:center; color:var(--text-muted);';
+    loadingTd.textContent = t.admin_subs_loading;
+    loadingTr.appendChild(loadingTd);
+    body.appendChild(loadingTr);
     try {
-      const res = await apiFetch('/api/subscriptions/requests' + (status ? '?status=' + encodeURIComponent(status) : ''));
-      const rows = (res && res.data) || [];
+      const res = await dashboardRequest('/api/subscriptions/requests' + (status ? '?status=' + encodeURIComponent(status) : ''));
+      if (!(res && res.success)) throw new Error('Admin requests unavailable');
+      const rows = res.data || [];
       body.replaceChildren();
       if (!rows.length) {
         const tr = document.createElement('tr');
         const td = document.createElement('td');
         td.colSpan = 6;
         td.style.cssText = 'padding:20px; text-align:center; color:var(--text-muted);';
-        td.textContent = currentLanguage === 'ar' ? 'لا توجد طلبات.' : 'No requests.';
+        td.textContent = t.subscription_admin_empty;
         tr.appendChild(td);
         body.appendChild(tr);
-        return;
+        return true;
       }
       rows.forEach(function (r) {
         const tr = document.createElement('tr');
@@ -7489,20 +7497,16 @@
         if (r.status === 'pending') {
           const ok = document.createElement('button');
           ok.className = 'btn btn-primary btn-sm';
-          ok.textContent = currentLanguage === 'ar' ? 'اعتماد وتفعيل' : 'Approve';
-          ok.addEventListener('click', async function () {
-            const resp = await apiFetch('/api/subscriptions/requests/' + r._id, { method: 'PUT', body: JSON.stringify({ action: 'approve' }) });
-            if (resp && resp.success) loadAdminSubs();
-            else alert((resp && resp.message) || 'Error');
+          ok.textContent = t.subscription_action_approve;
+          ok.addEventListener('click', function () {
+            reviewSubscriptionRequest(r._id, 'approve', [ok, no]);
           });
           const no = document.createElement('button');
           no.className = 'btn btn-secondary btn-sm';
           no.style.marginInlineStart = '6px';
-          no.textContent = currentLanguage === 'ar' ? 'رفض' : 'Reject';
-          no.addEventListener('click', async function () {
-            const resp = await apiFetch('/api/subscriptions/requests/' + r._id, { method: 'PUT', body: JSON.stringify({ action: 'reject' }) });
-            if (resp && resp.success) loadAdminSubs();
-            else alert((resp && resp.message) || 'Error');
+          no.textContent = t.subscription_action_reject;
+          no.addEventListener('click', function () {
+            reviewSubscriptionRequest(r._id, 'reject', [ok, no]);
           });
           actions.append(ok, no);
         } else {
@@ -7511,7 +7515,60 @@
         tr.appendChild(actions);
         body.appendChild(tr);
       });
-    } catch (e) {}
+      return true;
+    } catch (e) {
+      console.error('loadAdminSubs_error', e);
+      body.replaceChildren();
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 6;
+      td.style.cssText = 'padding:20px; text-align:center; color:var(--red);';
+      td.textContent = t.subscription_list_error + ' ';
+      const retry = document.createElement('button');
+      retry.className = 'btn btn-sm btn-secondary';
+      retry.type = 'button';
+      retry.textContent = t.feedback_retry;
+      retry.addEventListener('click', () => loadAdminSubs());
+      td.appendChild(retry);
+      tr.appendChild(td);
+      body.appendChild(tr);
+      return false;
+    }
+  }
+
+  // D08c: approve + reject share ONE lock per request id — an approve/reject
+  // race sends a single PUT. A 409 means another review already landed:
+  // report the conflict and reconcile via GET, never re-PUT. A 500 may have
+  // persisted the review server-side: report it, reconcile read-only, and
+  // NEVER auto-retry the approval. UI-only: activation atomicity untouched.
+  async function reviewSubscriptionRequest(id, action, buttons) {
+    const t = translations[currentLanguage] || translations.en;
+    const controls = Array.isArray(buttons) ? buttons : [];
+    const previous = controls.map((b) => b.disabled);
+    controls.forEach((b) => { b.disabled = true; });
+    try {
+      await withEntityLock(`subscription-request:${id}`, id, async () => {
+        try {
+          const resp = await dashboardRequest('/api/subscriptions/requests/' + id, { method: 'PUT', body: JSON.stringify({ action }) }, { operation: 'mutation' });
+          if (resp && resp.success) {
+            await loadAdminSubs();
+          } else {
+            alert((resp && resp.message) || t.subscription_action_error);
+          }
+        } catch (err) {
+          console.error('subscription_review_error', err);
+          if (err && err.status === 409) {
+            alert(t.subscription_review_conflict);
+            await loadAdminSubs();
+          } else {
+            alert((err && err.message) || t.subscription_action_error);
+            await loadAdminSubs();
+          }
+        }
+      });
+    } finally {
+      controls.forEach((b, i) => { b.disabled = previous[i]; });
+    }
   }
 
   document.getElementById('adminSubsRefreshBtn')?.addEventListener('click', loadAdminSubs);
@@ -7539,7 +7596,7 @@
   };
 
   // Initialize and Boot System
-  initIdeaCouncil();
+  // F05: council inits on first tab entry (lazy); nothing council at boot.
   checkAuthAndLoad();
   applyLanguage(currentLanguage);
 

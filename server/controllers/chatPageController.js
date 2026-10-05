@@ -73,9 +73,26 @@ async function deleteFromImgbb(deleteUrl) {
 // Create a new chat page
 exports.createChatPage = async (req, res) => {
   try {
-    const { userId, botId, linkId } = req.body;
-    if (!userId || !botId) {
-      return res.status(400).json({ message: 'User ID and Bot ID are required' });
+    // Body userId is ignored: the page is always owned by the caller.
+    const { botId, linkId } = req.body;
+    if (!botId) {
+      return res.status(400).json({ message: 'Bot ID is required' });
+    }
+    if (!mongoose.isValidObjectId(botId)) {
+      return res.status(404).json({ message: 'Bot not found' });
+    }
+
+    // Ownership gate (mirrors botAccess.js): the bot must belong to the
+    // caller — a direct (non-impersonating) superadmin keeps full access.
+    // Unowned bots get 404 with zero side effects: no read, no provision.
+    const callerUserId = req.user.userId;
+    const isDirectSuperadmin = req.auth?.actorRole === 'superadmin'
+      && !req.auth?.isImpersonating;
+    const accessibleBot = isDirectSuperadmin
+      ? await Bot.exists({ _id: botId })
+      : await Bot.exists({ _id: botId, userId: callerUserId });
+    if (!accessibleBot) {
+      return res.status(404).json({ message: 'Bot not found' });
     }
 
     // إذا المستخدم مدخلش linkId، هنولد UUID تلقائيًا ونظبطه عشان يكون مناسب
@@ -100,7 +117,7 @@ exports.createChatPage = async (req, res) => {
     }
 
     const chatPage = new ChatPage({
-      userId,
+      userId: callerUserId,
       botId,
       linkId: finalLinkId,
     });
@@ -120,7 +137,16 @@ exports.createChatPage = async (req, res) => {
 exports.updateChatPage = async (req, res) => {
   try {
     const { id } = req.params;
-    const chatPage = await ChatPage.findById(id);
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(404).json({ message: 'Chat page not found' });
+    }
+    // Ownership scope (mirrors botAccess.js): callers only touch their own
+    // pages; a direct (non-impersonating) superadmin keeps full access.
+    const isDirectSuperadmin = req.auth?.actorRole === 'superadmin'
+      && !req.auth?.isImpersonating;
+    const chatPage = isDirectSuperadmin
+      ? await ChatPage.findById(id)
+      : await ChatPage.findOne({ _id: id, userId: req.user.userId });
     if (!chatPage) {
       return res.status(404).json({ message: 'Chat page not found' });
     }
@@ -273,6 +299,21 @@ exports.getChatPageByLinkId = async (req, res) => {
 exports.getChatPageByBotId = async (req, res) => {
   try {
     const { botId } = req.params;
+    if (!mongoose.isValidObjectId(botId)) {
+      return res.status(404).json({ message: 'Bot not found' });
+    }
+    // Ownership gate (mirrors botAccess.js): the bot must belong to the
+    // caller — a direct (non-impersonating) superadmin keeps full access.
+    // Unowned bots get 404 with zero side effects: no read, no provision.
+    const isDirectSuperadmin = req.auth?.actorRole === 'superadmin'
+      && !req.auth?.isImpersonating;
+    const accessibleBot = isDirectSuperadmin
+      ? await Bot.exists({ _id: botId })
+      : await Bot.exists({ _id: botId, userId: req.user.userId });
+    if (!accessibleBot) {
+      return res.status(404).json({ message: 'Bot not found' });
+    }
+
     let chatPage = await ChatPage.findOne({ botId });
     
     // Auto provision chat page if not existing yet for this bot

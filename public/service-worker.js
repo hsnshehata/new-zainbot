@@ -1,35 +1,55 @@
-// public/service-worker.js
+// public/service-worker.js (F03)
 // Canonical service worker. It must live at the site root so its default
 // scope is "/" and it can control every page.
 
-const CACHE_NAME = 'zainbot-v0.0022-cleanup'; // open-source cleanup: dead pages/assets removed
-// Pre-cache only real, actively-loaded app shell assets. addAll() is atomic:
-// one missing URL aborts the whole precache, so every entry must exist.
+const CACHE_NAME = 'zainbot-v0.0040-release'; // F08: release gate — flushes F05/F06-noop/F07-era caches on warm upgrade
+// Pre-cache the PUBLIC shell only: landing + shared shell assets. addAll()
+// is atomic — one missing URL aborts the whole precache, so every entry
+// must exist (proven by tests/webAssets.test.js: zero missing refs).
+// NEVER here: the dashboard monolith (/dashboard, dashboard_new.js),
+// private/auth pages (login/register/auth.js/login.css), API, or non-GET.
+// Rationale: precache is an explicit allowlist snapshot; the server marks
+// HTML/API no-store (F02), so auth-gated content must not be snapshotted.
 const urlsToCache = [
   '/',
   '/index.html',
-  '/login.html',
-  '/register.html',
-  '/dashboard',
   '/style.css',
   '/css/common.css',
-  '/css/login.css',
   '/js/utils.js',
   '/js/script.js',
-  '/js/auth.js',
-  '/js/dashboard_new.js',
   '/manifest.json',
   '/favicon.ico',
   '/icon-192.png',
   '/icon-512.png',
 ];
 
+// Server-rendered / sensitive surfaces: network-only, never cached, never
+// served from cache (no sensitive fallback). Kept as exact/boundary
+// prefixes — same explicit style as server/middleware/webAssetCache.js.
+function isNetworkOnlyPath(pathname) {
+  return (
+    pathname === '/api' || pathname.startsWith('/api/') ||
+    pathname === '/health' || pathname.startsWith('/health/') ||
+    pathname.startsWith('/store/') ||
+    pathname.startsWith('/chat/')
+  );
+}
+
+// Same-origin static shell assets eligible for network-first runtime
+// caching: the precache list plus version-agnostic css/js/font extensions.
+// Dashboard/lazy chunks are NOT prefetched at install; a chunk is only
+// ever cached after the page itself explicitly requests it (F05 contract).
+function isShellAsset(pathname) {
+  if (urlsToCache.includes(pathname)) return true;
+  return /\.(css|js|woff2?|ttf)$/i.test(pathname);
+}
+
 self.addEventListener('install', (event) => {
   console.log('Service Worker: Installing...');
   event.waitUntil(
     self.skipWaiting().then(() => caches.open(CACHE_NAME))
       .then((cache) => {
-        console.log('Service Worker: Caching app shell');
+        console.log('Service Worker: Caching public shell');
         return cache.addAll(urlsToCache)
           .catch(error => {
             console.error('Service Worker: Failed to cache resource:', error);
@@ -47,123 +67,132 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          // Purge ONLY ZainBot-prefixed caches from previous releases;
+          // foreign/third-party caches are left untouched.
+          if (cacheName !== CACHE_NAME && cacheName.startsWith('zainbot-')) {
             console.log('Service Worker: Clearing old cache:', cacheName);
             return caches.delete(cacheName);
           }
+          return undefined;
         })
       ).then(() => self.clients.claim());
     })
   );
-  return self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
-  const requestUrl = new URL(event.request.url);
+  const request = event.request;
+  // Non-GET (POST/PUT/DELETE/...): never intercept, never cache.
+  if (request.method !== 'GET') return;
+
+  const requestUrl = new URL(request.url);
   const pathname = requestUrl.pathname;
   const isSameOrigin = requestUrl.origin === self.location.origin;
-  const dest = event.request.destination;
+  // Query-blind cache key: ?v= is a version label, not a content
+  // fingerprint — all query variants share one entry (no skew, no growth).
+  const cacheKey = requestUrl.origin + pathname;
+  const dest = request.destination;
 
   // 1) الصور: ممنوع تتحط في أي كاش وممنوع تتقري من الكاش
   // هنستخدم network fetch مع cache: 'no-store' دايمًا علشان كل مرة تتحمل من السيرفر
   if (dest === 'image') {
     event.respondWith(
-      fetch(event.request, { cache: 'no-store' })
+      fetch(request, { cache: 'no-store' })
         .catch(() => {
           // لو الشبكة وقعت مفيش fallback للصور (حسب الطلب: الصور لازم تتجاب من الشبكة)
-          console.warn('Service Worker: Image fetch failed (no-store)', event.request.url);
+          console.warn('Service Worker: Image fetch failed (no-store)', request.url);
           return new Response('', { status: 504, statusText: 'Image fetch failed' });
         })
     );
     return;
   }
 
-  // تجاهل أي طلبات للـ /chat/ وخلّيها تتحمل من الشبكة دايمًا
-  if (pathname.startsWith('/chat/')) {
+  // 2) API والديناميك الحساس: شبكة فقط، بلا كاش قراءةً أو كتابةً، وبلا
+  // fallback حساس — الفشل يرجع 503 صريحًا وليس صفحة مخزنة.
+  if (isNetworkOnlyPath(pathname)) {
     event.respondWith(
-      fetch(event.request)
+      fetch(request)
         .catch(() => {
-          console.log(`Service Worker: Network failed for ${pathname}, no fallback for chat page`);
-          return new Response('الصفحة غير متاحة حاليًا، حاول مرة أخرى.', { status: 503 });
+          console.log(`Service Worker: Network failed for ${pathname}, no cached fallback for sensitive path`);
+          return new Response('Service unavailable', { status: 503, headers: { 'Content-Type': 'text/plain' } });
         })
     );
     return;
   }
 
-  // 2) أي روابط خارجية (Cross-Origin): لا كاش نهائيًا
+  // 3) أي روابط خارجية (Cross-Origin): لا كاش نهائيًا
   if (!isSameOrigin) {
     event.respondWith(
-      fetch(event.request, { cache: 'no-store' })
+      fetch(request, { cache: 'no-store' })
         .catch(() => {
-          console.warn('Service Worker: External request failed (no-store)', event.request.url);
+          console.warn('Service Worker: External request failed (no-store)', request.url);
           return new Response('External resource unavailable', { status: 502 });
         })
     );
     return;
   }
 
-  // Network-first strategy for cached assets, fonts, and external resources
-  if (
-    urlsToCache.includes(event.request.url) || // ملفات في urlsToCache
-    urlsToCache.includes(pathname) || // ملفات محلية
-    pathname.endsWith('.css') || // أي ملف CSS
-    pathname.endsWith('.js') || // أي ملف JS
-    pathname.endsWith('.woff2') || // خطوط محلية فقط
-    pathname.endsWith('.woff') // خطوط محلية فقط
-  ) {
+  // 4) أصول الشل العامة same-origin: network-first بمفتاح query-blind، مع
+  // احترام no-store (رد no-store لا يُكتب في الكاش أبدًا).
+  if (isShellAsset(pathname)) {
     event.respondWith(
-      fetch(event.request)
+      fetch(request)
         .then((networkResponse) => {
-          // نحفظ في الكاش فقط للموارد المحلية غير الصور
           if (networkResponse && networkResponse.status === 200) {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                console.log(`Service Worker: Updating cache for ${event.request.url}`);
-                cache.put(event.request, responseToCache);
-              });
-            console.log(`Service Worker: Serving fresh content from network for ${event.request.url}`);
+            const responseCacheControl = networkResponse.headers
+              ? (networkResponse.headers.get('Cache-Control') || '')
+              : '';
+            if (!/no-store/i.test(responseCacheControl)) {
+              const responseToCache = networkResponse.clone();
+              caches.open(CACHE_NAME)
+                .then((cache) => {
+                  console.log(`Service Worker: Updating cache for ${cacheKey}`);
+                  cache.put(cacheKey, responseToCache);
+                });
+            } else {
+              console.log(`Service Worker: Respecting no-store for ${cacheKey}`);
+            }
+            console.log(`Service Worker: Serving fresh content from network for ${request.url}`);
             return networkResponse;
           }
           // If network response is not valid, fall back to cache
-          return caches.match(event.request)
+          return caches.match(cacheKey)
             .then((cacheResponse) => {
               if (cacheResponse) {
-                console.log(`Service Worker: Serving cached content for ${event.request.url}`);
+                console.log(`Service Worker: Serving cached content for ${cacheKey}`);
                 return cacheResponse;
               }
-              // لو الملف خارجي، بلاش نطبع لوج مضلل
-              if (isSameOrigin) {
-                console.error(`Service Worker: No cache available for ${event.request.url}`);
-              }
+              console.error(`Service Worker: No cache available for ${cacheKey}`);
               return new Response('Resource not found', { status: 404 });
             });
         })
         .catch(async () => {
           // If network fails (offline), fall back to cache
-          console.log(`Service Worker: Network failed, falling back to cache for ${event.request.url}`);
-          const cacheResponse = await caches.match(event.request);
+          console.log(`Service Worker: Network failed, falling back to cache for ${cacheKey}`);
+          const cacheResponse = await caches.match(cacheKey);
           if (cacheResponse) {
             return cacheResponse;
           }
-          if (event.request.mode === 'navigate') {
-            const indexHtml = await caches.match('/index.html');
+          if (request.mode === 'navigate') {
+            const indexHtml = await caches.match(self.location.origin + '/index.html');
             if (indexHtml) return indexHtml;
           }
           return new Response('Resource unavailable offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
         })
     );
-  } else {
-    // Network-first for API calls or non-cached resources
-    event.respondWith(
-      fetch(event.request)
-        .catch(async () => {
-          if (event.request.mode === 'navigate') {
-            const indexHtml = await caches.match('/index.html');
-            if (indexHtml) return indexHtml;
-          }
-          return new Response('Network request failed', { status: 503, headers: { 'Content-Type': 'text/plain' } });
-        })
-    );
+    return;
   }
+
+  // 5) باقي same-origin (صفحات خاصة/HTML غير مخزن): شبكة فقط مع fallback
+  // الملاحة للشل العام عند الانقطاع — بلا قراءة/كتابة كاش هنا.
+  event.respondWith(
+    fetch(request)
+      .catch(async () => {
+        if (request.mode === 'navigate') {
+          const indexHtml = await caches.match(self.location.origin + '/index.html');
+          if (indexHtml) return indexHtml;
+        }
+        return new Response('Network request failed', { status: 503, headers: { 'Content-Type': 'text/plain' } });
+      })
+  );
 });

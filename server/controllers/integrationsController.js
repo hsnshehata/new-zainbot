@@ -6,6 +6,23 @@ const WebhookLog = require('../models/WebhookLog');
 const axios = require('axios');
 const logger = require('../logger');
 
+// An endpoint that answers HTTP 200 with an explicit `success:false` body
+// rejected the delivery — that is a failure, never proof of delivery.
+function endpointRejected(data) {
+  if (data !== null && typeof data === 'object' && !Array.isArray(data)) {
+    return data.success === false;
+  }
+  if (typeof data === 'string') {
+    try {
+      const parsed = JSON.parse(data);
+      return parsed !== null && typeof parsed === 'object' && parsed.success === false;
+    } catch (_ignored) {
+      return false;
+    }
+  }
+  return false;
+}
+
 // Generate API Key
 exports.generateApiKey = async (req, res) => {
   try {
@@ -129,12 +146,20 @@ exports.retryWebhook = async (req, res) => {
     const { id } = req.params;
     const log = await WebhookLog.findOne({ _id: id, userId: req.user.userId });
     if (!log) {
-      return res.status(404).json({ success: false, message: 'سجل التوصيل غير موجود.' });
+      return res.status(404).json({
+        success: false,
+        code: 'WEBHOOK_LOG_NOT_FOUND',
+        message: 'سجل التوصيل غير موجود.',
+      });
     }
 
     const webhook = await WebhookConfig.findById(log.webhookId);
     if (!webhook) {
-      return res.status(404).json({ success: false, message: 'إعدادات الويب هوك الأصلية غير موجودة.' });
+      return res.status(404).json({
+        success: false,
+        code: 'WEBHOOK_CONFIG_NOT_FOUND',
+        message: 'إعدادات الويب هوك الأصلية غير موجودة.',
+      });
     }
 
     // Re-dispatch using webhook secret signature
@@ -162,12 +187,23 @@ exports.retryWebhook = async (req, res) => {
       responseStatus = response.status;
       responseBody = typeof response.data === 'object' ? JSON.stringify(response.data) : String(response.data);
       success = responseStatus >= 200 && responseStatus < 300;
+      if (success && endpointRejected(response.data)) {
+        // HTTP 200 carrying success:false is a delivery failure, not proof
+        // of delivery. It gets the same stable failure code.
+        success = false;
+      }
     } catch (err) {
       success = false;
-      responseStatus = err.response ? err.response.status : 500;
-      responseBody = err.response 
-        ? (typeof err.response.data === 'object' ? JSON.stringify(err.response.data) : String(err.response.data)) 
-        : err.message;
+      if (err.response) {
+        responseStatus = err.response.status;
+        const data = err.response.data;
+        responseBody = typeof data === 'object' ? JSON.stringify(data) : String(data);
+      } else {
+        // Transport-level failure (timeout/DNS/refused): never persist or
+        // return raw client error strings (they may carry IPs/internals).
+        responseStatus = 0;
+        responseBody = 'NO_RESPONSE_FROM_ENDPOINT';
+      }
     }
 
     // Update log
@@ -178,9 +214,30 @@ exports.retryWebhook = async (req, res) => {
     log.timestamp = new Date();
     await log.save();
 
-    res.status(200).json({ success, data: log });
+    // Return a sanitized projection: the stored log may hold the endpoint's
+    // raw body for the owner's log viewer, but the retry response itself
+    // must not leak raw provider output.
+    const result = {
+      _id: log._id,
+      event: log.event,
+      url: log.url,
+      success: log.success,
+      responseStatus: log.responseStatus,
+      attempts: log.attempts,
+      timestamp: log.timestamp,
+    };
+
+    if (!success) {
+      return res.status(200).json({
+        success: false,
+        code: 'WEBHOOK_DELIVERY_FAILED',
+        message: 'تعذر تسليم الويب هوك عند إعادة المحاولة.',
+        data: result,
+      });
+    }
+    res.status(200).json({ success: true, data: result });
   } catch (err) {
     logger.error('❌ Error retrying webhook delivery:', { err });
-    res.status(500).json({ success: false, message: 'فشل في إعادة إرسال الويب هوك.' });
+    res.status(500).json({ success: false, code: 'WEBHOOK_RETRY_FAILED', message: 'فشل في إعادة إرسال الويب هوك.' });
   }
 };

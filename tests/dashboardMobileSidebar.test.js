@@ -39,3 +39,28 @@ test('settings grids fit narrow phone screens', () => {
   // Grid children must not force tracks wider via automatic minimum size.
   assert.match(dashboardHtml, /#plansGrid\s*>\s*\*,[^}]*min-width:\s*0/);
 });
+
+test('E04: drawer open routes the shared lifecycle with main-area isolation', () => {
+  // Open traps focus + isolates the background through ZainBotA11y; the
+  // scrim stays outside the isolated background so it remains clickable.
+  assert.match(dashboardScript, /a11y\.openDialog\(sidebar,/);
+  assert.match(dashboardScript, /background: document\.querySelector\('\.db-main'\)/);
+  assert.match(dashboardScript, /onClose: \(\) => setDrawerVisual\(false\)/);
+});
+
+test('E04: scrim, Escape, selection and resize converge on one drawer cleanup', () => {
+  assert.match(dashboardScript, /sidebarScrim\.addEventListener\('click', \(\) => \{\s+setMobileMenuOpen\(false, true\);/);
+  assert.match(dashboardScript, /event\.key === 'Escape' && sidebar\?\.classList\.contains\('mobile-open'\)/);
+  // E04 fix round 1: selection commits to the heading after the close
+  // restores the opener (order asserted in dashboardKeyboardNavigation).
+  const clickStart = dashboardScript.indexOf('// Sidebar navigation click');
+  assert.notEqual(clickStart, -1, 'Missing menu-click wiring');
+  const clickBlock = dashboardScript.slice(clickStart, clickStart + 900);
+  const order = ['switchTab(target);', 'setMobileMenuOpen(false);', 'focusPageHeading(target);']
+    .map((s) => clickBlock.indexOf(s));
+  assert.ok(order.every((i) => i !== -1), 'Menu handler must switch, close, then focus the heading');
+  assert.ok(order[0] < order[1] && order[1] < order[2], 'Menu handler order: switch → close → heading');
+  assert.match(dashboardScript, /const handleSidebarBreakpointChange = \(\) => setMobileMenuOpen\(false\);/);
+  // Cleanup always restores visuals, even if the lifecycle hook throws.
+  assert.match(dashboardScript, /\} finally \{\s+if \(!shouldOpen\) setDrawerVisual\(false\);\s+\}/);
+});

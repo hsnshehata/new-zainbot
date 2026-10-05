@@ -46,35 +46,184 @@ document.addEventListener('DOMContentLoaded', () => {
       logout_error: 'Could not sign out. Please try again.'
     }
   };
-  const loginText = (key) => loginCopy[localStorage.getItem('zainbot_lang') === 'en' ? 'en' : 'ar'][key];
+  // <zainbot-login-language>
+  const loginLanguage = () => {
+    try {
+      const storage = window.localStorage;
+      if (!storage) return 'ar';
+      const stored = storage.getItem('zainbot_lang');
+      if (stored === 'ar' || stored === 'en') return stored;
+    } catch (err) { /* storage blocked: fall through to default */ }
+    return 'ar';
+  };
+  const loginText = (key) => loginCopy[loginLanguage()][key];
+  // </zainbot-login-language>
   const params = new URLSearchParams(window.location.search);
   const recoveryParams = new URLSearchParams(window.location.hash.slice(1));
   const resetToken = /^[a-f0-9]{64}$/.test(recoveryParams.get('reset') || '') ? recoveryParams.get('reset') : null;
   const verifyToken = /^[a-f0-9]{64}$/.test(recoveryParams.get('verify') || '') ? recoveryParams.get('verify') : null;
   if (recoveryParams.has('reset') || recoveryParams.has('verify')) window.history.replaceState(null, '', window.location.pathname);
-  const showMessage = (element, text) => {
-    if (element) { element.textContent = text; element.style.display = 'block'; }
+  // Live keyed messages: a visible LOCAL message keeps its key and re-renders
+  // on zainbot:languagechange without form reset or new requests. Server
+  // free-text is shown raw and never re-rendered (known codes map only —
+  // never guessed from text).
+  let liveMessage = null;
+  const showKeyed = (element, key) => {
+    const text = loginText(key);
+    if (element && text) {
+      element.textContent = text;
+      element.style.display = 'block';
+      liveMessage = { element, key };
+    }
   };
-  if (params.has('verification')) showMessage(params.get('verification') === 'success' ? successDiv : errorDiv,
-    loginText(params.get('verification') === 'success' ? 'verification_success' : 'verification_invalid'));
-  if (recoveryParams.has('reset') && !resetToken) showMessage(errorDiv, loginText('reset_invalid'));
-  if (recoveryParams.has('verify') && !verifyToken) showMessage(errorDiv, loginText('verification_invalid'));
+  const showRaw = (element, text) => {
+    if (element) { element.textContent = text; element.style.display = 'block'; }
+    liveMessage = null;
+  };
+  const showFailure = (element, err, key) => {
+    if (!element) return;
+    if (err && err.message) showRaw(element, err.message);
+    else showKeyed(element, key);
+  };
+  // E07: field-level error association + focus management. Server/general
+  // outcomes keep flowing to the shared #error region untouched (C07 owns
+  // that path); only LOCAL validation flags fields, and every submit clears
+  // stale flags first so a server message is never misattributed.
+  const safeFocus = (element) => {
+    if (!element || typeof element.focus !== 'function') return;
+    try {
+      element.focus({ preventScroll: true });
+    } catch (err) {
+      try {
+        element.focus();
+      } catch (ignored) { /* non-focusable stub: leave focus alone */ }
+    }
+  };
+  const isVisibleField = (element) => {
+    if (!element) return false;
+    try {
+      if (element.hidden === true) return false;
+      if (element.style && element.style.display === 'none') return false;
+    } catch (err) { return false; }
+    return true;
+  };
+  const isInside = (root, node) => {
+    try {
+      return !!(root && node && typeof root.contains === 'function' && root.contains(node));
+    } catch (err) { return false; }
+  };
+  const activeInside = (root) => {
+    try {
+      const active = document.activeElement;
+      return !!(active && isInside(root, active));
+    } catch (err) { return false; }
+  };
+  const flaggedFields = new Set();
+  const linkFieldError = (field) => {
+    if (!field || typeof field.setAttribute !== 'function') return;
+    try {
+      field.setAttribute('aria-invalid', 'true');
+      if (!errorDiv || typeof field.getAttribute !== 'function') return;
+      const described = String(field.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+      if (!described.includes('error')) described.push('error');
+      field.setAttribute('aria-describedby', described.join(' '));
+    } catch (err) { /* attribute storage unavailable: invalid flag is best-effort */ }
+    flaggedFields.add(field);
+  };
+  const unlinkFieldError = (field) => {
+    if (!field) return;
+    try {
+      if (typeof field.removeAttribute === 'function') {
+        field.removeAttribute('aria-invalid');
+        if (typeof field.getAttribute === 'function') {
+          const kept = String(field.getAttribute('aria-describedby') || '').split(/\s+/).filter((t) => t && t !== 'error');
+          if (kept.length) field.setAttribute('aria-describedby', kept.join(' '));
+          else field.removeAttribute('aria-describedby');
+        }
+      }
+    } catch (err) { /* best-effort */ }
+    flaggedFields.delete(field);
+  };
+  const clearAllFieldFlags = () => {
+    Array.from(flaggedFields).forEach(unlinkFieldError);
+    flaggedFields.clear();
+  };
+  const flagInvalid = (field, key) => {
+    showKeyed(errorDiv, key);
+    linkFieldError(field);
+    if (isVisibleField(field)) safeFocus(field);
+  };
+  // When a form is hidden (toggle-hide, reset success), focus inside it
+  // would strand on a hidden element: move it to the first visible fallback.
+  const moveFocusOutOf = (hiddenRoot, fallbacks) => {
+    if (!activeInside(hiddenRoot)) return;
+    const options = Array.isArray(fallbacks) ? fallbacks : [];
+    for (const candidate of options) {
+      let element = null;
+      try {
+        element = typeof candidate === 'string' ? document.querySelector(candidate) : candidate;
+      } catch (err) { element = null; }
+      if (isVisibleField(element)) {
+        safeFocus(element);
+        return;
+      }
+    }
+    try {
+      const body = document.body;
+      if (isVisibleField(body)) safeFocus(body);
+    } catch (err) { /* no body to fall back to: leave focus alone */ }
+  };
+  const FOCUS_MANAGED_IDS = ['#username', '#password', '#confirmPassword', '#botName', '#email', '#recoveryEmail', '#resendEmail', '#newPassword', '#resetConfirm'];
+  FOCUS_MANAGED_IDS.forEach((selector) => {
+    try {
+      document.querySelector(selector)?.addEventListener('input', (event) => {
+        const field = event && event.target ? event.target : document.querySelector(selector);
+        if (field && flaggedFields.has(field)) unlinkFieldError(field);
+      });
+    } catch (err) { /* wiring is best-effort */ }
+  });
+  async function authRequest(url, options, errorKey) {
+    const fallback = loginText(errorKey);
+    try {
+      return await handleApiRequest(url, options, null, fallback);
+    } catch (err) {
+      if (err && typeof err.message === 'string' && fallback && err.message.startsWith(fallback + ':')) {
+        err.message = '';
+      }
+      throw err;
+    }
+  }
+  document.addEventListener('zainbot:languagechange', () => {
+    if (!liveMessage) return;
+    const { element, key } = liveMessage;
+    if (!element || !element.isConnected || element.style.display === 'none') return;
+    const text = loginText(key);
+    if (text) element.textContent = text;
+  });
+  if (params.has('verification')) showKeyed(params.get('verification') === 'success' ? successDiv : errorDiv,
+    params.get('verification') === 'success' ? 'verification_success' : 'verification_invalid');
+  if (recoveryParams.has('reset') && !resetToken) showKeyed(errorDiv, 'reset_invalid');
+  if (recoveryParams.has('verify') && !verifyToken) showKeyed(errorDiv, 'verification_invalid');
   if (verifyToken) {
     fetch('/api/auth/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: verifyToken }) })
-      .then((response) => showMessage(response.ok ? successDiv : errorDiv, loginText(response.ok ? 'verification_success' : 'verification_invalid')))
-      .catch(() => showMessage(errorDiv, loginText('verification_invalid')));
+      .then((response) => showKeyed(response.ok ? successDiv : errorDiv, response.ok ? 'verification_success' : 'verification_invalid'))
+      .catch(() => showKeyed(errorDiv, 'verification_invalid'));
   }
-  if (resetToken) document.querySelector('#resetForm')?.removeAttribute('hidden');
+  if (resetToken) {
+    document.querySelector('#resetForm')?.removeAttribute('hidden');
+    const newPasswordField = document.querySelector('#newPassword');
+    if (isVisibleField(newPasswordField)) safeFocus(newPasswordField);
+  }
 
   async function recoveryRequest(url, body, form, successKey) {
     try {
-      const data = await handleApiRequest(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }, null, loginText('recovery_error'));
-      showMessage(successDiv, loginText(successKey) || data.message);
+      const data = await authRequest(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }, 'recovery_error');
+      showKeyed(successDiv, successKey);
       if (errorDiv) errorDiv.style.display = 'none';
       form.reset();
       return true;
     } catch (err) {
-      showMessage(errorDiv, err.message || loginText('recovery_error'));
+      showFailure(errorDiv, err, 'recovery_error');
       return false;
     }
   }
@@ -84,32 +233,63 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('#resendForm');
     form.hidden = !form.hidden;
     resendToggle.setAttribute('aria-expanded', String(!form.hidden));
+    if (!form.hidden) {
+      const field = document.querySelector('#resendEmail');
+      if (isVisibleField(field)) safeFocus(field);
+    } else {
+      moveFocusOutOf(form, [resendToggle]);
+    }
   });
   document.querySelector('#resendForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = document.querySelector('#resendEmail').value.trim();
-    if (!document.querySelector('#resendEmail').checkValidity()) return showMessage(errorDiv, loginText('recovery_required'));
-    await recoveryRequest('/api/auth/resend-verification', { email }, e.target, 'resend_sent');
+    clearAllFieldFlags();
+    const emailField = document.querySelector('#resendEmail');
+    if (!emailField || !emailField.checkValidity()) {
+      if (emailField) flagInvalid(emailField, 'recovery_required');
+      else showKeyed(errorDiv, 'recovery_required');
+      return;
+    }
+    await recoveryRequest('/api/auth/resend-verification', { email: emailField.value.trim() }, e.target, 'resend_sent');
   });
   document.querySelector('#forgotToggle')?.addEventListener('click', (e) => {
     const form = document.querySelector('#forgotForm');
     form.hidden = !form.hidden;
     e.currentTarget.setAttribute('aria-expanded', String(!form.hidden));
+    if (!form.hidden) {
+      const field = document.querySelector('#recoveryEmail');
+      if (isVisibleField(field)) safeFocus(field);
+    } else {
+      moveFocusOutOf(form, [e.currentTarget]);
+    }
   });
   document.querySelector('#forgotForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    clearAllFieldFlags();
     const field = document.querySelector('#recoveryEmail');
-    if (!field.checkValidity()) return showMessage(errorDiv, loginText('recovery_required'));
+    if (!field || !field.checkValidity()) {
+      if (field) flagInvalid(field, 'recovery_required');
+      else showKeyed(errorDiv, 'recovery_required');
+      return;
+    }
     await recoveryRequest('/api/auth/forgot-password', { email: field.value.trim() }, e.target, 'forgot_sent');
   });
   document.querySelector('#resetForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const password = document.querySelector('#newPassword').value;
-    if (!isStrongPassword(password)) return showMessage(errorDiv, loginText('password_strength_error'));
-    if (password !== document.querySelector('#resetConfirm').value) return showMessage(errorDiv, loginText('passwords_dont_match'));
-    if (await recoveryRequest('/api/auth/reset-password', { token: resetToken, password, confirmPassword: password }, e.target, 'reset_success')) {
+    clearAllFieldFlags();
+    const newPasswordField = document.querySelector('#newPassword');
+    const resetConfirmField = document.querySelector('#resetConfirm');
+    if (!isStrongPassword(newPasswordField && newPasswordField.value)) {
+      if (newPasswordField) flagInvalid(newPasswordField, 'password_strength_error');
+      else showKeyed(errorDiv, 'password_strength_error');
+      return;
+    }
+    if (newPasswordField && resetConfirmField && newPasswordField.value !== resetConfirmField.value) {
+      flagInvalid(resetConfirmField, 'passwords_dont_match');
+      return;
+    }
+    if (await recoveryRequest('/api/auth/reset-password', { token: resetToken, password: newPasswordField.value, confirmPassword: newPasswordField.value }, e.target, 'reset_success')) {
       e.target.hidden = true;
-      showMessage(successDiv, loginText('reset_success'));
+      moveFocusOutOf(e.target, ['#username', '#forgotToggle']);
     }
   });
 
@@ -152,24 +332,24 @@ document.addEventListener('DOMContentLoaded', () => {
   window.handleGoogleSignIn = async (response) => {
     const idToken = response.credential;
     try {
-      const data = await handleApiRequest('/api/auth/google', {
+      const data = await authRequest('/api/auth/google', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ idToken, ...(registerForm && window.zainbotSignupIntendedTier ? { intendedTier: window.zainbotSignupIntendedTier } : {}) }),
-      }, errorDiv, loginText('google_failed'));
+      }, 'google_failed');
 
       if (data.success) {
         saveSession({ token: data.token, role: data.role, userId: data.userId, username: data.username });
               window.location.href = '/dashboard';
+      } else if (data.message) {
+        showRaw(errorDiv, data.message);
       } else {
-        errorDiv.style.display = 'block';
-        errorDiv.textContent = data.message || loginText('google_failed');
+        showKeyed(errorDiv, 'google_failed');
       }
     } catch (err) {
-      errorDiv.style.display = 'block';
-      errorDiv.textContent = err.message || loginText('google_error');
+      showFailure(errorDiv, err, 'google_failed');
     }
   };
 
@@ -177,35 +357,43 @@ document.addEventListener('DOMContentLoaded', () => {
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      clearAllFieldFlags();
 
-      const username = document.querySelector('#username').value.trim();
-      const password = document.querySelector('#password').value;
+      const usernameField = document.querySelector('#username');
+      const passwordField = document.querySelector('#password');
+      const username = usernameField ? usernameField.value.trim() : '';
+      const password = passwordField ? passwordField.value : '';
 
       if (!username || !password) {
-        errorDiv.style.display = 'block';
-        errorDiv.textContent = loginText('credentials_required');
+        showKeyed(errorDiv, 'credentials_required');
+        const firstEmpty = !username ? usernameField : passwordField;
+        if (firstEmpty) {
+          if (usernameField && !username) linkFieldError(usernameField);
+          if (passwordField && !password) linkFieldError(passwordField);
+          if (isVisibleField(firstEmpty)) safeFocus(firstEmpty);
+        }
         return;
       }
 
       try {
-        const data = await handleApiRequest('/api/auth/login', {
+        const data = await authRequest('/api/auth/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ username, password }),
-        }, errorDiv, loginText('login_failed'));
+        }, 'login_failed');
 
         if (data.success) {
           saveSession({ token: data.token, role: data.role, userId: data.userId, username: data.username });
                 window.location.href = '/dashboard';
+        } else if (data.message) {
+          showRaw(errorDiv, data.message);
         } else {
-          errorDiv.style.display = 'block';
-          errorDiv.textContent = data.message || loginText('login_failed');
+          showKeyed(errorDiv, 'login_failed');
         }
       } catch (err) {
-        errorDiv.style.display = 'block';
-        errorDiv.textContent = err.message || loginText('login_error');
+        showFailure(errorDiv, err, 'login_failed');
       }
     });
   }
@@ -231,74 +419,81 @@ document.addEventListener('DOMContentLoaded', () => {
         successDiv.style.display = 'none';
         successDiv.textContent = '';
       }
+      liveMessage = null;
 
       // Validate inputs
+      clearAllFieldFlags();
+      const usernameField = document.querySelector('#username');
+      const passwordField = document.querySelector('#password');
+      const confirmField = document.querySelector('#confirmPassword');
       if (!username || !password || !confirmPassword || !botName || !email) {
-        if (errorDiv) {
-          errorDiv.style.display = 'block';
-          errorDiv.textContent = loginText('all_fields_required');
-        }
+        showKeyed(errorDiv, 'all_fields_required');
+        const emptyFields = [usernameField, passwordField, confirmField,
+          document.querySelector('#botName'), document.querySelector('#email')]
+          .filter((field) => field && !field.value.trim());
+        emptyFields.forEach(linkFieldError);
+        const firstEmpty = emptyFields.length > 0 ? emptyFields[0] : null;
+        if (firstEmpty && isVisibleField(firstEmpty)) safeFocus(firstEmpty);
         return;
       }
 
       if (password !== confirmPassword) {
-        if (errorDiv) {
-          errorDiv.style.display = 'block';
-          errorDiv.textContent = loginText('passwords_dont_match');
+        showKeyed(errorDiv, 'passwords_dont_match');
+        if (confirmField) {
+          linkFieldError(confirmField);
+          if (isVisibleField(confirmField)) safeFocus(confirmField);
         }
         return;
       }
 
       if (!isStrongPassword(password)) {
-        if (errorDiv) {
-          errorDiv.style.display = 'block';
-          errorDiv.textContent = loginText('password_strength_error');
+        showKeyed(errorDiv, 'password_strength_error');
+        if (passwordField) {
+          linkFieldError(passwordField);
+          if (isVisibleField(passwordField)) safeFocus(passwordField);
         }
         return;
       }
 
       if (!/^[a-z0-9_-]+$/.test(username)) {
-        if (errorDiv) {
-          errorDiv.style.display = 'block';
-          errorDiv.textContent = loginText('username_format_error');
+        showKeyed(errorDiv, 'username_format_error');
+        if (usernameField) {
+          linkFieldError(usernameField);
+          if (isVisibleField(usernameField)) safeFocus(usernameField);
         }
         return;
       }
 
       try {
-        const data = await handleApiRequest('/api/auth/register', {
+        const data = await authRequest('/api/auth/register', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ username, password, confirmPassword, botName, whatsapp, email,
             ...(window.zainbotSignupIntendedTier ? { intendedTier: window.zainbotSignupIntendedTier } : {}) }),
-        }, errorDiv, loginText('register_failed'));
+        }, 'register_failed');
 
         if (data.success) {
-          if (successDiv) {
-            successDiv.style.display = 'block';
-            successDiv.textContent = loginText('register_success');
-          }
+          showKeyed(successDiv, 'register_success');
           if (errorDiv) {
             errorDiv.style.display = 'none';
           }
           registerForm.reset();
+        } else if (data.message) {
+          showRaw(errorDiv, data.message);
         } else {
-          if (errorDiv) {
-            errorDiv.style.display = 'block';
-            errorDiv.textContent = data.message || loginText('register_failed');
-          }
+          showKeyed(errorDiv, 'register_failed');
         }
       } catch (err) {
-        if (errorDiv) {
-          errorDiv.style.display = 'block';
-          errorDiv.textContent = err.status === 503 ? loginText('registration_delivery_failed') : (err.message || loginText('register_error'));
-        }
+        if (err.status === 503) showKeyed(errorDiv, 'registration_delivery_failed');
+        else showFailure(errorDiv, err, 'register_error');
         if (err.status === 503 && resendToggle) {
           document.querySelector('#resendEmail').value = email;
           document.querySelector('#resendForm').hidden = false;
           resendToggle.setAttribute('aria-expanded', 'true');
+          const resendField = document.querySelector('#resendEmail');
+          if (isVisibleField(resendField)) safeFocus(resendField);
         }
       }
     });
@@ -310,13 +505,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const username = localStorage.getItem('username');
 
       try {
-        await handleApiRequest('/api/auth/logout', {
+        await authRequest('/api/auth/logout', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ username }),
-        }, errorDiv, loginText('logout_error'));
+        }, 'logout_error');
 
         clearSession();
         window.location.href = '/';
@@ -324,8 +519,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!errorDiv) {
           alert(loginText('logout_error'));
         } else {
-          errorDiv.style.display = 'block';
-          errorDiv.textContent = err.message || loginText('logout_error');
+          showFailure(errorDiv, err, 'logout_error');
         }
       }
     });

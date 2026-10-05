@@ -26,7 +26,17 @@ async function listBookings(req, res) {
       if (!botIds.length) {
         return res.json({ success: true, data: [], bookings: [], counts: { total: 0, pending: 0, confirmed: 0, byStatus: {} } });
       }
-      filter.botId = { $in: botIds };
+      if (req.query.botId) {
+        // Selected bot applies only after ownership: an unowned botId never
+        // falls back to all bots — it yields an empty list instead.
+        if (botIds.some((id) => String(id) === String(req.query.botId))) {
+          filter.botId = req.query.botId;
+        } else {
+          return res.json({ success: true, data: [], bookings: [], counts: { total: 0, pending: 0, confirmed: 0, byStatus: {} } });
+        }
+      } else {
+        filter.botId = { $in: botIds };
+      }
     } else if (req.query.botId) {
       filter.botId = req.query.botId;
     }

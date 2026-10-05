@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20261005-f08">
   
   <style>
     /* Premium Dashboard Specific Styles (Extending style.css) */
@@ -110,6 +110,28 @@
 
     .menu-item.active i {
       color: var(--cyan);
+    }
+
+    /* E04: native menu buttons keep the exact menu-item look (type=button
+       reset only — B02 owns future extraction, do not restyle here). */
+    button.menu-item {
+      background: transparent;
+      border: 0;
+      width: 100%;
+      font: inherit;
+      text-align: start;
+    }
+
+    /* E04: visible keyboard focus, nav + header controls only (scoped). */
+    .db-sidebar .menu-item:focus-visible,
+    .dashboard-menu-toggle:focus-visible,
+    .user-menu-toggle:focus-visible,
+    .account-menu button:focus-visible,
+    .account-menu a:focus-visible,
+    #sidebarLogout:focus-visible,
+    .sidebar-scrim:focus-visible {
+      outline: 2px solid var(--cyan);
+      outline-offset: 2px;
     }
 
     .sidebar-footer {
@@ -866,43 +888,43 @@
       </div>
       
       <nav class="sidebar-menu">
-        <div class="menu-item active" data-target="page-overview">
+        <button type="button" class="menu-item active" data-target="page-overview" aria-current="page">
           <i class="fas fa-chart-pie"></i>
           <span data-i18n="menu_overview">Overview</span>
-        </div>
-        <div class="menu-item" data-target="page-agents">
+        </button>
+        <button type="button" class="menu-item" data-target="page-agents">
           <i class="fas fa-robot"></i>
           <span data-i18n="menu_agents">AI Agents</span>
-        </div>
-        <div class="menu-item" data-target="page-idea-council">
+        </button>
+        <button type="button" class="menu-item" data-target="page-idea-council">
           <i class="fas fa-lightbulb"></i>
           <span data-i18n="menu_idea_council">Idea Council</span>
-        </div>
-        <div class="menu-item" data-target="page-inbox">
+        </button>
+        <button type="button" class="menu-item" data-target="page-inbox">
           <i class="fas fa-inbox"></i>
           <span data-i18n="menu_inbox">Omnichannel Inbox</span>
-        </div>
-        <div class="menu-item" data-target="page-training">
+        </button>
+        <button type="button" class="menu-item" data-target="page-training">
           <i class="fas fa-brain"></i>
           <span data-i18n="menu_training">AI Training</span>
-        </div>
-        <div class="menu-item" data-target="page-channels">
+        </button>
+        <button type="button" class="menu-item" data-target="page-channels">
           <i class="fas fa-plug"></i>
           <span data-i18n="menu_channels">Connections</span>
-        </div>
-        <div class="menu-item" data-target="page-orders">
+        </button>
+        <button type="button" class="menu-item" data-target="page-orders">
           <i class="fas fa-shopping-bag"></i>
           <span data-i18n="menu_orders">Orders & Bookings</span>
-        </div>
-        <div class="menu-item" data-target="page-settings">
+        </button>
+        <button type="button" class="menu-item" data-target="page-settings">
           <i class="fas fa-cog"></i>
           <span data-i18n="menu_settings">Settings & Billing</span>
-        </div>
+        </button>
         <!-- Admin Console Menu (Only shown to superadmins) -->
-        <div class="menu-item" data-target="page-admin" id="menu-admin" style="display:none; border-top: 1px solid var(--glass-border); margin-top: 12px; padding-top: 16px;">
+        <button type="button" class="menu-item" data-target="page-admin" id="menu-admin" style="display:none; border-top: 1px solid var(--glass-border); margin-top: 12px; padding-top: 16px;">
           <i class="fas fa-shield-alt" style="color:var(--orange)"></i>
           <span data-i18n="menu_admin" style="color:var(--orange)">AI Failover Panel</span>
-        </div>
+        </button>
       </nav>
       
       <div class="sidebar-footer">
@@ -924,26 +946,30 @@
           <!-- i18n Language toggle -->
           <button id="dashboardLangToggle" class="btn btn-secondary btn-sm" style="background:var(--surface); border:1px solid var(--glass-border); padding:6px 12px; font-weight:600;">AR</button>
           
-          <button id="accountMenuToggle" class="user-badge user-menu-toggle" type="button" aria-haspopup="menu" aria-expanded="false">
+          <button id="accountMenuToggle" class="user-badge user-menu-toggle" type="button" aria-expanded="false" aria-controls="accountMenu">
             <span class="user-avatar" id="headerUserAvatar">U</span>
             <span id="headerUsername">Loading...</span>
             <i class="fas fa-chevron-down user-menu-chevron" aria-hidden="true"></i>
           </button>
-          <div id="accountMenu" class="account-menu" role="menu" hidden>
+          <div id="accountMenu" class="account-menu" hidden>
             <div class="account-menu-head">
               <strong id="accountMenuName">—</strong>
               <span id="accountMenuEmail">—</span>
             </div>
             <div class="account-menu-quota"><span data-i18n="account_quota_remaining">Messages remaining</span><strong id="accountMenuQuota">—</strong></div>
-            <button id="accountSettingsBtn" type="button" role="menuitem"><i class="fas fa-gear"></i><span data-i18n="account_settings">Account settings</span></button>
-            <a href="/help.html" role="menuitem"><i class="fas fa-circle-question" aria-hidden="true"></i><span data-i18n="account_help_guide">First conversation guide</span></a>
-            <button id="accountLogoutBtn" type="button" role="menuitem" class="account-logout"><i class="fas fa-sign-out-alt"></i><span data-i18n="logout">Logout</span></button>
+            <button id="accountSettingsBtn" type="button"><i class="fas fa-gear"></i><span data-i18n="account_settings">Account settings</span></button>
+            <a href="/help.html"><i class="fas fa-circle-question" aria-hidden="true"></i><span data-i18n="account_help_guide">First conversation guide</span></a>
+            <button id="accountLogoutBtn" type="button" class="account-logout"><i class="fas fa-sign-out-alt"></i><span data-i18n="logout">Logout</span></button>
           </div>
         </div>
       </header>
 
       <!-- CONTENT CONTENT -->
       <div class="db-content">
+        <div id="bootstrapError" class="bootstrap-error" hidden role="alert" style="margin:0 0 12px;">
+          <span data-i18n="bootstrap_load_failed">Could not load your profile. Check your connection, then retry — you are still signed in.</span>
+          <button id="bootstrapRetryBtn" class="btn btn-primary btn-sm" type="button" style="margin-inline-start:12px;"><span data-i18n="feedback_retry">Retry</span></button>
+        </div>
         
         <!-- ==================== 1. OVERVIEW PAGE ==================== -->
         <section id="page-overview" class="db-page active">
@@ -1604,11 +1630,11 @@
               <h3 data-i18n="training_brand_guidelines_title" style="margin-bottom:16px;">Brand Guidelines & Prompt</h3>
               <form id="promptTrainingForm">
                 <div class="form-group">
-                  <label data-i18n="label_welcome_message">Welcome Message</label>
+                  <label for="botWelcomeMessage" data-i18n="label_welcome_message">Welcome Message</label>
                   <textarea id="botWelcomeMessage" class="form-control" rows="3" data-i18n-placeholder="training_welcome_placeholder" placeholder="Enter a standard greeting message..."></textarea>
                 </div>
                 <div class="form-group">
-                  <label data-i18n="label_custom_instructions">Custom Persona Instructions</label>
+                  <label for="botCustomPrompt" data-i18n="label_custom_instructions">Custom Persona Instructions</label>
                   <textarea id="botCustomPrompt" class="form-control" rows="8" data-i18n-placeholder="training_persona_placeholder" placeholder="For example, describe the bot's tone, responsibilities, and escalation rules."></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary btn-sm" data-i18n="save_guidelines_btn">Save Settings</button>
@@ -1901,14 +1927,14 @@
             </div>
             <form id="subscriptionRequestForm" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr)); gap:10px; align-items:end;">
               <div class="form-group" style="margin-bottom:0;">
-                <label data-i18n="subscription_label_period">Billing period</label>
+                <label for="subBillingPeriod" data-i18n="subscription_label_period">Billing period</label>
                 <select id="subBillingPeriod" class="form-control">
                   <option value="monthly" data-i18n="subscription_monthly">Monthly</option>
                   <option value="yearly" data-i18n="subscription_yearly">Yearly (save 2 months)</option>
                 </select>
               </div>
               <div class="form-group" style="margin-bottom:0;">
-                <label data-i18n="subscription_label_method">Payment method</label>
+                <label for="subPaymentMethod" data-i18n="subscription_label_method">Payment method</label>
                 <select id="subPaymentMethod" class="form-control">
                   <option value="instapay" data-i18n="pay_instapay">Instapay</option>
                   <option value="vodafone_cash" data-i18n="pay_vodafone">Vodafone Cash</option>
@@ -1917,7 +1943,7 @@
                 </select>
               </div>
               <div class="form-group" style="margin-bottom:0;">
-                <label data-i18n="subscription_label_reference">Payment reference / receipt</label>
+                <label for="subPaymentReference" data-i18n="subscription_label_reference">Payment reference / receipt</label>
                 <input id="subPaymentReference" class="form-control" data-i18n-placeholder="subscription_reference_placeholder" placeholder="Transaction ID or sender number" />
               </div>
               <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -2031,7 +2057,7 @@
               <form id="backupKeysForm">
                 <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
                   <div class="form-group">
-                    <label data-i18n="label_backup_provider">AI Provider</label>
+                    <label for="backupProvider" data-i18n="label_backup_provider">AI Provider</label>
                     <select id="backupProvider" class="form-control">
                       <option value="openai">OpenAI</option>
                       <option value="gemini">Google Gemini</option>
@@ -2041,17 +2067,17 @@
                     </select>
                   </div>
                   <div class="form-group">
-                    <label data-i18n="label_backup_key">API Key</label>
+                    <label for="backupApiKey" data-i18n="label_backup_key">API Key</label>
                     <input type="password" id="backupApiKey" class="form-control" placeholder="sk-..." autocomplete="off" />
                   </div>
                 </div>
                 <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
                   <div class="form-group">
-                    <label data-i18n="label_backup_model">Default Model</label>
+                    <label for="backupModel" data-i18n="label_backup_model">Default Model</label>
                     <input type="text" id="backupModel" class="form-control" placeholder="gpt-4o-mini / gemini-1.5-flash" />
                   </div>
                   <div class="form-group">
-                    <label data-i18n="label_backup_url">Custom Endpoint Base URL</label>
+                    <label for="backupBaseUrl" data-i18n="label_backup_url">Custom Endpoint Base URL</label>
                     <input type="text" id="backupBaseUrl" class="form-control" placeholder="https://my-proxy.com/v1" />
                   </div>
                 </div>
@@ -2086,16 +2112,16 @@
                 <h4 data-i18n="dev_webhooks_title" style="margin-bottom:16px;">Outbound Webhooks URL</h4>
                 <form id="webhookConfigForm">
                   <div class="form-group">
-                    <label data-i18n="label_webhook_url">Destination Webhook URL</label>
+                    <label for="webhookUrlInput" data-i18n="label_webhook_url">Destination Webhook URL</label>
                     <input type="url" id="webhookUrlInput" class="form-control" placeholder="https://my-api-server.com/webhook" required />
                   </div>
                   <div class="form-group">
-                    <label data-i18n="label_webhook_secret">Signing Secret Key (HMAC)</label>
+                    <label for="webhookSecretInput" data-i18n="label_webhook_secret">Signing Secret Key (HMAC)</label>
                     <input type="text" id="webhookSecretInput" class="form-control" readonly placeholder="Will generate automatically on save" />
                   </div>
                   <div class="form-group">
-                    <label data-i18n="label_webhook_events">Subscribed Events</label>
-                    <div class="checkbox-group">
+                    <label id="webhookEventsLabel" data-i18n="label_webhook_events">Subscribed Events</label>
+                    <div class="checkbox-group" role="group" aria-labelledby="webhookEventsLabel">
                       <label class="checkbox-item"><input type="checkbox" name="webhookEvents" value="message.received" checked /> <span data-i18n="wh_event_msg_received">message.received</span></label>
                       <label class="checkbox-item"><input type="checkbox" name="webhookEvents" value="message.sent" checked /> <span data-i18n="wh_event_msg_sent">message.sent</span></label>
                       <label class="checkbox-item"><input type="checkbox" name="webhookEvents" value="order.created" checked /> <span data-i18n="wh_event_order_created">order.created</span></label>
@@ -2165,17 +2191,17 @@
                 </select>
                 <select id="adminUserStatusFilter" class="form-control" aria-label="Filter by status" data-i18n-aria="admin_filter_status">
                   <option value="" data-i18n="admin_visible_accounts">Visible accounts</option>
-                  <option value="active">Active</option>
-                  <option value="suspended">Suspended</option>
-                  <option value="deleted">Deleted</option>
+                  <option value="active" data-i18n="admin_active">Active</option>
+                  <option value="suspended" data-i18n="admin_suspended">Suspended</option>
+                  <option value="deleted" data-i18n="admin_status_deleted">Deleted</option>
                 </select>
                 <select id="adminUserTierFilter" class="form-control" aria-label="Filter by plan tier" data-i18n-aria="admin_filter_tier">
                   <option value="" data-i18n="admin_all_tiers">All tiers</option>
-                  <option value="free">Free</option>
-                  <option value="growth_1k">Growth 1K</option>
-                  <option value="growth_10k">Growth 10K</option>
-                  <option value="growth_50k">Growth 50K</option>
-                  <option value="unlimited">Unlimited</option>
+                  <option value="free" data-i18n="admin_free">Free</option>
+                  <option value="growth_1k" data-i18n="admin_tier_growth_1k">Growth 1K</option>
+                  <option value="growth_10k" data-i18n="admin_tier_growth_10k">Growth 10K</option>
+                  <option value="growth_50k" data-i18n="admin_tier_growth_50k">Growth 50K</option>
+                  <option value="unlimited" data-i18n="admin_tier_unlimited">Unlimited</option>
                 </select>
                 <button class="btn btn-secondary btn-sm" type="submit"><i class="fas fa-filter"></i> <span data-i18n="admin_apply">Apply</span></button>
               </form>
@@ -2227,11 +2253,11 @@
                 <h3 data-i18n="admin_register_key">Register Global Provider Key</h3>
                 <form id="adminKeyAddForm" style="margin-top:16px;">
                   <div class="form-group">
-                    <label data-i18n="admin_label_name">Key Name / Description</label>
+                    <label for="adminKeyName" data-i18n="admin_label_name">Key Name / Description</label>
                     <input type="text" id="adminKeyName" class="form-control" placeholder="Primary OpenAI" required />
                   </div>
                   <div class="form-group">
-                    <label data-i18n="admin_label_provider">AI Provider</label>
+                    <label for="adminKeyProvider" data-i18n="admin_label_provider">AI Provider</label>
                     <select id="adminKeyProvider" class="form-control">
                       <option value="openai">OpenAI</option>
                       <option value="gemini">Google Gemini</option>
@@ -2241,19 +2267,19 @@
                     </select>
                   </div>
                   <div class="form-group">
-                    <label data-i18n="admin_label_key">API Key</label>
+                    <label for="adminKeySecret" data-i18n="admin_label_key">API Key</label>
                     <input type="password" id="adminKeySecret" class="form-control" placeholder="sk-..." required autocomplete="off" />
                   </div>
                   <div class="form-group">
-                    <label data-i18n="admin_label_model">Default Model</label>
+                    <label for="adminKeyModel" data-i18n="admin_label_model">Default Model</label>
                     <input type="text" id="adminKeyModel" class="form-control" placeholder="gpt-4o-mini / gemini-1.5-flash" required />
                   </div>
                   <div class="form-group">
-                    <label data-i18n="admin_label_priority">Priority Rank (1 = Highest)</label>
+                    <label for="adminKeyPriority" data-i18n="admin_label_priority">Priority Rank (1 = Highest)</label>
                     <input type="number" id="adminKeyPriority" class="form-control" value="1" min="1" required />
                   </div>
                   <div class="form-group">
-                    <label data-i18n="admin_label_base_url">Base URL (Optional)</label>
+                    <label for="adminKeyBaseUrl" data-i18n="admin_label_base_url">Base URL (Optional)</label>
                     <input type="text" id="adminKeyBaseUrl" class="form-control" placeholder="https://api.openai.com/v1" />
                   </div>
                   <button type="submit" class="btn btn-primary btn-sm btn-block" style="background:var(--orange); color:#000; border-color:var(--orange)" data-i18n="admin_btn_register">Register Server Key</button>
@@ -2351,22 +2377,22 @@
               <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;" data-i18n="notify_desc">Deliver an in-app notification to every account or to one specific user.</p>
               <form id="adminNotifyForm">
                 <div class="form-group">
-                  <label data-i18n="notify_target">Target</label>
+                  <label for="notifyTargetSelect" data-i18n="notify_target">Target</label>
                   <select id="notifyTargetSelect" class="form-control">
                     <option value="all" data-i18n="notify_target_all">All users</option>
                     <option value="single" data-i18n="notify_target_single">Specific user (by username)</option>
                   </select>
                 </div>
                 <div class="form-group" id="notifyUsernameGroup" style="display:none;">
-                  <label data-i18n="notify_username_label">Username</label>
+                  <label for="notifyUsernameInput" data-i18n="notify_username_label">Username</label>
                   <input type="text" id="notifyUsernameInput" class="form-control" autocomplete="off" />
                 </div>
                 <div class="form-group">
-                  <label data-i18n="notify_title_label">Title</label>
+                  <label for="notifyTitleInput" data-i18n="notify_title_label">Title</label>
                   <input type="text" id="notifyTitleInput" class="form-control" maxlength="120" required />
                 </div>
                 <div class="form-group">
-                  <label data-i18n="notify_body_label">Message</label>
+                  <label for="notifyBodyInput" data-i18n="notify_body_label">Message</label>
                   <textarea id="notifyBodyInput" class="form-control" rows="4" maxlength="1000" required></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary btn-sm" style="background:var(--orange); color:#000; border-color:var(--orange);" data-i18n="notify_send_btn">Send notification</button>
@@ -2437,17 +2463,17 @@
   </div>
 
   <!-- General Instruction Modal Form -->
-  <div class="db-modal" id="instructionModal">
+  <div class="db-modal" id="instructionModal" role="dialog" aria-modal="true" aria-labelledby="instructionModalTitle">
     <div class="db-modal-content">
       <div class="db-modal-header">
         <h3 id="instructionModalTitle">Add General Instruction</h3>
-        <button class="btn btn-secondary btn-sm modal-close-btn" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
+        <button class="btn btn-secondary btn-sm modal-close-btn" style="padding:6px 12px;" data-i18n-aria="btn_cancel"><i class="fas fa-times"></i></button>
       </div>
       <div class="db-modal-body">
         <form id="instructionForm">
           <input type="hidden" id="instructionIdInput" />
           <div class="form-group">
-            <label data-i18n="label_instruction_content">Instruction</label>
+            <label for="instructionContentInput" data-i18n="label_instruction_content">Instruction</label>
             <textarea id="instructionContentInput" class="form-control" rows="5" data-i18n-placeholder="instruction_content_placeholder" placeholder="For example, always greet customers in Egyptian Arabic and never quote prices outside the catalog." required></textarea>
           </div>
         </form>
@@ -2460,21 +2486,21 @@
   </div>
 
   <!-- FAQ Modal Form -->
-  <div class="db-modal" id="faqModal">
+  <div class="db-modal" id="faqModal" role="dialog" aria-modal="true" aria-labelledby="faqModalTitle">
     <div class="db-modal-content">
       <div class="db-modal-header">
         <h3 id="faqModalTitle">Create FAQ Rule</h3>
-        <button class="btn btn-secondary btn-sm modal-close-btn" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
+        <button class="btn btn-secondary btn-sm modal-close-btn" style="padding:6px 12px;" data-i18n-aria="btn_cancel"><i class="fas fa-times"></i></button>
       </div>
       <div class="db-modal-body">
         <form id="faqForm">
           <input type="hidden" id="faqIdInput" />
           <div class="form-group">
-            <label data-i18n="label_faq_question">Question / Keywords</label>
+            <label for="faqQuestionInput" data-i18n="label_faq_question">Question / Keywords</label>
             <input type="text" id="faqQuestionInput" class="form-control" data-i18n-placeholder="faq_question_placeholder" placeholder="For example, delivery times" required />
           </div>
           <div class="form-group">
-            <label data-i18n="label_faq_answer">Expected Answer</label>
+            <label for="faqAnswerInput" data-i18n="label_faq_answer">Expected Answer</label>
             <textarea id="faqAnswerInput" class="form-control" rows="4" data-i18n-placeholder="faq_answer_placeholder" placeholder="For example, we deliver within three business days across Cairo." required></textarea>
           </div>
         </form>
@@ -2486,11 +2512,11 @@
     </div>
   </div>
   <!-- Channel Modal Form -->
-  <div class="db-modal" id="channelModal">
+  <div class="db-modal" id="channelModal" role="dialog" aria-modal="true" aria-labelledby="channelModalTitle">
     <div class="db-modal-content" style="max-width:540px;">
       <div class="db-modal-header">
         <h3 id="channelModalTitle"><i class="fas fa-plug"></i> Configure Channel</h3>
-        <button class="btn btn-secondary btn-sm modal-close-btn" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
+        <button class="btn btn-secondary btn-sm modal-close-btn" style="padding:6px 12px;" data-i18n-aria="btn_cancel"><i class="fas fa-times"></i></button>
       </div>
       <div class="db-modal-body" id="channelModalBody">
         <!-- Dynamic content rendered by JS -->
@@ -2498,29 +2524,29 @@
     </div>
   </div>
 
-  <div class="db-modal" id="adminUserModal">
+  <div class="db-modal" id="adminUserModal" role="dialog" aria-modal="true" aria-labelledby="adminUserModalTitle">
     <div class="db-modal-content" style="max-width:720px;">
       <div class="db-modal-header">
         <h3 id="adminUserModalTitle" data-i18n="admin_user_modal">Manage user</h3>
-        <button class="btn btn-secondary btn-sm admin-user-modal-close" type="button" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
+        <button class="btn btn-secondary btn-sm admin-user-modal-close" type="button" style="padding:6px 12px;" data-i18n-aria="btn_cancel"><i class="fas fa-times"></i></button>
       </div>
       <form id="adminUserForm">
         <div class="db-modal-body">
           <input id="adminUserId" type="hidden" />
           <input id="adminUserMode" type="hidden" value="edit" />
           <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-            <div class="form-group"><label data-i18n="admin_username">Username</label><input id="adminUserUsername" class="form-control" required minlength="3" maxlength="20" /></div>
-            <div class="form-group"><label data-i18n="admin_email">Email</label><input id="adminUserEmail" class="form-control" required type="email" /></div>
-            <div class="form-group"><label data-i18n="admin_whatsapp">WhatsApp</label><input id="adminUserWhatsapp" class="form-control" autocomplete="tel" /></div>
-            <div class="form-group"><label data-i18n="admin_role">Role</label><select id="adminUserRole" class="form-control"><option value="user" data-i18n="admin_user">User</option><option value="superadmin" data-i18n="admin_superadmin">Super admin</option></select></div>
-            <div class="form-group"><label data-i18n="admin_subscription">Subscription</label><select id="adminUserSubscriptionType" class="form-control"><option value="free" data-i18n="admin_free">Free</option><option value="monthly" data-i18n="admin_monthly">Monthly</option><option value="yearly" data-i18n="admin_yearly">Yearly</option></select></div>
-            <div class="form-group"><label data-i18n="admin_plan_tier">Plan tier</label><select id="adminUserTier" class="form-control"><option value="free" data-i18n="admin_free">Free</option><option value="growth_1k">Growth 1K</option><option value="growth_10k">Growth 10K</option><option value="growth_50k">Growth 50K</option><option value="unlimited">Unlimited</option></select></div>
-            <div class="form-group"><label data-i18n="th_user_status">Status</label><select id="adminUserStatus" class="form-control"><option value="active" data-i18n="admin_active">Active</option><option value="suspended" data-i18n="admin_suspended">Suspended</option></select></div>
-            <div class="form-group"><label data-i18n="admin_verification">Verification</label><select id="adminUserVerified" class="form-control"><option value="true" data-i18n="admin_verified">Verified</option><option value="false" data-i18n="admin_not_verified">Not verified</option></select></div>
-            <div class="form-group"><label data-i18n="admin_daily_usage">Daily messages used</label><input id="adminUserDailyUsage" class="form-control" type="number" min="0" value="0" /></div>
-            <div class="form-group"><label data-i18n="admin_monthly_usage">Monthly messages used</label><input id="adminUserMonthlyUsage" class="form-control" type="number" min="0" value="0" /></div>
-            <div class="form-group" id="adminUserPasswordGroup"><label data-i18n="admin_temporary_password">Temporary password</label><input id="adminUserPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" /><small style="color:var(--text-muted);" data-i18n="admin_password_help">Leave empty to keep the existing password.</small></div>
-            <div class="form-group" id="adminUserConfirmPasswordGroup"><label data-i18n="admin_confirm_password">Confirm password</label><input id="adminUserConfirmPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" /></div>
+            <div class="form-group"><label for="adminUserUsername" data-i18n="admin_username">Username</label><input id="adminUserUsername" class="form-control" required minlength="3" maxlength="20" /></div>
+            <div class="form-group"><label for="adminUserEmail" data-i18n="admin_email">Email</label><input id="adminUserEmail" class="form-control" required type="email" /></div>
+            <div class="form-group"><label for="adminUserWhatsapp" data-i18n="admin_whatsapp">WhatsApp</label><input id="adminUserWhatsapp" class="form-control" autocomplete="tel" /></div>
+            <div class="form-group"><label for="adminUserRole" data-i18n="admin_role">Role</label><select id="adminUserRole" class="form-control"><option value="user" data-i18n="admin_user">User</option><option value="superadmin" data-i18n="admin_superadmin">Super admin</option></select></div>
+            <div class="form-group"><label for="adminUserSubscriptionType" data-i18n="admin_subscription">Subscription</label><select id="adminUserSubscriptionType" class="form-control"><option value="free" data-i18n="admin_free">Free</option><option value="monthly" data-i18n="admin_monthly">Monthly</option><option value="yearly" data-i18n="admin_yearly">Yearly</option></select></div>
+            <div class="form-group"><label for="adminUserTier" data-i18n="admin_plan_tier">Plan tier</label><select id="adminUserTier" class="form-control"><option value="free" data-i18n="admin_free">Free</option><option value="growth_1k">Growth 1K</option><option value="growth_10k">Growth 10K</option><option value="growth_50k">Growth 50K</option><option value="unlimited">Unlimited</option></select></div>
+            <div class="form-group"><label for="adminUserStatus" data-i18n="th_user_status">Status</label><select id="adminUserStatus" class="form-control"><option value="active" data-i18n="admin_active">Active</option><option value="suspended" data-i18n="admin_suspended">Suspended</option></select></div>
+            <div class="form-group"><label for="adminUserVerified" data-i18n="admin_verification">Verification</label><select id="adminUserVerified" class="form-control"><option value="true" data-i18n="admin_verified">Verified</option><option value="false" data-i18n="admin_not_verified">Not verified</option></select></div>
+            <div class="form-group"><label for="adminUserDailyUsage" data-i18n="admin_daily_usage">Daily messages used</label><input id="adminUserDailyUsage" class="form-control" type="number" min="0" value="0" /></div>
+            <div class="form-group"><label for="adminUserMonthlyUsage" data-i18n="admin_monthly_usage">Monthly messages used</label><input id="adminUserMonthlyUsage" class="form-control" type="number" min="0" value="0" /></div>
+            <div class="form-group" id="adminUserPasswordGroup"><label for="adminUserPassword" data-i18n="admin_temporary_password">Temporary password</label><input id="adminUserPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" aria-describedby="adminUserPasswordHint" /><small id="adminUserPasswordHint" style="color:var(--text-muted);" data-i18n="admin_password_help">Leave empty to keep the existing password.</small></div>
+            <div class="form-group" id="adminUserConfirmPasswordGroup"><label for="adminUserConfirmPassword" data-i18n="admin_confirm_password">Confirm password</label><input id="adminUserConfirmPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" /></div>
           </div>
         </div>
         <div class="db-modal-footer">
@@ -2531,35 +2557,35 @@
     </div>
   </div>
 
-  <div class="db-modal" id="impersonationModal">
+  <div class="db-modal" id="impersonationModal" role="dialog" aria-modal="true" aria-labelledby="impersonationModalTitle">
     <div class="db-modal-content" style="max-width:520px;">
-      <div class="db-modal-header"><h3 data-i18n="impersonation_title">Start audited access</h3><button class="btn btn-secondary btn-sm impersonation-modal-close" type="button"><i class="fas fa-times"></i></button></div>
+      <div class="db-modal-header"><h3 id="impersonationModalTitle" data-i18n="impersonation_title">Start audited access</h3><button class="btn btn-secondary btn-sm impersonation-modal-close" type="button" data-i18n-aria="btn_cancel"><i class="fas fa-times"></i></button></div>
       <form id="impersonationForm">
         <div class="db-modal-body">
           <input id="impersonationSubjectId" type="hidden" />
           <p style="color:var(--text-muted); font-size:13px;" data-i18n="impersonation_desc">This starts a temporary, audited session. Enter the reason for access.</p>
-          <div class="form-group"><label data-i18n="impersonation_reason">Reason</label><textarea id="impersonationReason" class="form-control" rows="3" minlength="3" maxlength="500" required></textarea></div>
+          <div class="form-group"><label for="impersonationReason" data-i18n="impersonation_reason">Reason</label><textarea id="impersonationReason" class="form-control" rows="3" minlength="3" maxlength="500" required></textarea></div>
         </div>
         <div class="db-modal-footer"><button class="btn btn-secondary btn-sm impersonation-modal-close" type="button" data-i18n="btn_cancel">Cancel</button><button type="submit" class="btn btn-primary btn-sm" data-i18n="impersonation_continue">Continue</button></div>
       </form>
     </div>
   </div>
 
-  <div class="db-modal" id="agentModal">
+  <div class="db-modal" id="agentModal" role="dialog" aria-modal="true" aria-labelledby="agentModalTitle">
     <div class="db-modal-content" style="max-width:720px; max-height:90vh; overflow:auto;">
-      <div class="db-modal-header"><h3 id="agentModalTitle" data-i18n="agents_create">Create agent</h3><button class="btn btn-secondary btn-sm agent-modal-close" type="button"><i class="fas fa-times"></i></button></div>
+      <div class="db-modal-header"><h3 id="agentModalTitle" data-i18n="agents_create">Create agent</h3><button class="btn btn-secondary btn-sm agent-modal-close" type="button" data-i18n-aria="btn_cancel"><i class="fas fa-times"></i></button></div>
       <form id="agentForm">
         <div class="db-modal-body">
           <input id="agentId" type="hidden" />
           <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-            <div class="form-group"><label data-i18n="agent_name">Agent name</label><input id="agentName" class="form-control" required minlength="2" maxlength="80" /></div>
-            <div class="form-group"><label data-i18n="agent_role">Agent role</label><select id="agentType" class="form-control"><option value="customer_support" data-i18n="agent_role_support">Customer support</option><option value="sales" data-i18n="agent_role_sales">Sales</option><option value="lead_qualification" data-i18n="agent_role_leads">Lead qualification</option><option value="custom" data-i18n="agent_role_custom">Custom</option></select></div>
+            <div class="form-group"><label for="agentName" data-i18n="agent_name">Agent name</label><input id="agentName" class="form-control" required minlength="2" maxlength="80" /></div>
+            <div class="form-group"><label for="agentType" data-i18n="agent_role">Agent role</label><select id="agentType" class="form-control"><option value="customer_support" data-i18n="agent_role_support">Customer support</option><option value="sales" data-i18n="agent_role_sales">Sales</option><option value="lead_qualification" data-i18n="agent_role_leads">Lead qualification</option><option value="custom" data-i18n="agent_role_custom">Custom</option></select></div>
           </div>
-          <div class="form-group"><label data-i18n="agent_description">Description</label><input id="agentDescription" class="form-control" maxlength="500" placeholder="What this agent is responsible for" data-i18n-placeholder="agent_description_placeholder" /></div>
-          <div class="form-group"><label data-i18n="agent_welcome_message">Welcome message</label><textarea id="agentWelcomeMessage" class="form-control" rows="2" maxlength="500"></textarea></div>
-          <div class="form-group"><label data-i18n="agent_instructions">Instructions</label><textarea id="agentInstructions" class="form-control" rows="7" maxlength="12000" placeholder="Tone, source of truth, do-not-do rules, and escalation behavior" data-i18n-placeholder="agent_instructions_placeholder"></textarea></div>
-          <div class="form-group"><label data-i18n="agent_objectives">Objectives</label><textarea id="agentObjectives" class="form-control" rows="3" placeholder="One objective per line" data-i18n-placeholder="agent_objectives_placeholder"></textarea></div>
-          <div class="form-group"><label data-i18n="agent_handoff_keywords">Human handoff keywords</label><input id="agentHandoffKeywords" class="form-control" placeholder="human, manager, complaint" data-i18n-placeholder="agent_handoff_placeholder" /></div>
+          <div class="form-group"><label for="agentDescription" data-i18n="agent_description">Description</label><input id="agentDescription" class="form-control" maxlength="500" placeholder="What this agent is responsible for" data-i18n-placeholder="agent_description_placeholder" /></div>
+          <div class="form-group"><label for="agentWelcomeMessage" data-i18n="agent_welcome_message">Welcome message</label><textarea id="agentWelcomeMessage" class="form-control" rows="2" maxlength="500"></textarea></div>
+          <div class="form-group"><label for="agentInstructions" data-i18n="agent_instructions">Instructions</label><textarea id="agentInstructions" class="form-control" rows="7" maxlength="12000" placeholder="Tone, source of truth, do-not-do rules, and escalation behavior" data-i18n-placeholder="agent_instructions_placeholder"></textarea></div>
+          <div class="form-group"><label for="agentObjectives" data-i18n="agent_objectives">Objectives</label><textarea id="agentObjectives" class="form-control" rows="3" placeholder="One objective per line" data-i18n-placeholder="agent_objectives_placeholder"></textarea></div>
+          <div class="form-group"><label for="agentHandoffKeywords" data-i18n="agent_handoff_keywords">Human handoff keywords</label><input id="agentHandoffKeywords" class="form-control" placeholder="human, manager, complaint" data-i18n-placeholder="agent_handoff_placeholder" /></div>
           
           <!-- Agent Tools Section -->
           <div style="border-top:1px solid var(--glass-border); padding-top:16px; margin-top:16px;">
@@ -2573,11 +2599,11 @@
                 </label>
                 <div id="bookingToolSettingsGroup" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
                   <div class="form-group" style="margin-bottom:0;">
-                    <label style="font-size:12px;" data-i18n="agent_booking_hours_label">Working Hours</label>
+                    <label for="agentBookingWorkingHours" style="font-size:12px;" data-i18n="agent_booking_hours_label">Working Hours</label>
                     <input id="agentBookingWorkingHours" class="form-control" placeholder="09:00 - 22:00" value="09:00 - 22:00" />
                   </div>
                   <div class="form-group" style="margin-bottom:0;">
-                    <label style="font-size:12px;" data-i18n="agent_booking_service_label">Default Service / Purpose</label>
+                    <label for="agentBookingDefaultService" style="font-size:12px;" data-i18n="agent_booking_service_label">Default Service / Purpose</label>
                     <input id="agentBookingDefaultService" class="form-control" placeholder="استشارة / موعد" value="استشارة / موعد" />
                   </div>
                 </div>
@@ -2615,7 +2641,7 @@
                 </label>
                 <div id="salesRecoverySettingsGroup" style="display:grid; grid-template-columns:1fr 2fr; gap:12px; margin-top:12px;">
                   <div class="form-group" style="margin-bottom:0;">
-                    <label style="font-size:12px;" data-i18n="agent_recovery_delay_label">Follow-up After</label>
+                    <label for="agentSalesRecoveryDelay" style="font-size:12px;" data-i18n="agent_recovery_delay_label">Follow-up After</label>
                     <select id="agentSalesRecoveryDelay" class="form-control">
                       <option value="2" data-i18n="delay_2h">2 Hours</option>
                       <option value="4" data-i18n="delay_4h">4 Hours</option>
@@ -2624,7 +2650,7 @@
                     </select>
                   </div>
                   <div class="form-group" style="margin-bottom:0;">
-                    <label style="font-size:12px;" data-i18n="agent_recovery_msg_label">Custom Follow-up Message</label>
+                    <label for="agentSalesRecoveryMsg" style="font-size:12px;" data-i18n="agent_recovery_msg_label">Custom Follow-up Message</label>
                     <input id="agentSalesRecoveryMsg" class="form-control" placeholder="Leave empty for automatic friendly recovery message" data-i18n-placeholder="agent_recovery_msg_placeholder" />
                   </div>
                 </div>
@@ -2638,16 +2664,16 @@
                 </label>
                 <div id="dailyDigestSettingsGroup" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
                   <div class="form-group" style="margin-bottom:0;">
-                    <label style="font-size:12px;" data-i18n="agent_digest_channel_label">Notification Channel</label>
+                    <label for="agentDailyDigestChannel" style="font-size:12px;" data-i18n="agent_digest_channel_label">Notification Channel</label>
                     <select id="agentDailyDigestChannel" class="form-control">
                       <option value="all" data-i18n="channel_all">Telegram, WhatsApp & Dashboard</option>
-                      <option value="telegram">Telegram Only</option>
-                      <option value="whatsapp">WhatsApp Only</option>
+                      <option value="telegram" data-i18n="channel_telegram_only">Telegram Only</option>
+                      <option value="whatsapp" data-i18n="channel_whatsapp_only">WhatsApp Only</option>
                       <option value="in_app" data-i18n="channel_inapp">Dashboard Notifications Only</option>
                     </select>
                   </div>
                   <div class="form-group" style="margin-bottom:0;">
-                    <label style="font-size:12px;" data-i18n="agent_digest_time_label">Delivery Time</label>
+                    <label for="agentDailyDigestTime" style="font-size:12px;" data-i18n="agent_digest_time_label">Delivery Time</label>
                     <input id="agentDailyDigestTime" type="time" class="form-control" value="21:00" />
                   </div>
                 </div>
@@ -2661,7 +2687,7 @@
                 </label>
                 <div id="salesUpsellSettingsGroup" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
                   <div class="form-group" style="margin-bottom:0;">
-                    <label style="font-size:12px;" data-i18n="agent_sales_tone_label">Sales Persona Tone</label>
+                    <label for="agentSalesTone" style="font-size:12px;" data-i18n="agent_sales_tone_label">Sales Persona Tone</label>
                     <select id="agentSalesTone" class="form-control">
                       <option value="consultative" data-i18n="tone_consultative">Consultative & Helpful</option>
                       <option value="enthusiastic" data-i18n="tone_enthusiastic">Enthusiastic & Promotional</option>
@@ -2669,7 +2695,7 @@
                     </select>
                   </div>
                   <div class="form-group" style="margin-bottom:0;">
-                    <label style="font-size:12px;" data-i18n="agent_max_discount_label">Closing Incentive Discount</label>
+                    <label for="agentMaxDiscount" style="font-size:12px;" data-i18n="agent_max_discount_label">Closing Incentive Discount</label>
                     <select id="agentMaxDiscount" class="form-control">
                       <option value="0" data-i18n="discount_none">No discounts (0%)</option>
                       <option value="5">Up to 5% discount</option>
@@ -2702,32 +2728,32 @@
   </div>
 
   <!-- Booking Modal Form (Create / Edit Appointment) -->
-  <div class="db-modal" id="bookingModal">
+  <div class="db-modal" id="bookingModal" role="dialog" aria-modal="true" aria-labelledby="bookingModalTitle">
     <div class="db-modal-content" style="max-width:600px;">
       <div class="db-modal-header">
         <h3 id="bookingModalTitle" data-i18n="booking_modal_title"><i class="fas fa-calendar-alt"></i> Manage Appointment</h3>
-        <button class="btn btn-secondary btn-sm modal-close-btn booking-modal-close" type="button" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
+        <button class="btn btn-secondary btn-sm modal-close-btn booking-modal-close" type="button" style="padding:6px 12px;" data-i18n-aria="btn_cancel"><i class="fas fa-times"></i></button>
       </div>
       <form id="bookingForm">
         <div class="db-modal-body">
           <input type="hidden" id="bookingIdInput" />
           <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
             <div class="form-group">
-              <label data-i18n="label_customer_name">Customer Name</label>
+              <label for="bookingCustomerName" data-i18n="label_customer_name">Customer Name</label>
               <input type="text" id="bookingCustomerName" class="form-control" required data-i18n-placeholder="placeholder_customer_name" placeholder="Full Name" />
             </div>
             <div class="form-group">
-              <label data-i18n="label_customer_phone">Phone Number</label>
+              <label for="bookingCustomerPhone" data-i18n="label_customer_phone">Phone Number</label>
               <input type="text" id="bookingCustomerPhone" class="form-control" data-i18n-placeholder="placeholder_customer_phone" placeholder="01xxxxxxxxx" />
             </div>
           </div>
           <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
             <div class="form-group">
-              <label data-i18n="label_service_type">Service / Purpose</label>
+              <label for="bookingServiceType" data-i18n="label_service_type">Service / Purpose</label>
               <input type="text" id="bookingServiceType" class="form-control" placeholder="Consultation / Review" data-i18n-placeholder="placeholder_service_type" />
             </div>
             <div class="form-group">
-              <label data-i18n="label_booking_status">Status</label>
+              <label for="bookingStatusSelect" data-i18n="label_booking_status">Status</label>
               <select id="bookingStatusSelect" class="form-control">
                 <option value="pending" data-i18n="status_pending">Pending</option>
                 <option value="confirmed" data-i18n="status_confirmed">Confirmed</option>
@@ -2739,16 +2765,16 @@
           </div>
           <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
             <div class="form-group">
-              <label data-i18n="label_booking_date">Date & Time</label>
+              <label for="bookingDateTime" data-i18n="label_booking_date">Date & Time</label>
               <input type="datetime-local" id="bookingDateTime" class="form-control" required />
             </div>
             <div class="form-group">
-              <label data-i18n="label_slot_duration">Duration (Minutes)</label>
+              <label for="bookingDuration" data-i18n="label_slot_duration">Duration (Minutes)</label>
               <input type="number" id="bookingDuration" class="form-control" value="30" min="5" step="5" />
             </div>
           </div>
           <div class="form-group">
-            <label data-i18n="label_booking_notes">Notes / AI Summary</label>
+            <label for="bookingNotes" data-i18n="label_booking_notes">Notes / AI Summary</label>
             <textarea id="bookingNotes" class="form-control" rows="3" data-i18n-placeholder="placeholder_booking_notes" placeholder="Additional details, requests, or notes..."></textarea>
           </div>
         </div>
@@ -2761,40 +2787,40 @@
   </div>
 
   <!-- Chat Order Modal Form (Create / Edit Order) -->
-  <div class="db-modal" id="chatOrderModal">
+  <div class="db-modal" id="chatOrderModal" role="dialog" aria-modal="true" aria-labelledby="chatOrderModalTitle">
     <div class="db-modal-content" style="max-width:650px;">
       <div class="db-modal-header">
         <h3 id="chatOrderModalTitle" data-i18n="chat_order_modal_title"><i class="fas fa-shopping-cart"></i> Manage Chat Order</h3>
-        <button class="btn btn-secondary btn-sm modal-close-btn order-modal-close" type="button" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
+        <button class="btn btn-secondary btn-sm modal-close-btn order-modal-close" type="button" style="padding:6px 12px;" data-i18n-aria="btn_cancel"><i class="fas fa-times"></i></button>
       </div>
       <form id="chatOrderForm">
         <div class="db-modal-body">
           <input type="hidden" id="chatOrderIdInput" />
           <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
             <div class="form-group">
-              <label data-i18n="label_customer_name">Customer Name</label>
+              <label for="orderCustomerName" data-i18n="label_customer_name">Customer Name</label>
               <input type="text" id="orderCustomerName" class="form-control" required />
             </div>
             <div class="form-group">
-              <label data-i18n="label_customer_phone">Phone Number</label>
+              <label for="orderCustomerPhone" data-i18n="label_customer_phone">Phone Number</label>
               <input type="text" id="orderCustomerPhone" class="form-control" required />
             </div>
           </div>
           <div class="form-group">
-            <label data-i18n="label_customer_address">Delivery Address</label>
+              <label for="orderCustomerAddress" data-i18n="label_customer_address">Delivery Address</label>
             <input type="text" id="orderCustomerAddress" class="form-control" required />
           </div>
           <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;">
             <div class="form-group">
-              <label data-i18n="label_order_items">Items Summary</label>
+              <label for="orderItemsSummary" data-i18n="label_order_items">Items Summary</label>
               <input type="text" id="orderItemsSummary" class="form-control" placeholder="Product name x1" data-i18n-placeholder="placeholder_order_items" />
             </div>
             <div class="form-group">
-              <label data-i18n="label_total_amount">Total Amount (EGP)</label>
+              <label for="orderTotalAmount" data-i18n="label_total_amount">Total Amount (EGP)</label>
               <input type="number" id="orderTotalAmount" class="form-control" min="0" step="1" required />
             </div>
             <div class="form-group">
-              <label data-i18n="label_order_status">Status</label>
+              <label for="orderStatusSelect" data-i18n="label_order_status">Status</label>
               <select id="orderStatusSelect" class="form-control">
                 <option value="pending" data-i18n="status_pending">Pending</option>
                 <option value="processing" data-i18n="status_processing">Processing</option>
@@ -2806,7 +2832,7 @@
             </div>
           </div>
           <div class="form-group">
-            <label data-i18n="label_order_note">Order Note</label>
+            <label for="orderCustomerNote" data-i18n="label_order_note">Order Note</label>
             <textarea id="orderCustomerNote" class="form-control" rows="2"></textarea>
           </div>
         </div>
@@ -2819,34 +2845,34 @@
   </div>
 
   <!-- Notification Recipient Modal Form -->
-  <div class="db-modal" id="recipientModal">
+  <div class="db-modal" id="recipientModal" role="dialog" aria-modal="true" aria-labelledby="recipientModalTitle">
     <div class="db-modal-content" style="max-width:540px;">
       <div class="db-modal-header">
         <h3 id="recipientModalTitle" data-i18n="recipient_modal_title"><i class="fas fa-bell"></i> Add Notification Channel</h3>
-        <button class="btn btn-secondary btn-sm modal-close-btn recipient-modal-close" type="button" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
+        <button class="btn btn-secondary btn-sm modal-close-btn recipient-modal-close" type="button" style="padding:6px 12px;" data-i18n-aria="btn_cancel"><i class="fas fa-times"></i></button>
       </div>
       <form id="recipientForm">
         <div class="db-modal-body">
           <input type="hidden" id="recipientIdInput" />
           <div class="form-group">
-            <label data-i18n="label_rec_channel">Notification Channel</label>
+            <label for="recipientChannelSelect" data-i18n="label_rec_channel">Notification Channel</label>
             <select id="recipientChannelSelect" class="form-control" required>
               <option value="whatsapp" data-i18n="channel_whatsapp">WhatsApp Number</option>
               <option value="telegram" data-i18n="channel_telegram">Telegram Account / Channel ID</option>
             </select>
           </div>
           <div class="form-group">
-            <label data-i18n="label_rec_target">Target Destination</label>
-            <input type="text" id="recipientTargetInput" class="form-control" placeholder="01xxxxxxxxx or Telegram Chat ID" data-i18n-placeholder="placeholder_rec_target" required />
-            <small style="color:var(--text-muted);" data-i18n="hint_rec_target">For WhatsApp: 01xxxxxxxxx or +201xxxxxxxxx. For Telegram: Chat ID (e.g. 123456789) or group/channel ID.</small>
+            <label for="recipientTargetInput" data-i18n="label_rec_target">Target Destination</label>
+            <input type="text" id="recipientTargetInput" class="form-control" placeholder="01xxxxxxxxx or Telegram Chat ID" data-i18n-placeholder="placeholder_rec_target" aria-describedby="recipientTargetHint" required />
+            <small id="recipientTargetHint" style="color:var(--text-muted);" data-i18n="hint_rec_target">For WhatsApp: 01xxxxxxxxx or +201xxxxxxxxx. For Telegram: Chat ID (e.g. 123456789) or group/channel ID.</small>
           </div>
           <div class="form-group">
-            <label data-i18n="label_rec_label">Label / Team Description</label>
+            <label for="recipientLabelInput" data-i18n="label_rec_label">Label / Team Description</label>
             <input type="text" id="recipientLabelInput" class="form-control" placeholder="Sales Manager, Kitchen, Operations..." data-i18n-placeholder="placeholder_rec_label" />
           </div>
           <div class="form-group">
-            <label data-i18n="label_rec_events">Subscribed Alert Events</label>
-            <div class="checkbox-group">
+            <label id="recipientEventsLabel" data-i18n="label_rec_events">Subscribed Alert Events</label>
+            <div class="checkbox-group" role="group" aria-labelledby="recipientEventsLabel">
               <label class="checkbox-item"><input type="checkbox" name="recipientEvents" value="order_created" checked /> <span data-i18n="ev_order_created">New Orders</span></label>
               <label class="checkbox-item"><input type="checkbox" name="recipientEvents" value="order_status" checked /> <span data-i18n="ev_order_status">Order Status Updates</span></label>
               <label class="checkbox-item"><input type="checkbox" name="recipientEvents" value="booking_created" checked /> <span data-i18n="ev_booking_created">New Appointments</span></label>
@@ -2864,11 +2890,11 @@
   </div>
 
   <!-- Dedicated Web Chat Page & Customizer Modal with Live Preview -->
-  <div class="db-modal" id="chatPageModal">
+  <div class="db-modal" id="chatPageModal" role="dialog" aria-modal="true" aria-labelledby="chatPageModalTitle">
     <div class="db-modal-content" style="max-width:1120px; width:95%; max-height:92vh; overflow-y:auto;">
       <div class="db-modal-header">
         <h3 id="chatPageModalTitle" data-i18n="chat_page_customizer_title"><i class="fas fa-palette"></i> Customize Dedicated Web Chat Page</h3>
-        <button class="btn btn-secondary btn-sm modal-close-btn chat-page-modal-close" type="button" style="padding:6px 12px;"><i class="fas fa-times"></i></button>
+        <button class="btn btn-secondary btn-sm modal-close-btn chat-page-modal-close" type="button" style="padding:6px 12px;" data-i18n-aria="btn_cancel"><i class="fas fa-times"></i></button>
       </div>
       
       <div style="background:rgba(6,182,212,0.08); border:1px solid rgba(6,182,212,0.25); border-radius:8px; padding:12px 16px; margin:16px 20px 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
@@ -2956,11 +2982,11 @@
               <!-- General Info -->
               <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
                 <div class="form-group">
-                  <label data-i18n="label_chat_page_title">Chat Page Title</label>
+                  <label for="chatPageTitleInput" data-i18n="label_chat_page_title">Chat Page Title</label>
                   <input type="text" id="chatPageTitleInput" class="form-control" placeholder="ZainBot AI Sales Agent" required oninput="updateLivePreview()" />
                 </div>
                 <div class="form-group">
-                  <label data-i18n="label_chat_page_slug">Custom Link ID / Slug</label>
+                  <label for="chatPageSlugInput" data-i18n="label_chat_page_slug">Custom Link ID / Slug</label>
                   <input type="text" id="chatPageSlugInput" class="form-control" placeholder="my-bot" />
                 </div>
               </div>
@@ -2972,34 +2998,34 @@
               </h4>
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:10px; margin-bottom:16px;">
                 <div class="form-group" style="margin-bottom:0;">
-                  <label style="font-size:11px;" data-i18n="label_color_header">Header</label>
+                  <label for="chatColorHeader" style="font-size:11px;" data-i18n="label_color_header">Header</label>
                   <input type="color" id="chatColorHeader" class="form-control" value="#0f172a" style="height:36px; padding:2px; cursor:pointer;" oninput="updateLivePreview()" />
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
-                  <label style="font-size:11px;" data-i18n="label_color_bg">Background</label>
+                  <label for="chatColorBg" style="font-size:11px;" data-i18n="label_color_bg">Background</label>
                   <input type="color" id="chatColorBg" class="form-control" value="#0a0f1d" style="height:36px; padding:2px; cursor:pointer;" oninput="updateLivePreview()" />
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
-                  <label style="font-size:11px;" data-i18n="label_color_bot_bubble">Bot Bubble</label>
+                  <label for="chatColorBotBubble" style="font-size:11px;" data-i18n="label_color_bot_bubble">Bot Bubble</label>
                   <input type="color" id="chatColorBotBubble" class="form-control" value="#1e293b" style="height:36px; padding:2px; cursor:pointer;" oninput="updateLivePreview()" />
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
-                  <label style="font-size:11px;" data-i18n="label_color_user_bubble">User Bubble</label>
+                  <label for="chatColorUserBubble" style="font-size:11px;" data-i18n="label_color_user_bubble">User Bubble</label>
                   <input type="color" id="chatColorUserBubble" class="form-control" value="#06b6d4" style="height:36px; padding:2px; cursor:pointer;" oninput="updateLivePreview()" />
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
-                  <label style="font-size:11px;" data-i18n="label_color_button">Send Button</label>
+                  <label for="chatColorButton" style="font-size:11px;" data-i18n="label_color_button">Send Button</label>
                   <input type="color" id="chatColorButton" class="form-control" value="#06b6d4" style="height:36px; padding:2px; cursor:pointer;" oninput="updateLivePreview()" />
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
-                  <label style="font-size:11px;" data-i18n="label_color_title">Title Color</label>
+                  <label for="chatColorTitle" style="font-size:11px;" data-i18n="label_color_title">Title Color</label>
                   <input type="color" id="chatColorTitle" class="form-control" value="#ffffff" style="height:36px; padding:2px; cursor:pointer;" oninput="updateLivePreview()" />
                 </div>
               </div>
 
               <!-- Suggested Questions -->
               <div class="form-group" style="margin-bottom:14px;">
-                <label data-i18n="label_chat_suggested_questions">Suggested Quick Questions (One per line)</label>
+                <label for="chatPageSuggestedQuestions" data-i18n="label_chat_suggested_questions">Suggested Quick Questions (One per line)</label>
                 <textarea id="chatPageSuggestedQuestions" class="form-control" rows="3" placeholder="ما هي المنتجات والعروض المتوفرة؟&#10;كيف يمكنني حجز موعد؟" oninput="updateLivePreview()"></textarea>
               </div>
 
@@ -3017,7 +3043,7 @@
 
               <!-- Embed Widget Snippet -->
               <div class="form-group" style="margin-bottom:0;">
-                <label data-i18n="label_embed_widget_code">Website Embed Code (Widget)</label>
+                <label for="chatPageWidgetCode" data-i18n="label_embed_widget_code">Website Embed Code (Widget)</label>
                 <div style="display:flex; gap:8px;">
                   <input type="text" id="chatPageWidgetCode" class="form-control" readonly style="font-family:monospace; font-size:12px; color:var(--cyan);" />
                   <button type="button" id="copyWidgetCodeBtn" class="btn btn-secondary btn-sm" onclick="copyWidgetEmbedCode()"><i class="fas fa-copy"></i> <span data-i18n="btn_copy_code">Copy</span></button>
@@ -3108,7 +3134,7 @@
   </div>
 
   <!-- Idea Council Dedicated Follow-up & Defense Modal -->
-  <div class="db-modal" id="ideaFollowupModal">
+  <div class="db-modal" id="ideaFollowupModal" role="dialog" aria-modal="true" aria-labelledby="ideaFollowupModalTitle">
     <div class="db-modal-content" style="max-width: 680px; max-height: 90vh; display: flex; flex-direction: column;">
       <div class="db-modal-header" style="background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(6, 182, 212, 0.15)); border-bottom: 1px solid var(--glass-border);">
         <div style="display:flex; align-items:center; gap:10px;">
@@ -3123,7 +3149,7 @@
             <p style="font-size:12px; color:var(--text-muted); margin:2px 0 0 0;" data-i18n="idea_followup_modal_subtitle">Present new arguments, strategic angles, and evidence to challenge council skepticism.</p>
           </div>
         </div>
-        <button class="btn btn-secondary btn-sm idea-followup-modal-close" type="button" style="padding:6px 10px;"><i class="fas fa-times"></i></button>
+        <button class="btn btn-secondary btn-sm idea-followup-modal-close" type="button" style="padding:6px 10px;" data-i18n-aria="btn_cancel"><i class="fas fa-times"></i></button>
       </div>
 
       <div class="db-modal-body" style="overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:18px;">
@@ -3220,7 +3246,7 @@
   </div>
 
   <!-- Idea Council Rounds Comparison (Round Delta) Modal -->
-  <div class="db-modal" id="ideaRoundsComparisonModal">
+  <div class="db-modal" id="ideaRoundsComparisonModal" role="dialog" aria-modal="true" aria-labelledby="ideaCompareModalTitle">
     <div class="db-modal-content" style="max-width: 850px; max-height: 90vh; display: flex; flex-direction: column;">
       <div class="db-modal-header" style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(16, 185, 129, 0.15)); border-bottom: 1px solid var(--glass-border);">
         <div style="display:flex; align-items:center; gap:10px;">
@@ -3228,11 +3254,11 @@
             <i class="fas fa-code-compare"></i>
           </div>
           <div>
-            <h3 style="margin:0; font-size:16px; font-weight:700;" data-i18n="idea_compare_modal_title">Evaluation Rounds Comparison (Round Delta)</h3>
+            <h3 id="ideaCompareModalTitle" style="margin:0; font-size:16px; font-weight:700;" data-i18n="idea_compare_modal_title">Evaluation Rounds Comparison (Round Delta)</h3>
             <p style="font-size:12px; color:var(--text-muted); margin:2px 0 0 0;" data-i18n="idea_compare_modal_subtitle">Track how the council's verdict, assumptions, and validation plan evolved after your defense.</p>
           </div>
         </div>
-        <button class="btn btn-secondary btn-sm idea-compare-modal-close" type="button" style="padding:6px 10px;"><i class="fas fa-times"></i></button>
+        <button class="btn btn-secondary btn-sm idea-compare-modal-close" type="button" style="padding:6px 10px;" data-i18n-aria="btn_cancel"><i class="fas fa-times"></i></button>
       </div>
 
       <div class="db-modal-body" style="overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:18px;">
@@ -3260,14 +3286,19 @@
 
   <div id="impersonationBanner" style="display:none; position:fixed; inset:0 0 auto; z-index:5000; background:#d97706; color:#111827; padding:10px 18px; font-weight:700; text-align:center; box-shadow:0 2px 12px rgba(0,0,0,.28);">
     <span id="impersonationBannerText">You are viewing a user account in a temporary audited session.</span>
-    <button id="exitImpersonationBtn" class="btn btn-sm" type="button" style="margin-inline-start:12px; background:#111827; border-color:#111827; color:#fff;">Exit and return to admin</button>
+    <button id="exitImpersonationBtn" class="btn btn-sm" type="button" data-i18n="admin_exit_impersonation" style="margin-inline-start:12px; background:#111827; border-color:#111827; color:#fff;">Exit and return to admin</button>
   </div>
 
-  <script src="js/utils.js"></script>
+  <div id="feedbackLiveRegion"></div>
+
+  <script src="js/utils.js?v=20261005-f08"></script>
   <!-- Loading script for i18n translations & UI logic -->
   <script src="js/dashboard-onboarding.js?v=20260928-journey"></script>
-  <script src="js/dashboard_new.js?v=20260928-journey2"></script>
-  <script src="js/settings-summary.js?v=2"></script>
+  <script src="js/ui-accessibility.js?v=1"></script>
+  <script src="js/dashboard-request.js?v=20261005-d02"></script>
+  <script src="js/dashboard-feedback.js?v=20261005-d03"></script>
+  <script src="js/dashboard-assets.js?v=20261005-f05"></script>
+  <script src="js/dashboard_new.js?v=20261005-d09"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

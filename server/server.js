@@ -54,6 +54,7 @@ const {
 } = require('./services/ideaEvaluationWorker');
 const AppError = require('./utils/appError');
 const errorHandler = require('./middleware/errorHandler');
+const { webAssetCache } = require('./middleware/webAssetCache');
 // removed waRoutes (local WA app)
 const connectDB = require('./db');
 const Conversation = require('./models/Conversation');
@@ -233,30 +234,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware لإضافة Cache-Control headers
+// Web-asset cache policy (F02): explicit classification lives in
+// server/middleware/webAssetCache.js — no startsWith('/') catch-all, no
+// immutable for unversioned JS/CSS, query version is not a fingerprint.
+app.use(webAssetCache);
+
+// Middleware
 app.use((req, res, next) => {
-  if (req.path.match(/\.(html)$/i) || ['/', '/dashboard', '/dashboard_new', '/login', '/register', '/set-whatsapp', '/chat/', '/store/'].some(path => req.path.startsWith(path))) {
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-  }
-  else if (req.path.match(/\.(css|js|woff|woff2|ttf)$/i) && req.path.includes('/chat')) {
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    res.setHeader('Content-Type', req.path.match(/\.css$/i) ? 'text/css' : req.path.match(/\.js$/i) ? 'application/javascript' : 'font/woff2');
-  }
-  else if (req.path.match(/\.(png|jpg|jpeg|gif|ico|json)$/i)) {
-    res.setHeader('Cache-Control', 'public, max-age=300');
-  }
-  else if (req.path.match(/\.(css|js|woff|woff2|ttf)$/i)) {
-    // DEV MODE: Disable caching to ensure updates are seen immediately
-    if (process.env.NODE_ENV === 'production') {
-      res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
-    } else {
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    }
-  }
   // إضافة headers لتحسين الأداء والأمان
   res.setHeader('X-Content-Type-Options', 'nosniff');
   // صفحة الشات العامة مسموح بتضمينها من مواقع العملاء (frame-ancestors *)

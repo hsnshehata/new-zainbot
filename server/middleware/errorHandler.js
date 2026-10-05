@@ -1,48 +1,56 @@
 const logger = require('../logger');
 const path = require('path');
 
-function normalizeError(err) {
-  const normalized = { ...err };
-  normalized.statusCode = err.statusCode || err.status || 500;
-  normalized.code = err.code || 'INTERNAL_ERROR';
-  normalized.message = err.message || 'حدث خطأ غير متوقع';
-  return normalized;
-}
+const GENERIC_MESSAGE = 'حدث خطأ غير متوقع';
 
 module.exports = (err, req, res, next) => { // eslint-disable-line no-unused-vars
-  const traceId = req.requestId || `${Date.now()}`;
-  const normalized = normalizeError(err);
+  const traceId = (req && req.requestId) || `${Date.now()}`;
 
-  // معالجة أخطاء التحقق الشائعة
+  let statusCode = err.statusCode || err.status || 500;
+  let code = err.code || 'INTERNAL_ERROR';
+  let message = err.message || GENERIC_MESSAGE;
+
+  // Operational client errors keep stable, mappable codes.
   if (err.name === 'ValidationError') {
-    normalized.statusCode = 400;
-    normalized.code = 'VALIDATION_ERROR';
+    statusCode = 400;
+    code = 'VALIDATION_ERROR';
   }
   if (err.name === 'CastError') {
-    normalized.statusCode = 400;
-    normalized.code = 'BAD_ID_FORMAT';
+    statusCode = 400;
+    code = 'BAD_ID_FORMAT';
   }
 
+  // Unexpected failures (no explicit status) never leak exception strings
+  // or driver internals to the client; details stay in server logs only.
+  const unexpected = statusCode >= 500 && !(err.statusCode || err.status);
+  if (unexpected) {
+    message = GENERIC_MESSAGE;
+    code = 'INTERNAL_ERROR';
+  }
+
+  // Additive `success` flag: existing { message, code, traceId } readers
+  // are unaffected.
   const responsePayload = {
-    message: normalized.message,
-    code: normalized.code,
+    success: false,
+    message,
+    code,
     traceId,
   };
 
   logger.error('unhandled_error', {
     traceId,
-    code: normalized.code,
-    statusCode: normalized.statusCode,
+    code,
+    statusCode,
     err: err.message,
     stack: err.stack,
-    path: req.originalUrl,
-    method: req.method,
+    path: req && req.originalUrl,
+    method: req && req.method,
   });
 
-  // إذا كان 404 ومش API request، أرسل صفحة 404.html
-  if (normalized.statusCode === 404 && !req.originalUrl.startsWith('/api/')) {
+  // Non-API 404 keeps serving the HTML page — untouched by this contract.
+  if (statusCode === 404 && req && req.originalUrl && !req.originalUrl.startsWith('/api/')) {
     return res.status(404).sendFile(path.join(__dirname, '..', '..', 'public', '404.html'));
   }
 
-  res.status(normalized.statusCode).json(responsePayload);
+  res.status(statusCode).json(responsePayload);
 };
