@@ -108,9 +108,18 @@ const orderSchema = new mongoose.Schema({
   // released (idempotently).
   stockStatus: {
     type: String,
-    enum: ['none', 'pending', 'completed', 'failed'],
+    enum: ['none', 'pending', 'completed', 'failed', 'restoring'],
     default: 'none'
   },
+  // Generation fence: set to a fresh id on EVERY transition into
+  // stockStatus 'pending' and required in the completion CAS filter, so a
+  // stalled writer from an older generation can never complete (and adopt)
+  // a newer generation of the same order.
+  stockEpoch: { type: String, default: '' },
+  // Ledger marker: true once a previously completed reservation has been
+  // fully restored to stock (cancel / regression). Restoration itself is
+  // idempotent per (product, order) via Product.restorations.
+  stockReleased: { type: Boolean, default: false },
   // Durable post-commit ops flags: set when a post-save side effect
   // (stock decrement, owner notification) failed after the order was
   // already persisted. A reconciliation sweep can find and retry these

@@ -91,6 +91,19 @@ const productSchema = new mongoose.Schema({
     ],
     default: []
   },
+  // Restoration ledger: one entry per (order, product) restock, written in
+  // the same atomic update as the stock increment, so a retried or swept
+  // restore can never double-restore.
+  restorations: {
+    type: [
+      new mongoose.Schema({
+        orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', required: true },
+        qty: { type: Number, required: true, min: 1 },
+        at: { type: Date, default: Date.now }
+      }, { _id: false })
+    ],
+    default: []
+  },
   salesCount: { type: Number, default: 0, min: [0, 'عدد المبيعات يجب أن يكون أكبر من أو يساوي 0'] }, // إضافة salesCount
   isActive: { type: Boolean, default: true }, // إضافة isActive
   createdAt: { type: Date, default: Date.now },

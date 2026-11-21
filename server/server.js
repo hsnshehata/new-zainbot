@@ -804,9 +804,10 @@ function startOrderOpsSweep() {
     try {
       const reconciled = await stockService.reconcileStuckOrders();
       const tokens = await stockService.reconcileOrphanTokens();
+      const restores = await stockService.reconcileInterruptedRestores();
       const notified = await orderOps.retryPendingNotifications();
-      if (reconciled || tokens || notified.recovered || notified.failed) {
-        logger.info('order_ops_sweep', { reconciled, orphanTokens: tokens, ...notified });
+      if (reconciled || tokens || restores || notified.recovered || notified.failed) {
+        logger.info('order_ops_sweep', { reconciled, orphanTokens: tokens, interruptedRestores: restores, ...notified });
       }
     } catch (err) {
       logger.error('order_ops_sweep_failed', { err: err.message });

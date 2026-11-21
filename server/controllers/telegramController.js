@@ -26,6 +26,8 @@ const settingsButtonLabel = (botName = 'البوت') => {
 
 const botStatsButtonLabel = '📊 عدادات البوت';
 
+const { changeOrderStatus } = require('../services/orderStatusService');
+
 const ORDER_STATUS_OPTIONS = [
   { key: 'pending', label: 'قيد الانتظار' },
   { key: 'processing', label: 'جاري التجهيز' },
@@ -36,6 +38,13 @@ const ORDER_STATUS_OPTIONS = [
   { key: 'cancelled', label: 'ملغي' },
 ];
 
+// Store orders (Order model) accept only this subset; chat orders keep the
+// full list above. Offering an enum-invalid key previously ended in a
+// generic save error for the owner.
+const STORE_ORDER_STATUS_OPTIONS = ORDER_STATUS_OPTIONS.filter((o) =>
+  ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'].includes(o.key)
+);
+
 const STATUS_LABEL_MAP = ORDER_STATUS_OPTIONS.reduce((acc, cur) => {
   acc[cur.key] = cur.label;
   return acc;
@@ -43,23 +52,23 @@ const STATUS_LABEL_MAP = ORDER_STATUS_OPTIONS.reduce((acc, cur) => {
 
 const statusLabel = (key) => STATUS_LABEL_MAP[key] || key;
 
-const parseOrderStatusInput = (text) => {
+const parseOrderStatusInput = (text, options = ORDER_STATUS_OPTIONS) => {
   const normalized = (text || '').trim().toLowerCase();
   if (!normalized) return null;
   // رقم (1..N)
   const num = parseInt(normalized, 10);
-  if (Number.isInteger(num) && num >= 1 && num <= ORDER_STATUS_OPTIONS.length) {
-    return ORDER_STATUS_OPTIONS[num - 1].key;
+  if (Number.isInteger(num) && num >= 1 && num <= options.length) {
+    return options[num - 1].key;
   }
 
   // مطابق للمفتاح الإنجليزي
   const synonyms = { canceled: 'cancelled', cancelled: 'cancelled', onhold: 'on_hold', on_hold: 'on_hold' };
   const keyNorm = synonyms[normalized] || normalized;
-  const matchKey = ORDER_STATUS_OPTIONS.find((o) => o.key === keyNorm);
+  const matchKey = options.find((o) => o.key === keyNorm);
   if (matchKey) return matchKey.key;
 
   // مطابق للتسمية العربية
-  const matchLabel = ORDER_STATUS_OPTIONS.find((o) => o.label === normalized || o.label.toLowerCase() === normalized);
+  const matchLabel = options.find((o) => o.label === normalized || o.label.toLowerCase() === normalized);
   if (matchLabel) return matchLabel.key;
 
   return null;
@@ -794,7 +803,7 @@ exports.handleWebhook = async (req, res) => {
         }
         const selectedOrder = orders[idx];
         chatStates.set(chatId, { step: 'order_status_waiting_new', orderId: selectedOrder._id, storeId });
-        const optionsLines = ORDER_STATUS_OPTIONS.map((o, i) => `${i + 1}) ${o.label} (${o.key})`).join('\n');
+        const optionsLines = STORE_ORDER_STATUS_OPTIONS.map((o, i) => `${i + 1}) ${o.label} (${o.key})`).join('\n');
         await sendTelegramMessage(
           chatId,
           `اختر رقم الحالة الجديدة أو اكتبها بالعربية/الإنجليزية:\n${optionsLines}`,
@@ -805,9 +814,9 @@ exports.handleWebhook = async (req, res) => {
 
       if (state.step === 'order_status_waiting_new') {
         const { orderId, storeId: stId } = state;
-        const parsedStatus = parseOrderStatusInput(text);
+        const parsedStatus = parseOrderStatusInput(text, STORE_ORDER_STATUS_OPTIONS);
         if (!parsedStatus) {
-          const optionsLines = ORDER_STATUS_OPTIONS.map((o, i) => `${i + 1}) ${o.label} (${o.key})`).join('\n');
+          const optionsLines = STORE_ORDER_STATUS_OPTIONS.map((o, i) => `${i + 1}) ${o.label} (${o.key})`).join('\n');
           await sendTelegramMessage(chatId, `حالة غير مدعومة. الحالات المسموحة بالأرقام أو بالأسماء:\n${optionsLines}`, { reply_markup: inlineBackHome() });
           return res.status(200).json({ ok: true });
         }
@@ -818,11 +827,21 @@ exports.handleWebhook = async (req, res) => {
             chatStates.delete(chatId);
             return res.status(200).json({ ok: true });
           }
+          // نفس الخدمة الموحدة التي يستخدمها مسار لوحة التحكم: بروتوكول
+          // المخزون (حجز عند التأكيد، استعادة عند الإلغاء/التراجع) لا يمكن
+          // تجاوزه من تيليجرام.
           const prev = order.status;
-          order.status = parsedStatus;
-          if (!Array.isArray(order.history)) order.history = [];
-          order.history.push({ status: parsedStatus, changedBy: linkedBot.userId, changedAt: new Date(), note: `تغيير من ${prev} إلى ${parsedStatus} (تيليجرام)` });
-          await order.save();
+          const result = await changeOrderStatus({
+            order,
+            targetStatus: parsedStatus,
+            changedBy: linkedBot.userId,
+            note: `تغيير من ${prev} إلى ${parsedStatus} (تيليجرام)`,
+          });
+          if (!result.ok) {
+            await sendTelegramMessage(chatId, `تعذر تحديث حالة الطلب: ${result.message}`, { reply_markup: inlineBackHome() });
+            chatStates.delete(chatId);
+            return res.status(200).json({ ok: true });
+          }
           const human = ORDER_STATUS_OPTIONS.find((o) => o.key === parsedStatus)?.label || parsedStatus;
           await sendTelegramMessage(chatId, `✅ تم تحديث حالة الطلب إلى ${human}.`, { reply_markup: inlineBackHome() });
         } catch (err) {

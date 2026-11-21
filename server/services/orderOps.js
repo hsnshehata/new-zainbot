@@ -150,7 +150,10 @@ async function retryPendingNotifications({ now = new Date(), deps = {} } = {}) {
       logger.info('order_notification_recovered', { orderId: claimed._id, attempts: claimed.opsFlags?.notificationAttempts });
       recovered += 1;
     } catch (err) {
-      const attempts = (claimed.opsFlags?.notificationAttempts || 0) + 1;
+      // claimed is the post-$inc document: its notificationAttempts IS the
+      // current attempt count. Adding 1 here double-counted and silently
+      // burned one retry from the budget.
+      const attempts = claimed.opsFlags?.notificationAttempts || 0;
       await Order.updateOne(
         { _id: claimed._id },
         {

@@ -148,13 +148,18 @@ async function reconcileStuckOrders({ now = new Date() } = {}) {
   for (const order of stuck) {
     const nextStockStatus = order.status === 'confirmed' ? 'failed' : 'none';
     const claimed = await Order.findOneAndUpdate(
-      { _id: order._id, stockStatus: 'pending' },
+      { _id: order._id, stockStatus: 'pending', updatedAt: { $lt: cutoff } },
       {
         $set: {
           stockStatus: nextStockStatus,
           ...(order.status === 'confirmed' ? { status: 'cancelled' } : {}),
           'opsFlags.stockError': 'reconciled: released reservations after interrupted processing',
         },
+        // A cancelled phantom must free its idempotency key exactly like
+        // the controller's own failure path, or the shopper's legitimate
+        // retry replays a cancelled order as a success and can never
+        // re-order with that key.
+        ...(order.status === 'confirmed' ? { $unset: { idempotencyKey: '', payloadHash: '' } } : {}),
         $push: {
           history: {
             status: order.status === 'confirmed' ? 'cancelled' : order.status,
@@ -231,20 +236,84 @@ async function reconcileOrphanTokens({ now = new Date() } = {}) {
  *                                       MUST release its reservations
  *                                       (idempotent) and fail the request.
  */
-async function completeOrderReservation(orderId, extraSet = {}, historyEntry = null) {
+async function completeOrderReservation(orderId, extraSet = {}, historyEntry = null, stockEpoch = '') {
   const update = { $set: { stockStatus: 'completed', ...extraSet } };
   if (historyEntry) update.$push = { history: historyEntry };
-  const done = await Order.findOneAndUpdate(
-    { _id: orderId, stockStatus: 'pending' },
-    update,
-    { new: true }
-  );
+  // The epoch is the generation fence: a stalled writer from an older
+  // pending generation must never complete a newer one (cross-generation
+  // adoption would confirm a partially reserved order).
+  const filter = { _id: orderId, stockStatus: 'pending' };
+  if (stockEpoch) filter.stockEpoch = stockEpoch;
+  const done = await Order.findOneAndUpdate(filter, update, { new: true });
   if (done) return { ok: true, order: done };
   const current = await Order.findById(orderId).select('status stockStatus');
   if (current && current.stockStatus === 'completed') {
     return { ok: true, alreadyCompleted: true, order: current };
   }
   return { ok: false, state: current ? current.stockStatus : 'missing' };
+}
+
+/**
+ * Idempotently restore qty units for an order on ONE product. The
+ * restoration ledger entry is written in the same atomic update as the
+ * stock increment, guarded by its absence: any retry (after a crash, or a
+ * sweep re-run) is a no-op. This is what makes restock crash-safe.
+ */
+async function restoreLineForOrder(productId, orderId, qty) {
+  const oid = new mongoose.Types.ObjectId(String(orderId));
+  const result = await Product.updateOne(
+    { _id: productId, 'restorations.orderId': { $ne: oid } },
+    { $inc: { stock: qty }, $push: { restorations: { orderId: oid, qty, at: new Date() } } }
+  );
+  return result.modifiedCount;
+}
+
+/** Restore every line of an order, line by line; each line is idempotent. */
+async function restoreOrderStock(order) {
+  let restored = 0;
+  for (const item of order.products || []) {
+    if (!item.productId || !item.quantity) continue;
+    try {
+      restored += await restoreLineForOrder(item.productId, order._id, item.quantity);
+    } catch (err) {
+      logger.error('stock_restore_line_failed', {
+        orderId: order._id,
+        productId: item.productId,
+        err: err.message,
+      });
+    }
+  }
+  return restored;
+}
+
+/**
+ * Recover orders whose restock was interrupted between the atomic claim
+ * (stockStatus 'completed' -> 'restoring') and the finish. Every step is
+ * idempotent, so re-running restore + token pull + finish is exact.
+ */
+async function reconcileInterruptedRestores({ now = new Date() } = {}) {
+  const cutoff = new Date(now.getTime() - STALE_RESERVATION_MS);
+  const stuck = await Order.find({ stockStatus: 'restoring', updatedAt: { $lt: cutoff } })
+    .sort({ updatedAt: 1 })
+    .limit(SWEEP_ORDER_LIMIT);
+  let reconciled = 0;
+  for (const order of stuck) {
+    const claimed = await Order.findOneAndUpdate(
+      { _id: order._id, stockStatus: 'restoring', updatedAt: { $lt: cutoff } },
+      { $set: { 'opsFlags.stockError': 'reconciled: resumed interrupted stock restoration' } },
+      { new: true }
+    );
+    if (!claimed) continue;
+    await restoreOrderStock(claimed);
+    await pullOrderTokens(claimed._id);
+    await Order.updateOne(
+      { _id: claimed._id, stockStatus: 'restoring' },
+      { $set: { stockStatus: 'none', stockReleased: true } }
+    );
+    logger.warn('stock_interrupted_restore_reconciled', { orderId: claimed._id, storeId: claimed.storeId });
+    reconciled += 1;
+  }
+  return reconciled;
 }
 
 module.exports = {
@@ -256,4 +325,7 @@ module.exports = {
   pullOrderTokens,
   reconcileStuckOrders,
   reconcileOrphanTokens,
+  reconcileInterruptedRestores,
+  restoreLineForOrder,
+  restoreOrderStock,
 };
