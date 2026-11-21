@@ -25,11 +25,20 @@ and the local test suite; it is not a staging or production verification.
   frame rules outside `/chat/*`, CORS restricted to configured origins
   (`server/server.js`). CSP/loader contracts are enforced by
   `tests/webCsp.test.js`.
-- **Secrets handling**: AI provider credentials are encrypted at rest via
-  `server/services/AiCredentialCrypto.js`; key resolution order is
+- **Secrets handling**: AI provider credentials CAN be encrypted at rest
+  via `server/services/AiCredentialCrypto.js`, but ONLY when
+  `CREDENTIAL_ENCRYPTION_KEY` is configured. Key resolution order is
   encrypted control plane -> legacy ProviderKey -> env
   (`server/services/aiKeyResolver.js`). `.env` is gitignored;
   `.env.example` documents required vars.
+  **Release gate (explicit)**: an environment without
+  `CREDENTIAL_ENCRYPTION_KEY` still accepts new AI keys through the admin
+  API and stores them in PLAINTEXT ProviderKey documents (with a loud
+  `provider_key_plaintext_created/updated` warning log). Encrypted at
+  rest must never be advertised as unconditional. Before any production
+  launch: configure `CREDENTIAL_ENCRYPTION_KEY` everywhere, verify new
+  writes land as AiCredential documents, then run the migration script
+  (dry-run first) and retire the plaintext read fallback.
 - **Tenant scoping (new code)**: every assistant route scopes by
   `req.user.userId` set by the auth middleware; conversations, reminders,
   sales, expenses, orders, bookings and inbox tools cannot be addressed
@@ -93,6 +102,19 @@ and the local test suite; it is not a staging or production verification.
    live database; running it in production is Hassan's call. Fully removing
    the read fallback also needs an admin UI for the control-plane
    credentials (API-only today).
+   **Updated 2026-11-21 (later run): encrypted-on-write.** When
+   `CREDENTIAL_ENCRYPTION_KEY` is configured, `POST /api/admin/keys` now
+   creates an encrypted AiCredential instead of a plaintext ProviderKey
+   (`server/controllers/adminKeysController.js`): no new plaintext secrets
+   can be created through the admin API. The admin UI contract is
+   preserved (same response fields plus `storage: 'encrypted'`; list
+   merges both stores; update/delete route by a `cred_` id prefix;
+   rotation re-encrypts; duplicates return 409). With the key
+   unconfigured the legacy plaintext path remains with the warning log -
+   that fallback is the release gate above, not a supported production
+   posture. Verified in `tests/adminKeysEncryption.test.js` (real MongoDB
+   7.0.24: no-plaintext-anywhere, decrypt round-trip, rotation, legacy
+   fallback).
 2. **No migrations framework**: schema evolution is implicit; no
    `server/migrations` directory. Backfill/rollback story for production
    data changes (including this milestone's new collections) is manual.
@@ -124,8 +146,33 @@ and the local test suite; it is not a staging or production verification.
 
 ## Suggested acceptance path before production
 
-1. Deploy `feat/owner-assistant` to a staging resource with a test MongoDB.
-2. Run the full suite + browser smoke against staging.
-3. Exercise `/api/assistant/*` with a seeded tenant; confirm reminder
-   delivery through a test notification recipient.
-4. Confirm Coolify branch/deploy mapping, then merge to the deployed branch.
+Staging must be built synthetic-first. Cloning the live Coolify app
+configuration would copy real credentials, webhooks, cron jobs and the
+production database connection, so NONE of that may be reused.
+
+1. Create a NEW Coolify application (not a clone) for
+   `feat/owner-assistant` on a temporary subdomain:
+   - fresh, empty MongoDB database used only for staging;
+   - all outbound channels disabled: no WhatsApp/Telegram tokens, no
+     Meta webhook secrets, notification dispatcher pointed at a
+     stub/log-only endpoint;
+   - all cron/scheduled jobs disabled at the env level;
+   - only synthetic test credentials (a throwaway AI provider key if
+     live-completion verification is separately approved, a test
+     Telegram bot if webhook delivery is approved);
+   - `CREDENTIAL_ENCRYPTION_KEY` set to a staging-only value so the
+     encrypted-on-write path is exercised;
+   - capacity and cost checked with Hassan before creation (another app
+     + database on the shared Coolify server consumes real resources).
+2. Seed synthetic owner/store/bot/sales data; run the full suite +
+   browser smoke against staging (service worker, real Mongo, real JWT).
+3. Exercise signup -> dashboard -> assistant chat -> reminder
+   create/complete end to end.
+4. Optional, each individually approved by Hassan: real AI completion
+   with the test key, Telegram delivery to the test bot, migration
+   script `--dry-run` output review against the staging DB.
+5. Acceptance criteria: this document's checklist plus zero
+   CSP/i18n/lazy-load regressions and the visuals already captured.
+6. Only after staging passes: confirm Coolify branch/deploy mapping,
+   then merge to `master` (auto-deploys `new.zainbot.com`) with
+   Hassan's explicit approval.
