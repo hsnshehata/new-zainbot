@@ -41,7 +41,7 @@ function fail(httpStatus, message, extra = {}) {
 async function plainTransition(order, targetStatus, historyEntry) {
   const updated = await Order.findOneAndUpdate(
     { _id: order._id, status: order.status, stockStatus: order.stockStatus },
-    { $set: { status: targetStatus }, $push: { history: historyEntry } },
+    { $set: { status: targetStatus, updatedAt: new Date() }, $push: { history: historyEntry } },
     { new: true }
   );
   if (!updated) {
@@ -98,7 +98,7 @@ async function changeOrderStatus({ order, targetStatus, changedBy = null, note =
     const epoch = new mongoose.Types.ObjectId().toString();
     const claimed = await Order.findOneAndUpdate(
       { _id: order._id, status: prevStatus, stockStatus: { $in: ['none', 'failed'] } },
-      { $set: { stockStatus: 'pending', stockEpoch: epoch } },
+      { $set: { stockStatus: 'pending', stockEpoch: epoch, updatedAt: new Date() } },
       { new: true }
     );
     if (!claimed) {
@@ -156,7 +156,7 @@ async function changeOrderStatus({ order, targetStatus, changedBy = null, note =
     // An interrupted restore is resumed by reconcileInterruptedRestores.
     const claimed = await Order.findOneAndUpdate(
       { _id: order._id, status: prevStatus, stockStatus: 'completed' },
-      { $set: { stockStatus: 'restoring', status: targetStatus }, $push: { history: historyEntry } },
+      { $set: { stockStatus: 'restoring', status: targetStatus, updatedAt: new Date() }, $push: { history: historyEntry } },
       { new: true }
     );
     if (!claimed) {
@@ -173,7 +173,7 @@ async function changeOrderStatus({ order, targetStatus, changedBy = null, note =
     await stockService.pullOrderTokens(claimed._id);
     const done = await Order.findOneAndUpdate(
       { _id: claimed._id, stockStatus: 'restoring' },
-      { $set: { stockStatus: 'none', stockReleased: true } },
+      { $set: { stockStatus: 'none', stockReleased: true, updatedAt: new Date() } },
       { new: true }
     );
     logger.info('order_stock_restored', { orderId: claimed._id, targetStatus });

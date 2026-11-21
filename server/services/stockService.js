@@ -152,6 +152,7 @@ async function reconcileStuckOrders({ now = new Date() } = {}) {
       {
         $set: {
           stockStatus: nextStockStatus,
+          updatedAt: new Date(),
           ...(order.status === 'confirmed' ? { status: 'cancelled' } : {}),
           'opsFlags.stockError': 'reconciled: released reservations after interrupted processing',
         },
@@ -184,6 +185,11 @@ async function reconcileStuckOrders({ now = new Date() } = {}) {
   return reconciled;
 }
 
+// Restoration ledger entries are the fence against stale restock writers
+// and must be retained - but no live writer outlives a container restart,
+// so entries older than this horizon are pruned by the sweep.
+const RESTORATION_LEDGER_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+
 /**
  * Reconcile stale reservation tokens on products (bounded). Only tokens
  * older than the TTL are touched, and only when the owning order's recorded
@@ -212,6 +218,15 @@ async function reconcileOrphanTokens({ now = new Date() } = {}) {
       }
     }
   }
+  // Horizon-prune ancient restoration ledger entries (see retention note).
+  const ledgerCutoff = new Date(now.getTime() - RESTORATION_LEDGER_RETENTION_MS);
+  const pruned = await Product.updateMany(
+    { 'restorations.at': { $lt: ledgerCutoff } },
+    { $pull: { restorations: { at: { $lt: ledgerCutoff } } } }
+  );
+  if (pruned.modifiedCount) {
+    logger.info('stock_restoration_ledger_pruned', { products: pruned.modifiedCount });
+  }
   return touched;
 }
 
@@ -237,7 +252,7 @@ async function reconcileOrphanTokens({ now = new Date() } = {}) {
  *                                       (idempotent) and fail the request.
  */
 async function completeOrderReservation(orderId, extraSet = {}, historyEntry = null, stockEpoch = '') {
-  const update = { $set: { stockStatus: 'completed', ...extraSet } };
+  const update = { $set: { stockStatus: 'completed', updatedAt: new Date(), ...extraSet } };
   if (historyEntry) update.$push = { history: historyEntry };
   // The epoch is the generation fence: a stalled writer from an older
   // pending generation must never complete a newer one (cross-generation
@@ -246,21 +261,20 @@ async function completeOrderReservation(orderId, extraSet = {}, historyEntry = n
   if (stockEpoch) filter.stockEpoch = stockEpoch;
   const done = await Order.findOneAndUpdate(filter, update, { new: true });
   if (done) {
-    // A new reservation generation completed: prior-cycle restoration
-    // entries for this order are permanently stale (that stock has been
-    // re-reserved). Pull them so the ledger stays bounded, and reset the
-    // stockReleased marker with the completed state.
-    try {
-      await Product.updateMany(
-        { 'restorations.orderId': done._id },
-        { $pull: { restorations: { orderId: done._id } } }
-      );
-      if (done.stockReleased) {
+    // Retention is the fence: prior-generation restoration entries MUST
+    // stay. A restock writer stalled before the sweep resumed its order
+    // still carries this generation's epoch; its late line restores are
+    // no-ops only while the matching ledger entries exist. Entries are
+    // unique per generation (fresh ObjectId epoch), so retention never
+    // re-blocks a legitimate future cycle; a horizon prune in the orphan
+    // sweep bounds the array (no live writer outlives a container).
+    if (done.stockReleased) {
+      try {
         await Order.updateOne({ _id: done._id }, { $set: { stockReleased: false } });
         done.stockReleased = false;
+      } catch (cleanupErr) {
+        logger.warn('stock_completion_released_reset_failed', { orderId: done._id, err: cleanupErr.message });
       }
-    } catch (cleanupErr) {
-      logger.warn('stock_completion_ledger_cleanup_failed', { orderId: done._id, err: cleanupErr.message });
     }
     return { ok: true, order: done };
   }
@@ -331,7 +345,7 @@ async function reconcileInterruptedRestores({ now = new Date() } = {}) {
   for (const order of stuck) {
     const claimed = await Order.findOneAndUpdate(
       { _id: order._id, stockStatus: 'restoring', updatedAt: { $lt: cutoff } },
-      { $set: { 'opsFlags.stockError': 'reconciled: resumed interrupted stock restoration' } },
+      { $set: { 'opsFlags.stockError': 'reconciled: resumed interrupted stock restoration', updatedAt: new Date() } },
       { new: true }
     );
     if (!claimed) continue;
@@ -350,7 +364,7 @@ async function reconcileInterruptedRestores({ now = new Date() } = {}) {
     await pullOrderTokens(claimed._id);
     await Order.updateOne(
       { _id: claimed._id, stockStatus: 'restoring' },
-      { $set: { stockStatus: 'none', stockReleased: true } }
+      { $set: { stockStatus: 'none', stockReleased: true, updatedAt: new Date() } }
     );
     logger.warn('stock_interrupted_restore_reconciled', { orderId: claimed._id, storeId: claimed.storeId });
     reconciled += 1;
