@@ -49,6 +49,7 @@ const bookingsRoutes = require('./routes/bookings');
 const telegramRoutes = require('./routes/telegram');
 const whatsappRoutes = require('./routes/whatsapp');
 const ideaCouncilRoutes = require('./routes/ideaCouncil');
+const assistantRoutes = require('./routes/assistant');
 const {
   startIdeaEvaluationWorker,
 } = require('./services/ideaEvaluationWorker');
@@ -73,6 +74,7 @@ const {
   sendDailyPerformanceSummary,
   checkSubscriptionExpiringSoon,
   cleanupOldLogs,
+  checkDueReminders,
 } = require('./cronJobs');
 const authenticate = require('./middleware/authenticate');
 const { loadAccessibleBot } = require('./middleware/botAccess');
@@ -338,6 +340,7 @@ const authenticatedPaths = [
   '/api/admin',
   '/api/upload',
   '/api/idea-council',
+  '/api/assistant',
 ];
 app.use(authenticatedPaths, authenticate, accountLimiter);
 
@@ -412,6 +415,7 @@ app.use(
 );
 app.use('/api/admin/ai', createAiControlPlaneRouter());
 app.use('/api/idea-council', ideaCouncilRoutes);
+app.use('/api/assistant', assistantRoutes);
 app.use('/api/onboarding-events', require('./routes/onboardingMetrics').onboardingEventsRouter);
 app.use('/api/onboarding-metrics', require('./routes/onboardingMetrics').onboardingMetricsRouter);
 app.use('/', indexRoutes);
@@ -746,6 +750,7 @@ async function startServer() {
   sendDailyPerformanceSummary();
   checkSubscriptionExpiringSoon();
   cleanupOldLogs();
+  checkDueReminders();
   startIdeaEvaluationWorker();
 
   const port = process.env.PORT || 5000;

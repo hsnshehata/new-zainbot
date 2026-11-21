@@ -68,7 +68,7 @@ test('dashboard CSP allows same-origin chunks; unsafe-inline retained, no nonce 
 test('every chunk + loader URL is same-origin (nothing beyond self)', () => {
   const assets = require('../public/js/dashboard-assets');
   const urls = Object.values(assets.FEATURES).sort();
-  assert.deepEqual(urls.map((u) => u.split('?')[0]), ['/js/dashboard-idea-council.js', '/js/settings-summary.js']);
+  assert.deepEqual(urls.map((u) => u.split('?')[0]), ['/js/dashboard-assistant.js', '/js/dashboard-idea-council.js', '/js/settings-summary.js']);
   const versions = new Set(urls.map((u) => (u.match(/\?v=(\d{8}-[a-z0-9]+)/) || [])[1]));
   assert.equal(versions.size, 1, `both chunks share one dated loader version: ${urls.join(', ')}`);
   assert.equal([...versions][0], assets.VERSION, 'map versions match the loader VERSION const');

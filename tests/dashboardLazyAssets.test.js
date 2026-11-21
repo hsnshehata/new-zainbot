@@ -73,7 +73,7 @@ test('unknown feature ids reject without touching the DOM', async () => {
 test('static map holds versioned same-origin URLs only', () => {
   const doc = makeScriptDoc();
   const { assets } = loadLoader(doc, {});
-  assert.deepEqual(Object.keys(assets.FEATURES).sort(), ['ideaCouncil', 'settingsSummary']);
+  assert.deepEqual(Object.keys(assets.FEATURES).sort(), ['assistant', 'ideaCouncil', 'settingsSummary']);
   for (const url of Object.values(assets.FEATURES)) {
     assert.ok(url.startsWith('/js/'), `chunk URL must be same-origin static: ${url}`);
     assert.match(url, /\?v=\d{8}-[a-z0-9]+/, `chunk URL must carry a dated version: ${url}`);

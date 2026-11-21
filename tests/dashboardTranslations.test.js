@@ -11,7 +11,7 @@ const dashboardHtml = fs.readFileSync(path.join(workspace, 'public', 'dashboard.
 // F-owned parity instead; now the council t() calls live only in the chunk).
 // Dictionaries stay in the dashboard IIFE, so section scans resolve to its
 // blocks first.
-const SCAN_PATHS = ['public/js/dashboard_new.js', 'public/js/dashboard-idea-council.js'];
+const SCAN_PATHS = ['public/js/dashboard_new.js', 'public/js/dashboard-idea-council.js', 'public/js/dashboard-assistant.js'];
 const dashboardScript = SCAN_PATHS
   .map((rel) => fs.readFileSync(path.join(workspace, rel), 'utf8').replace(/\r\n/g, '\n'))
   .join('\n');

@@ -497,6 +497,49 @@ const cleanupOldLogs = () => {
   }, { timezone: 'Africa/Cairo' });
 };
 
+// إرسال التذكيرات المستحقة (مساعد زين): يحدّث الحالة أولاً حتى لا يتكرر
+// الإرسال لو فشل الإشعار، ثم ينشئ إشعارًا داخليًا ويرسل عبر القنوات المفعّلة.
+const Reminder = require('./models/Reminder');
+
+async function sendDueReminders({ now = new Date(), limit = 50 } = {}) {
+  const due = await Reminder.find({ status: 'pending', dueAt: { $lte: now } })
+    .sort({ dueAt: 1 })
+    .limit(limit);
+  let sent = 0;
+  for (const reminder of due) {
+    try {
+      reminder.status = 'sent';
+      reminder.sentAt = now;
+      await reminder.save();
+      sent += 1;
+      await dispatchMultiChannelNotification({
+        userId: reminder.user,
+        event: 'assistant_reminder',
+        data: {
+          message: `⏰ تذكير: ${reminder.text}`,
+          dueAt: reminder.dueAt,
+        },
+      });
+    } catch (err) {
+      logger.error('❌ Error sending due reminder', { reminderId: String(reminder._id), err: err.message });
+    }
+  }
+  return { due: due.length, sent };
+}
+
+const checkDueReminders = () => {
+  return cron.schedule('*/5 * * * *', async () => {
+    try {
+      const result = await sendDueReminders();
+      if (result.sent > 0) {
+        logger.info('⏰ Due reminders sent.', result);
+      }
+    } catch (err) {
+      logger.error('❌ Error in due reminders check', { err: err.message });
+    }
+  }, { timezone: 'Africa/Cairo' });
+};
+
 module.exports = {
   checkAutoStopBots,
   refreshInstagramTokens,
@@ -507,5 +550,7 @@ module.exports = {
   checkSubscriptionExpiringSoon,
   cleanupOldLogs,
   runBotSalesRecovery,
-  runBotDailySummary
+  runBotDailySummary,
+  checkDueReminders,
+  sendDueReminders
 };

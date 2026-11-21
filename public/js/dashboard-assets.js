@@ -8,18 +8,20 @@
 (function (global) {
   'use strict';
 
-  var VERSION = '20261005-livenote';
+  var VERSION = '20261121-assistant';
 
   // Static same-origin map. Versions bump here (F-owned) when a chunk changes;
   // the SW stays query-blind (one entry per path), so no SW edit is needed.
   var FEATURE_MAP = {
     ideaCouncil: '/js/dashboard-idea-council.js?v=' + VERSION,
     settingsSummary: '/js/settings-summary.js?v=' + VERSION,
+    assistant: '/js/dashboard-assistant.js?v=' + VERSION,
   };
 
   var EXPECTED_GLOBAL = {
     ideaCouncil: 'ZainBotIdeaCouncil',
     settingsSummary: 'ZainBotSettingsSummary',
+    assistant: 'ZainBotAssistant',
   };
 
   var pending = {};
@@ -83,6 +85,7 @@
   var exposed = {
     ideaCouncil: FEATURE_MAP.ideaCouncil,
     settingsSummary: FEATURE_MAP.settingsSummary,
+    assistant: FEATURE_MAP.assistant,
   };
   api.FEATURES = typeof Object.freeze === 'function' ? Object.freeze(exposed) : exposed;
   api.VERSION = VERSION;

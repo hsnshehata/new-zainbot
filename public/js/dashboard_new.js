@@ -1244,9 +1244,63 @@
       idea_status_running: 'In Progress',
       idea_status_completed: 'Completed',
       idea_status_partial: 'Partial',
-      idea_status_failed: 'Failed'
+      idea_status_failed: 'Failed',
+      menu_assistant: 'Business Assistant',
+      assistant_desc: 'Ask about your sales, orders, stock and more, answered from your own data',
+      assistant_new_chat: 'New chat',
+      assistant_welcome_title: 'How can I help you today?',
+      assistant_welcome_hint: 'Ask me about sales, expenses, orders, stock, customers, bookings, inbox, or agent status.',
+      assistant_input_placeholder: 'Ask about your business...',
+      assistant_send: 'Send',
+      assistant_thinking: 'Thinking…',
+      assistant_chats: 'Chats',
+      assistant_no_chats: 'No saved chats yet',
+      assistant_reminders_title: 'Reminders',
+      assistant_reminder_text_placeholder: 'Reminder text…',
+      assistant_reminder_due: 'Reminder time',
+      assistant_reminder_add: 'Add reminder',
+      assistant_reminder_empty: 'No reminders yet',
+      assistant_error: 'Something went wrong, please try again',
+      assistant_fallback_badge: 'Answer from your data (AI key not configured)',
+      assistant_you: 'You',
+      assistant_name: 'Zain Assistant',
+      assistant_reminder_saved: 'Reminder saved',
+      assistant_reminder_done: 'Done',
+      assistant_reminder_delete: 'Delete',
+      assistant_delete_chat: 'Delete chat',
+      assistant_reminder_status_pending: 'Pending',
+      assistant_reminder_status_sent: 'Sent',
+      assistant_reminder_status_done: 'Done',
+      assistant_reminder_status_cancelled: 'Cancelled'
     },
     ar: {
+      menu_assistant: 'مساعد زين',
+      assistant_desc: 'اسأل عن مبيعاتك وطلباتك ومخزونك، وإجابات من بياناتك الفعلية',
+      assistant_new_chat: 'محادثة جديدة',
+      assistant_welcome_title: 'أقدر أساعدك في إيه النهارده؟',
+      assistant_welcome_hint: 'اسألني عن المبيعات، المصروفات، الطلبات، المخزون، العملاء، الحجوزات، الرسائل، أو حالة الوكلاء.',
+      assistant_input_placeholder: 'اسأل عن نشاطك التجاري...',
+      assistant_send: 'إرسال',
+      assistant_thinking: 'بفكر…',
+      assistant_chats: 'المحادثات',
+      assistant_no_chats: 'لا توجد محادثات محفوظة بعد',
+      assistant_reminders_title: 'التذكيرات',
+      assistant_reminder_text_placeholder: 'نص التذكير…',
+      assistant_reminder_due: 'موعد التذكير',
+      assistant_reminder_add: 'إضافة تذكير',
+      assistant_reminder_empty: 'لا توجد تذكيرات بعد',
+      assistant_error: 'حدث خطأ، حاول مرة أخرى',
+      assistant_fallback_badge: 'إجابة من بياناتك (مفتاح الذكاء الاصطناعي غير مُعدّ)',
+      assistant_you: 'أنت',
+      assistant_name: 'مساعد زين',
+      assistant_reminder_saved: 'تم حفظ التذكير',
+      assistant_reminder_done: 'تم',
+      assistant_reminder_delete: 'حذف',
+      assistant_delete_chat: 'حذف المحادثة',
+      assistant_reminder_status_pending: 'قيد الانتظار',
+      assistant_reminder_status_sent: 'تم الإرسال',
+      assistant_reminder_status_done: 'مكتمل',
+      assistant_reminder_status_cancelled: 'ملغي',
       menu_overview: 'نظرة عامة',
       menu_inbox: 'صندوق الوارد الموحد',
       inbox_select_chat: 'اختر محادثة',
@@ -2435,6 +2489,8 @@
       loadAgents();
     } else if (tabId === 'page-idea-council') {
       enterCouncilTab();
+    } else if (tabId === 'page-assistant') {
+      enterAssistantTab();
     } else if (tabId === 'page-inbox') {
       loadInboxData();
     } else if (tabId === 'page-training') {
@@ -7249,6 +7305,56 @@
     }).catch(() => {
       if (!stillActive()) return;
       showCouncilLoadError(() => enterCouncilTab());
+    });
+  }
+
+  // Assistant tab (مساعد زين): same lazy-entry pattern as the council chunk —
+  // load on first tab entry, init once, then load data while the tab is still
+  // active (stale-load guard via token + activeTab).
+  let assistantModule = null;
+  let assistantLoadToken = 0;
+
+  function ensureAssistantModule() {
+    if (!assistantModule) {
+      if (!window.ZainBotAssistant || typeof window.ZainBotAssistant.create !== 'function') {
+        throw new Error('dashboard-assistant.js must load before use (via dashboard-assets.js)');
+      }
+      if (!window.ZainBotRequest || typeof window.ZainBotRequest.requestJson !== 'function') {
+        throw new Error('dashboard-request.js must load before dashboard_new.js');
+      }
+      assistantModule = window.ZainBotAssistant.create({
+        requestJson: (...args) => window.ZainBotRequest.requestJson(...args),
+        getLanguage: () => currentLanguage,
+        t: (key, fallback = '') => ideaT(key, fallback),
+        feedback: window.ZainBotFeedback || null,
+      });
+    }
+    return assistantModule;
+  }
+
+  function showAssistantLoadError(retry) {
+    const container = document.getElementById('assistantMessages');
+    if (container) {
+      container.innerHTML = '<p style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">' + ideaT('lazy_load_failed') + '</p><p style="padding:0 24px 24px;text-align:center;"><button type="button" id="assistantChunkRetryBtn" class="btn btn-secondary btn-sm">' + ideaT('feedback_retry') + '</button></p>';
+      const retryBtn = document.getElementById('assistantChunkRetryBtn');
+      if (retryBtn && typeof retry === 'function') retryBtn.addEventListener('click', retry);
+    }
+  }
+
+  function enterAssistantTab() {
+    const myToken = ++assistantLoadToken;
+    const stillActive = () => myToken === assistantLoadToken && activeTab === 'page-assistant';
+    if (!window.ZainBotDashboardAssets || typeof window.ZainBotDashboardAssets.loadFeature !== 'function') {
+      showAssistantLoadError(() => enterAssistantTab());
+      return;
+    }
+    window.ZainBotDashboardAssets.loadFeature('assistant').then(() => {
+      if (!stillActive()) return;
+      ensureAssistantModule().init();
+      ensureAssistantModule().load();
+    }).catch(() => {
+      if (!stillActive()) return;
+      showAssistantLoadError(() => enterAssistantTab());
     });
   }
 
