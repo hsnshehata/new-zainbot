@@ -73,8 +73,8 @@ test('R1: three confirm/cancel cycles restore every generation, ledger retained 
     // pull older restoration entries - they are the only fence against a
     // stale restock writer resuming after a newer completion (probe R8).
     // Epochs are unique per generation, so retention never blocks a future
-    // cycle; the ledger is bounded by a 7-day horizon prune in the sweep
-    // (no live writer outlives a container restart).
+    // cycle. Retention is indefinite (no hard writer-lifetime bound, so
+    // no age-based prune; growth risk tracked in stockService.js).
     assert.equal(
       (await Product.findById(product._id)).restorations.length,
       cycle - 1,

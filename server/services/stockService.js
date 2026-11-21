@@ -185,11 +185,6 @@ async function reconcileStuckOrders({ now = new Date() } = {}) {
   return reconciled;
 }
 
-// Restoration ledger entries are the fence against stale restock writers
-// and must be retained - but no live writer outlives a container restart,
-// so entries older than this horizon are pruned by the sweep.
-const RESTORATION_LEDGER_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
-
 /**
  * Reconcile stale reservation tokens on products (bounded). Only tokens
  * older than the TTL are touched, and only when the owning order's recorded
@@ -218,15 +213,19 @@ async function reconcileOrphanTokens({ now = new Date() } = {}) {
       }
     }
   }
-  // Horizon-prune ancient restoration ledger entries (see retention note).
-  const ledgerCutoff = new Date(now.getTime() - RESTORATION_LEDGER_RETENTION_MS);
-  const pruned = await Product.updateMany(
-    { 'restorations.at': { $lt: ledgerCutoff } },
-    { $pull: { restorations: { at: { $lt: ledgerCutoff } } } }
-  );
-  if (pruned.modifiedCount) {
-    logger.info('stock_restoration_ledger_pruned', { products: pruned.modifiedCount });
-  }
+  // NO automatic pruning of Product.restorations here. The ledger is the
+  // fence against stale restock writers; no hard writer-lifetime guarantee
+  // exists (a suspended process or long-lived container can outlive any
+  // horizon), and deleting an entry is deleting correctness evidence -
+  // a resuming writer would re-restore stock. Entries are retained
+  // indefinitely until a bounded compaction scheme is designed with a
+  // proven invariant (e.g. one compacted marker per order that still
+  // blocks replay of its historical epochs).
+  // GROWTH RISK (tracked, accepted for now): one small subdocument
+  // (~64 bytes) per completed cancel/regression line per product. Order
+  // volume on this deployment is low; the array is also naturally
+  // bounded per product by that product's total cancellations. Monitor
+  // if cancel volume grows; compact only with proof, never by age.
   return touched;
 }
 
@@ -266,8 +265,9 @@ async function completeOrderReservation(orderId, extraSet = {}, historyEntry = n
     // still carries this generation's epoch; its late line restores are
     // no-ops only while the matching ledger entries exist. Entries are
     // unique per generation (fresh ObjectId epoch), so retention never
-    // re-blocks a legitimate future cycle; a horizon prune in the orphan
-    // sweep bounds the array (no live writer outlives a container).
+    // re-blocks a legitimate future cycle. Retention is indefinite: no
+    // hard writer-lifetime bound exists, so entries are never pruned by
+    // age (see the note in reconcileOrphanTokens).
     if (done.stockReleased) {
       try {
         await Order.updateOne({ _id: done._id }, { $set: { stockReleased: false } });
