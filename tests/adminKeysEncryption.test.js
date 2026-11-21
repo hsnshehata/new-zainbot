@@ -261,3 +261,28 @@ test('updateKey legacy rotation returns 409 and writes nothing on credential nam
   assert.equal(raw.isActive, true);
   assert.equal(await AiCredential.countDocuments(), 1, 'no second credential created');
 });
+
+test('non-superadmin and impersonating actors get 403 and write nothing on every endpoint', { timeout: 60000 }, async () => {
+  setEncryption(true);
+  const denied = [
+    { actorRole: 'user', isImpersonating: false, actorUserId: String(ACTOR_ID) },
+    { actorRole: 'superadmin', isImpersonating: true, actorUserId: String(ACTOR_ID) },
+  ];
+  for (const auth of denied) {
+    for (const call of [
+      (r) => controller.addKey(r.req, r.res),
+      (r) => controller.listKeys(r.req, r.res),
+      (r) => controller.updateKey(r.req, r.res),
+      (r) => controller.deleteKey(r.req, r.res),
+      (r) => controller.resetAllFailedKeys(r.req, r.res),
+    ]) {
+      const { req, res } = reqRes({ name: 'X', provider: 'openai', apiKey: SYNTHETIC_KEY, defaultModel: 'm' }, { id: 'cred_' + String(new mongoose.Types.ObjectId()) });
+      req.auth = auth;
+      await call({ req, res });
+      assert.equal(res.statusCode, 403, `expected 403 for ${JSON.stringify(auth)}`);
+      assert.equal(res.payload.success, false);
+    }
+  }
+  assert.equal(await ProviderKey.countDocuments(), 0, 'no plaintext written by denied calls');
+  assert.equal(await AiCredential.countDocuments(), 0, 'no credential written by denied calls');
+});

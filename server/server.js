@@ -742,6 +742,23 @@ async function startServer() {
     total: restoreResults.length,
     restored: restoreResults.filter((result) => result.restored).length,
   });
+  startBackgroundJobs();
+
+  const port = process.env.PORT || 5000;
+  activeHttpServer = app.listen(port, '0.0.0.0', () => {
+    logger.info('server_started', { port });
+  });
+  return activeHttpServer;
+}
+
+// Background jobs (crons + workers). Staging and other isolated environments
+// set CRON_JOBS_ENABLED=false so no scheduled sends, recovery runs, or
+// subscription sweeps run against their database at all.
+function startBackgroundJobs() {
+  if (String(process.env.CRON_JOBS_ENABLED || 'true').trim().toLowerCase() === 'false') {
+    logger.info('background_jobs_disabled', { reason: 'CRON_JOBS_ENABLED=false' });
+    return false;
+  }
   checkAutoStopBots();
   refreshInstagramTokens();
   refreshFacebookTokens();
@@ -752,12 +769,7 @@ async function startServer() {
   cleanupOldLogs();
   checkDueReminders();
   startIdeaEvaluationWorker();
-
-  const port = process.env.PORT || 5000;
-  activeHttpServer = app.listen(port, '0.0.0.0', () => {
-    logger.info('server_started', { port });
-  });
-  return activeHttpServer;
+  return true;
 }
 
 if (require.main === module && process.env.NODE_ENV !== 'test') {
@@ -770,4 +782,5 @@ if (require.main === module && process.env.NODE_ENV !== 'test') {
 
 module.exports = app;
 module.exports.startServer = startServer;
+module.exports.startBackgroundJobs = startBackgroundJobs;
 module.exports.normalizeOrigin = normalizeOrigin;
