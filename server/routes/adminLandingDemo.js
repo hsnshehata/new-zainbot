@@ -19,6 +19,9 @@ router.get('/', async (req, res) => {
       data: {
         isEnabled: config.isEnabled,
         instructions: config.instructions || '',
+        dailyCap: config.dailyCap,
+        usageDate: config.usageDate || '',
+        usageCount: config.usageCount || 0,
         updatedAt: config.updatedAt,
       },
     });
@@ -39,6 +42,18 @@ router.put('/', auditMutation, async (req, res) => {
 
     if (req.body?.isEnabled !== undefined) {
       config.isEnabled = Boolean(req.body.isEnabled);
+    }
+
+    if (req.body?.dailyCap !== undefined) {
+      const cap = Number(req.body.dailyCap);
+      if (!Number.isInteger(cap) || cap < 0 || cap > 100000) {
+        return res.status(400).json({
+          success: false,
+          error: 'INVALID_DAILY_CAP',
+          message: 'dailyCap must be an integer between 0 and 100,000',
+        });
+      }
+      config.dailyCap = cap;
     }
 
     if (req.body?.instructions !== undefined) {
@@ -68,6 +83,7 @@ router.put('/', auditMutation, async (req, res) => {
       data: {
         isEnabled: config.isEnabled,
         instructions: config.instructions || '',
+        dailyCap: config.dailyCap,
         updatedAt: config.updatedAt,
       },
     });

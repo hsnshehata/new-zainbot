@@ -41,6 +41,38 @@ async function getDemoConfig() {
   return doc;
 }
 
+/**
+ * Atomically consume one unit of the global daily demo budget.
+ * Fail-closed: any doubt means no consumption, no reply.
+ * Step 1: same-day increment under the cap. Step 2: day rollover reset.
+ * Both are single atomic updates; a lost race simply means the budget is
+ * honestly exhausted.
+ */
+async function tryConsumeDailyQuota(config) {
+  const cap = Number(config.dailyCap);
+  if (!Number.isFinite(cap) || cap <= 0) return false;
+  const today = new Date().toISOString().slice(0, 10);
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    // eslint-disable-next-line no-await-in-loop
+    const inc = await LandingDemoConfig.findOneAndUpdate(
+      { key: 'landing_demo', usageDate: today, usageCount: { $lt: cap } },
+      { $inc: { usageCount: 1 } },
+      { new: true }
+    );
+    if (inc) return true;
+    // eslint-disable-next-line no-await-in-loop
+    const roll = await LandingDemoConfig.findOneAndUpdate(
+      { key: 'landing_demo', usageDate: { $ne: today } },
+      { $set: { usageDate: today, usageCount: 1 } },
+      { new: true }
+    );
+    if (roll) return true;
+    // A concurrent caller may have just rolled the day over; retry the
+    // same-day increment once before honestly refusing.
+  }
+  return false;
+}
+
 function invalidateConfigCache() {
   configCache = null;
   configCacheAt = 0;
@@ -127,6 +159,21 @@ router.post('/chat', async (req, res) => {
       });
     }
 
+    // Global budget check BEFORE any paid completion. Quota consumption
+    // failing closed means the visitor gets an honest 429, never a free
+    // pass and never a charged call past the cap.
+    const allowed = await tryConsumeDailyQuota(config);
+    if (!allowed) {
+      logger.warn('landing_demo_daily_cap_reached', { requestId: req.requestId });
+      return res.status(429).json({
+        success: false,
+        error: 'DEMO_DAILY_LIMIT',
+        message: lang === 'ar'
+          ? 'وصلت تجربة اليوم لحدها اليومي. جرّب تاني بكرة أو أنشئ حساب مجاني.'
+          : 'The live demo reached its daily limit. Please try again tomorrow or create a free account.',
+      });
+    }
+
     const completion = await withTimeout(
       getAiCompletion({
         messages: [
@@ -174,3 +221,4 @@ router.post('/chat', async (req, res) => {
 
 module.exports = router;
 module.exports.invalidateConfigCache = invalidateConfigCache;
+module.exports.tryConsumeDailyQuota = tryConsumeDailyQuota;
