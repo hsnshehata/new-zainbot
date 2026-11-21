@@ -97,6 +97,15 @@ test('migration: dry run is read-only, apply encrypts and clears plaintext, reru
   });
   assert.equal(roundTrip, SYNTHETIC_KEY);
 
+  // The migrated credential carries the display/failover metadata labels the
+  // admin UI reads (model, priority, last4).
+  assert.ok(credential.labels.includes('model:gpt-4o'), 'model label carried');
+  assert.ok(credential.labels.includes('priority:1'), 'priority label carried');
+  assert.ok(
+    credential.labels.some((l) => l === 'last4:' + SYNTHETIC_KEY.slice(-4)),
+    'last4 label carried'
+  );
+
   // 4) Rerun: nothing re-migrated, existing credentials untouched.
   const second = await migrateProviderKeys({
     ProviderKey,

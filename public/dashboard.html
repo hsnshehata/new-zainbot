@@ -2308,6 +2308,9 @@
                   <h3 data-i18n="admin_active_keys">Active Global API Keys & Priority Order</h3>
                   <button id="adminResetKeysBtn" class="btn btn-primary btn-sm" style="background:var(--orange); border-color:var(--orange); color:#000;"><i class="fas fa-redo"></i> <span data-i18n="admin_btn_reset">Reset Failed Keys</span></button>
                 </div>
+                <div id="adminKeysLegacyBanner" style="display:none; margin-bottom:12px; padding:12px 14px; border:1px solid rgba(245,158,11,.4); background:rgba(245,158,11,.08); border-radius:var(--radius-sm); font-size:12px;">
+                  <i class="fas fa-shield-alt" style="color:var(--orange); margin-inline-end:6px;"></i><span data-i18n="admin_legacy_banner">Some keys are still stored as legacy plaintext. Rotate each key's secret (edit icon) to move it into encrypted storage, or run the migration script with a dry run first.</span>
+                </div>
                 <div id="adminKeysListContainer" style="display:flex; flex-direction:column; border:1px solid var(--glass-border); border-radius:var(--radius-sm); overflow:hidden;">
                   <!-- Key rows rendered dynamically -->
                 </div>
@@ -2546,6 +2549,46 @@
       <div class="db-modal-footer">
         <button class="btn btn-secondary btn-sm modal-close-btn" data-i18n="btn_cancel">Cancel</button>
         <button type="submit" form="instructionForm" class="btn btn-primary btn-sm" data-i18n="btn_save">Save Rule</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Server Key Edit/Rotate Modal -->
+  <div class="db-modal" id="adminKeyEditModal" role="dialog" aria-modal="true" aria-labelledby="adminKeyEditModalTitle">
+    <div class="db-modal-content">
+      <div class="db-modal-header">
+        <h3 id="adminKeyEditModalTitle" data-i18n="admin_key_edit_title">Edit / Rotate Server Key</h3>
+        <button class="btn btn-secondary btn-sm modal-close-btn" style="padding:6px 12px;" data-i18n-aria="btn_cancel"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="db-modal-body">
+        <form id="adminKeyEditForm">
+          <input type="hidden" id="adminKeyEditId" />
+          <div class="form-group">
+            <label for="adminKeyEditName" data-i18n="admin_label_name">Key Name / Description</label>
+            <input type="text" id="adminKeyEditName" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label for="adminKeyEditModel" data-i18n="admin_label_model">Default Model</label>
+            <input type="text" id="adminKeyEditModel" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label for="adminKeyEditPriority" data-i18n="admin_label_priority">Priority Rank (1 = Highest)</label>
+            <input type="number" id="adminKeyEditPriority" class="form-control" min="1" required />
+          </div>
+          <div class="form-group">
+            <label for="adminKeyEditBaseUrl" data-i18n="admin_label_base_url">Base URL (Optional)</label>
+            <input type="text" id="adminKeyEditBaseUrl" class="form-control" placeholder="https://api.openai.com/v1" />
+          </div>
+          <div class="form-group">
+            <label for="adminKeyEditSecret" data-i18n="admin_label_new_secret">New API Secret (leave blank to keep current)</label>
+            <input type="password" id="adminKeyEditSecret" class="form-control" placeholder="sk-..." autocomplete="new-password" />
+            <p style="font-size:11px; color:var(--text-muted); margin-top:6px;" data-i18n="admin_key_rotate_hint">Saving a new secret re-encrypts the key. For a legacy plaintext key, saving a new secret moves it into encrypted storage and retires the plaintext copy. The current secret is never shown.</p>
+          </div>
+        </form>
+      </div>
+      <div class="db-modal-footer">
+        <button class="btn btn-secondary btn-sm modal-close-btn" data-i18n="btn_cancel">Cancel</button>
+        <button type="submit" form="adminKeyEditForm" class="btn btn-primary btn-sm" data-i18n="admin_key_save">Save Key</button>
       </div>
     </div>
   </div>

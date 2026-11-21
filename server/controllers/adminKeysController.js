@@ -8,6 +8,13 @@ const {
   encryptCredentialSecret,
   parseCredentialEncryptionKey,
 } = require('../services/AiCredentialCrypto');
+const {
+  MODEL_LABEL,
+  PRIORITY_LABEL,
+  LAST4_LABEL,
+  readLabel,
+  buildCredentialLabels,
+} = require('../services/aiCredentialLabels');
 
 // Check if user is superadmin
 const checkSuperadmin = (req) => {
@@ -31,14 +38,6 @@ function encryptionConfigured(environment = process.env) {
 }
 
 const CRED_ID_PREFIX = 'cred_';
-const MODEL_LABEL = 'model:';
-const PRIORITY_LABEL = 'priority:';
-const LAST4_LABEL = 'last4:';
-
-function readLabel(labels, prefix) {
-  const found = (labels || []).find((label) => typeof label === 'string' && label.startsWith(prefix));
-  return found ? found.slice(prefix.length) : '';
-}
 
 function serializeProviderKey(key) {
   const rawKey = key.apiKey || '';
@@ -66,14 +65,6 @@ function serializeCredential(credential) {
     storage: 'encrypted',
     createdAt: credential.createdAt,
   };
-}
-
-function buildCredentialLabels({ defaultModel, priority, last4 }) {
-  const labels = [];
-  if (defaultModel) labels.push((MODEL_LABEL + String(defaultModel)).slice(0, 50));
-  labels.push((PRIORITY_LABEL + String(priority ?? 1)).slice(0, 50));
-  if (last4) labels.push((LAST4_LABEL + String(last4)).slice(0, 50));
-  return labels;
 }
 
 function actorObjectId(req) {
@@ -165,7 +156,10 @@ exports.listKeys = async (req, res) => {
       return res.status(403).json({ success: false, message: 'غير مصرح للوصول إلى هذه البيانات.' });
     }
 
-    const keys = await ProviderKey.find({})
+    // Tombstones (legacy docs deactivated by migration/rotation upgrade) are
+    // superseded by their encrypted credential and are hidden from the list
+    // so they do not keep tripping the legacy-plaintext banner.
+    const keys = await ProviderKey.find({ errorMessage: { $ne: 'migrated_to_encrypted_ai_credential' } })
       .select('+apiKey')
       .sort({ priority: 1 });
     const credentials = await AiCredential.find({}).sort({ createdAt: 1 }).lean();
@@ -239,6 +233,56 @@ exports.updateKey = async (req, res) => {
     const key = await ProviderKey.findById(id).select('+apiKey');
     if (!key) {
       return res.status(404).json({ success: false, message: 'المفتاح المطلوب غير موجود.' });
+    }
+
+    // Rotating the secret of a legacy plaintext key while encryption is
+    // configured upgrades that key into the encrypted control plane instead
+    // of writing new plaintext: create the AiCredential, then unset and
+    // deactivate the legacy document (same semantics as the migration
+    // script, per key, from the admin UI).
+    if (apiKey !== undefined && apiKey !== '' && encryptionConfigured()) {
+      const targetName = name !== undefined ? String(name).trim() : key.name;
+      const normalizedProvider = String(key.provider || '').trim().toLowerCase();
+      const conflict = await AiCredential.findOne({ name: targetName, provider: normalizedProvider }).lean();
+      if (conflict) {
+        return res.status(409).json({ success: false, message: 'يوجد مفتاح مشفر بنفس الاسم ونفس المزود بالفعل.' });
+      }
+
+      const actorId = actorObjectId(req);
+      const credentialId = new mongoose.Types.ObjectId();
+      const encrypted = encryptCredentialSecret(apiKey, {
+        context: buildCredentialContext(credentialId, normalizedProvider),
+      });
+      const nextBaseUrl = baseUrl !== undefined ? baseUrl : key.baseUrl;
+      const credential = await AiCredential.create({
+        _id: credentialId,
+        name: targetName,
+        provider: normalizedProvider,
+        baseUrl: nextBaseUrl && String(nextBaseUrl).startsWith('https://') ? String(nextBaseUrl).trim() : '',
+        ...encrypted,
+        status: 'active',
+        labels: buildCredentialLabels({
+          defaultModel: defaultModel !== undefined ? defaultModel : key.defaultModel,
+          priority: priority !== undefined ? Number(priority) : key.priority,
+          last4: String(apiKey).slice(-4),
+        }),
+        createdBy: actorId,
+        updatedBy: actorId,
+      });
+
+      await ProviderKey.updateOne(
+        { _id: key._id },
+        {
+          $unset: { apiKey: 1 },
+          $set: {
+            isActive: false,
+            errorMessage: 'migrated_to_encrypted_ai_credential',
+            lastTested: new Date(),
+          },
+        }
+      );
+
+      return res.status(200).json({ success: true, data: serializeCredential(credential) });
     }
 
     if (name !== undefined) key.name = name;

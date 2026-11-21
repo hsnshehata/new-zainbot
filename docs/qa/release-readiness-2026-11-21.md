@@ -99,9 +99,10 @@ and the local test suite; it is not a staging or production verification.
    `AiCredential`, then unsets the plaintext field and deactivates the
    legacy doc (idempotent; verified against real MongoDB 7.0.24 in
    `tests/providerKeyMigration.test.js`). It has NOT been run against any
-   live database; running it in production is Hassan's call. Fully removing
-   the read fallback also needs an admin UI for the control-plane
-   credentials (API-only today).
+   live database; running it in production is Hassan's call. The admin UI
+   now covers the encrypted control plane (see the credential-management
+   UI update below), so retiring the read fallback is blocked only on
+   running the migration in production, not on missing UI.
    **Updated 2026-11-21 (later run): encrypted-on-write.** When
    `CREDENTIAL_ENCRYPTION_KEY` is configured, `POST /api/admin/keys` now
    creates an encrypted AiCredential instead of a plaintext ProviderKey
@@ -115,6 +116,25 @@ and the local test suite; it is not a staging or production verification.
    posture. Verified in `tests/adminKeysEncryption.test.js` (real MongoDB
    7.0.24: no-plaintext-anywhere, decrypt round-trip, rotation, legacy
    fallback).
+   **Updated 2026-11-21 (credential-management UI):** the superadmin
+   dashboard (AI Failover Servers & Keys) now fully covers both stores:
+   every row shows a storage badge (ENCRYPTED / LEGACY PLAINTEXT) and the
+   masked last-4 of the secret (never the secret itself); a banner appears
+   while any legacy plaintext key remains; and an edit/rotate modal allows
+   metadata edits plus optional secret rotation. Rotating a legacy key's
+   secret through the UI or API upgrades that key into the encrypted
+   control plane (legacy document deactivated, plaintext field removed),
+   matching the migration script's semantics per key; conflicts with an
+   existing credential of the same name+provider return 409 without
+   writes. Migration tombstones are hidden from the list so they cannot
+   trip the plaintext banner. Migration script hardened: encrypt/decrypt
+   preflight probe before any database access, model/priority/last4 labels
+   carried into migrated credentials (previously dropped), printed
+   mongodump prerequisite + rollback instructions before `--apply` writes,
+   and exact apply/verify commands in dry-run output. Verified by
+   `tests/adminKeysEncryption.test.js` (8 tests) and
+   `tests/providerKeyMigration.test.js` (2 tests incl. label assertions),
+   plus EN/AR screenshots of list, banner, badges and modal.
 2. **No migrations framework**: schema evolution is implicit; no
    `server/migrations` directory. Backfill/rollback story for production
    data changes (including this milestone's new collections) is manual.

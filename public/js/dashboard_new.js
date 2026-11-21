@@ -579,6 +579,14 @@
       admin_lbl_provider: 'Provider',
       admin_lbl_model: 'Model',
       admin_lbl_priority: 'Priority',
+      admin_badge_encrypted: 'ENCRYPTED',
+      admin_badge_legacy: 'LEGACY PLAINTEXT',
+      admin_legacy_banner: 'Some keys are still stored as legacy plaintext. Rotate each key\'s secret (edit icon) to move it into encrypted storage, or run the migration script with a dry run first.',
+      admin_key_edit_title: 'Edit / Rotate Server Key',
+      admin_label_new_secret: 'New API Secret (leave blank to keep current)',
+      admin_key_rotate_hint: 'Saving a new secret re-encrypts the key. For a legacy plaintext key, saving a new secret moves it into encrypted storage and retires the plaintext copy. The current secret is never shown.',
+      admin_key_save: 'Save Key',
+      admin_key_save_failed: 'Could not save the key. Your edits were kept.',
       admin_subtab_overview: 'System Overview',
       admin_subtab_audit: 'Audit & Sessions',
       admin_subtab_notify: 'Notifications',
@@ -1664,6 +1672,14 @@
       admin_lbl_provider: 'المزود',
       admin_lbl_model: 'النموذج',
       admin_lbl_priority: 'الأولوية',
+      admin_badge_encrypted: 'مشفر',
+      admin_badge_legacy: 'نص عادي قديم',
+      admin_legacy_banner: 'بعض المفاتيح ما زالت مخزنة كنص عادي قديم. دوّر سر كل مفتاح (أيقونة التعديل) لنقله إلى التخزين المشفر، أو شغّل سكربت الترحيل في وضع المعاينة أولاً.',
+      admin_key_edit_title: 'تعديل / تدوير مفتاح السيرفر',
+      admin_label_new_secret: 'سر API جديد (اتركه فارغاً للاحتفاظ بالحالي)',
+      admin_key_rotate_hint: 'حفظ سر جديد يعيد تشفير المفتاح. للمفاتيح القديمة النصية، حفظ سر جديد ينقلها إلى التخزين المشفر ويوقف النسخة النصية. السر الحالي لا يُعرض أبداً.',
+      admin_key_save: 'حفظ المفتاح',
+      admin_key_save_failed: 'تعذر حفظ المفتاح. تم الاحتفاظ بتعديلاتك.',
       admin_subtab_overview: 'نظرة عامة على النظام',
       admin_subtab_audit: 'سجل التدقيق والجلسات',
       admin_subtab_notify: 'الإشعارات',
@@ -6583,6 +6599,11 @@
 
     const t = translations[currentLanguage] || translations.en;
 
+    const legacyBanner = document.getElementById('adminKeysLegacyBanner');
+    if (legacyBanner) {
+      legacyBanner.style.display = adminKeys.some((k) => k.storage === 'legacy_plaintext') ? 'block' : 'none';
+    }
+
     if (adminKeys.length === 0) {
       container.innerHTML = `<div style="padding:24px; text-align:center; color:var(--text-muted);">${t.admin_no_keys}</div>`;
       return;
@@ -6595,6 +6616,11 @@
       const badgeClass = key.status === 'working' ? 'badge-success' : 'badge-danger';
       const statusText = key.status === 'working' ? t.admin_status_working : t.admin_status_failed;
       const opacity = key.isActive ? '1' : '0.5';
+      const isEncrypted = key.storage === 'encrypted';
+      const storageBadge = isEncrypted
+        ? `<span class="badge badge-success" style="transform:scale(0.8); border:1px solid rgba(16,185,129,.4);"><i class="fas fa-lock"></i> ${t.admin_badge_encrypted}</span>`
+        : `<span class="badge" style="transform:scale(0.8); background:rgba(245,158,11,.15); color:var(--orange); border:1px solid rgba(245,158,11,.4);"><i class="fas fa-unlock"></i> ${t.admin_badge_legacy}</span>`;
+      const maskedSecret = key.last4 ? ` | <span dir="ltr">••••${key.last4}</span>` : '';
 
       row.innerHTML = `
         <div class="admin-key-details" style="opacity:${opacity};">
@@ -6603,13 +6629,17 @@
           <div>
             <h4 style="font-size:14px; font-weight:600; display:inline-block; margin-right:8px;">${key.name}</h4>
             <span class="badge ${badgeClass}" style="transform:scale(0.8);">${statusText}</span>
+            ${storageBadge}
             <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
-              ${t.admin_lbl_provider}: <strong>${key.provider}</strong> | ${t.admin_lbl_model}: <strong>${key.defaultModel}</strong> | ${t.admin_lbl_priority}: <strong>${key.priority}</strong>
+              ${t.admin_lbl_provider}: <strong>${key.provider}</strong> | ${t.admin_lbl_model}: <strong>${key.defaultModel}</strong> | ${t.admin_lbl_priority}: <strong>${key.priority}</strong>${maskedSecret}
             </div>
             ${key.errorMessage ? `<div style="font-size:10px; color:var(--red); margin-top:2px;">Error: ${key.errorMessage}</div>` : ''}
           </div>
         </div>
         <div style="display:flex; gap:10px;">
+          <button class="btn btn-secondary btn-sm" onclick="openAdminKeyEditModal('${key._id}')" style="padding:6px 10px;" aria-label="${t.admin_key_edit_title}">
+            <i class="fas fa-pen"></i>
+          </button>
           <button class="btn btn-secondary btn-sm" onclick="toggleAdminKeyActive('${key._id}', ${!key.isActive})" style="padding:6px 10px;">
             <i class="fas ${key.isActive ? 'fa-eye-slash' : 'fa-eye'}"></i>
           </button>
@@ -6656,6 +6686,84 @@
       }
     });
   }
+
+  // Edit/rotate modal for server keys: metadata edits + optional secret
+  // rotation. The current secret is never displayed or requested back; a
+  // blank secret field means "keep current". Rotating a legacy plaintext key
+  // while encryption is configured upgrades it into the encrypted control
+  // plane server-side.
+  const adminKeyEditModal = document.getElementById('adminKeyEditModal');
+  const adminKeyEditForm = document.getElementById('adminKeyEditForm');
+
+  window.openAdminKeyEditModal = function(id) {
+    if (!adminKeyEditModal) return;
+    const key = (adminKeys || []).find((k) => String(k._id) === String(id));
+    if (!key) return;
+    document.getElementById('adminKeyEditId').value = key._id;
+    document.getElementById('adminKeyEditName').value = key.name || '';
+    document.getElementById('adminKeyEditModel').value = key.defaultModel || '';
+    document.getElementById('adminKeyEditPriority').value = key.priority || 1;
+    document.getElementById('adminKeyEditBaseUrl').value = key.baseUrl || '';
+    document.getElementById('adminKeyEditSecret').value = '';
+    adminKeyEditModal.classList.add('active');
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.openDialog === 'function') {
+        window.ZainBotA11y.openDialog(adminKeyEditModal, {
+          background: document.querySelector('.db-wrapper'),
+          onClose: () => adminKeyEditModal.classList.remove('active'),
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const closeAdminKeyEditModal = () => {
+    if (!adminKeyEditModal) return;
+    try {
+      if (window.ZainBotA11y && typeof window.ZainBotA11y.closeDialog === 'function') {
+        window.ZainBotA11y.closeDialog(adminKeyEditModal);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      adminKeyEditModal.classList.remove('active');
+    }
+  };
+
+  adminKeyEditModal?.querySelectorAll('.modal-close-btn').forEach(btn => {
+    btn.addEventListener('click', closeAdminKeyEditModal);
+  });
+
+  adminKeyEditForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const t = translations[currentLanguage] || translations.en;
+    const id = document.getElementById('adminKeyEditId').value;
+    const newSecret = document.getElementById('adminKeyEditSecret').value.trim();
+    const payload = {
+      name: document.getElementById('adminKeyEditName').value.trim(),
+      defaultModel: document.getElementById('adminKeyEditModel').value.trim(),
+      priority: Number(document.getElementById('adminKeyEditPriority').value),
+      baseUrl: document.getElementById('adminKeyEditBaseUrl').value.trim(),
+    };
+    if (newSecret) payload.apiKey = newSecret;
+
+    try {
+      const res = await apiFetch(`/api/admin/keys/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+      if (res && res.success) {
+        closeAdminKeyEditModal();
+        loadAdminKeys();
+      } else {
+        showResult(t.admin_key_save_failed, false);
+      }
+    } catch (err) {
+      console.error(err);
+      showResult(t.admin_key_save_failed, false);
+    }
+  });
 
   // Reset Failed Keys
   const adminResetKeysBtn = document.getElementById('adminResetKeysBtn');

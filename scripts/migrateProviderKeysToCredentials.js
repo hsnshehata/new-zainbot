@@ -17,11 +17,26 @@ const mongoose = require('mongoose');
 const {
   buildCredentialContext,
   encryptCredentialSecret,
+  decryptCredentialSecret,
   parseCredentialEncryptionKey,
 } = require('../server/services/AiCredentialCrypto');
+const { buildCredentialLabels } = require('../server/services/aiCredentialLabels');
 
 // Nil ObjectId marks system-created rows when no admin actor is supplied.
 const SYSTEM_ACTOR_ID = new mongoose.Types.ObjectId('000000000000000000000000');
+
+// Preflight: prove the configured CREDENTIAL_ENCRYPTION_KEY can actually
+// round-trip a secret before any database read/write happens. Catches a
+// malformed or wrong key before a half-applied migration.
+function preflightCryptoProbe(environment) {
+  const probe = 'migration-preflight-probe';
+  const context = buildCredentialContext(SYSTEM_ACTOR_ID, 'preflight');
+  const encrypted = encryptCredentialSecret(probe, { context, environment });
+  const decrypted = decryptCredentialSecret(encrypted, { context, environment });
+  if (decrypted !== probe) {
+    throw new Error('CREDENTIAL_ENCRYPTION_KEY failed the encrypt/decrypt preflight probe');
+  }
+}
 
 async function migrateProviderKeys({
   ProviderKey,
@@ -32,8 +47,10 @@ async function migrateProviderKeys({
   actorId = SYSTEM_ACTOR_ID,
 }) {
   // Throws early when the encryption key is missing or malformed; nothing is
-  // read or written in that case.
+  // read or written in that case. The probe additionally proves the key can
+  // round-trip a secret before the database is touched.
   parseCredentialEncryptionKey(environment.CREDENTIAL_ENCRYPTION_KEY);
+  preflightCryptoProbe(environment);
 
   const legacyKeys = await ProviderKey.find({ isActive: true }).select('+apiKey');
   const report = {
@@ -79,6 +96,13 @@ async function migrateProviderKeys({
       baseUrl,
       ...encrypted,
       status: 'active',
+      // Carry the display/failover metadata so migrated credentials look and
+      // sort the same as keys created through the admin API.
+      labels: buildCredentialLabels({
+        defaultModel: key.defaultModel,
+        priority: key.priority,
+        last4: String(key.apiKey).slice(-4),
+      }),
       createdBy: actorId,
       updatedBy: actorId,
     });
@@ -117,13 +141,32 @@ async function main() {
     throw new Error('MONGODB_URI is required');
   }
 
+  const dbName = (uri.split('/').pop() || '').split('?')[0] || '<db>';
+
+  if (!dryRun) {
+    // Apply is destructive in one direction: the plaintext apiKey field is
+    // removed from each migrated ProviderKey document. Rollback requires a
+    // pre-migration database dump, so make taking one an explicit printed
+    // prerequisite before any write happens.
+    console.log('PREREQUISITE - take a backup BEFORE this command writes anything:');
+    console.log(`  mongodump --uri="<your mongodb uri>" --db=${dbName} --out=./backup-pre-key-migration-$(date +%Y%m%d-%H%M%S)`);
+    console.log('Rollback after --apply = mongorestore that dump, then delete the AiCredential');
+    console.log('documents this run created (they are the only ones created by it).');
+    console.log('');
+  }
+
   await mongoose.connect(uri);
   try {
     const ProviderKey = require('../server/models/ProviderKey');
     const AiCredential = require('../server/models/AiCredential');
     const report = await migrateProviderKeys({ ProviderKey, AiCredential, dryRun });
     if (dryRun) {
-      console.log('Dry run only. Re-run with --apply and CONFIRM_MIGRATION=MIGRATE_PROVIDER_KEYS to write.');
+      console.log('Dry run only. To apply, run exactly:');
+      console.log('  CONFIRM_MIGRATION=MIGRATE_PROVIDER_KEYS node scripts/migrateProviderKeysToCredentials.js --apply');
+      console.log('Take the mongodump backup printed by the apply run BEFORE confirming any production write.');
+    } else {
+      console.log(`Applied. Migrated ${report.migrated} key(s). Verify the admin keys list now shows them as Encrypted,`);
+      console.log('then confirm AI completions still work before considering the legacy fallback retired.');
     }
     return report;
   } finally {

@@ -189,3 +189,75 @@ test('legacy plaintext path still works when encryption is not configured', { ti
   assert.equal(await ProviderKey.countDocuments(), 1);
   assert.equal(await AiCredential.countDocuments(), 0);
 });
+
+test('updateKey rotating a legacy key secret upgrades it into encrypted storage', { timeout: 60000 }, async () => {
+  setEncryption(true);
+  const ROTATED_KEY = 'sk-rotated-synthetic-key-not-real';
+  const legacy = await ProviderKey.create({
+    name: 'Legacy Key',
+    provider: 'openai',
+    apiKey: SYNTHETIC_KEY,
+    defaultModel: 'gpt-4o',
+    priority: 3,
+  });
+
+  const { req, res } = reqRes({ apiKey: ROTATED_KEY }, { id: String(legacy._id) });
+  await controller.updateKey(req, res);
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.payload.data.storage, 'encrypted');
+  assert.ok(String(res.payload.data._id).startsWith('cred_'));
+  assert.equal(res.payload.data.defaultModel, 'gpt-4o');
+  assert.equal(res.payload.data.priority, 3);
+  assert.equal(res.payload.data.last4, ROTATED_KEY.slice(-4));
+
+  // Legacy document deactivated, plaintext removed from the stored document.
+  const raw = await mongoose.connection.collection('providerkeys').findOne({ name: 'Legacy Key' });
+  assert.ok(!('apiKey' in raw), 'plaintext field removed');
+  assert.equal(raw.isActive, false);
+  assert.equal(raw.errorMessage, 'migrated_to_encrypted_ai_credential');
+
+  // New credential decrypts to the rotated secret.
+  const credentialId = String(res.payload.data._id).slice('cred_'.length);
+  const credential = await AiCredential.findById(credentialId)
+    .select('+secretCiphertext +secretIv +secretAuthTag +encryptionKeyId')
+    .lean();
+  const roundTrip = decryptCredentialSecret(credential, {
+    context: buildCredentialContext(credential._id, credential.provider),
+  });
+  assert.equal(roundTrip, ROTATED_KEY);
+
+  // The merged list now shows exactly one (encrypted) entry for that name.
+  const list = reqRes();
+  await controller.listKeys(list.req, list.res);
+  const matches = list.res.payload.data.filter((k) => k.name === 'Legacy Key');
+  assert.equal(matches.length, 1);
+  assert.equal(matches[0].storage, 'encrypted');
+});
+
+test('updateKey legacy rotation returns 409 and writes nothing on credential name conflict', { timeout: 60000 }, async () => {
+  setEncryption(true);
+  const legacy = await ProviderKey.create({
+    name: 'Conflict Key',
+    provider: 'openai',
+    apiKey: SYNTHETIC_KEY,
+    defaultModel: 'gpt-4o',
+  });
+  const add = reqRes({
+    name: 'Conflict Key',
+    provider: 'openai',
+    apiKey: 'sk-existing-encrypted-key',
+    defaultModel: 'gpt-4o-mini',
+  });
+  await controller.addKey(add.req, add.res);
+  assert.equal(add.res.statusCode, 201);
+
+  const { req, res } = reqRes({ apiKey: 'sk-rotated-conflict-key' }, { id: String(legacy._id) });
+  await controller.updateKey(req, res);
+  assert.equal(res.statusCode, 409);
+
+  const raw = await mongoose.connection.collection('providerkeys').findOne({ name: 'Conflict Key' });
+  assert.equal(raw.apiKey, SYNTHETIC_KEY, 'legacy plaintext untouched on conflict');
+  assert.equal(raw.isActive, true);
+  assert.equal(await AiCredential.countDocuments(), 1, 'no second credential created');
+});
