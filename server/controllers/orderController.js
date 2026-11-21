@@ -319,15 +319,19 @@ exports.getOrders = async (req, res) => {
   const userId = req.user.userId;
 
   try {
-    // التحقق من وجود المتجر (لا تمنع العرض إذا كان المستخدم مختلفاً — نكتفي بالتحقق من وجود المتجر)
-    const store = await Store.findById(storeId);
+    // Orders contain customer PII: only the store owner (or a direct,
+    // non-impersonating superadmin) may list them. Mirrors the access
+    // pattern used by updateOrder and getBotAccessFilter.
+    const subjectUserId = req.auth?.subjectUserId || userId;
+    const actorRole = req.auth?.actorRole || req.user?.role;
+    const isImpersonating = Boolean(req.auth?.isImpersonating);
+    const storeFilter = (actorRole === 'superadmin' && !isImpersonating)
+      ? { _id: storeId }
+      : { _id: storeId, userId: subjectUserId };
+    const store = await Store.findOne(storeFilter);
     if (!store) {
-      logger.warn('orders_fetch_store_not_found', { storeId });
+      logger.warn('orders_fetch_store_not_found', { storeId, requestedBy: userId });
       return res.status(404).json({ message: 'المتجر غير موجود' });
-    }
-
-    if (String(store.userId) !== String(userId)) {
-      logger.warn('orders_fetch_readonly', { storeId, requestedBy: userId, ownerId: store.userId });
     }
 
     const orders = await Order.find({ storeId }).sort({ createdAt: -1 });
