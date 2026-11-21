@@ -82,7 +82,13 @@ async function changeOrderStatus({ order, targetStatus, changedBy = null, note =
     if (order.stockStatus === 'completed') {
       return { ok: true, alreadyCompleted: true, order };
     }
-    const owesStock = order.paymentMethod === 'whatsapp_confirmation' || order.stockReleased === true;
+    // Modern protocol state always owes stock on (re-)confirm: a 'failed'
+    // reservation was released, never decremented - that is not a legacy
+    // order. Legacy means: COD + no protocol state ever ('none', never
+    // released) - its stock was handled outside the protocol.
+    const owesStock = order.paymentMethod === 'whatsapp_confirmation'
+      || order.stockReleased === true
+      || order.stockStatus === 'failed';
     if (!owesStock) {
       return plainTransition(order, targetStatus, historyEntry);
     }
@@ -156,7 +162,14 @@ async function changeOrderStatus({ order, targetStatus, changedBy = null, note =
     if (!claimed) {
       return fail(409, 'تعذر تحديث الطلب: عملية أخرى جارية. حدّث الصفحة وحاول مرة أخرى.');
     }
-    await stockService.restoreOrderStock(claimed);
+    try {
+      await stockService.restoreOrderStock(claimed);
+    } catch (restoreErr) {
+      // Stay in 'restoring': reconcileInterruptedRestores retries. Never
+      // report success for a half-restored order.
+      logger.error('order_restock_failed', { orderId: claimed._id, err: restoreErr.message });
+      return fail(500, 'تعذر استعادة المخزون الآن. سيُعاد تلقائيًا؛ حدّث الصفحة بعد قليل.');
+    }
     await stockService.pullOrderTokens(claimed._id);
     const done = await Order.findOneAndUpdate(
       { _id: claimed._id, stockStatus: 'restoring' },

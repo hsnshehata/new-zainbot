@@ -98,6 +98,10 @@ const productSchema = new mongoose.Schema({
     type: [
       new mongoose.Schema({
         orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', required: true },
+        // Scoped to the reservation generation (Order.stockEpoch) the
+        // restore belongs to, so repeated confirm/cancel cycles restore
+        // every cycle, not just the first.
+        epoch: { type: String, default: '' },
         qty: { type: Number, required: true, min: 1 },
         at: { type: Date, default: Date.now }
       }, { _id: false })

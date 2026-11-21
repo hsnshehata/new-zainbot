@@ -245,7 +245,25 @@ async function completeOrderReservation(orderId, extraSet = {}, historyEntry = n
   const filter = { _id: orderId, stockStatus: 'pending' };
   if (stockEpoch) filter.stockEpoch = stockEpoch;
   const done = await Order.findOneAndUpdate(filter, update, { new: true });
-  if (done) return { ok: true, order: done };
+  if (done) {
+    // A new reservation generation completed: prior-cycle restoration
+    // entries for this order are permanently stale (that stock has been
+    // re-reserved). Pull them so the ledger stays bounded, and reset the
+    // stockReleased marker with the completed state.
+    try {
+      await Product.updateMany(
+        { 'restorations.orderId': done._id },
+        { $pull: { restorations: { orderId: done._id } } }
+      );
+      if (done.stockReleased) {
+        await Order.updateOne({ _id: done._id }, { $set: { stockReleased: false } });
+        done.stockReleased = false;
+      }
+    } catch (cleanupErr) {
+      logger.warn('stock_completion_ledger_cleanup_failed', { orderId: done._id, err: cleanupErr.message });
+    }
+    return { ok: true, order: done };
+  }
   const current = await Order.findById(orderId).select('status stockStatus');
   if (current && current.stockStatus === 'completed') {
     return { ok: true, alreadyCompleted: true, order: current };
@@ -259,29 +277,42 @@ async function completeOrderReservation(orderId, extraSet = {}, historyEntry = n
  * stock increment, guarded by its absence: any retry (after a crash, or a
  * sweep re-run) is a no-op. This is what makes restock crash-safe.
  */
-async function restoreLineForOrder(productId, orderId, qty) {
+async function restoreLineForOrder(productId, orderId, qty, epoch = '') {
   const oid = new mongoose.Types.ObjectId(String(orderId));
+  const gen = String(epoch || '');
   const result = await Product.updateOne(
-    { _id: productId, 'restorations.orderId': { $ne: oid } },
-    { $inc: { stock: qty }, $push: { restorations: { orderId: oid, qty, at: new Date() } } }
+    { _id: productId, restorations: { $not: { $elemMatch: { orderId: oid, epoch: gen } } } },
+    { $inc: { stock: qty }, $push: { restorations: { orderId: oid, epoch: gen, qty, at: new Date() } } }
   );
   return result.modifiedCount;
 }
 
-/** Restore every line of an order, line by line; each line is idempotent. */
+/**
+ * Restore every line of an order, line by line; each line is idempotent
+ * within the order's current reservation generation (stockEpoch). A line
+ * that errors is NOT swallowed: the caller must leave the order in
+ * 'restoring' so the sweep retries, instead of marking a half-restored
+ * order as done.
+ */
 async function restoreOrderStock(order) {
+  const epoch = order.stockEpoch || '';
   let restored = 0;
+  const failures = [];
   for (const item of order.products || []) {
     if (!item.productId || !item.quantity) continue;
     try {
-      restored += await restoreLineForOrder(item.productId, order._id, item.quantity);
+      restored += await restoreLineForOrder(item.productId, order._id, item.quantity, epoch);
     } catch (err) {
       logger.error('stock_restore_line_failed', {
         orderId: order._id,
         productId: item.productId,
         err: err.message,
       });
+      failures.push({ productId: item.productId, err: err.message });
     }
+  }
+  if (failures.length) {
+    throw new Error(`stock restore failed for ${failures.length} line(s) of order ${order._id}`);
   }
   return restored;
 }
@@ -304,7 +335,18 @@ async function reconcileInterruptedRestores({ now = new Date() } = {}) {
       { new: true }
     );
     if (!claimed) continue;
-    await restoreOrderStock(claimed);
+    try {
+      await restoreOrderStock(claimed);
+    } catch (restoreErr) {
+      // Leave the order in 'restoring': the next sweep retries. Marking it
+      // done here would durably lose the unrestored lines.
+      await Order.updateOne(
+        { _id: claimed._id },
+        { $set: { 'opsFlags.stockError': `restore retry pending: ${String(restoreErr.message).slice(0, 200)}` } }
+      );
+      logger.error('stock_interrupted_restore_retry_pending', { orderId: claimed._id, err: restoreErr.message });
+      continue;
+    }
     await pullOrderTokens(claimed._id);
     await Order.updateOne(
       { _id: claimed._id, stockStatus: 'restoring' },
