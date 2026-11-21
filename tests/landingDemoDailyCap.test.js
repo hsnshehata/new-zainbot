@@ -35,9 +35,9 @@ test('consumes atomically up to the cap, then fails closed', async () => {
   config.dailyCap = 2;
   await config.save();
 
-  assert.equal(await tryConsumeDailyQuota(config), true);
-  assert.equal(await tryConsumeDailyQuota(config), true);
-  assert.equal(await tryConsumeDailyQuota(config), false, 'third call must be refused');
+  assert.equal(await tryConsumeDailyQuota(config), 'ok');
+  assert.equal(await tryConsumeDailyQuota(config), 'ok');
+  assert.equal(await tryConsumeDailyQuota(config), 'exhausted', 'third call must be refused');
 
   const doc = await LandingDemoConfig.getConfig();
   assert.equal(doc.usageCount, 2, 'count never overshoots the cap');
@@ -49,7 +49,7 @@ test('concurrent bursts cannot overshoot the cap', async () => {
   await config.save();
 
   const results = await Promise.all(Array.from({ length: 20 }, () => tryConsumeDailyQuota(config)));
-  assert.equal(results.filter(Boolean).length, 5);
+  assert.equal(results.filter((r) => r === 'ok').length, 5);
   const doc = await LandingDemoConfig.getConfig();
   assert.equal(doc.usageCount, 5);
 });
@@ -61,8 +61,8 @@ test('a new UTC day rolls the counter over exactly once', async () => {
   config.usageCount = 9999; // stale day, exhausted
   await config.save();
 
-  assert.equal(await tryConsumeDailyQuota(config), true, 'stale day resets');
-  assert.equal(await tryConsumeDailyQuota(config), false, 'new day cap applies immediately');
+  assert.equal(await tryConsumeDailyQuota(config), 'ok', 'stale day resets');
+  assert.equal(await tryConsumeDailyQuota(config), 'exhausted', 'new day cap applies immediately');
   const doc = await LandingDemoConfig.getConfig();
   assert.equal(doc.usageCount, 1);
   assert.notEqual(doc.usageDate, '2000-01-01');
@@ -71,14 +71,22 @@ test('a new UTC day rolls the counter over exactly once', async () => {
 test('default config is fail-closed (cap 0) without an explicit owner cap', async () => {
   const config = await LandingDemoConfig.getConfig();
   assert.equal(config.dailyCap, 0);
-  assert.equal(await tryConsumeDailyQuota(config), false);
+  assert.equal(await tryConsumeDailyQuota(config), 'not_configured');
+});
+
+test('a legacy stored doc without cap fields is not_configured, not exhausted', async () => {
+  // Documents written before the cap fields existed carry no dailyCap.
+  // The refusal reason must be "not set up", never a false "try tomorrow".
+  await LandingDemoConfig.collection.insertOne({ key: 'landing_demo', isEnabled: true });
+  const config = await LandingDemoConfig.getConfig();
+  assert.equal(await tryConsumeDailyQuota(config), 'not_configured');
 });
 
 test('cap 0 is fail-closed: no consumption, no reply', async () => {
   const config = await LandingDemoConfig.getConfig();
   config.dailyCap = 0;
   await config.save();
-  assert.equal(await tryConsumeDailyQuota(config), false);
+  assert.equal(await tryConsumeDailyQuota(config), 'not_configured');
   const doc = await LandingDemoConfig.getConfig();
   assert.equal(doc.usageCount, 0);
 });

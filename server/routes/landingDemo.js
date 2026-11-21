@@ -42,15 +42,20 @@ async function getDemoConfig() {
 }
 
 /**
- * Atomically consume one unit of the global daily demo budget.
+ * Consume one unit of the global daily demo request limit, atomically.
  * Fail-closed: any doubt means no consumption, no reply.
+ * This is a REQUEST-COUNT limit only, not a spending envelope and not
+ * authority for any other paid path. Returns:
+ *   'ok'             - one request unit was consumed
+ *   'not_configured' - no positive owner-configured cap exists
+ *   'exhausted'      - a positive cap exists and today\'s count reached it
  * Step 1: same-day increment under the cap. Step 2: day rollover reset.
- * Both are single atomic updates; a lost race simply means the budget is
+ * Both are single atomic updates; a lost race simply means the limit is
  * honestly exhausted.
  */
 async function tryConsumeDailyQuota(config) {
   const cap = Number(config.dailyCap);
-  if (!Number.isFinite(cap) || cap <= 0) return false;
+  if (!Number.isFinite(cap) || cap <= 0) return 'not_configured';
   const today = new Date().toISOString().slice(0, 10);
   for (let attempt = 0; attempt < 2; attempt += 1) {
     // eslint-disable-next-line no-await-in-loop
@@ -59,18 +64,18 @@ async function tryConsumeDailyQuota(config) {
       { $inc: { usageCount: 1 } },
       { new: true }
     );
-    if (inc) return true;
+    if (inc) return 'ok';
     // eslint-disable-next-line no-await-in-loop
     const roll = await LandingDemoConfig.findOneAndUpdate(
       { key: 'landing_demo', usageDate: { $ne: today } },
       { $set: { usageDate: today, usageCount: 1 } },
       { new: true }
     );
-    if (roll) return true;
+    if (roll) return 'ok';
     // A concurrent caller may have just rolled the day over; retry the
     // same-day increment once before honestly refusing.
   }
-  return false;
+  return 'exhausted';
 }
 
 function invalidateConfigCache() {
@@ -159,11 +164,22 @@ router.post('/chat', async (req, res) => {
       });
     }
 
-    // Global budget check BEFORE any paid completion. Quota consumption
-    // failing closed means the visitor gets an honest 429, never a free
-    // pass and never a charged call past the cap.
-    const allowed = await tryConsumeDailyQuota(config);
-    if (!allowed) {
+    // Global request-limit check BEFORE any paid completion. Failing
+    // closed means the visitor gets an honest refusal, never a free pass
+    // and never a completion past the configured limit.
+    const quota = await tryConsumeDailyQuota(config);
+    if (quota === 'not_configured') {
+      // No positive owner-configured cap: do not promise "tomorrow" -
+      // the limit does not reset on its own. Say it is being set up.
+      return res.status(503).json({
+        success: false,
+        error: 'DEMO_NOT_CONFIGURED',
+        message: lang === 'ar'
+          ? 'التجربة المباشرة مش متاحة دلوقتي لأنها لسه بتتجهز. تقدر تنشئ حساب مجاني وتجرب مساحة عملك.'
+          : 'The live demo is not available right now while it is being set up. You can create a free account and try your own workspace.',
+      });
+    }
+    if (quota !== 'ok') {
       logger.warn('landing_demo_daily_cap_reached', { requestId: req.requestId });
       return res.status(429).json({
         success: false,
