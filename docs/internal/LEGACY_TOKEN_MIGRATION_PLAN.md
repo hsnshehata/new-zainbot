@@ -9,6 +9,9 @@ prod container, no values read)
 
 - `bots.facebookApiKey`: 0 encrypted (`chv1:`), 10 plaintext
 - `bots.instagramApiKey`: 0 encrypted, 2 plaintext
+- Affected documents (observed 2026-11-22 01:56 EET): 12 DISTINCT bot
+  documents carry the 12 plaintext fields; no document carries both -
+  exactly one plaintext field per affected document.
 - `bots.whatsappApiKey`: 0 encrypted, 0 plaintext (observed 2026-11-22
   01:53 EET) - no tokens of this class exist on the test site; nothing to
   migrate. Also observed: no stored WhatsApp QR session blobs (the one
@@ -29,8 +32,8 @@ All steps run from the application (Node with the key), never a raw DB
 script; encryption is `encryptChannelToken`, which is idempotent
 (already-prefixed values are returned unchanged).
 
-1. **Dry run (read-only)**: count plaintext per field, list bot IDs only.
-   Expected: 10 facebookApiKey, 2 instagramApiKey, 0 whatsappApiKey (already observed).
+1. **Dry run (read-only)**: count plaintext per field AND distinct affected documents, list bot IDs only.
+   Expected: 10 facebookApiKey, 2 instagramApiKey, 0 whatsappApiKey, across 12 distinct documents (already observed; recount anyway).
    Output goes to logs, not to any persistent diagnostic endpoint.
 2. **Backup note**: Atlas holds continuous backups; record the timestamp
    before the run so a point-in-time restore exists. No separate plaintext
@@ -46,11 +49,33 @@ script; encryption is `encryptChannelToken`, which is idempotent
 5. **Soak**: decryption at use sites already handles both formats
    (shipped, tested), so merchants see no change.
 
+## Risks (explicit, none waived)
+
+- **Key dependency**: every encrypted value is unreadable without
+  `CREDENTIAL_ENCRYPTION_KEY`. The migration raises the blast radius of a
+  key loss from "some tokens" to "all channel tokens". Mitigation: the key
+  already lives only in Coolify env and the vault; it must never rotate;
+  Hassan should confirm he holds no other copy expectation before the run.
+- **Write/verification failure mid-run**: a failed document is logged by
+  ID and left plaintext (the setter is idempotent; reruns are safe). A
+  document can end up neither broken nor migrated; never half-encrypted,
+  because each field write is a single $set.
+- **Backup/rollback**: encrypt-in-place is reversible ONLY through the
+  documented decrypt procedure with the same key - a code path, not a
+  data rescue. Atlas point-in-time restore from the recorded pre-run
+  timestamp is the disaster fallback; restoring it also restores
+  plaintext, so a restore must be followed by a re-run of this batch.
+- **Credential preservation**: tokens are not rotated or re-issued; the
+  same secret changes only its stored form. If Meta has already expired a
+  plaintext token, the migration preserves an already-dead token - the
+  verification step proves decryptability, not token validity against
+  Meta's API. Validating tokens against Meta is a separate, optional,
+  owner-approved step (read-only API calls).
+
 ## Rollback
 
-Encryption is reversible with the same key: a documented decrypt procedure
-can restore plaintext per field. Because the key never leaves the
-environment and never rotates, rollback is a code path, not a data rescue.
+Per-field decrypt with the same key, documented procedure. Atlas PITR as
+disaster fallback (see Risks).
 
 ## Failure handling
 
