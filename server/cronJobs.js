@@ -497,21 +497,52 @@ const cleanupOldLogs = () => {
   }, { timezone: 'Africa/Cairo' });
 };
 
-// إرسال التذكيرات المستحقة (مساعد زين): يحدّث الحالة أولاً حتى لا يتكرر
-// الإرسال لو فشل الإشعار، ثم ينشئ إشعارًا داخليًا ويرسل عبر القنوات المفعّلة.
+// إرسال التذكيرات المستحقة (مساعد زين):
+// - استيلاء ذرّي (findOneAndUpdate على status=pending) حتى لا تلتقط نسختان
+//   متزامنتان نفس التذكير فيتكرر الإرسال.
+// - النجاح ينقل إلى sent، والفشل يعيد الجدولة بمحاولات محدودة (attempts) حتى
+//   maxAttempts ثم failed مع lastError — لا يُفقد تذكير ولا يتكرر بلا حد.
+// - التذكيرات العالقة في claimed (انهيار بعد الاستيلاء) تُسترد بعد
+//   STALE_CLAIM_MS وتُعامل كمحاولة جديدة.
 const Reminder = require('./models/Reminder');
+const os = require('os');
+
+const REMINDER_INSTANCE_ID = `${os.hostname()}:${process.pid}`;
+const REMINDER_STALE_CLAIM_MS = 10 * 60 * 1000;
+const REMINDER_RETRY_BACKOFF_MS = 5 * 60 * 1000;
+
+async function claimNextDueReminder({ now }) {
+  const staleBefore = new Date(now.getTime() - REMINDER_STALE_CLAIM_MS);
+  return Reminder.findOneAndUpdate(
+    {
+      $or: [
+        {
+          status: 'pending',
+          dueAt: { $lte: now },
+          $or: [{ nextAttemptAt: null }, { nextAttemptAt: { $lte: now } }],
+        },
+        { status: 'claimed', claimedAt: { $lte: staleBefore } },
+      ],
+    },
+    {
+      $set: { status: 'claimed', claimedAt: now, claimedBy: REMINDER_INSTANCE_ID },
+      $inc: { attempts: 1 },
+    },
+    { sort: { dueAt: 1 }, new: true }
+  );
+}
 
 async function sendDueReminders({ now = new Date(), limit = 50 } = {}) {
-  const due = await Reminder.find({ status: 'pending', dueAt: { $lte: now } })
-    .sort({ dueAt: 1 })
-    .limit(limit);
   let sent = 0;
-  for (const reminder of due) {
+  let failed = 0;
+  let claimedCount = 0;
+
+  while (claimedCount < limit) {
+    const reminder = await claimNextDueReminder({ now });
+    if (!reminder) break;
+    claimedCount += 1;
+
     try {
-      reminder.status = 'sent';
-      reminder.sentAt = now;
-      await reminder.save();
-      sent += 1;
       await dispatchMultiChannelNotification({
         userId: reminder.user,
         event: 'assistant_reminder',
@@ -520,11 +551,32 @@ async function sendDueReminders({ now = new Date(), limit = 50 } = {}) {
           dueAt: reminder.dueAt,
         },
       });
+      reminder.status = 'sent';
+      reminder.sentAt = now;
+      reminder.lastError = null;
+      reminder.nextAttemptAt = null;
+      await reminder.save();
+      sent += 1;
     } catch (err) {
-      logger.error('❌ Error sending due reminder', { reminderId: String(reminder._id), err: err.message });
+      const message = err && err.message ? err.message : String(err);
+      reminder.lastError = message.slice(0, 1000);
+      if (reminder.attempts >= reminder.maxAttempts) {
+        reminder.status = 'failed';
+        reminder.nextAttemptAt = null;
+        failed += 1;
+        logger.error('❌ Reminder failed permanently', { reminderId: String(reminder._id), attempts: reminder.attempts, err: message });
+      } else {
+        reminder.status = 'pending';
+        reminder.nextAttemptAt = new Date(now.getTime() + REMINDER_RETRY_BACKOFF_MS * reminder.attempts);
+        logger.warn('⚠️ Reminder dispatch failed, scheduled retry', { reminderId: String(reminder._id), attempts: reminder.attempts, err: message });
+      }
+      await reminder.save().catch((saveErr) => {
+        logger.error('❌ Error persisting reminder failure state', { reminderId: String(reminder._id), err: saveErr.message });
+      });
     }
   }
-  return { due: due.length, sent };
+
+  return { claimed: claimedCount, sent, failed };
 }
 
 const checkDueReminders = () => {
