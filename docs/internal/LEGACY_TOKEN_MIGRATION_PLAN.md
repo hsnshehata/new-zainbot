@@ -9,8 +9,10 @@ prod container, no values read)
 
 - `bots.facebookApiKey`: 0 encrypted (`chv1:`), 10 plaintext
 - `bots.instagramApiKey`: 0 encrypted, 2 plaintext
-- `bots.whatsappApiKey`: count not taken that night (setter shipped in
-  6500692); same class, include in the dry run.
+- `bots.whatsappApiKey`: 0 encrypted, 0 plaintext (observed 2026-11-22
+  01:53 EET) - no tokens of this class exist on the test site; nothing to
+  migrate. Also observed: no stored WhatsApp QR session blobs (the one
+  GridFS bucket has 0 objects), so that class is currently latent too.
 - The counts establish the CURRENT baseline. They cannot date when any
   ciphertext arose; they only show what is stored now.
 
@@ -28,7 +30,7 @@ script; encryption is `encryptChannelToken`, which is idempotent
 (already-prefixed values are returned unchanged).
 
 1. **Dry run (read-only)**: count plaintext per field, list bot IDs only.
-   Expected: 10 facebookApiKey, 2 instagramApiKey, whatsappApiKey TBD.
+   Expected: 10 facebookApiKey, 2 instagramApiKey, 0 whatsappApiKey (already observed).
    Output goes to logs, not to any persistent diagnostic endpoint.
 2. **Backup note**: Atlas holds continuous backups; record the timestamp
    before the run so a point-in-time restore exists. No separate plaintext
@@ -61,4 +63,4 @@ environment and never rotates, rollback is a code path, not a data rescue.
 
 1. Approve running the bounded batch on new.zainbot.com (test site) — yes/no.
 2. Timing: any quiet window; runtime is seconds for 12+ documents.
-3. Include whatsappApiKey in the same run (recommended) — yes/no.
+3. whatsappApiKey is currently zero rows; keep it in the run as a no-op guard so anything added later is covered.
