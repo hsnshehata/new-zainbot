@@ -22,8 +22,12 @@ external sends, no zainbot.com cutover without explicit approval.
    Documented limitation, not eliminated.
 3. Encrypted-at-rest write path: proven only at config level until the first
    real admin key write.
-4. Landing/frontend alignment: landing does not yet mention the Business
-   Assistant feature (original contract asks for landing matching features).
+4. ~~Landing/frontend alignment~~ CLOSED 2026-11-21: verified live. The
+   product landing (public/index.html, served at /) presents "Card 7: Zain
+   Assistant" with full Arabic+English copy (bento_card7_* in script.js);
+   confirmed in the deployed HTML/JS. NOTE: my first review pass grepped
+   public/landing.html (the per-store landing template) and wrongly flagged
+   the feature as missing - wrong-file error, corrected here.
 
 ## Findings log
 ### F1 (low, cleanup): fabricated confidence leftover in landing demo API
