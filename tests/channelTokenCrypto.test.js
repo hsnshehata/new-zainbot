@@ -84,7 +84,7 @@ test('Bot model: setter encrypts at rest, raw document holds ciphertext only', a
   assert.equal(decryptChannelToken(raw.instagramApiKey), 'IG_secret_token_xyz');
 });
 
-test('legacy plaintext row stays readable and migrates lazily on next save', async () => {
+test('legacy plaintext row: untouched by unrelated saves, encrypted on explicit token write', async () => {
   const botId = new mongoose.Types.ObjectId();
   await mongoose.connection.db.collection('bots').insertOne({
     _id: botId,
@@ -95,10 +95,15 @@ test('legacy plaintext row stays readable and migrates lazily on next save', asy
   const bot = await Bot.findById(botId);
   assert.equal(bot.facebookApiKey, 'EAAG_legacy_row_token'); // untouched read
   assert.equal(decryptChannelToken(bot.facebookApiKey), 'EAAG_legacy_row_token');
-  // Owner saves anything: the setter encrypts the token then, and only then.
+  // Unrelated save must NOT migrate the existing secret (owner-held authority).
   bot.name = 'بوت قديم محدث';
   await bot.save();
-  const raw = await mongoose.connection.db.collection('bots').findOne({ _id: botId });
+  let raw = await mongoose.connection.db.collection('bots').findOne({ _id: botId });
+  assert.equal(raw.facebookApiKey, 'EAAG_legacy_row_token');
+  // Explicitly writing the token field encrypts at rest.
+  bot.facebookApiKey = 'EAAG_legacy_row_token';
+  await bot.save();
+  raw = await mongoose.connection.db.collection('bots').findOne({ _id: botId });
   assert.ok(isEncryptedChannelToken(raw.facebookApiKey));
   assert.equal(decryptChannelToken(raw.facebookApiKey), 'EAAG_legacy_row_token');
 });

@@ -146,21 +146,9 @@ const botSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-// Lazy migration: a save that leaves the token paths unmodified would keep
-// legacy plaintext at rest (setters only run on modified paths). Re-assign
-// any plaintext token so its setter runs on this save too.
-botSchema.pre('save', function encryptLegacyChannelTokens(next) {
-  try {
-    for (const path of ['facebookApiKey', 'instagramApiKey']) {
-      const value = this.get(path);
-      if (typeof value === 'string' && value.trim() !== '') {
-        this.set(path, value); // no-op for ciphertext, encrypts plaintext
-      }
-    }
-    next();
-  } catch (err) {
-    next(err);
-  }
-});
+// NOTE: legacy plaintext rows are NOT auto-migrated on unrelated saves.
+// The setter encrypts only when the owner explicitly writes a token field;
+// reads of legacy rows pass through decryptChannelToken unchanged. Migrating
+// existing rows needs the owner's explicit approval and a bounded plan.
 
 module.exports = mongoose.model('Bot', botSchema);
