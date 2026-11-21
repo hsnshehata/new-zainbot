@@ -27,6 +27,33 @@ async function authorizeStoreAccess(storeId, userId, userRole) {
   throw e;
 }
 
+// Public storefront field set: anonymous product-list responses must never
+// expose merchant-internal fields (costPrice, lowStockThreshold, barcode,
+// generatedCodes). The dashboard reads full docs via the authenticated
+// getProduct endpoint instead.
+const PUBLIC_PRODUCT_FIELDS = '_id storeId productName description detailedDescription price hasOffer originalPrice discountedPrice currency stock salesCount imageUrl images optionsEnabled optionGroups isActive createdAt updatedAt';
+const PUBLIC_PRODUCT_PROJECTION = {
+  _id: 1,
+  storeId: 1,
+  productName: 1,
+  description: 1,
+  detailedDescription: 1,
+  price: 1,
+  hasOffer: 1,
+  originalPrice: 1,
+  discountedPrice: 1,
+  currency: 1,
+  stock: 1,
+  salesCount: 1,
+  imageUrl: 1,
+  images: 1,
+  optionsEnabled: 1,
+  optionGroups: 1,
+  isActive: 1,
+  createdAt: 1,
+  updatedAt: 1,
+};
+
 // مولد أكواد المنتج: يعيد مصفوفة بثلاث صيغ مختلفة (رقمي، أحرف+أرقام، قصير)
 function generateProductCodes() {
   const now = Date.now().toString();
@@ -419,7 +446,7 @@ exports.getProducts = async (req, res) => {
       query.productName = { $regex: search, $options: 'i' };
     }
 
-    let productsQuery = Product.find(query).populate({
+    let productsQuery = Product.find(query).select(PUBLIC_PRODUCT_FIELDS).populate({
       path: 'category',
       select: 'name',
       options: { lean: true }
@@ -444,8 +471,15 @@ exports.getProducts = async (req, res) => {
 
     // جلب منتجات عشوائية
     if (random === 'true') {
+      // Aggregation pipelines do not cast types like Mongoose queries do:
+      // string ids from the query string must become ObjectIds or $match
+      // silently matches nothing.
+      const aggregateMatch = { ...query, storeId: new mongoose.Types.ObjectId(storeId) };
+      if (query.category && mongoose.Types.ObjectId.isValid(query.category)) {
+        aggregateMatch.category = new mongoose.Types.ObjectId(query.category);
+      }
       productsQuery = Product.aggregate([
-        { $match: query },
+        { $match: aggregateMatch },
         { $sample: { size: parseInt(limitNum) } },
         {
           $lookup: {
@@ -458,26 +492,7 @@ exports.getProducts = async (req, res) => {
         { $unwind: { path: '$category', preserveNullAndEmptyArrays: true } },
         {
           $project: {
-            _id: 1,
-            storeId: 1,
-            productName: 1,
-            description: 1,
-            price: 1,
-            costPrice: 1,
-            hasOffer: 1,
-            originalPrice: 1,
-            discountedPrice: 1,
-            currency: 1,
-            stock: 1,
-            lowStockThreshold: 1,
-            imageUrl: 1,
-            images: 1,
-            barcode: 1,
-            generatedCodes: 1,
-            salesCount: 1,
-            isActive: 1,
-            createdAt: 1,
-            updatedAt: 1,
+            ...PUBLIC_PRODUCT_PROJECTION,
             category: {
               $cond: {
                 if: { $eq: ['$category', {}] },
@@ -587,13 +602,15 @@ exports.getBestsellers = async (req, res) => {
             ]
           }
         }
-      }
+      },
+      { $project: { ...PUBLIC_PRODUCT_PROJECTION, category: 1, totalQuantity: 1 } }
     ]);
 
     // إذا لم يكن هناك طلبات، جلب أحدث المنتجات
     if (bestsellers.length === 0) {
       logger.info('bestsellers_no_orders_fallback', { storeId });
       bestsellers = await Product.find({ storeId, isActive: true })
+        .select(PUBLIC_PRODUCT_FIELDS)
         .sort({ createdAt: -1 })
         .limit(parseInt(limit))
         .populate({

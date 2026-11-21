@@ -4,7 +4,6 @@ const { v4: uuidv4 } = require('uuid');
 const mongoose = require('mongoose');
 const ChatPage = require('../models/ChatPage');
 const Bot = require('../models/Bot');
-const Feedback = require('../models/Feedback');
 const axios = require('axios');
 const FormData = require('form-data');
 const logger = require('../logger');
@@ -400,27 +399,6 @@ exports.getPublicLinkIdByBot = async (req, res) => {
   }
 };
 
-// Submit feedback from chat page
-exports.submitFeedback = async (req, res) => {
-  try {
-    const { botId, userId, messageId, feedback, messageContent } = req.body;
-    if (!botId || !userId || !messageId || !feedback || !messageContent) {
-      return res.status(400).json({ message: 'جميع الحقول مطلوبة' });
-    }
-
-    const feedbackEntry = new Feedback({
-      botId,
-      userId,
-      messageId,
-      feedback,
-      messageContent,
-      timestamp: new Date(),
-    });
-
-    await feedbackEntry.save();
-    res.status(201).json({ message: 'تم تسجيل التقييم بنجاح' });
-  } catch (err) {
-    logger.error('chat_feedback_error', { err: err.message, stack: err.stack });
-    res.status(500).json({ message: 'خطأ في السيرفر' });
-  }
-};
+// submitFeedback was removed: it was unreachable dead code whose payload
+// shape could never satisfy the Feedback schema (missing type/userMessage).
+// Live feedback flows through POST /api/feedback in server.js.

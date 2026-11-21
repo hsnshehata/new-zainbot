@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { createChatPage, updateChatPage, getChatPageByLinkId, getChatPageByBotId, getPublicLinkIdByBot, submitFeedback } = require('../controllers/chatPageController');
+const { createChatPage, updateChatPage, getChatPageByLinkId, getChatPageByBotId, getPublicLinkIdByBot } = require('../controllers/chatPageController');
 const authenticate = require('../middleware/authenticate');
 
 const storage = multer.memoryStorage();
@@ -22,7 +22,9 @@ router.post('/', authenticate, createChatPage);
 router.put('/:id', authenticate, upload.single('logo'), updateChatPage);
 router.get('/public/bot/:botId', getPublicLinkIdByBot);
 router.get('/bot/:botId', authenticate, getChatPageByBotId);
-router.post('/feedback', submitFeedback);
+// NOTE: no POST /feedback route here. The chat widget posts feedback to the
+// global /api/feedback endpoint (server.js); the old per-router endpoint was
+// dead code that could never pass the Feedback schema validation.
 router.get('/:linkId', getChatPageByLinkId);
 
 module.exports = router;
