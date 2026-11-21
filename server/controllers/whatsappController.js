@@ -39,7 +39,8 @@ const processWebhook = async (req, res) => {
         logger.info('whatsapp_message_type', { type: messageData.type });
         if (messageData.type === "text") {
           message = messageData.text.body;
-          logger.info('whatsapp_text_message', { message });
+          // Metadata-only: message text is customer PII, log shape not content
+          logger.info('whatsapp_text_message', { messageLength: (message || '').length });
         } else if (messageData.type === "image") {
           isImage = true;
           mediaUrl = messageData.image.id; // Get the media ID
@@ -66,10 +67,11 @@ const processWebhook = async (req, res) => {
               }
             );
             const mediaData = await response.json();
-            logger.info('whatsapp_media_fetch_response', { mediaData });
+            // Metadata-only: mediaData carries a signed media URL, log shape not content
+            logger.info('whatsapp_media_fetch_response', { hasUrl: !!(mediaData && mediaData.url), mimeType: mediaData && mediaData.mime_type });
             if (mediaData.url) {
               mediaUrl = mediaData.url; // Update mediaUrl with the actual URL
-              logger.info('whatsapp_media_url_fetched', { mediaUrl });
+              logger.info('whatsapp_media_url_fetched', { mediaId: mediaUrl });
             } else {
               logger.warn('whatsapp_media_url_fetch_failed', { mediaUrl });
               return res.sendStatus(200);

@@ -112,7 +112,8 @@ const handleMessage = async (req, res) => {
       return res.sendStatus(400);
     }
 
-    logger.info('ig_webhook_received', { body });
+    // Metadata-only: full webhook bodies contain customer PII and must not land in logs
+    logger.info('ig_webhook_received', { object: body.object, entryCount: Array.isArray(body.entry) ? body.entry.length : 0 });
 
     for (const entry of body.entry) {
       const pageId = entry.id;

@@ -736,10 +736,11 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
       finalChannel = 'whatsapp';
       logger.info(`📋 Overriding channel to 'whatsapp' because userId contains @c.us`);
     }
-    logger.info('🤖 Processing message', { botId, userId: finalUserId, message, channel: finalChannel, isImage, isVoice, mediaUrl });
+    // Metadata-only: message text and signed media URLs are customer data
+    logger.info('🤖 Processing message', { botId, userId: finalUserId, messageLength: (message || '').length, channel: finalChannel, isImage, isVoice, hasMediaUrl: !!mediaUrl });
 
     if (!botId || !finalUserId || (!message && !isImage && !isVoice && !mediaUrl)) {
-      logger.error('❌ Missing required fields', { botId, userId: finalUserId, message, mediaUrl });
+      logger.error('❌ Missing required fields', { botId, userId: finalUserId, hasMessage: !!message, hasMediaUrl: !!mediaUrl });
       return 'عذرًا، حدث خطأ في معالجة الطلب. حاول مرة أخرى.';
     }
 

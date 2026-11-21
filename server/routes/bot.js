@@ -28,7 +28,7 @@ router.post('/', async (req, res) => {
 
     // فحص الحقول المطلوبة
     if (!botId || !userId || (!message && !isImage && !isVoice)) {
-      logger.error('❌ Missing required fields for /api/bot', { botId, message, userId });
+      logger.error('❌ Missing required fields for /api/bot', { botId, hasMessage: !!message, userId });
       return res.status(400).json({ message: 'Bot ID, message or media, and user ID are required' });
     }
 
@@ -81,7 +81,7 @@ router.post('/', async (req, res) => {
     }
 
     // تمرير mediaUrl لدالة processMessage
-    logger.info('📤 Calling botEngine', { mediaUrl, botId, userId, channel: channel || 'web' });
+    logger.info('📤 Calling botEngine', { hasMediaUrl: !!mediaUrl, botId, userId, channel: channel || 'web' });
     const reply = await botEngine.processMessage(botId, userId, message, isImage, isVoice, null, channel || 'web', mediaUrl);
 
     if (reply === null) {

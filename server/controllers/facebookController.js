@@ -6,7 +6,8 @@ const logger = require('../logger');
 
 const handleMessage = async (req, res) => {
   try {
-    logger.info('fb_webhook_received', { body: req.body });
+    // Metadata-only: full webhook bodies contain customer PII and must not land in logs
+    logger.info('fb_webhook_received', { object: req.body?.object, entryCount: Array.isArray(req.body?.entry) ? req.body.entry.length : 0 });
 
     const body = req.body;
 
