@@ -99,18 +99,29 @@ exports.upsertFromOrder = async ({ storeId, name, phone, email, address, orderTo
 };
 
 // Lookup عام بالهاتف — يعيد بيانات أساسية فقط بدون مصادقة
+//
+// Privacy contract (this endpoint is anonymous, so it is an identity
+// oracle by nature; the design choice is to keep checkout prefill working
+// for the exact returning customer while making bulk harvesting
+// impractical):
+// - EXACT match only. The old $regex contains-match let a caller confirm
+//   customer identity from a phone-number FRAGMENT, which turned
+//   enumeration from guessing full numbers into guessing substrings.
+// - A strict per-route limiter (routes/customers.js) caps attempts per IP
+//   far below the global limiter.
 exports.publicLookup = async (req, res) => {
   const { storeId } = req.params; const { phone } = req.query;
   try {
     if (!phone) return res.status(400).json({ message: 'رقم الهاتف مطلوب' });
-    // تبسيط الرقم: الاحتفاظ بالأرقام فقط للمطابقة المرنة
+    // تبسيط الرقم: الاحتفاظ بالأرقام فقط
     const digits = String(phone).replace(/\D+/g,'');
-    if (digits.length < 6) return res.status(400).json({ message: 'رقم غير صالح' });
-    // نحاول المطابقة بالضبط أولاً، ولو مافيش نجرّب يحتوي على (بحرص)
-    let customer = await Customer.findOne({ storeId, phone: { $in: [phone, digits] } }, { name:1, phone:1, email:1, address:1, _id:0 });
-    if (!customer){
-      customer = await Customer.findOne({ storeId, phone: { $regex: digits.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1'), $options: 'i' } }, { name:1, phone:1, email:1, address:1, _id:0 });
-    }
+    if (digits.length < 6 || digits.length > 16) return res.status(400).json({ message: 'رقم غير صالح' });
+    // Exact match on the number as typed or its digits-only form. No
+    // substring/regex fallback: partial matches are an enumeration oracle.
+    const customer = await Customer.findOne(
+      { storeId, phone: { $in: [String(phone).trim(), digits] } },
+      { name:1, phone:1, email:1, address:1, _id:0 }
+    );
     if (!customer) return res.status(404).json({ message: 'لا يوجد عميل لهذا الرقم' });
     return res.status(200).json(customer);
   } catch (err) {
