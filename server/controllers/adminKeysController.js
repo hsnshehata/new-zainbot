@@ -1,19 +1,87 @@
 // server/controllers/adminKeysController.js
+const mongoose = require('mongoose');
 const ProviderKey = require('../models/ProviderKey');
+const AiCredential = require('../models/AiCredential');
 const logger = require('../logger');
+const {
+  buildCredentialContext,
+  encryptCredentialSecret,
+  parseCredentialEncryptionKey,
+} = require('../services/AiCredentialCrypto');
 
 // Check if user is superadmin
 const checkSuperadmin = (req) => {
   return req.auth?.actorRole === 'superadmin' && !req.auth?.isImpersonating;
 };
 
+// Encrypted-on-write: when CREDENTIAL_ENCRYPTION_KEY is configured, new keys
+// are stored as encrypted AiCredential documents (AES-256-GCM control plane)
+// instead of legacy plaintext ProviderKey documents. The admin UI contract is
+// preserved: responses carry the same fields (with storage: 'encrypted'), and
+// update/delete route by the 'cred_' id prefix. Legacy plaintext documents
+// keep working through aiKeyResolver until migrated with
+// scripts/migrateProviderKeysToCredentials.js (dry-run default).
+function encryptionConfigured(environment = process.env) {
+  try {
+    parseCredentialEncryptionKey(environment.CREDENTIAL_ENCRYPTION_KEY);
+    return true;
+  } catch (_error) {
+    return false;
+  }
+}
+
+const CRED_ID_PREFIX = 'cred_';
+const MODEL_LABEL = 'model:';
+const PRIORITY_LABEL = 'priority:';
+const LAST4_LABEL = 'last4:';
+
+function readLabel(labels, prefix) {
+  const found = (labels || []).find((label) => typeof label === 'string' && label.startsWith(prefix));
+  return found ? found.slice(prefix.length) : '';
+}
+
 function serializeProviderKey(key) {
   const rawKey = key.apiKey || '';
   const value = typeof key.toObject === 'function' ? key.toObject() : { ...key };
   value.configured = Boolean(rawKey);
   value.last4 = rawKey ? rawKey.slice(-4) : '';
+  value.storage = 'legacy_plaintext';
   delete value.apiKey;
   return value;
+}
+
+function serializeCredential(credential) {
+  return {
+    _id: CRED_ID_PREFIX + String(credential._id),
+    name: credential.name,
+    provider: credential.provider,
+    baseUrl: credential.baseUrl || '',
+    defaultModel: readLabel(credential.labels, MODEL_LABEL),
+    priority: Number(readLabel(credential.labels, PRIORITY_LABEL)) || 1,
+    isActive: credential.status === 'active',
+    status: credential.status === 'error' ? 'failed' : 'working',
+    errorMessage: credential.lastErrorCode || '',
+    configured: true,
+    last4: readLabel(credential.labels, LAST4_LABEL),
+    storage: 'encrypted',
+    createdAt: credential.createdAt,
+  };
+}
+
+function buildCredentialLabels({ defaultModel, priority, last4 }) {
+  const labels = [];
+  if (defaultModel) labels.push((MODEL_LABEL + String(defaultModel)).slice(0, 50));
+  labels.push((PRIORITY_LABEL + String(priority ?? 1)).slice(0, 50));
+  if (last4) labels.push((LAST4_LABEL + String(last4)).slice(0, 50));
+  return labels;
+}
+
+function actorObjectId(req) {
+  try {
+    return new mongoose.Types.ObjectId(req.auth?.actorUserId);
+  } catch (_error) {
+    return new mongoose.Types.ObjectId('000000000000000000000000');
+  }
 }
 
 // Add Provider Key
@@ -28,9 +96,47 @@ exports.addKey = async (req, res) => {
       return res.status(400).json({ success: false, message: 'الحقول المطلوبة مفقودة.' });
     }
 
-    // Plaintext at rest: the encrypted control plane
-    // (/api/admin/ai/credentials) is the preferred store for new keys, and
-    // scripts/migrateProviderKeysToCredentials.js migrates existing ones.
+    if (encryptionConfigured()) {
+      const normalizedProvider = String(provider).trim().toLowerCase();
+      const actorId = actorObjectId(req);
+      const id = new mongoose.Types.ObjectId();
+      let encrypted;
+      try {
+        encrypted = encryptCredentialSecret(apiKey, {
+          context: buildCredentialContext(id, normalizedProvider),
+        });
+      } catch (err) {
+        logger.error('admin_key_encrypt_failed', { error: err.message });
+        return res.status(500).json({ success: false, message: 'فشل في تشفير المفتاح الجديد.' });
+      }
+
+      try {
+        const credential = await AiCredential.create({
+          _id: id,
+          name: String(name).trim(),
+          provider: normalizedProvider,
+          baseUrl: baseUrl && String(baseUrl).startsWith('https://') ? String(baseUrl).trim() : '',
+          ...encrypted,
+          status: 'active',
+          labels: buildCredentialLabels({
+            defaultModel,
+            priority: priority !== undefined ? Number(priority) : 1,
+            last4: String(apiKey).slice(-4),
+          }),
+          createdBy: actorId,
+          updatedBy: actorId,
+        });
+        return res.status(201).json({ success: true, data: serializeCredential(credential) });
+      } catch (err) {
+        if (err && err.code === 11000) {
+          return res.status(409).json({ success: false, message: 'يوجد مفتاح بنفس الاسم ونفس المزود بالفعل.' });
+        }
+        throw err;
+      }
+    }
+
+    // Encryption not configured: legacy plaintext path (warning logged; the
+    // encrypted control plane stays the documented target).
     logger.warn('provider_key_plaintext_created', {
       name,
       provider,
@@ -62,9 +168,13 @@ exports.listKeys = async (req, res) => {
     const keys = await ProviderKey.find({})
       .select('+apiKey')
       .sort({ priority: 1 });
+    const credentials = await AiCredential.find({}).sort({ createdAt: 1 }).lean();
     res.status(200).json({
       success: true,
-      data: keys.map(serializeProviderKey),
+      data: [
+        ...keys.map(serializeProviderKey),
+        ...credentials.map(serializeCredential),
+      ],
     });
   } catch (err) {
     logger.error('provider_key_list_failed', { error: err.message });
@@ -81,6 +191,50 @@ exports.updateKey = async (req, res) => {
 
     const { id } = req.params;
     const { name, provider, apiKey, baseUrl, defaultModel, priority, isActive, status } = req.body;
+
+    if (String(id).startsWith(CRED_ID_PREFIX)) {
+      const credentialId = String(id).slice(CRED_ID_PREFIX.length);
+      const credential = await AiCredential.findById(credentialId);
+      if (!credential) {
+        return res.status(404).json({ success: false, message: 'المفتاح المطلوب غير موجود.' });
+      }
+
+      const actorId = actorObjectId(req);
+      const update = { updatedBy: actorId };
+      const labels = [...(credential.labels || [])];
+      const setLabel = (prefix, value) => {
+        const index = labels.findIndex((label) => label.startsWith(prefix));
+        if (index >= 0) labels.splice(index, 1);
+        if (value !== undefined && value !== '') labels.push((prefix + String(value)).slice(0, 50));
+      };
+
+      if (name !== undefined) update.name = String(name).trim();
+      if (baseUrl !== undefined) {
+        update.baseUrl = baseUrl && String(baseUrl).startsWith('https://') ? String(baseUrl).trim() : '';
+      }
+      if (defaultModel !== undefined) setLabel(MODEL_LABEL, defaultModel);
+      if (priority !== undefined) setLabel(PRIORITY_LABEL, Number(priority));
+      if (isActive !== undefined) update.status = isActive ? 'active' : 'disabled';
+      if (status !== undefined) {
+        update.status = status === 'working' ? 'active' : 'error';
+        if (status === 'working') {
+          update.lastErrorCode = '';
+          update.failureCount = 0;
+        }
+      }
+      if (apiKey !== undefined && apiKey !== '') {
+        const encrypted = encryptCredentialSecret(apiKey, {
+          context: buildCredentialContext(credential._id, credential.provider),
+        });
+        Object.assign(update, encrypted);
+        update.lastErrorCode = '';
+        setLabel(LAST4_LABEL, String(apiKey).slice(-4));
+      }
+      if (labels.length) update.labels = labels;
+
+      const saved = await AiCredential.findByIdAndUpdate(credential._id, { $set: update }, { new: true });
+      return res.status(200).json({ success: true, data: serializeCredential(saved) });
+    }
 
     const key = await ProviderKey.findById(id).select('+apiKey');
     if (!key) {
@@ -123,6 +277,10 @@ exports.resetAllFailedKeys = async (req, res) => {
     }
 
     await ProviderKey.updateMany({ isActive: true }, { status: 'working', errorMessage: '' });
+    await AiCredential.updateMany(
+      { status: 'error' },
+      { status: 'active', failureCount: 0, lastErrorCode: '' }
+    );
     res.status(200).json({ success: true, message: 'تم إعادة تفعيل وفحص كافة مفاتيح السيرفر بنجاح.' });
   } catch (err) {
     logger.error('provider_key_reset_failed', { error: err.message });
@@ -138,6 +296,14 @@ exports.deleteKey = async (req, res) => {
     }
 
     const { id } = req.params;
+    if (String(id).startsWith(CRED_ID_PREFIX)) {
+      const credential = await AiCredential.findByIdAndDelete(String(id).slice(CRED_ID_PREFIX.length));
+      if (!credential) {
+        return res.status(404).json({ success: false, message: 'المفتاح غير موجود.' });
+      }
+      return res.status(200).json({ success: true, message: 'تم حذف المفتاح بنجاح.' });
+    }
+
     const key = await ProviderKey.findByIdAndDelete(id);
     if (!key) {
       return res.status(404).json({ success: false, message: 'المفتاح غير موجود.' });
