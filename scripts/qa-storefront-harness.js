@@ -23,6 +23,17 @@ async function main() {
   const Store = require('../server/models/Store');
   const Product = require('../server/models/Product');
 
+  // Seed a real local image asset so rendered screenshots show the
+  // actual product image pipeline instead of broken thumbnails.
+  const fs = require('fs');
+  const path = require('path');
+  const qaAssetsDir = path.join(__dirname, '..', 'public', 'qa-assets');
+  fs.mkdirSync(qaAssetsDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(qaAssetsDir, 'bag.png'),
+    Buffer.from(process.env.QA_BAG_PNG_B64 || '', 'base64')
+  );
+
   const store = await Store.create({
     storeName: 'متجر المراجعة',
     storeLink: 'qa-review-store',
@@ -40,7 +51,8 @@ async function main() {
     price: 750,
     currency: 'EGP',
     stock: 12,
-    images: [],
+    imageUrl: '/qa-assets/bag.png',
+    images: ['/qa-assets/bag.png'],
   });
 
   console.log(`QA_READY url=http://127.0.0.1:${process.env.PORT}/store/qa-review-store/landing`);

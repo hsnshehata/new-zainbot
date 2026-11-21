@@ -39,3 +39,4 @@ yarn-error.log*
 *.key
 .npmrc
 
+public/qa-assets/
