@@ -1937,3 +1937,25 @@ html[dir="rtl"] .testimonial-card::before {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
 }
+
+/* ===== SHARED FEEDBACK LIVE REGION (dashboard notifications) ===== */
+/* #feedbackLiveRegion is the single ARIA live region every dashboard
+   notification writes to. Without styling it rendered as raw text at the
+   page corner; now it is a proper fixed card, hidden while empty. */
+#feedbackLiveRegion {
+  position: fixed;
+  inset-block-start: 16px;
+  inset-inline-start: 16px;
+  z-index: 6000;
+  max-width: min(340px, 90vw);
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.96);
+  color: #e2e8f0;
+  font-size: 13px;
+  line-height: 1.6;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  border-inline-start: 3px solid #22c55e;
+}
+#feedbackLiveRegion:empty { display: none; }
+#feedbackLiveRegion[role="alert"] { border-inline-start-color: #ef4444; }
