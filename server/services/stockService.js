@@ -222,10 +222,12 @@ async function reconcileOrphanTokens({ now = new Date() } = {}) {
   // proven invariant (e.g. one compacted marker per order that still
   // blocks replay of its historical epochs).
   // GROWTH RISK (tracked, accepted for now): one small subdocument
-  // (~64 bytes) per completed cancel/regression line per product. Order
-  // volume on this deployment is low; the array is also naturally
-  // bounded per product by that product's total cancellations. Monitor
-  // if cancel volume grows; compact only with proof, never by age.
+  // (~64 bytes) per completed cancel/regression line per product, and
+  // this is UNBOUNDED for a long-lived product - cumulative
+  // cancellations grow forever, and a MongoDB document caps at 16MB
+  // (~250k entries). Current volumes are far below that, but the
+  // eventual document-size limit is a real readiness finding, not a
+  // non-issue. Compact only with a proven invariant, never by age.
   return touched;
 }
 

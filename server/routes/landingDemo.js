@@ -91,7 +91,7 @@ function buildPlatformKnowledge() {
     'ZainBot is a SaaS platform that lets merchants and businesses create intelligent AI agents that answer, sell, and follow up with customers automatically.',
     'Platform capabilities you can talk about:',
     '- AI agents (chatbots) trained on the merchant\'s own data: welcome message, agent profile, custom instructions, objectives, FAQ rules, and general training instructions.',
-    '- Channels: WhatsApp, Facebook Messenger, Instagram, Telegram, a website chat widget, and a hosted online store with landing pages (three store layouts).',
+    '- Channels: WhatsApp (QR pairing), Facebook Messenger, Instagram, and a website chat widget for customer conversations; Telegram for owner notifications and order management; plus a hosted online store with landing pages (three store layouts).',
     '- Commerce: product catalog with categories, in-chat order taking (chat orders), bookings/appointments, customers and suppliers, sales and expenses tracking.',
     '- Human handoff: the agent can pause auto-replies and hand the conversation to a human when the customer asks or when handoff keywords are matched.',
     '- Analytics: conversations, messages handled, connected channels, training rules, orders, and usage dashboards.',
