@@ -21,12 +21,13 @@ const landingDemoConfigSchema = new mongoose.Schema({
   },
   // Global fail-closed budget: at most dailyCap paid AI completions per UTC
   // day across ALL visitors. The per-IP limiter is abuse control, not a
-  // budget - a cap is. 0 disables demo replies entirely. Consumption is
-  // atomic (findOneAndUpdate under a $lt filter), so concurrent bursts
-  // cannot overshoot.
+  // budget - a cap is. DEFAULT 0: no paid demo replies unless the owner
+  // explicitly configures a positive cap (spend authority is the owner's,
+  // not a guessed default). Consumption is atomic (findOneAndUpdate under
+  // a $lt filter), so concurrent bursts cannot overshoot.
   dailyCap: {
     type: Number,
-    default: 300,
+    default: 0,
     min: 0,
     max: 100000,
   },

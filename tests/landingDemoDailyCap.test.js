@@ -68,6 +68,12 @@ test('a new UTC day rolls the counter over exactly once', async () => {
   assert.notEqual(doc.usageDate, '2000-01-01');
 });
 
+test('default config is fail-closed (cap 0) without an explicit owner cap', async () => {
+  const config = await LandingDemoConfig.getConfig();
+  assert.equal(config.dailyCap, 0);
+  assert.equal(await tryConsumeDailyQuota(config), false);
+});
+
 test('cap 0 is fail-closed: no consumption, no reply', async () => {
   const config = await LandingDemoConfig.getConfig();
   config.dailyCap = 0;
