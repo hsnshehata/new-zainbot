@@ -265,8 +265,16 @@ exports.createOrder = async (req, res) => {
         return res.status(400).json({ message: `المخزون غير كافٍ للمنتج ${name}` });
       }
     }
+    // الإتمام عبر CAS شرطي هو السياج الحقيقي: لو استعاد الطلب المتوقف
+    // معالجته بعد أن طالبته المصالحة، يفشل الانتقال فنحرّر حجوزاتنا
+    // (idempotent) ونفشل الطلب بدل ترك مخزون مخصوم لطلب ملغى.
+    const completion = await stockService.completeOrderReservation(newOrder._id);
+    if (!completion.ok) {
+      await stockService.releaseOrderReservations(newOrder);
+      logger.warn('order_create_completion_lost_fence', { storeId, orderId: newOrder._id, state: completion.state });
+      return res.status(503).json({ message: 'تعذر إتمام الطلب. حاول مرة أخرى بعد لحظات.' });
+    }
     newOrder.stockStatus = 'completed';
-    await newOrder.save();
     // Tokens are intentionally KEPT on the products: they preserve
     // idempotency for any in-flight duplicate of this same order (a
     // concurrent replay must still find its token). The orphan-token sweep
@@ -365,10 +373,29 @@ exports.updateOrder = async (req, res) => {
             return res.status(409).json({ message: `لا يمكن تأكيد الطلب: المخزون غير كافٍ للمنتج ${name}` });
           }
         }
+        const completion = await stockService.completeOrderReservation(
+          order._id,
+          { status },
+          {
+            status,
+            changedBy: userId || null,
+            changedAt: new Date(),
+            note: `تغيير الحالة من ${prevStatus} إلى ${status}`
+          }
+        );
+        if (!completion.ok) {
+          // المصالحة طالبت الطلب أثناء التوقف: نحرّر حجوزاتنا ونفشل بأمان.
+          await stockService.releaseOrderReservations(order);
+          logger.warn('order_confirm_completion_lost_fence', { storeId, orderId: order._id, state: completion.state });
+          return res.status(409).json({ message: 'تعذر إتمام التأكيد. حدّث الصفحة وحاول مرة أخرى.' });
+        }
+        if (completion.alreadyCompleted) {
+          // تأكيد مكرر لنفس الطلب اكتمل للتو: الحجز ملكه، لا نحرّر شيئًا.
+          return res.status(200).json(completion.order);
+        }
         order.status = status;
         order.stockStatus = 'completed';
         pushHistory();
-        await order.save();
         // Tokens stay until the TTL-fenced orphan sweep pulls them, for the
         // same in-flight-duplicate idempotency reason as in createOrder.
         logger.info('order_confirm_stock_reserved', { storeId, orderId: order._id });

@@ -210,8 +210,46 @@ async function reconcileOrphanTokens({ now = new Date() } = {}) {
   return touched;
 }
 
+/**
+ * Complete an order's reservation: the conditional CAS that is the REAL
+ * fence of the protocol. The TTL only tells the sweep when it MAY claim a
+ * stuck order; ownership is settled here, atomically: only the writer that
+ * moves stockStatus 'pending' -> 'completed' owns the outcome.
+ *
+ * Outcomes:
+ *  - { ok: true }                    -> we completed; tokens now belong to a
+ *                                       terminal order and are swept later.
+ *  - { ok: true, alreadyCompleted }  -> a sibling request for the SAME
+ *                                       order (e.g. a duplicate confirm)
+ *                                       already completed it. The caller
+ *                                       MUST NOT release: the tokens belong
+ *                                       to the sibling's valid reservation.
+ *  - { ok: false }                   -> the reconciliation sweep claimed the
+ *                                       order while we were stalled (TTL is
+ *                                       not a fence; a paused request can
+ *                                       resume after the claim). The caller
+ *                                       MUST release its reservations
+ *                                       (idempotent) and fail the request.
+ */
+async function completeOrderReservation(orderId, extraSet = {}, historyEntry = null) {
+  const update = { $set: { stockStatus: 'completed', ...extraSet } };
+  if (historyEntry) update.$push = { history: historyEntry };
+  const done = await Order.findOneAndUpdate(
+    { _id: orderId, stockStatus: 'pending' },
+    update,
+    { new: true }
+  );
+  if (done) return { ok: true, order: done };
+  const current = await Order.findById(orderId).select('status stockStatus');
+  if (current && current.stockStatus === 'completed') {
+    return { ok: true, alreadyCompleted: true, order: current };
+  }
+  return { ok: false, state: current ? current.stockStatus : 'missing' };
+}
+
 module.exports = {
   STALE_RESERVATION_MS,
+  completeOrderReservation,
   reserveLine,
   releaseLineForOrder,
   releaseOrderReservations,

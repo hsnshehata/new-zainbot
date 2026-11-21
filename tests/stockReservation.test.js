@@ -226,6 +226,66 @@ test('confirm with insufficient stock: 409, order stays pending, no decrement', 
   assert.equal(updated.stockStatus, 'none');
 });
 
+test('fence: a request resuming after the sweep claimed its order cannot complete or keep stock', async () => {
+  const product = await makeProduct(5);
+  const orderId = new mongoose.Types.ObjectId();
+  // Simulate a stalled create: intent saved, line reserved, then the
+  // event loop froze past the TTL and the sweep claimed the order.
+  await Order.create({
+    _id: orderId,
+    storeId: store._id,
+    products: [{ productId: product._id, quantity: 2, price: 100 }],
+    totalPrice: 200,
+    paymentMethod: 'cash_on_delivery',
+    status: 'confirmed',
+    stockStatus: 'pending',
+  });
+  await stockService.reserveLine(product._id, store._id, orderId, 2);
+  await Order.updateOne({ _id: orderId }, { $set: { updatedAt: new Date(Date.now() - 60 * 60 * 1000) } });
+  await stockService.reconcileStuckOrders();
+  assert.equal((await Product.findById(product._id)).stock, 5);
+  assert.equal((await Order.findById(orderId)).status, 'cancelled');
+
+  // The request wakes up and tries to complete. The CAS must fail...
+  const completion = await stockService.completeOrderReservation(orderId);
+  assert.equal(completion.ok, false);
+  // ...so the request releases (idempotent: the sweep already did) and
+  // the final state stays exactly as the sweep left it.
+  const order = await Order.findById(orderId);
+  await stockService.releaseOrderReservations(order);
+  assert.equal((await Product.findById(product._id)).stock, 5);
+  assert.equal((await Order.findById(orderId)).status, 'cancelled');
+  assert.equal((await Order.findById(orderId)).stockStatus, 'failed');
+});
+
+test('fence: a duplicate confirm losing the CAS must NOT release the sibling reservation', async () => {
+  const product = await makeProduct(2);
+  const orderId = new mongoose.Types.ObjectId();
+  await Order.create({
+    _id: orderId,
+    storeId: store._id,
+    products: [{ productId: product._id, quantity: 2, price: 100 }],
+    totalPrice: 200,
+    paymentMethod: 'whatsapp_confirmation',
+    status: 'pending',
+    stockStatus: 'pending',
+  });
+  // One token exists for both racing confirms (same orderId): a single
+  // decrement. The first CAS wins; the second sees alreadyCompleted.
+  await stockService.reserveLine(product._id, store._id, orderId, 2);
+  const first = await stockService.completeOrderReservation(orderId, { status: 'confirmed' });
+  assert.equal(first.ok, true);
+  assert.equal(first.alreadyCompleted, undefined);
+  const second = await stockService.completeOrderReservation(orderId, { status: 'confirmed' });
+  assert.equal(second.ok, true);
+  assert.equal(second.alreadyCompleted, true);
+  // Controller behavior on alreadyCompleted: return success, release
+  // nothing. Stock must remain decremented exactly once, token retained.
+  const after = await Product.findById(product._id);
+  assert.equal(after.stock, 0);
+  assert.equal(after.reservations.length, 1);
+});
+
 test('notification retry: claim fencing, dedup of in-app doc, recovery clears flags', async () => {
   const product = await makeProduct(1);
   const order = await Order.create({
