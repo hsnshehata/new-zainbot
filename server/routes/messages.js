@@ -65,7 +65,7 @@ async function getSocialUsername(userId, bot, platform) {
         ? decryptChannelToken(bot.facebookApiKey)
         : platform === "instagram"
         ? decryptChannelToken(bot.instagramApiKey)
-        : bot.whatsappApiKey;
+        : decryptChannelToken(bot.whatsappApiKey);
     let apiUrl =
       platform === "facebook"
         ? "https://graph.facebook.com/v22.0"

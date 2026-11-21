@@ -14,7 +14,7 @@ const botSchema = new mongoose.Schema({
   instagramPageId: { type: String, trim: true },
   // إضافة حقول واتساب
   whatsappBusinessAccountId: { type: String, trim: true },
-  whatsappApiKey: { type: String, trim: true },
+  whatsappApiKey: { type: String, trim: true, set: encryptChannelToken },
   lastWhatsappTokenRefresh: { type: Date },
   isActive: { type: Boolean, default: true },
   autoStopDate: { type: Date },

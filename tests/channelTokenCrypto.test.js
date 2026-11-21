@@ -71,6 +71,7 @@ test('Bot model: setter encrypts at rest, raw document holds ciphertext only', a
     userId: new mongoose.Types.ObjectId(),
     facebookApiKey: 'EAAG_fb_secret_token_xyz',
     instagramApiKey: 'IG_secret_token_xyz',
+    whatsappApiKey: 'WA_secret_token_xyz',
   });
   // In-memory property is the ciphertext (setter-only design)...
   assert.ok(isEncryptedChannelToken(bot.facebookApiKey));
@@ -78,10 +79,12 @@ test('Bot model: setter encrypts at rest, raw document holds ciphertext only', a
   const raw = await mongoose.connection.db.collection('bots').findOne({ _id: bot._id });
   assert.ok(isEncryptedChannelToken(raw.facebookApiKey));
   assert.ok(isEncryptedChannelToken(raw.instagramApiKey));
+  assert.ok(isEncryptedChannelToken(raw.whatsappApiKey));
   assert.ok(!raw.facebookApiKey.includes('EAAG_fb_secret_token_xyz'));
   // The use-site helper recovers the original tokens.
   assert.equal(decryptChannelToken(raw.facebookApiKey), 'EAAG_fb_secret_token_xyz');
   assert.equal(decryptChannelToken(raw.instagramApiKey), 'IG_secret_token_xyz');
+  assert.equal(decryptChannelToken(raw.whatsappApiKey), 'WA_secret_token_xyz');
 });
 
 test('legacy plaintext row: untouched by unrelated saves, encrypted on explicit token write', async () => {
