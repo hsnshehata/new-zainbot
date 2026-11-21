@@ -342,6 +342,24 @@ const authenticatedPaths = [
   '/api/idea-council',
   '/api/assistant',
 ];
+// Public storefront endpoints. The routers below intentionally leave
+// these handlers unauthenticated for anonymous shoppers (see the
+// 'بدون authenticate للوصول العام' comments), but the app-level gate
+// would shadow them, so they are mounted explicitly BEFORE it.
+// Handlers apply their own public-safe projections (PUBLIC_PRODUCT_FIELDS)
+// and input validation.
+{
+  const storeController = require('./controllers/storeController');
+  const productController = require('./controllers/productController');
+  const categoryController = require('./controllers/categoryController');
+  const orderController = require('./controllers/orderController');
+  app.get('/api/stores/store/:storeLink', storeController.getStoreByLink);
+  app.get('/api/products/:storeId/products', productController.getProducts);
+  app.get('/api/products/:storeId/products/bestsellers', productController.getBestsellers);
+  app.get('/api/categories/:storeId/categories', categoryController.getCategories);
+  app.post('/api/orders/:storeId/orders', orderController.createOrder);
+}
+
 app.use(authenticatedPaths, authenticate, accountLimiter);
 
 // Route لجلب GOOGLE_CLIENT_ID + public subscription info (no secrets)

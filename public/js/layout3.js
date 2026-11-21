@@ -212,7 +212,7 @@
         </div>
         <div id="coPhonePanel" class="checkout-form hidden">
           <input type="tel" id="coPhone" placeholder="رقم الموبايل للتواصل" required>
-          <button class="btn btn-primary" id="coPhoneConfirm">جلب البيانات</button>
+          <button class="btn btn-primary" id="coPhoneConfirm">متابعة</button>
         </div>
         <div id="coStep2" class="checkout-form hidden">
           <input type="text" id="coName" placeholder="الاسم الكامل" required>

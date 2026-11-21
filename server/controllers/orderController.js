@@ -175,12 +175,23 @@ exports.createOrder = async (req, res) => {
     }
 
     // تحديث المخزون إذا الطلب مؤكد
+    // Guarded: the order is already saved at this point; a stock-update
+    // failure must not turn the shopper's success into a 500 (which
+    // causes duplicate orders when they retry).
     if (newOrder.status === 'confirmed') {
       for (const item of orderProducts) {
-        const product = await Product.findById(item.productId);
-        product.stock -= item.quantity;
-        await product.save();
-        logger.info('order_stock_updated', { storeId, productId: product._id, productName: product.productName, stock: product.stock });
+        try {
+          const product = await Product.findById(item.productId);
+          if (!product) {
+            logger.warn('order_stock_product_missing', { storeId, productId: item.productId });
+            continue;
+          }
+          product.stock -= item.quantity;
+          await product.save();
+          logger.info('order_stock_updated', { storeId, productId: product._id, productName: product.productName, stock: product.stock });
+        } catch (stockErr) {
+          logger.warn('order_stock_update_failed', { storeId, orderId: newOrder._id, productId: item.productId, err: stockErr.message });
+        }
       }
     }
 
@@ -192,14 +203,20 @@ exports.createOrder = async (req, res) => {
       logger.warn('order_total_format_failed', { storeId, orderId: newOrder._id, currency: orderCurrency, err: formatErr.message });
     }
 
-    const notification = new Notification({
-      user: store.userId,
-      title: `طلب جديد في ${store.storeName}`,
-      message: `تم إنشاء طلب جديد (${newOrder._id}) بإجمالي ${formattedTotal}.`,
-      isRead: false
-    });
-    await notification.save();
-    logger.info('order_notification_created', { storeId, orderId: newOrder._id, userId: store.userId });
+    // Guarded for the same reason: the order exists already, so a
+    // notification failure must not fail the shopper's request.
+    try {
+      const notification = new Notification({
+        user: store.userId,
+        title: `طلب جديد في ${store.storeName}`,
+        message: `تم إنشاء طلب جديد (${newOrder._id}) بإجمالي ${formattedTotal}.`,
+        isRead: false
+      });
+      await notification.save();
+      logger.info('order_notification_created', { storeId, orderId: newOrder._id, userId: store.userId });
+    } catch (notifErr) {
+      logger.warn('order_notification_failed', { storeId, orderId: newOrder._id, err: notifErr.message });
+    }
 
     // حدد البوت المرتبط بالمتجر (لو لم يُخزَّن botId في المتجر نبحث عنه)
     let botIdForNotify = store.botId || null;
