@@ -275,9 +275,26 @@
         };
         checkoutEl.querySelector('#coSubmit').disabled = true;
         try {
-          const r = await fetch(`/api/orders/${STORE_REF._id}/orders`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+          // مفتاح عدم تكرار: يُنشأ لكل محاولة طلب ويُعاد إرساله عند أي
+          // إعادة محاولة (انقطاع شبكة/تكرار الضغط) فيعيد السيرفر الطلب
+          // الأصلي بدل إنشاء طلب مكرر. يُمسح بعد النجاح أو عند تضارب 409.
+          const idemStorageKey = `zainbot:idem:${STORE_REF._id}`;
+          let idemKey = '';
+          try { idemKey = localStorage.getItem(idemStorageKey) || ''; } catch(_){}
+          if (!idemKey){
+            idemKey = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            try { localStorage.setItem(idemStorageKey, idemKey); } catch(_){}
+          }
+          const r = await fetch(`/api/orders/${STORE_REF._id}/orders`, { method:'POST', headers:{ 'Content-Type':'application/json', 'Idempotency-Key': idemKey }, body: JSON.stringify(payload) });
+          if (r.status === 409){
+            try { localStorage.removeItem(idemStorageKey); } catch(_){}
+            alert('حصل تضارب في الطلب، راجع السلة وحاول مرة أخرى');
+            checkoutEl.querySelector('#coSubmit').disabled = false;
+            return;
+          }
           if (!r.ok) throw new Error('failed');
           const order = await r.json();
+          try { localStorage.removeItem(idemStorageKey); } catch(_){}
           saveCustomerCache({ name, phone, email, address: addr });
           writeCart({});
           updateCartBadge();

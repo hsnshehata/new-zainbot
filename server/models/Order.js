@@ -94,6 +94,11 @@ const orderSchema = new mongoose.Schema({
     changedAt: { type: Date, default: Date.now },
     note: { type: String, default: '' }
   }],
+  // Guest-checkout idempotency: the storefront generates a key per
+  // checkout attempt and resends it on retries; the server returns the
+  // original order for a replay instead of creating a duplicate.
+  idempotencyKey: { type: String, default: undefined },
+  payloadHash: { type: String, default: '' },
   // Durable post-commit ops flags: set when a post-save side effect
   // (stock decrement, owner notification) failed after the order was
   // already persisted. A reconciliation sweep can find and retry these
@@ -107,6 +112,11 @@ const orderSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
+
+orderSchema.index(
+  { storeId: 1, idempotencyKey: 1 },
+  { unique: true, partialFilterExpression: { idempotencyKey: { $type: 'string' } } }
+);
 
 // تحديث تاريخ التعديل
 orderSchema.pre('save', function (next) {

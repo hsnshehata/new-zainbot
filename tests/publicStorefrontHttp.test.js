@@ -67,10 +67,10 @@ function orderBody(overrides = {}) {
   };
 }
 
-async function postOrder(storeId, body) {
+async function postOrder(storeId, body, headers = {}) {
   const res = await fetch(`${baseUrl}/api/orders/${storeId}/orders`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
     body: JSON.stringify(body),
   });
   let json = null;
@@ -129,6 +129,52 @@ test('insufficient stock is rejected', async () => {
 test('missing customer details are rejected', async () => {
   const { status } = await postOrder(storeA._id, orderBody({ customerName: '' }));
   assert.equal(status, 400);
+});
+
+test('idempotent replay returns the original order and does not double-decrement stock', async () => {
+  const key = 'qa-idem-replay-1';
+  const before = await Product.findById(productA._id);
+  const first = await postOrder(storeA._id, orderBody(), { 'Idempotency-Key': key });
+  assert.equal(first.status, 201);
+  const second = await postOrder(storeA._id, orderBody(), { 'Idempotency-Key': key });
+  assert.equal(second.status, 200);
+  assert.equal(String(second.json._id), String(first.json._id));
+  const after = await Product.findById(productA._id);
+  assert.equal(after.stock, before.stock - 1); // one decrement only
+});
+
+test('same idempotency key with a different payload is rejected (409)', async () => {
+  const key = 'qa-idem-mismatch-1';
+  const first = await postOrder(storeA._id, orderBody(), { 'Idempotency-Key': key });
+  assert.equal(first.status, 201);
+  const conflict = await postOrder(storeA._id, orderBody({ customerAddress: 'عنوان مختلف تماماً 999' }), { 'Idempotency-Key': key });
+  assert.equal(conflict.status, 409);
+});
+
+test('concurrent orders cannot oversell the last items', async () => {
+  const scarce = await Product.create({ storeId: storeA._id, productName: 'منتج نادر', price: 50, currency: 'EGP', stock: 3 });
+  const results = await Promise.all([...Array(5)].map((_, i) => postOrder(storeA._id, orderBody({
+    products: [{ productId: String(scarce._id), quantity: 1, selectedOptions: [] }],
+  }), { 'Idempotency-Key': `qa-concurrency-${i}` })));
+  const created = results.filter((r) => r.status === 201).length;
+  const rejected = results.filter((r) => r.status === 400).length;
+  assert.equal(created, 3);
+  assert.equal(rejected, 2);
+  const after = await Product.findById(scarce._id);
+  assert.equal(after.stock, 0);
+});
+
+test('a multi-product order rolls back reservations when a later product fails', async () => {
+  const before = await Product.findById(productA._id);
+  const r = await postOrder(storeA._id, orderBody({
+    products: [
+      { productId: String(productA._id), quantity: 1, selectedOptions: [] },
+      { productId: String(productB._id), quantity: 1, selectedOptions: [] }, // cross-store: fails
+    ],
+  }));
+  assert.equal(r.status, 404);
+  const after = await Product.findById(productA._id);
+  assert.equal(after.stock, before.stock); // reservation released
 });
 
 test('nonexistent store returns 404, malformed id does not crash', async () => {

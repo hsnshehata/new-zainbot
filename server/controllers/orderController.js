@@ -1,4 +1,5 @@
 // /server/controllers/orderController.js
+const crypto = require('crypto');
 const Order = require('../models/Order');
 const Store = require('../models/Store');
 const Product = require('../models/Product');
@@ -69,33 +70,106 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ message: 'يرجى كتابة العنوان بالتفصيل (المدينة/المنطقة/الشارع/معلم قريب) لإتمام الطلب.' });
     }
 
+    // Guest-checkout idempotency: the storefront sends a stable key per
+    // checkout attempt and resends it on retries; a replay returns the
+    // original order instead of creating a duplicate (which would
+    // double-decrement stock and re-send owner notifications). The same
+    // key with a different payload is rejected (409).
+    const rawKey = req.get('idempotency-key');
+    const idempotencyKey = rawKey ? String(rawKey).trim().slice(0, 128) : '';
+    let payloadHash = '';
+    if (idempotencyKey) {
+      payloadHash = crypto.createHash('sha256').update(JSON.stringify({
+        storeId: String(storeId),
+        products: products.map((p) => ({ productId: String(p.productId), quantity: Number(p.quantity), selectedOptions: Array.isArray(p.selectedOptions) ? p.selectedOptions : [] })),
+        paymentMethod: safePaymentMethod,
+        customerName: safeCustomerName,
+        customerWhatsapp: sanitizedWhatsapp,
+        customerEmail: safeEmail,
+        customerAddress: safeAddress,
+        customerNote: safeNote,
+      })).digest('hex');
+      const existing = await Order.findOne({ storeId, idempotencyKey });
+      if (existing) {
+        if (existing.payloadHash === payloadHash) {
+          logger.info('order_create_idempotent_replay', { storeId, orderId: existing._id });
+          return res.status(200).json(existing);
+        }
+        logger.warn('order_create_idempotency_mismatch', { storeId, orderId: existing._id });
+        return res.status(409).json({ message: 'مفتاح الطلب ده اتستخدم لطلب مختلف. راجع السلة أو أعد المحاولة.' });
+      }
+    }
+
     let totalPrice = 0;
     const orderProducts = [];
+    const willBeConfirmed = safePaymentMethod !== 'whatsapp_confirmation';
+    const reserved = [];
 
-    // التحقق من المخزون وحساب الإجمالي
+    // عند فشل لاحق نرجّع أي كميات محجوزة حتى لا تضيع من المخزون
+    const releaseReservations = async () => {
+      for (const r of reserved) {
+        await Product.updateOne({ _id: r.productId }, { $inc: { stock: r.quantity } })
+          .catch((e) => logger.error('order_stock_release_failed', { storeId, productId: r.productId, err: e.message }));
+      }
+      reserved.length = 0;
+    };
+
+    // التحقق من المخزون وحساب الإجمالي، مع حجز ذرّي للكمية عند الطلب
+    // المؤكد فورًا (الدفع عند الاستلام) حتى لا يبيع طلبان متزامنان آخر
+    // قطعة. طلبات تأكيد واتساب تبقى pending بدون خصم هنا - الخصم يتم
+    // عند التأكيد في updateOrder كما كان سابقًا.
     for (const item of products) {
       const productId = item.productId;
       const requestedQuantity = Number(item.quantity);
       if (!productId || !Number.isFinite(requestedQuantity) || requestedQuantity <= 0) {
         logger.warn('order_create_invalid_quantity', { storeId, item });
+        await releaseReservations();
         return res.status(400).json({ message: 'تم إرسال كمية غير صالحة لأحد المنتجات.' });
       }
 
-      const product = await Product.findOne({ _id: productId, storeId });
-      if (!product) {
-        logger.warn('order_create_product_not_found', { storeId, productId });
-        return res.status(404).json({ message: `المنتج ${productId} غير موجود` });
-      }
-      const availableStock = typeof product.stock === 'number' ? product.stock : 0;
-      if (availableStock < requestedQuantity) {
-        logger.warn('order_create_insufficient_stock', {
-          storeId,
-          productId,
-          productName: product.productName,
-          availableStock,
-          requestedQuantity
-        });
-        return res.status(400).json({ message: `المخزون غير كافٍ للمنتج ${product.productName}` });
+      let product;
+      if (willBeConfirmed) {
+        product = await Product.findOneAndUpdate(
+          { _id: productId, storeId, stock: { $gte: requestedQuantity } },
+          { $inc: { stock: -requestedQuantity } },
+          { new: true }
+        );
+        if (!product) {
+          const exists = await Product.findOne({ _id: productId, storeId }).select('productName stock');
+          await releaseReservations();
+          if (!exists) {
+            logger.warn('order_create_product_not_found', { storeId, productId });
+            return res.status(404).json({ message: `المنتج ${productId} غير موجود` });
+          }
+          logger.warn('order_create_insufficient_stock', {
+            storeId,
+            productId,
+            productName: exists.productName,
+            availableStock: exists.stock,
+            requestedQuantity
+          });
+          return res.status(400).json({ message: `المخزون غير كافٍ للمنتج ${exists.productName}` });
+        }
+        reserved.push({ productId: product._id, quantity: requestedQuantity });
+      } else {
+        product = await Product.findOne({ _id: productId, storeId });
+        if (!product) {
+          logger.warn('order_create_product_not_found', { storeId, productId });
+          await releaseReservations();
+          return res.status(404).json({ message: `المنتج ${productId} غير موجود` });
+        }
+        const availableStock = typeof product.stock === 'number' ? product.stock : 0;
+        if (availableStock < requestedQuantity) {
+          logger.warn('order_create_insufficient_stock', {
+            storeId,
+            productId,
+            productName: product.productName,
+            availableStock,
+            requestedQuantity
+          });
+          await releaseReservations();
+          return res.status(400).json({ message: `المخزون غير كافٍ للمنتج ${product.productName}` });
+        }
       }
       const unitPrice = product.hasOffer && product.discountedPrice ? product.discountedPrice : product.price;
       const numericPrice = Number(unitPrice) || 0;
@@ -141,6 +215,8 @@ exports.createOrder = async (req, res) => {
       customerEmail: safeEmail,
       customerAddress: safeAddress,
       customerNote: safeNote,
+      idempotencyKey: idempotencyKey || undefined,
+      payloadHash,
       history: [{
         status: safePaymentMethod === 'whatsapp_confirmation' ? 'pending' : 'confirmed',
         changedBy: userId || null,
@@ -149,7 +225,26 @@ exports.createOrder = async (req, res) => {
       }]
     });
 
-  await newOrder.save();
+  try {
+    await newOrder.save();
+  } catch (saveErr) {
+    // Save failed after atomic reservations: release the stock first.
+    await releaseReservations();
+    // Duplicate idempotency key (tight race with a concurrent submit):
+    // replay the winner instead of failing the shopper.
+    if (saveErr && saveErr.code === 11000 && idempotencyKey) {
+      const winner = await Order.findOne({ storeId, idempotencyKey });
+      if (winner && winner.payloadHash === payloadHash) {
+        logger.info('order_create_idempotent_replay_after_race', { storeId, orderId: winner._id });
+        return res.status(200).json(winner);
+      }
+      if (winner) {
+        logger.warn('order_create_idempotency_mismatch', { storeId, orderId: winner._id });
+        return res.status(409).json({ message: 'مفتاح الطلب ده اتستخدم لطلب مختلف. راجع السلة أو أعد المحاولة.' });
+      }
+    }
+    throw saveErr;
+  }
   logger.info('order_created', {
     storeId,
     orderId: newOrder._id,
@@ -174,32 +269,9 @@ exports.createOrder = async (req, res) => {
       logger.warn('order_customer_upsert_failed', { storeId, orderId: newOrder._id, err: e.message });
     }
 
-    // تحديث المخزون إذا الطلب مؤكد
-    // Guarded: the order is already saved at this point; a stock-update
-    // failure must not turn the shopper's success into a 500 (which
-    // causes duplicate orders when they retry).
-    if (newOrder.status === 'confirmed') {
-      for (const item of orderProducts) {
-        try {
-          const product = await Product.findById(item.productId);
-          if (!product) {
-            logger.warn('order_stock_product_missing', { storeId, productId: item.productId });
-            continue;
-          }
-          product.stock -= item.quantity;
-          await product.save();
-          logger.info('order_stock_updated', { storeId, productId: product._id, productName: product.productName, stock: product.stock });
-        } catch (stockErr) {
-          // Durable marker for reconciliation, not a silent swallow: the
-          // order carries the failure so a sweep can find and retry it.
-          logger.error('order_stock_update_failed', { storeId, orderId: newOrder._id, productId: item.productId, err: stockErr.message });
-          await Order.updateOne(
-            { _id: newOrder._id },
-            { $set: { 'opsFlags.stockReconciliationPending': true, 'opsFlags.stockError': String(stockErr.message || 'stock update failed').slice(0, 300) } }
-          ).catch((flagErr) => logger.error('order_opsflag_write_failed', { orderId: newOrder._id, err: flagErr.message }));
-        }
-      }
-    }
+    // لا يوجد خصم مخزون بعد الحفظ: الطلبات المؤكدة فورًا حُجزت كمياتها
+    // ذرّيًا قبل إنشاء الطلب (أعلاه)، وطلبات pending تُخصم عند التأكيد
+    // في updateOrder. لا يبقى هنا مسار فشل يحتاج opsFlags للمخزون.
 
     // إشعار لصاحب المتجر
     let formattedTotal = `${totalPrice.toFixed(2)} ${orderCurrency}`;
