@@ -3,26 +3,11 @@ const { processMessage } = require("../botEngine");
 const WhatsAppSession = require("../models/WhatsAppSession");
 const mongoose = require("mongoose");
 
-// Webhook verification
-const verifyWebhook = async (req, res) => {
-  const mode = req.query["hub.mode"];
-  const token = req.query["hub.verify_token"];
-  const challenge = req.query["hub.challenge"];
-  const logger = require('../logger');
-
-  if (mode && token) {
-    if (mode === "subscribe" && token === process.env.WHATSAPP_VERIFY_TOKEN) {
-      logger.info('whatsapp_webhook_verified');
-      res.status(200).send(challenge);
-    } else {
-      logger.warn('whatsapp_webhook_verify_failed');
-      res.sendStatus(403);
-    }
-  } else {
-    logger.warn('whatsapp_webhook_missing_params');
-    res.sendStatus(400);
-  }
-};
+// Webhook verification: the old verifyWebhook handler was removed. It was
+// never mounted (the real GET verification lives in routes/webhook.js via
+// verifySubscription with an env token and timing-safe comparison), and a
+// second, unused verifier with plain string equality only invites
+// accidental mounting later.
 
 // Process incoming WhatsApp messages
 const processWebhook = async (req, res) => {
@@ -105,6 +90,13 @@ const processWebhook = async (req, res) => {
           return res.sendStatus(200);
         }
 
+        // Align with facebookController: an inactive bot must not process
+        // messages. Still ack 200 so Meta does not retry-deliver.
+        if (!bot.isActive) {
+          logger.warn('whatsapp_bot_inactive', { botId: bot._id, name: bot.name });
+          return res.sendStatus(200);
+        }
+
         logger.info('whatsapp_processing', { userId, botId: bot._id, messageId, isImage, isVoice });
 
         // Process the message using botEngine
@@ -142,7 +134,11 @@ const processWebhook = async (req, res) => {
           }
         );
 
-        logger.info('whatsapp_reply_sent', { userId, botId, reply });
+        // botId must come from the loaded bot document: a bare `botId`
+        // variable does not exist in this scope, and the ReferenceError
+        // after the reply is sent makes Meta retry the webhook and
+        // deliver duplicate replies to the customer.
+        logger.info('whatsapp_reply_sent', { userId, botId: bot._id, reply });
       }
       res.sendStatus(200);
     } else {
@@ -198,4 +194,4 @@ const disconnect = async (req, res) => {
   }
 };
 
-module.exports = { verifyWebhook, processWebhook, getSession, connectWithQR, disconnect };
+module.exports = { processWebhook, getSession, connectWithQR, disconnect };

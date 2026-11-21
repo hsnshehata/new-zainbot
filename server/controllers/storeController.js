@@ -95,6 +95,14 @@ exports.createStore = async (req, res) => {
         logger.warn('store_create_bot_not_found', { selectedBotId });
         return res.status(400).json({ message: 'البوت المحدد غير موجود' });
       }
+      // Ownership gate: linking a store writes bot.storeId on the target
+      // bot, so the caller must own that bot (direct superadmin excepted).
+      // Without this, any authenticated user could point someone else's
+      // bot at a storefront they control.
+      if (req.user.role !== 'superadmin' && String(bot.userId) !== String(userId)) {
+        logger.warn('store_create_bot_not_owned', { selectedBotId, userId });
+        return res.status(403).json({ message: 'غير مصرح لك بربط هذا البوت' });
+      }
       botIdToUse = bot._id;
       // إذا البوت له مالك، نخليه owner
       if (bot.userId) ownerUserId = bot.userId;

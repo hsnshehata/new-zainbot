@@ -68,7 +68,8 @@ async function sendTelegramMessage(chatId, text, extra = {}) {
 }
 
 function buildLinkCode() {
-  const num = Math.floor(100000 + Math.random() * 900000);
+  // Link codes authenticate account linking: use CSPRNG, not Math.random.
+  const num = require('crypto').randomInt(100000, 1000000);
   return String(num);
 }
 

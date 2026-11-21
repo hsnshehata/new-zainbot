@@ -63,7 +63,11 @@ exports.getCustomerDetails = async (req, res) => {
 // بحث عميل بالهاتف (استخدام لاحقًا في صفحة المتجر)
 exports.lookupByPhone = async (req, res) => {
   const { storeId } = req.params; const { phone } = req.query;
+  const userId = req.user.userId; const role = req.user.role;
   try {
+    // Same ownership gate as every other customers endpoint: an authenticated
+    // non-owner must not read a store's customer records by phone.
+    await authorizeStoreAccess(storeId, userId, role);
     if (!phone) return res.status(400).json({ message: 'رقم الهاتف مطلوب' });
     const customer = await Customer.findOne({ storeId, phone });
     if (!customer) return res.status(404).json({ message: 'لا يوجد عميل لهذا الرقم' });

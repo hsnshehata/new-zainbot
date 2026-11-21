@@ -33,7 +33,8 @@ const convertToLongLivedToken = async (shortLivedToken) => {
   try {
     const response = await axios.get(url);
     if (response.data.access_token) {
-      logger.info('✅ Successfully converted/renewed Facebook token', { tokenPreview: `${response.data.access_token.slice(0, 10)}...` });
+      // Never log token material, not even a prefix.
+      logger.info('✅ Successfully converted/renewed Facebook token');
       return response.data.access_token;
     }
     throw new Error('Failed to convert/renew token: No access_token in response');
@@ -148,7 +149,7 @@ const refreshInstagramTokens = () => {
           bot.lastInstagramTokenRefresh = new Date();
           await bot.save();
 
-          logger.info('✅ Successfully refreshed Instagram token', { botId: bot._id, tokenPreview: `${newToken.slice(0, 10)}...`, expiresIn });
+          logger.info('✅ Successfully refreshed Instagram token', { botId: bot._id, expiresIn });
         } catch (err) {
           logger.error('❌ Error refreshing Instagram token', { botId: bot._id, error: err.message, data: err.response?.data });
           const notification = new Notification({
@@ -219,7 +220,7 @@ const refreshFacebookTokens = () => {
           bot.lastFacebookTokenRefresh = new Date();
           await bot.save();
 
-          logger.info('✅ Successfully refreshed Facebook token', { botId: bot._id, tokenPreview: `${newToken.slice(0, 10)}...` });
+          logger.info('✅ Successfully refreshed Facebook token', { botId: bot._id });
         } catch (err) {
           logger.error('❌ Error refreshing Facebook token', { botId: bot._id, error: err.message, data: err.response?.data });
           const notification = new Notification({

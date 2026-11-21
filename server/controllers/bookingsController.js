@@ -52,7 +52,10 @@ async function listBookings(req, res) {
     }
 
     if (req.query.search) {
-      const regex = new RegExp(req.query.search.trim(), 'i');
+      // Escape user input before building a RegExp: a raw pattern from the
+      // query string is a regex-injection / ReDoS vector.
+      const escaped = req.query.search.trim().slice(0, 100).replace(/[.*+?^=!:${}()|\[\]\/\\]/g, '\\$&');
+      const regex = new RegExp(escaped, 'i');
       filter.$or = [
         { customerName: regex },
         { customerPhone: regex },

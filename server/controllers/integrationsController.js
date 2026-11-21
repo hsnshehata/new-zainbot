@@ -1,6 +1,8 @@
 // server/controllers/integrationsController.js
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 const ApiKey = require('../models/ApiKey');
+const Bot = require('../models/Bot');
 const WebhookConfig = require('../models/WebhookConfig');
 const WebhookLog = require('../models/WebhookLog');
 const axios = require('axios');
@@ -77,6 +79,23 @@ exports.setWebhookConfig = async (req, res) => {
     const { botId, url, events, isActive } = req.body;
     if (!botId || !url) {
       return res.status(400).json({ success: false, message: 'حقل البوت والرابط مطلوبين.' });
+    }
+
+    // Ownership gate: the webhook config must reference a bot the caller
+    // owns (a direct, non-impersonating superadmin keeps full access).
+    // Without this check a caller could attach their config to someone
+    // else's botId; the dispatcher's owner scoping currently prevents
+    // foreign events from flowing, but the dangling config must not exist.
+    if (!mongoose.isValidObjectId(botId)) {
+      return res.status(404).json({ success: false, message: 'البوت غير موجود.' });
+    }
+    const isDirectSuperadmin = req.auth?.actorRole === 'superadmin'
+      && !req.auth?.isImpersonating;
+    const ownedBot = isDirectSuperadmin
+      ? await Bot.exists({ _id: botId })
+      : await Bot.exists({ _id: botId, userId: req.user.userId });
+    if (!ownedBot) {
+      return res.status(404).json({ success: false, message: 'البوت غير موجود.' });
     }
 
     let config = await WebhookConfig.findOne({ userId: req.user.userId, botId });

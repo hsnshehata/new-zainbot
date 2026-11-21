@@ -96,26 +96,11 @@ const replyToComment = async (commentId, messageText, accessToken) => {
   }
 };
 
-// التحقق من الـ Webhook
-const verifyWebhook = (req, res) => {
-  const mode = req.query['hub.mode'];
-  const token = req.query['hub.verify_token'];
-  const challenge = req.query['hub.challenge'];
-
-  const VERIFY_TOKEN = 'hassanshehata'; // Hardcodeding this to match Facebook and WhatsApp webhooks in the system
-
-  if (mode && token) {
-    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-      logger.info('ig_webhook_verified');
-      return res.status(200).send(challenge);
-    } else {
-      logger.warn('ig_webhook_verify_failed');
-      return res.sendStatus(403);
-    }
-  }
-  logger.warn('ig_webhook_missing_params');
-  res.sendStatus(400);
-};
+// The old verifyWebhook handler was removed: it was never mounted (the real
+// GET verification lives in routes/webhook.js via verifySubscription with an
+// env token and timing-safe comparison) and it carried a hardcoded,
+// predictable verification token. Dead code with a baked-in secret must not
+// linger in the tree.
 
 // معالجة الرسائل والكومنتات القادمة من Instagram
 const handleMessage = async (req, res) => {
@@ -408,4 +393,4 @@ const handleMessage = async (req, res) => {
   }
 };
 
-module.exports = { verifyWebhook, handleMessage };
+module.exports = { handleMessage };
