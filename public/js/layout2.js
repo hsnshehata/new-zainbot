@@ -224,17 +224,9 @@
         const phone = phoneInput.value.trim();
         const digits = phone.replace(/\D+/g,'');
         if (!digits || digits.length < 6){ alert('أدخل رقم موبايل صالح'); phoneInput.focus(); return; }
-        // محاولة جلب بيانات العميل (إن وجدت)
-        try {
-          const r = await fetch(`/api/customers/public/${STORE_REF._id}/lookup?phone=${encodeURIComponent(phone)}`);
-          if (r.ok){
-            const data = await r.json();
-            if (data?.name) checkoutEl.querySelector('#coName').value = data.name;
-            if (data?.email) checkoutEl.querySelector('#coEmail').value = data.email;
-            if (data?.address) checkoutEl.querySelector('#coAddress').value = data.address;
-          }
-        } catch(_){ /* ignore */ }
-        // بعد الجلب نعرض النموذج الكامل
+        // لا يوجد جلب عام لبيانات العميل: الخصوصية أولاً — الإدخال اليدوي فقط
+        // (الحقول تُملأ من كاش الجهاز نفسه إن وُجد، وليس من سجلات المتجر)
+        // نعرض النموذج الكامل
         phonePanel.classList.add('hidden');
         step2.classList.remove('hidden');
         checkoutEl.querySelector('#coName').focus();

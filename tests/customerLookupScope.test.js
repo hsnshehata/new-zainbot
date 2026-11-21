@@ -89,23 +89,13 @@ test('superadmin retains lookup access', async () => {
   assert.equal(res.payload.phone, '01000000001');
 });
 
-// publicLookup privacy contract: exact-match only. The old $regex
-// contains-match made the anonymous endpoint a substring oracle: a caller
-// could confirm a customer from a phone-number fragment.
+// Privacy guard: the anonymous public lookup was REMOVED. Knowing a
+// phone number is not proof of ownership, so any anonymous response
+// with stored personal fields is a PII oracle. Checkout prefill uses
+// only the shopper's own device cache. This test makes sure the
+// handler cannot silently come back without an authenticated
+// proof-of-control design.
 
-test('publicLookup returns prefill data for the exact phone', async () => {
-  const { req, res } = reqRes({ userId: OTHER_ID });
-  delete req.user; // anonymous
-  await controller.publicLookup(req, res);
-  assert.equal(res.statusCode, 200);
-  assert.equal(res.payload.name, 'عميل تجريبي');
-});
-
-test('publicLookup rejects substring matches (no fragment oracle)', async () => {
-  const { req, res } = reqRes({ userId: OTHER_ID });
-  delete req.user;
-  req.query = { phone: '0000001' }; // suffix fragment of the stored number
-  await controller.publicLookup(req, res);
-  assert.equal(res.statusCode, 404);
-  assert.equal(res.payload && res.payload.name, undefined);
+test('no anonymous public lookup handler exists', () => {
+  assert.equal(controller.publicLookup, undefined);
 });

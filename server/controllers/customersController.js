@@ -98,37 +98,13 @@ exports.upsertFromOrder = async ({ storeId, name, phone, email, address, orderTo
   }
 };
 
-// Lookup عام بالهاتف — يعيد بيانات أساسية فقط بدون مصادقة
-//
-// Privacy contract (this endpoint is anonymous, so it is an identity
-// oracle by nature; the design choice is to keep checkout prefill working
-// for the exact returning customer while making bulk harvesting
-// impractical):
-// - EXACT match only. The old $regex contains-match let a caller confirm
-//   customer identity from a phone-number FRAGMENT, which turned
-//   enumeration from guessing full numbers into guessing substrings.
-// - A strict per-route limiter (routes/customers.js) caps attempts per IP
-//   far below the global limiter.
-exports.publicLookup = async (req, res) => {
-  const { storeId } = req.params; const { phone } = req.query;
-  try {
-    if (!phone) return res.status(400).json({ message: 'رقم الهاتف مطلوب' });
-    // تبسيط الرقم: الاحتفاظ بالأرقام فقط
-    const digits = String(phone).replace(/\D+/g,'');
-    if (digits.length < 6 || digits.length > 16) return res.status(400).json({ message: 'رقم غير صالح' });
-    // Exact match on the number as typed or its digits-only form. No
-    // substring/regex fallback: partial matches are an enumeration oracle.
-    const customer = await Customer.findOne(
-      { storeId, phone: { $in: [String(phone).trim(), digits] } },
-      { name:1, phone:1, email:1, address:1, _id:0 }
-    );
-    if (!customer) return res.status(404).json({ message: 'لا يوجد عميل لهذا الرقم' });
-    return res.status(200).json(customer);
-  } catch (err) {
-    logger.error('customer_public_lookup_error', { storeId, phone, err: err.message, stack: err.stack });
-    res.status(500).json({ message: 'خطأ في البحث عن العميل' });
-  }
-};
+// NOTE: the anonymous public phone lookup (publicLookup) was REMOVED.
+// Knowing a phone number is not proof of ownership, so any anonymous
+// response containing stored name/email/address is a PII oracle even
+// with exact-match + throttling. Checkout prefill now uses only the
+// shopper's own device cache (public/js/layout*.js). Reintroducing
+// server-side prefill requires proof of customer control (an
+// authenticated customer session or an approved OTP flow).
 
 // Create a new customer
 exports.createCustomer = async (req, res) => {
