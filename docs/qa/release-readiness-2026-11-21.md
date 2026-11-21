@@ -81,18 +81,40 @@ and the local test suite; it is not a staging or production verification.
 1. **Legacy plaintext `ProviderKey.apiKey`** remains a read fallback
    (`server/models/ProviderKey.js`, `server/services/aiKeyResolver.js`).
    Not selected by default (`select: false`), but plaintext at rest.
-   Recommend a migration to `AiCredential` and removal of the fallback.
+   **Triaged 2026-11-21 (later run):** new plaintext writes now log a
+   security warning (`provider_key_plaintext_created/updated`) pointing to
+   the encrypted control plane, and
+   `scripts/migrateProviderKeysToCredentials.js` performs the migration:
+   dry-run by default, writes only with `--apply` plus
+   `CONFIRM_MIGRATION=MIGRATE_PROVIDER_KEYS`, encrypts each key into an
+   `AiCredential`, then unsets the plaintext field and deactivates the
+   legacy doc (idempotent; verified against real MongoDB 7.0.24 in
+   `tests/providerKeyMigration.test.js`). It has NOT been run against any
+   live database; running it in production is Hassan's call. Fully removing
+   the read fallback also needs an admin UI for the control-plane
+   credentials (API-only today).
 2. **No migrations framework**: schema evolution is implicit; no
    `server/migrations` directory. Backfill/rollback story for production
    data changes (including this milestone's new collections) is manual.
-3. **Deployment wiring unknown**: which Coolify resource deploys this repo,
-   from which branch, and whether pushes auto-deploy was not confirmed in
-   this environment. Do not push `feat/owner-assistant` to any deployed
-   branch before confirming. Rollback = redeploy previous image; no
-   automated mechanism in-repo.
-4. **Reminder double-delivery race**: see Verification limits; consider
-   atomic claim (`findOneAndUpdate({status:'pending'} -> 'sent')`) before
-   dispatch.
+3. **Deployment wiring confirmed 2026-11-21 (read-only Coolify inspection)**:
+   the Coolify app `new-zainbot` deploys `hsnshehata/new-zainbot` branch
+   `master` via a GitHub-App-managed webhook (push to master = automatic
+   deploy) to `new.zainbot.com`. The production `zainbot.com` is a separate
+   app on a separate repo (`hsnshehata/zain-ai`, branch `main`). Repo CI
+   (`.github/workflows/ci.yml`) triggers only on `master`/`main`. A push of
+   the feature branch therefore triggers no CI and no deploy; merging to
+   `master` auto-deploys to `new.zainbot.com` and stays gated on Hassan's
+   explicit approval. Same Coolify server/network is shared infrastructure
+   with production; no infra changes were made. Rollback = redeploy previous
+   image; no automated mechanism in-repo.
+4. **Reminder delivery semantics**: fixed with an atomic claim
+   (`findOneAndUpdate` pending -> claimed), stale-claim recovery (10 min),
+   bounded retries with backoff, and a terminal `failed` state with
+   `lastError`; covered by real-MongoDB concurrency tests
+   (`tests/assistant/assistantMongo.test.js`). Honest limit: delivery is
+   **at-least-once** — a crash after a successful external send but before
+   the state save can repeat one delivery; the notification dispatcher has
+   no idempotency-key support, so this is documented, not eliminated.
 5. **Billing is manual** (Instapay/cash wallets + subscription requests):
    expiry reminders and auto-stop crons exist; no automated payment
    reconciliation to audit here.

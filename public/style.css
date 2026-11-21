@@ -1944,10 +1944,14 @@ html[dir="rtl"] .testimonial-card::before {
    page corner; now it is a proper fixed card, hidden while empty. */
 #feedbackLiveRegion {
   position: fixed;
-  inset-block-start: 16px;
+  inset-block-start: 72px; /* below the fixed dashboard header */
   inset-inline-start: 16px;
   z-index: 6000;
+  width: max-content;
   max-width: min(340px, 90vw);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   padding: 10px 14px;
   border-radius: 12px;
   background: rgba(15, 23, 42, 0.96);

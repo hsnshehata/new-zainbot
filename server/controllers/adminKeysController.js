@@ -28,6 +28,14 @@ exports.addKey = async (req, res) => {
       return res.status(400).json({ success: false, message: 'الحقول المطلوبة مفقودة.' });
     }
 
+    // Plaintext at rest: the encrypted control plane
+    // (/api/admin/ai/credentials) is the preferred store for new keys, and
+    // scripts/migrateProviderKeysToCredentials.js migrates existing ones.
+    logger.warn('provider_key_plaintext_created', {
+      name,
+      provider,
+      guidance: 'prefer_encrypted_ai_credential',
+    });
     const newKey = await ProviderKey.create({
       name,
       provider,
@@ -81,7 +89,13 @@ exports.updateKey = async (req, res) => {
 
     if (name !== undefined) key.name = name;
     if (provider !== undefined) key.provider = provider;
-    if (apiKey !== undefined && apiKey !== '') key.apiKey = apiKey;
+    if (apiKey !== undefined && apiKey !== '') {
+      logger.warn('provider_key_plaintext_updated', {
+        id: String(key._id),
+        guidance: 'prefer_encrypted_ai_credential',
+      });
+      key.apiKey = apiKey;
+    }
     if (baseUrl !== undefined) key.baseUrl = baseUrl;
     if (defaultModel !== undefined) key.defaultModel = defaultModel;
     if (priority !== undefined) key.priority = Number(priority);
