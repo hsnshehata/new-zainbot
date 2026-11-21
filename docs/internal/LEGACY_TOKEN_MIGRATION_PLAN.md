@@ -62,9 +62,14 @@ script; encryption is `encryptChannelToken`, which is idempotent
   because each field write is a single $set.
 - **Backup/rollback**: encrypt-in-place is reversible ONLY through the
   documented decrypt procedure with the same key - a code path, not a
-  data rescue. Atlas point-in-time restore from the recorded pre-run
-  timestamp is the disaster fallback; restoring it also restores
-  plaintext, so a restore must be followed by a re-run of this batch.
+  data rescue. Atlas backup/PITR availability is UNVERIFIED: the cluster
+  tier and its snapshot/PITR configuration are not visible from the
+  application or Coolify, and no Atlas credential exists in the vault.
+  An Atlas PITR fallback must NOT be assumed. GATE: before the run,
+  Hassan confirms the Atlas cluster's backup status (tier + snapshot or
+  continuous backup), or grants read access to verify it. If no backup
+  exists, the run does not proceed; the per-field decrypt procedure
+  remains the only rollback.
 - **Credential preservation**: tokens are not rotated or re-issued; the
   same secret changes only its stored form. If Meta has already expired a
   plaintext token, the migration preserves an already-dead token - the
@@ -74,8 +79,9 @@ script; encryption is `encryptChannelToken`, which is idempotent
 
 ## Rollback
 
-Per-field decrypt with the same key, documented procedure. Atlas PITR as
-disaster fallback (see Risks).
+Per-field decrypt with the same key, documented procedure. No database
+restore fallback is assumed (see Risks: Atlas backup status is a
+pre-run gate, not a given).
 
 ## Failure handling
 
