@@ -99,6 +99,18 @@ const orderSchema = new mongoose.Schema({
   // original order for a replay instead of creating a duplicate.
   idempotencyKey: { type: String, default: undefined },
   payloadHash: { type: String, default: '' },
+  // Stock reservation protocol state. 'none' for orders that never reserved
+  // stock through the protocol (legacy orders, pending whatsapp_confirmation
+  // orders before confirmation). 'pending' means durable intent recorded and
+  // reservation tokens may exist on products; a reconciliation sweep owns
+  // orders stuck here. 'completed' means all lines reserved and tokens may
+  // be pulled. 'failed' means reservation failed and every token was
+  // released (idempotently).
+  stockStatus: {
+    type: String,
+    enum: ['none', 'pending', 'completed', 'failed'],
+    default: 'none'
+  },
   // Durable post-commit ops flags: set when a post-save side effect
   // (stock decrement, owner notification) failed after the order was
   // already persisted. A reconciliation sweep can find and retry these
@@ -107,7 +119,16 @@ const orderSchema = new mongoose.Schema({
     stockReconciliationPending: { type: Boolean, default: false },
     stockError: { type: String, default: '' },
     notificationPending: { type: Boolean, default: false },
-    notificationError: { type: String, default: '' }
+    notificationError: { type: String, default: '' },
+    // Notification retry protocol: claim fencing (claimedAt) so only one
+    // worker retries at a time, attempt budget, and dedup so the in-app
+    // Notification document is created at most once. External channel
+    // delivery stays at-least-once (providers offer no idempotency keys).
+    notificationCreated: { type: Boolean, default: false },
+    notificationAttempts: { type: Number, default: 0 },
+    notificationClaimedAt: { type: Date, default: null },
+    notificationRecoveredAt: { type: Date, default: null },
+    notificationFailed: { type: Boolean, default: false }
   },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }

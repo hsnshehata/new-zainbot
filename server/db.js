@@ -35,6 +35,29 @@ async function connectDB(retries = 3, delayMs = 3000) {
       });
       registerConnectionListeners();
       logger.info('mongodb_connected');
+      // Read-only boot diagnostics (metadata only): topology decides whether
+      // multi-document transactions are available, and listing index names
+      // confirms autoIndex built the order idempotency index. No data or
+      // credentials are logged.
+      try {
+        const desc = mongoose.connection.client?.topology?.description;
+        logger.info('mongodb_topology', {
+          type: desc?.type || 'unknown',
+          setName: desc?.setName || undefined,
+          serverCount: desc?.servers?.size ?? undefined,
+        });
+      } catch (topoErr) {
+        logger.warn('mongodb_topology_check_failed', { error: topoErr.message });
+      }
+      try {
+        const Order = require('./models/Order');
+        const indexes = await Order.listIndexes();
+        logger.info('order_collection_indexes', {
+          indexes: indexes.map((i) => ({ name: i.name, unique: Boolean(i.unique), partial: Boolean(i.partialFilterExpression) })),
+        });
+      } catch (idxErr) {
+        logger.warn('order_index_check_failed', { error: idxErr.message });
+      }
       return mongoose.connection;
     } catch (error) {
       lastError = error;

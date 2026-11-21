@@ -5,7 +5,9 @@ const Store = require('../models/Store');
 const Product = require('../models/Product');
 const Notification = require('../models/Notification');
 const Bot = require('../models/Bot');
-const { notifyNewOrder, notifyOrderStatus } = require('../services/telegramService');
+const { notifyOrderStatus } = require('../services/telegramService');
+const stockService = require('../services/stockService');
+const orderOps = require('../services/orderOps');
 const { upsertFromOrder } = require('./customersController');
 const logger = require('../logger');
 
@@ -103,73 +105,37 @@ exports.createOrder = async (req, res) => {
     let totalPrice = 0;
     const orderProducts = [];
     const willBeConfirmed = safePaymentMethod !== 'whatsapp_confirmation';
-    const reserved = [];
 
-    // عند فشل لاحق نرجّع أي كميات محجوزة حتى لا تضيع من المخزون
-    const releaseReservations = async () => {
-      for (const r of reserved) {
-        await Product.updateOne({ _id: r.productId }, { $inc: { stock: r.quantity } })
-          .catch((e) => logger.error('order_stock_release_failed', { storeId, productId: r.productId, err: e.message }));
-      }
-      reserved.length = 0;
-    };
-
-    // التحقق من المخزون وحساب الإجمالي، مع حجز ذرّي للكمية عند الطلب
-    // المؤكد فورًا (الدفع عند الاستلام) حتى لا يبيع طلبان متزامنان آخر
-    // قطعة. طلبات تأكيد واتساب تبقى pending بدون خصم هنا - الخصم يتم
-    // عند التأكيد في updateOrder كما كان سابقًا.
+    // قراءة المنتجات وحساب الإجمالي (بدون أي تعديل للمخزون هنا). الحجز
+    // الذرّي الفعلي يتم بعد حفظ الطلب عبر بروتوكول التوكنات في
+    // stockService، حتى يبقى كل خصم قابلًا للاسترجاع بعد أي انقطاع.
     for (const item of products) {
       const productId = item.productId;
       const requestedQuantity = Number(item.quantity);
       if (!productId || !Number.isFinite(requestedQuantity) || requestedQuantity <= 0) {
         logger.warn('order_create_invalid_quantity', { storeId, item });
-        await releaseReservations();
         return res.status(400).json({ message: 'تم إرسال كمية غير صالحة لأحد المنتجات.' });
       }
 
-      let product;
-      if (willBeConfirmed) {
-        product = await Product.findOneAndUpdate(
-          { _id: productId, storeId, stock: { $gte: requestedQuantity } },
-          { $inc: { stock: -requestedQuantity } },
-          { new: true }
-        );
-        if (!product) {
-          const exists = await Product.findOne({ _id: productId, storeId }).select('productName stock');
-          await releaseReservations();
-          if (!exists) {
-            logger.warn('order_create_product_not_found', { storeId, productId });
-            return res.status(404).json({ message: `المنتج ${productId} غير موجود` });
-          }
-          logger.warn('order_create_insufficient_stock', {
-            storeId,
-            productId,
-            productName: exists.productName,
-            availableStock: exists.stock,
-            requestedQuantity
-          });
-          return res.status(400).json({ message: `المخزون غير كافٍ للمنتج ${exists.productName}` });
-        }
-        reserved.push({ productId: product._id, quantity: requestedQuantity });
-      } else {
-        product = await Product.findOne({ _id: productId, storeId });
-        if (!product) {
-          logger.warn('order_create_product_not_found', { storeId, productId });
-          await releaseReservations();
-          return res.status(404).json({ message: `المنتج ${productId} غير موجود` });
-        }
-        const availableStock = typeof product.stock === 'number' ? product.stock : 0;
-        if (availableStock < requestedQuantity) {
-          logger.warn('order_create_insufficient_stock', {
-            storeId,
-            productId,
-            productName: product.productName,
-            availableStock,
-            requestedQuantity
-          });
-          await releaseReservations();
-          return res.status(400).json({ message: `المخزون غير كافٍ للمنتج ${product.productName}` });
-        }
+      const product = await Product.findOne({ _id: productId, storeId });
+      if (!product) {
+        logger.warn('order_create_product_not_found', { storeId, productId });
+        return res.status(404).json({ message: `المنتج ${productId} غير موجود` });
+      }
+      // الفحص المبكر للمخزون فقط لطلبات تأكيد واتساب (لا حجز عند الإنشاء
+      // لها). للطلبات المؤكدة فورًا لا نرفض هنا أبدًا: الرفض المبكر قد يسبق
+      // اكتمال طلب متزامن يحمل نفس مفتاح الطلبية فيعيد 'مخزون غير كافٍ'
+      // لطلب كان يجب أن يُعاد تشغيله (replay). الحجز بعد الحفظ هو الحكم.
+      const availableStock = typeof product.stock === 'number' ? product.stock : 0;
+      if (!willBeConfirmed && availableStock < requestedQuantity) {
+        logger.warn('order_create_insufficient_stock', {
+          storeId,
+          productId,
+          productName: product.productName,
+          availableStock,
+          requestedQuantity
+        });
+        return res.status(400).json({ message: `المخزون غير كافٍ للمنتج ${product.productName}` });
       }
       const unitPrice = product.hasOffer && product.discountedPrice ? product.discountedPrice : product.price;
       const numericPrice = Number(unitPrice) || 0;
@@ -201,7 +167,10 @@ exports.createOrder = async (req, res) => {
 
     const orderCurrency = orderProducts[0]?.currency || 'EGP';
 
-    // إنشاء الطلب مع history ابتدائي
+    // إنشاء الطلب مع history ابتدائي. الطلب يُحفظ أولاً بحالة حجز
+    // 'pending' (للطلبات المؤكدة فورًا) قبل أي خصم من المخزون: هذه النية
+    // المُخزَّنة هي ما يجعل أي انقطاع لاحق قابلًا للمصالحة بدقة، لأن
+    // توكنات الحجز على المنتجات تشير دائمًا إلى هذا الطلب.
     const newOrder = new Order({
       storeId,
       userId,
@@ -210,6 +179,7 @@ exports.createOrder = async (req, res) => {
       currency: orderCurrency,
       paymentMethod: safePaymentMethod,
       status: safePaymentMethod === 'whatsapp_confirmation' ? 'pending' : 'confirmed',
+      stockStatus: willBeConfirmed ? 'pending' : 'none',
       customerName: safeCustomerName,
       customerWhatsapp: sanitizedWhatsapp,
       customerEmail: safeEmail,
@@ -225,15 +195,27 @@ exports.createOrder = async (req, res) => {
       }]
     });
 
-  try {
-    await newOrder.save();
-  } catch (saveErr) {
-    // Save failed after atomic reservations: release the stock first.
-    await releaseReservations();
-    // Duplicate idempotency key (tight race with a concurrent submit):
-    // replay the winner instead of failing the shopper.
-    if (saveErr && saveErr.code === 11000 && idempotencyKey) {
-      const winner = await Order.findOne({ storeId, idempotencyKey });
+  // Duplicate-key race: two concurrent submits with the same key. The
+  // loser never touches stock - it waits (bounded) for the winner's order
+  // to leave stockStatus 'pending', then replays it (200) or rejects a
+  // mismatched payload (409). If the winner failed its reservation and
+  // freed the key, the loser retries its own insert once. A winner still
+  // pending after the wait gets a 503 so the client retries later.
+  let saved = false;
+  for (let attempt = 0; attempt < 2 && !saved; attempt += 1) {
+    try {
+      await newOrder.save();
+      saved = true;
+    } catch (saveErr) {
+      if (!(saveErr && saveErr.code === 11000 && idempotencyKey)) throw saveErr;
+      let winner = null;
+      for (let poll = 0; poll < 5; poll += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((r) => setTimeout(r, 500));
+        // eslint-disable-next-line no-await-in-loop
+        winner = await Order.findOne({ storeId, idempotencyKey });
+        if (!winner || winner.stockStatus !== 'pending') break;
+      }
       if (winner && winner.payloadHash === payloadHash) {
         logger.info('order_create_idempotent_replay_after_race', { storeId, orderId: winner._id });
         return res.status(200).json(winner);
@@ -242,9 +224,55 @@ exports.createOrder = async (req, res) => {
         logger.warn('order_create_idempotency_mismatch', { storeId, orderId: winner._id });
         return res.status(409).json({ message: 'مفتاح الطلب ده اتستخدم لطلب مختلف. راجع السلة أو أعد المحاولة.' });
       }
+      // Key freed by a failed concurrent reservation: retry our own insert.
+      logger.info('order_create_key_freed_retry', { storeId });
     }
-    throw saveErr;
   }
+  if (!saved) {
+    return res.status(503).json({ message: 'الطلب قيد المعالجة. حاول مرة أخرى بعد لحظات.' });
+  }
+
+  // الحجز الذرّي للمخزون للطلبات المؤكدة فورًا. كل سطر يُحجز بتوكن
+  // idempotent يحمل معرّف الطلب؛ عند فشل أي سطر تُحرَّر الأسطر السابقة
+  // (بشكل idempotent أيضًا) ويُلغى الطلب ويُحرَّر مفتاح الطلبية حتى
+  // تستطيع إعادة المحاولة بنفس المفتاح بعد توفّر المخزون.
+  if (willBeConfirmed) {
+    for (const line of orderProducts) {
+      const reservation = await stockService.reserveLine(line.productId, storeId, newOrder._id, line.quantity);
+      if (!reservation.ok) {
+        await stockService.releaseOrderReservations(newOrder);
+        await Order.updateOne(
+          { _id: newOrder._id },
+          {
+            $set: {
+              status: 'cancelled',
+              stockStatus: 'failed',
+              'opsFlags.stockError': 'reservation failed: insufficient stock at commit time',
+            },
+            $unset: { idempotencyKey: '' },
+            $push: {
+              history: {
+                status: 'cancelled',
+                changedBy: null,
+                changedAt: new Date(),
+                note: 'أُلغي تلقائيًا: المخزون نفد أثناء إتمام الطلب',
+              },
+            },
+          }
+        );
+        const name = reservation.product?.productName || line.name;
+        logger.warn('order_create_reservation_failed', { storeId, orderId: newOrder._id, productId: line.productId });
+        return res.status(400).json({ message: `المخزون غير كافٍ للمنتج ${name}` });
+      }
+    }
+    newOrder.stockStatus = 'completed';
+    await newOrder.save();
+    // Tokens are intentionally KEPT on the products: they preserve
+    // idempotency for any in-flight duplicate of this same order (a
+    // concurrent replay must still find its token). The orphan-token sweep
+    // pulls them, bounded and TTL-fenced, once they are stale.
+  }
+
   logger.info('order_created', {
     storeId,
     orderId: newOrder._id,
@@ -269,58 +297,14 @@ exports.createOrder = async (req, res) => {
       logger.warn('order_customer_upsert_failed', { storeId, orderId: newOrder._id, err: e.message });
     }
 
-    // لا يوجد خصم مخزون بعد الحفظ: الطلبات المؤكدة فورًا حُجزت كمياتها
-    // ذرّيًا قبل إنشاء الطلب (أعلاه)، وطلبات pending تُخصم عند التأكيد
-    // في updateOrder. لا يبقى هنا مسار فشل يحتاج opsFlags للمخزون.
-
-    // إشعار لصاحب المتجر
-    let formattedTotal = `${totalPrice.toFixed(2)} ${orderCurrency}`;
+    // إشعار صاحب المتجر عبر المسار المتين: إشعار داخلي (مرة واحدة كحد
+    // أقصى) + قناة خارجية (مرة واحدة على الأقل). أي فشل بعد حفظ الطلب لا
+    // يُفشل طلب المتسوّق - يُعلَّم الطلب وتتولّاه مصالحة الإشعارات.
     try {
-      formattedTotal = new Intl.NumberFormat('ar-EG', { style: 'currency', currency: orderCurrency }).format(totalPrice);
-    } catch (formatErr) {
-      logger.warn('order_total_format_failed', { storeId, orderId: newOrder._id, currency: orderCurrency, err: formatErr.message });
-    }
-
-    // Guarded for the same reason: the order exists already, so a
-    // notification failure must not fail the shopper's request.
-    try {
-      const notification = new Notification({
-        user: store.userId,
-        title: `طلب جديد في ${store.storeName}`,
-        message: `تم إنشاء طلب جديد (${newOrder._id}) بإجمالي ${formattedTotal}.`,
-        isRead: false
-      });
-      await notification.save();
-      logger.info('order_notification_created', { storeId, orderId: newOrder._id, userId: store.userId });
-    } catch (notifErr) {
-      logger.error('order_notification_failed', { storeId, orderId: newOrder._id, err: notifErr.message });
-      await Order.updateOne(
-        { _id: newOrder._id },
-        { $set: { 'opsFlags.notificationPending': true, 'opsFlags.notificationError': String(notifErr.message || 'notification failed').slice(0, 300) } }
-      ).catch((flagErr) => logger.error('order_opsflag_write_failed', { orderId: newOrder._id, err: flagErr.message }));
-    }
-
-    // حدد البوت المرتبط بالمتجر (لو لم يُخزَّن botId في المتجر نبحث عنه)
-    let botIdForNotify = store.botId || null;
-    if (!botIdForNotify) {
-      const botForStore = await Bot.findOne({ storeId: store._id }).select('_id');
-      if (botForStore) botIdForNotify = botForStore._id;
-    }
-
-    try {
-      await notifyNewOrder(store.userId, {
-        storeName: store.storeName,
-        orderId: newOrder._id,
-        status: newOrder.status,
-        total: totalPrice,
-        currency: orderCurrency,
-        customerName: safeCustomerName,
-        customerAddress: safeAddress,
-        customerWhatsapp: sanitizedWhatsapp,
-        items: orderProducts,
-      }, botIdForNotify);
+      await orderOps.notifyOwnerOfNewOrder(store, newOrder);
     } catch (notifyErr) {
       logger.warn('order_notify_new_order_failed', { storeId, orderId: newOrder._id, err: notifyErr.message });
+      await orderOps.flagNotificationPending(newOrder._id, notifyErr);
     }
 
     res.status(201).json(newOrder);
@@ -354,26 +338,45 @@ exports.updateOrder = async (req, res) => {
     // حفظ السجل القديم للحالة والتحقق من التغيير
     if (status && status !== order.status) {
       const prevStatus = order.status;
-      order.status = status;
-      // أضف إدخال إلى history
-      if (!Array.isArray(order.history)) order.history = [];
-      order.history.push({
-        status,
-        changedBy: userId || null,
-        changedAt: new Date(),
-        note: `تغيير الحالة من ${prevStatus} إلى ${status}`
-      });
+      const pushHistory = () => {
+        if (!Array.isArray(order.history)) order.history = [];
+        order.history.push({
+          status,
+          changedBy: userId || null,
+          changedAt: new Date(),
+          note: `تغيير الحالة من ${prevStatus} إلى ${status}`
+        });
+      };
 
       if (status === 'confirmed' && order.paymentMethod === 'whatsapp_confirmation') {
-        // تحديث المخزون عند التأكيد
+        // خصم المخزون عند التأكيد عبر نفس بروتوكول التوكنات الذرّي: نية
+        // مُخزَّنة (stockStatus) ثم حجز idempotent لكل سطر، حتى لا يخصم
+        // تأكيدان متزامنان نفس القطعة ولا يضيع خصم عند انقطاع. المخزون
+        // غير الكافي يرفض التأكيد ويبقي الطلب pending بدون سجل زائف.
+        order.stockStatus = 'pending';
+        await order.save();
         for (const item of order.products) {
-          const product = await Product.findById(item.productId);
-          product.stock -= item.quantity;
-          await product.save();
-          logger.info('order_update_stock', { storeId, orderId, productId: product._id, productName: product.productName, stock: product.stock });
+          const reservation = await stockService.reserveLine(item.productId, storeId, order._id, item.quantity);
+          if (!reservation.ok) {
+            await stockService.releaseOrderReservations(order);
+            await Order.updateOne({ _id: order._id, stockStatus: 'pending' }, { $set: { stockStatus: 'none', 'opsFlags.stockError': 'confirm failed: insufficient stock' } });
+            const name = reservation.product?.productName || item.name || String(item.productId);
+            logger.warn('order_confirm_insufficient_stock', { storeId, orderId: order._id, productId: item.productId });
+            return res.status(409).json({ message: `لا يمكن تأكيد الطلب: المخزون غير كافٍ للمنتج ${name}` });
+          }
         }
+        order.status = status;
+        order.stockStatus = 'completed';
+        pushHistory();
+        await order.save();
+        // Tokens stay until the TTL-fenced orphan sweep pulls them, for the
+        // same in-flight-duplicate idempotency reason as in createOrder.
+        logger.info('order_confirm_stock_reserved', { storeId, orderId: order._id });
+      } else {
+        order.status = status;
+        pushHistory();
+        await order.save();
       }
-      await order.save();
       logger.info('order_updated', { storeId, orderId: order._id, status });
 
       // إشعار لصاحب المتجر

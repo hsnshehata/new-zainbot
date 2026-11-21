@@ -74,6 +74,23 @@ const productSchema = new mongoose.Schema({
     ],
     default: []
   },
+  // Durable stock reservation tokens: one entry per order that atomically
+  // decremented stock through the reservation protocol. Reserve and release
+  // are both idempotent against this token, so a crash between the stock
+  // update and the order state transition can be reconciled exactly once.
+  // Tokens are pulled (without a stock change) once the owning order reaches
+  // a terminal state. Entries pre-date no orders: only new-protocol orders
+  // (Order.stockStatus set) ever create one.
+  reservations: {
+    type: [
+      new mongoose.Schema({
+        orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', required: true },
+        qty: { type: Number, required: true, min: 1 },
+        at: { type: Date, default: Date.now }
+      }, { _id: false })
+    ],
+    default: []
+  },
   salesCount: { type: Number, default: 0, min: [0, 'عدد المبيعات يجب أن يكون أكبر من أو يساوي 0'] }, // إضافة salesCount
   isActive: { type: Boolean, default: true }, // إضافة isActive
   createdAt: { type: Date, default: Date.now },

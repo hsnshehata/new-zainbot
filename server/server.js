@@ -787,7 +787,33 @@ function startBackgroundJobs() {
   cleanupOldLogs();
   checkDueReminders();
   startIdeaEvaluationWorker();
+  startOrderOpsSweep();
   return true;
+}
+
+// Durable order reconciliation: releases stock reservations orphaned by an
+// interrupted request (only new-protocol orders with stockStatus 'pending'
+// older than the fencing TTL, and stale reservation tokens), and retries
+// owner notifications flagged notificationPending with claim fencing and an
+// attempt budget. All operations underneath are idempotent, and nothing
+// here ever touches legacy orders or products without reservation tokens.
+function startOrderOpsSweep() {
+  const stockService = require('./services/stockService');
+  const orderOps = require('./services/orderOps');
+  const run = async () => {
+    try {
+      const reconciled = await stockService.reconcileStuckOrders();
+      const tokens = await stockService.reconcileOrphanTokens();
+      const notified = await orderOps.retryPendingNotifications();
+      if (reconciled || tokens || notified.recovered || notified.failed) {
+        logger.info('order_ops_sweep', { reconciled, orphanTokens: tokens, ...notified });
+      }
+    } catch (err) {
+      logger.error('order_ops_sweep_failed', { err: err.message });
+    }
+  };
+  run();
+  setInterval(run, 10 * 60 * 1000).unref();
 }
 
 if (require.main === module && process.env.NODE_ENV !== 'test') {
