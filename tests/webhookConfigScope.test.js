@@ -27,7 +27,9 @@ let bot;
 function reqRes({ userId, role, auth } = {}) {
   const req = {
     user: { userId: String(userId), role: role || 'user' },
-    body: { botId: String(bot._id), url: 'https://example.com/hook' },
+    // Public IP literal: the SSRF guard checks literals without DNS, so the
+    // test does not depend on sandbox name resolution.
+    body: { botId: String(bot._id), url: 'https://93.184.216.34/hook' },
   };
   if (auth) req.auth = auth;
   const res = {

@@ -51,7 +51,9 @@ function reset({ log = true, config = true } = {}) {
     ? {
       _id: LOG_ID,
       webhookId: 'wh-1',
-      url: 'https://owner.example/hook',
+      // Public IP literal: passes the webhookUrlGuard without needing DNS
+      // (axios is stubbed below, so no real traffic ever leaves the test).
+      url: 'https://93.184.216.34/hook',
       event: 'order.created',
       payload: { orderId: 'o-1' },
       responseStatus: 500,
@@ -109,7 +111,7 @@ test('successful redelivery returns success with a sanitized projection', async 
   assert.equal(result.body.data.attempts, 3);
   assert.ok(!('responseBody' in result.body.data), 'raw endpoint body must not ship in the retry response');
   assert.equal(axiosCalls.length, 1);
-  assert.equal(axiosCalls[0][0], 'https://owner.example/hook');
+  assert.equal(axiosCalls[0][0], 'https://93.184.216.34/hook');
   assert.equal(typeof axiosCalls[0][1], 'string');
   assert.equal(axiosCalls[0][2].headers['X-ZainBot-Event'], 'order.created');
   assert.ok(axiosCalls[0][2].headers['X-ZainBot-Signature']);

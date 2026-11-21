@@ -5,6 +5,7 @@ const ApiKey = require('../models/ApiKey');
 const Bot = require('../models/Bot');
 const WebhookConfig = require('../models/WebhookConfig');
 const WebhookLog = require('../models/WebhookLog');
+const { assertPublicHttpsUrl, buildPinnedHttpsAgent } = require('../services/webhookUrlGuard');
 const axios = require('axios');
 const logger = require('../logger');
 
@@ -96,6 +97,13 @@ exports.setWebhookConfig = async (req, res) => {
       : await Bot.exists({ _id: botId, userId: req.user.userId });
     if (!ownedBot) {
       return res.status(404).json({ success: false, message: 'البوت غير موجود.' });
+    }
+
+    // SSRF guard at config time: webhook targets must be public HTTPS.
+    try {
+      await assertPublicHttpsUrl(url);
+    } catch (e) {
+      return res.status(400).json({ success: false, message: e.message });
     }
 
     let config = await WebhookConfig.findOne({ userId: req.user.userId, botId });
@@ -193,6 +201,10 @@ exports.retryWebhook = async (req, res) => {
     let success = false;
 
     try {
+      // Same connect-time-pinned SSRF guard as live dispatch before
+      // re-posting to the saved URL.
+      const httpsAgent = await buildPinnedHttpsAgent(log.url);
+
       const response = await axios.post(log.url, payloadString, {
         headers: {
           'Content-Type': 'application/json',
@@ -200,7 +212,9 @@ exports.retryWebhook = async (req, res) => {
           'X-ZainBot-Event': log.event,
           'User-Agent': 'ZainBot-Webhook-Dispatcher/2.0-Retry'
         },
-        timeout: 8000
+        timeout: 8000,
+        maxRedirects: 0, // never follow redirects to un-validated targets
+        httpsAgent
       });
 
       responseStatus = response.status;
@@ -227,7 +241,7 @@ exports.retryWebhook = async (req, res) => {
 
     // Update log
     log.responseStatus = responseStatus;
-    log.responseBody = responseBody.slice(0, 1500);
+    log.responseBody = responseBody.slice(0, 300); // Minimize stored endpoint output (SSRF readback surface)
     log.success = success;
     log.attempts += 1;
     log.timestamp = new Date();

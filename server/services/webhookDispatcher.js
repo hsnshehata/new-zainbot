@@ -4,6 +4,7 @@ const axios = require('axios');
 const WebhookConfig = require('../models/WebhookConfig');
 const WebhookLog = require('../models/WebhookLog');
 const logger = require('../logger');
+const { buildPinnedHttpsAgent } = require('./webhookUrlGuard');
 
 /**
  * Dispatches an event payload to registered customer webhook URLs.
@@ -43,6 +44,14 @@ async function dispatchWebhook(userId, botId, event, payload) {
       let success = false;
 
       try {
+        // SSRF guard at dispatch time with connect-time pinning: the agent
+        // resolves the hostname itself, vets every answer, and the socket
+        // connects only to a vetted IP (TLS SNI/verification still use the
+        // URL hostname). A config re-pointed at an internal address after
+        // validation, or a DNS flip between validation and connect, is
+        // blocked.
+        const httpsAgent = await buildPinnedHttpsAgent(webhook.url);
+
         const response = await axios.post(webhook.url, payloadString, {
           headers: {
             'Content-Type': 'application/json',
@@ -50,7 +59,9 @@ async function dispatchWebhook(userId, botId, event, payload) {
             'X-ZainBot-Event': event,
             'User-Agent': 'ZainBot-Webhook-Dispatcher/2.0'
           },
-          timeout: 8000 // 8 seconds timeout
+          timeout: 8000, // 8 seconds timeout
+          maxRedirects: 0, // never follow redirects to un-validated targets
+          httpsAgent
         });
 
         responseStatus = response.status;
@@ -73,7 +84,7 @@ async function dispatchWebhook(userId, botId, event, payload) {
         url: webhook.url,
         payload,
         responseStatus,
-        responseBody: responseBody.slice(0, 1500), // Limit storage size
+        responseBody: responseBody.slice(0, 300), // Minimize stored endpoint output (SSRF readback surface)
         success,
         attempts: 1
       });
