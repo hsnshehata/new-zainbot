@@ -22,6 +22,14 @@ exports.getSettings = async (req, res) => {
       return res.status(404).json({ success: false, message: 'البوت غير موجود' });
     }
 
+    // Ownership: some mounts (routes/bots.js, facebook.js, instagram.js)
+    // reach this handler without loadAccessibleBot, so the check must
+    // live here too, same as updateSettings.
+    if (req.user.role !== 'superadmin' && bot.userId.toString() !== req.user.userId.toString()) {
+      logger.warn('⚠️ غير مصرح للمستخدم بعرض إعدادات البوت', { botUserId: bot.userId, requestUserId: req.user.userId });
+      return res.status(403).json({ success: false, message: 'غير مصرح لك بعرض إعدادات هذا البوت' });
+    }
+
     const settings = {
       workingHours: bot.workingHours,
       messagingOptinsEnabled: bot.messagingOptinsEnabled,
