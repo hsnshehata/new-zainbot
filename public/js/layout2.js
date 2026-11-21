@@ -194,7 +194,7 @@
         <div id="coStep2" class="checkout-form hidden">
           <input type="text" id="coName" placeholder="الاسم الكامل" required>
           <input type="email" id="coEmail" placeholder="البريد الإلكتروني (اختياري)">
-          <input type="text" id="coAddress" placeholder="اكتب العنوان بالتفصيل (المدينة/المنطقة/الشارع/المعلم القريب)" required>
+          <input type="text" id="coAddress" placeholder="العنوان بالتفصيل (المدينة/المنطقة/الشارع)" required>
           <small style="color:#6b7280;display:block;margin-top:4px;">العنوان لازم يكون واضح عشان نوصل طلبك بسهولة</small>
           <div class="pay-methods" style="display:grid; gap:6px;">
             <label style="display:flex;align-items:center;gap:8px;"><input type="radio" name="pay" value="cod" checked> الدفع عند الاستلام</label>

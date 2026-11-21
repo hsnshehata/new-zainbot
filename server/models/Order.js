@@ -94,6 +94,16 @@ const orderSchema = new mongoose.Schema({
     changedAt: { type: Date, default: Date.now },
     note: { type: String, default: '' }
   }],
+  // Durable post-commit ops flags: set when a post-save side effect
+  // (stock decrement, owner notification) failed after the order was
+  // already persisted. A reconciliation sweep can find and retry these
+  // instead of the failure disappearing behind the shopper's 201.
+  opsFlags: {
+    stockReconciliationPending: { type: Boolean, default: false },
+    stockError: { type: String, default: '' },
+    notificationPending: { type: Boolean, default: false },
+    notificationError: { type: String, default: '' }
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

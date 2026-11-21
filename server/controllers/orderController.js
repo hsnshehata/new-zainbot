@@ -190,7 +190,13 @@ exports.createOrder = async (req, res) => {
           await product.save();
           logger.info('order_stock_updated', { storeId, productId: product._id, productName: product.productName, stock: product.stock });
         } catch (stockErr) {
-          logger.warn('order_stock_update_failed', { storeId, orderId: newOrder._id, productId: item.productId, err: stockErr.message });
+          // Durable marker for reconciliation, not a silent swallow: the
+          // order carries the failure so a sweep can find and retry it.
+          logger.error('order_stock_update_failed', { storeId, orderId: newOrder._id, productId: item.productId, err: stockErr.message });
+          await Order.updateOne(
+            { _id: newOrder._id },
+            { $set: { 'opsFlags.stockReconciliationPending': true, 'opsFlags.stockError': String(stockErr.message || 'stock update failed').slice(0, 300) } }
+          ).catch((flagErr) => logger.error('order_opsflag_write_failed', { orderId: newOrder._id, err: flagErr.message }));
         }
       }
     }
@@ -215,7 +221,11 @@ exports.createOrder = async (req, res) => {
       await notification.save();
       logger.info('order_notification_created', { storeId, orderId: newOrder._id, userId: store.userId });
     } catch (notifErr) {
-      logger.warn('order_notification_failed', { storeId, orderId: newOrder._id, err: notifErr.message });
+      logger.error('order_notification_failed', { storeId, orderId: newOrder._id, err: notifErr.message });
+      await Order.updateOne(
+        { _id: newOrder._id },
+        { $set: { 'opsFlags.notificationPending': true, 'opsFlags.notificationError': String(notifErr.message || 'notification failed').slice(0, 300) } }
+      ).catch((flagErr) => logger.error('order_opsflag_write_failed', { orderId: newOrder._id, err: flagErr.message }));
     }
 
     // حدد البوت المرتبط بالمتجر (لو لم يُخزَّن botId في المتجر نبحث عنه)

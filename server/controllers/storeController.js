@@ -371,7 +371,8 @@ exports.getStoreByLink = async (req, res) => {
 
   try {
     logger.info('store_fetch_by_link_attempt', { storeLink });
-    const store = await Store.findOne({ storeLink, isActive: true }).select('-userId');
+    // Public response: exclude internal references (owner id, linked bot id)
+    const store = await Store.findOne({ storeLink, isActive: true }).select('-userId -botId');
     if (!store) {
       logger.warn('store_fetch_by_link_not_found', { storeLink });
       return res.status(404).json({ message: 'المتجر غير موجود أو غير مفعل' });
