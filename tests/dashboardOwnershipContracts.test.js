@@ -15,6 +15,7 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 
 process.env.JWT_SECRET = 'test-only-secret-that-is-at-least-32-bytes-long';
+process.env.CREDENTIAL_ENCRYPTION_KEY = 'hex:' + 'c'.repeat(64);
 process.env.NODE_ENV = 'test';
 
 // Stub outbound providers BEFORE the app loads (routes capture them at require).

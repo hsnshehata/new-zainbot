@@ -1,4 +1,5 @@
 const Conversation = require('../models/Conversation');
+const { decryptChannelToken } = require('../services/channelTokenCrypto');
 const Bot = require('../models/Bot');
 const axios = require('axios');
 const { processMessage } = require('../botEngine');
@@ -139,7 +140,7 @@ const handleMessage = async (req, res) => {
         continue;
       }
 
-      const isTokenValid = await validateAccessToken(bot.instagramApiKey);
+      const isTokenValid = await validateAccessToken(decryptChannelToken(bot.instagramApiKey));
       if (!isTokenValid) {
         logger.error('ig_bot_token_invalid', { botId: bot._id });
         continue;
@@ -194,7 +195,7 @@ const handleMessage = async (req, res) => {
             continue;
           }
 
-          const username = await getInstagramUsername(prefixedSenderId, bot.instagramApiKey);
+          const username = await getInstagramUsername(prefixedSenderId, decryptChannelToken(bot.instagramApiKey));
 
           let conversation = await Conversation.findOne({
             botId: bot._id,
@@ -226,7 +227,7 @@ const handleMessage = async (req, res) => {
           if (event.optin && bot.instagramMessagingOptinsEnabled) {
             logger.info('ig_optin', { userId: prefixedSenderId });
             const welcomeMessage = bot.welcomeMessage || 'مرحبًا! كيف يمكنني مساعدتك اليوم؟';
-            await sendMessage(senderId, welcomeMessage, bot.instagramApiKey);
+            await sendMessage(senderId, welcomeMessage, decryptChannelToken(bot.instagramApiKey));
             continue;
           } else if (event.optin && !bot.instagramMessagingOptinsEnabled) {
             logger.warn('ig_optin_disabled', { botId: bot._id });
@@ -236,7 +237,7 @@ const handleMessage = async (req, res) => {
           if (event.reaction && bot.instagramMessageReactionsEnabled) {
             logger.info('ig_reaction', { userId: prefixedSenderId, reaction: event.reaction.reaction });
             const responseText = `شكرًا على تفاعلك (${event.reaction.reaction})!`;
-            await sendMessage(senderId, responseText, bot.instagramApiKey);
+            await sendMessage(senderId, responseText, decryptChannelToken(bot.instagramApiKey));
             continue;
           } else if (event.reaction && !bot.instagramMessageReactionsEnabled) {
             logger.warn('ig_reaction_disabled', { botId: bot._id });
@@ -246,7 +247,7 @@ const handleMessage = async (req, res) => {
           if (event.referral && bot.instagramMessagingReferralsEnabled) {
             logger.info('ig_referral', { userId: prefixedSenderId, referral: event.referral.ref });
             const responseText = `مرحبًا! وصلتني من ${event.referral.source}، كيف يمكنني مساعدتك؟`;
-            await sendMessage(senderId, responseText, bot.instagramApiKey);
+            await sendMessage(senderId, responseText, decryptChannelToken(bot.instagramApiKey));
             continue;
           } else if (event.referral && !bot.instagramMessagingReferralsEnabled) {
             logger.warn('ig_referral_disabled', { botId: bot._id });
@@ -262,7 +263,7 @@ const handleMessage = async (req, res) => {
               logger.info('ig_muted_edit', { userId: prefixedSenderId });
               continue;
             }
-            await sendMessage(senderId, responseText, bot.instagramApiKey);
+            await sendMessage(senderId, responseText, decryptChannelToken(bot.instagramApiKey));
             continue;
           } else if (event.message_edit && !bot.instagramMessageEditsEnabled) {
             logger.warn('ig_message_edit_disabled', { botId: bot._id });
@@ -314,7 +315,7 @@ const handleMessage = async (req, res) => {
             }
 
             logger.info('ig_send_message_attempt', { senderId });
-            await sendMessage(senderId, reply, bot.instagramApiKey);
+            await sendMessage(senderId, reply, decryptChannelToken(bot.instagramApiKey));
           } else {
             logger.warn('ig_unhandled_event', { userId: prefixedSenderId });
           }
@@ -341,7 +342,7 @@ const handleMessage = async (req, res) => {
               continue;
             }
 
-            const username = await getInstagramUsername(prefixedCommenterId, bot.instagramApiKey);
+            const username = await getInstagramUsername(prefixedCommenterId, decryptChannelToken(bot.instagramApiKey));
 
             logger.info('ig_comment_received', { userId: prefixedCommenterId });
 
@@ -381,7 +382,7 @@ const handleMessage = async (req, res) => {
             }
 
             logger.info('ig_reply_comment_attempt', { commentId });
-            await replyToComment(commentId, reply, bot.instagramApiKey);
+            await replyToComment(commentId, reply, decryptChannelToken(bot.instagramApiKey));
           }
         }
       }

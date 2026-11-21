@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { decryptChannelToken } = require('../services/channelTokenCrypto');
 const Bot = require('../models/Bot');
 const Conversation = require('../models/Conversation');
 const { processMessage, processFeedback } = require('../botEngine');
@@ -144,7 +145,7 @@ const handleMessage = async (req, res) => {
           if (webhookEvent.optin && bot.messagingOptinsEnabled) {
             logger.info('fb_optin', { userId: prefixedSenderId });
             const welcomeMessage = bot.welcomeMessage || 'مرحبًا! كيف يمكنني مساعدتك اليوم؟';
-            await sendMessage(senderPsid, welcomeMessage, bot.facebookApiKey);
+            await sendMessage(senderPsid, welcomeMessage, decryptChannelToken(bot.facebookApiKey));
             continue;
           } else if (webhookEvent.optin && !bot.messagingOptinsEnabled) {
             logger.warn('fb_optin_disabled', { botId: bot._id });
@@ -154,7 +155,7 @@ const handleMessage = async (req, res) => {
           if (webhookEvent.reaction && bot.messageReactionsEnabled) {
             logger.info('fb_reaction', { userId: prefixedSenderId, reaction: webhookEvent.reaction.reaction });
             const responseText = `شكرًا على تفاعلك (${webhookEvent.reaction.reaction})!`;
-            await sendMessage(senderPsid, responseText, bot.facebookApiKey);
+            await sendMessage(senderPsid, responseText, decryptChannelToken(bot.facebookApiKey));
             continue;
           } else if (webhookEvent.reaction && !bot.messageReactionsEnabled) {
             logger.warn('fb_reaction_disabled', { botId: bot._id });
@@ -164,7 +165,7 @@ const handleMessage = async (req, res) => {
           if (webhookEvent.referral && bot.messagingReferralsEnabled) {
             logger.info('fb_referral', { userId: prefixedSenderId, referral: webhookEvent.referral.ref });
             const responseText = `مرحبًا! وصلتني من ${webhookEvent.referral.source}، كيف يمكنني مساعدتك؟`;
-            await sendMessage(senderPsid, responseText, bot.facebookApiKey);
+            await sendMessage(senderPsid, responseText, decryptChannelToken(bot.facebookApiKey));
             continue;
           } else if (webhookEvent.referral && !bot.messagingReferralsEnabled) {
             logger.warn('fb_referral_disabled', { botId: bot._id });
@@ -181,7 +182,7 @@ const handleMessage = async (req, res) => {
               logger.info('fb_muted_edit', { userId: prefixedSenderId });
               continue;
             }
-            await sendMessage(senderPsid, responseText, bot.facebookApiKey);
+            await sendMessage(senderPsid, responseText, decryptChannelToken(bot.facebookApiKey));
             continue;
           } else if (webhookEvent.message_edit && !bot.messageEditsEnabled) {
             logger.warn('fb_message_edit_disabled', { botId: bot._id });
@@ -225,7 +226,7 @@ const handleMessage = async (req, res) => {
               logger.info('fb_muted', { userId: prefixedSenderId });
               continue;
             }
-            await sendMessage(senderPsid, responseText, bot.facebookApiKey);
+            await sendMessage(senderPsid, responseText, decryptChannelToken(bot.facebookApiKey));
           } else if (webhookEvent.response_feedback) {
             const feedbackData = webhookEvent.response_feedback;
             const mid = feedbackData.mid;
@@ -321,7 +322,7 @@ const handleMessage = async (req, res) => {
 
               if (reply) {
                 logger.info('fb_comment_keyword_reply', { commentId, reply });
-                await replyToComment(commentId, reply, bot.facebookApiKey);
+                await replyToComment(commentId, reply, decryptChannelToken(bot.facebookApiKey));
               } else {
                 logger.info('fb_comment_no_keyword_match', { commentId });
               }
@@ -333,7 +334,7 @@ const handleMessage = async (req, res) => {
 
               // 1. Public Reply
               if (bot.privateReplyMessage) {
-                await replyToComment(commentId, bot.privateReplyMessage, bot.facebookApiKey);
+                await replyToComment(commentId, bot.privateReplyMessage, decryptChannelToken(bot.facebookApiKey));
               }
 
               // 2. Private AI Reply
@@ -341,7 +342,7 @@ const handleMessage = async (req, res) => {
 
               if (responseText) {
                 try {
-                  await sendPrivateReply(commentId, responseText, bot.facebookApiKey);
+                  await sendPrivateReply(commentId, responseText, decryptChannelToken(bot.facebookApiKey));
                 } catch (err) {
                   logger.error('fb_private_reply_failed', { err: err.message });
                   // Fallback or log?
@@ -356,7 +357,7 @@ const handleMessage = async (req, res) => {
               logger.info('fb_comment_muted', { userId: prefixedCommenterId });
               continue;
             }
-            await replyToComment(commentId, responseText, bot.facebookApiKey);
+            await replyToComment(commentId, responseText, decryptChannelToken(bot.facebookApiKey));
           } else {
             logger.warn('fb_comment_not_add', { change });
           }

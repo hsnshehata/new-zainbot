@@ -1,12 +1,16 @@
 // server/models/Bot.js
 const mongoose = require('mongoose');
+const { encryptChannelToken } = require('../services/channelTokenCrypto');
 
 const botSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  facebookApiKey: { type: String, trim: true },
+  // Channel tokens are encrypted at rest by the setter (CREDENTIAL_ENCRYPTION_KEY).
+  // Reads stay ciphertext: every use site must call decryptChannelToken().
+  // Legacy plaintext rows keep working until the owner's next save.
+  facebookApiKey: { type: String, trim: true, set: encryptChannelToken },
   facebookPageId: { type: String, trim: true },
-  instagramApiKey: { type: String, trim: true },
+  instagramApiKey: { type: String, trim: true, set: encryptChannelToken },
   instagramPageId: { type: String, trim: true },
   // إضافة حقول واتساب
   whatsappBusinessAccountId: { type: String, trim: true },
@@ -140,6 +144,23 @@ const botSchema = new mongoose.Schema({
   backupBaseUrl: { type: String, trim: true },
   archivedAt: { type: Date, default: null, index: true },
   createdAt: { type: Date, default: Date.now },
+});
+
+// Lazy migration: a save that leaves the token paths unmodified would keep
+// legacy plaintext at rest (setters only run on modified paths). Re-assign
+// any plaintext token so its setter runs on this save too.
+botSchema.pre('save', function encryptLegacyChannelTokens(next) {
+  try {
+    for (const path of ['facebookApiKey', 'instagramApiKey']) {
+      const value = this.get(path);
+      if (typeof value === 'string' && value.trim() !== '') {
+        this.set(path, value); // no-op for ciphertext, encrypts plaintext
+      }
+    }
+    next();
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = mongoose.model('Bot', botSchema);

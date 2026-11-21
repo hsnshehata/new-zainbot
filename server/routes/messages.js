@@ -1,4 +1,5 @@
 const express = require("express");
+const { decryptChannelToken } = require('../services/channelTokenCrypto');
 const mongoose = require("mongoose");
 const router = express.Router();
 const Conversation = require("../models/Conversation");
@@ -35,20 +36,20 @@ async function deliverManualReply(conversation, text) {
 
   if (!cleanUserId) return false;
 
-  if (conversation.channel === "facebook" && bot.facebookApiKey) {
+  if (conversation.channel === "facebook" && decryptChannelToken(bot.facebookApiKey)) {
     const response = await axios.post(
       "https://graph.facebook.com/v22.0/me/messages",
       { recipient: { id: cleanUserId }, message: { text } },
-      { params: { access_token: bot.facebookApiKey }, timeout: 15_000 }
+      { params: { access_token: decryptChannelToken(bot.facebookApiKey) }, timeout: 15_000 }
     );
     return Boolean(response.data?.recipient_id || response.data?.message_id);
   }
 
-  if (conversation.channel === "instagram" && bot.instagramApiKey) {
+  if (conversation.channel === "instagram" && decryptChannelToken(bot.instagramApiKey)) {
     const response = await axios.post(
       "https://graph.instagram.com/v22.0/me/messages",
       { recipient: { id: cleanUserId }, message: { text } },
-      { params: { access_token: bot.instagramApiKey }, timeout: 15_000 }
+      { params: { access_token: decryptChannelToken(bot.instagramApiKey) }, timeout: 15_000 }
     );
     return Boolean(response.data?.recipient_id || response.data?.message_id);
   }
@@ -61,9 +62,9 @@ async function getSocialUsername(userId, bot, platform) {
   try {
     let accessToken =
       platform === "facebook"
-        ? bot.facebookApiKey
+        ? decryptChannelToken(bot.facebookApiKey)
         : platform === "instagram"
-        ? bot.instagramApiKey
+        ? decryptChannelToken(bot.instagramApiKey)
         : bot.whatsappApiKey;
     let apiUrl =
       platform === "facebook"
@@ -89,7 +90,7 @@ async function getSocialUsername(userId, bot, platform) {
       if (platform === "facebook") {
         // جرب إنستجرام كمحاولة ثانية
         logger.info("📋 محاولة جلب الاسم باستخدام توكن إنستجرام كبديل...");
-        accessToken = bot.instagramApiKey;
+        accessToken = decryptChannelToken(bot.instagramApiKey);
         apiUrl = "https://graph.instagram.com/v22.0";
         attempt = "إنستجرام (المحاولة الثانية)";
         if (!accessToken) {
@@ -143,7 +144,7 @@ async function getSocialUsername(userId, bot, platform) {
       if (platform === "facebook" && attempt === "فيسبوك (المحاولة الأولى)") {
         // جرب إنستجرام كمحاولة ثانية
         logger.info("📋 محاولة جلب الاسم باستخدام توكن إنستجرام كبديل...");
-        accessToken = bot.instagramApiKey;
+        accessToken = decryptChannelToken(bot.instagramApiKey);
         apiUrl = "https://graph.instagram.com/v22.0";
         attempt = "إنستجرام (المحاولة الثانية)";
         if (!accessToken) {
@@ -259,9 +260,9 @@ router.get("/:botId", authenticate, loadAccessibleBot, async (req, res) => {
       result.conversations.map(async (conv) => {
         let username = conv.username || conv.userId;
         if (!conv.username || conv.username === "مستخدم فيسبوك" || conv.username === "مستخدم إنستجرام") {
-          if (type === "facebook" && bot.facebookApiKey) {
+          if (type === "facebook" && decryptChannelToken(bot.facebookApiKey)) {
             username = await getSocialUsername(conv.userId, bot, "facebook");
-          } else if (type === "instagram" && bot.instagramApiKey) {
+          } else if (type === "instagram" && decryptChannelToken(bot.instagramApiKey)) {
             username = await getSocialUsername(conv.userId, bot, "instagram");
           } else if (type === "whatsapp" && bot.whatsappApiKey) {
             username = await getSocialUsername(conv.userId, bot, "whatsapp");
