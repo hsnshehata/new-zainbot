@@ -1038,6 +1038,11 @@
                 <div class="progress-bar-fill" id="billingQuotaFill"></div>
               </div>
             </div>
+            <div id="aiUsageBlock" style="margin-top:16px; border-top:1px solid var(--glass-border); padding-top:12px;" hidden>
+              <p style="color:var(--text-muted); font-size:13px; margin-bottom:4px;"><span data-i18n="ai_usage_title">AI usage (last 30 days)</span>: <strong id="aiUsageRequests" style="color:#fff;">—</strong> <span data-i18n="ai_usage_requests">requests</span> · <strong id="aiUsageTokens" style="color:#fff;">—</strong> <span data-i18n="ai_usage_tokens">tokens</span></p>
+              <p id="aiUsageModels" style="color:var(--text-muted); font-size:12px; margin-bottom:4px;"></p>
+              <p style="color:var(--text-muted); font-size:11px;" data-i18n="ai_usage_caveat">Real recorded counts. Exact cost is unknown because provider unit rates are not tracked.</p>
+            </div>
           </div>
 
           <div class="db-responsive-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
@@ -2373,6 +2378,11 @@
               <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_chat_orders">Chat orders</div><div id="ovChatOrders" style="font-size:26px; font-weight:700; color:var(--orange);">—</div></div>
               <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_active_sessions">Active impersonations</div><div id="ovActiveSessions" style="font-size:26px; font-weight:700; color:var(--red);">—</div></div>
               <div class="glass-card" style="padding:18px; text-align:center;"><div style="font-size:12px; color:var(--text-muted);" data-i18n="ov_audit_events">Audit events</div><div id="ovAuditEvents" style="font-size:26px; font-weight:700; color:var(--text-muted);">—</div></div>
+            </div>
+            <div class="glass-card" style="margin-top:16px; padding:18px;">
+              <h3 style="font-size:16px; font-weight:700; margin-bottom:6px;"><i class="fas fa-link" style="color:var(--orange);"></i> <span data-i18n="admin_ownership_title">Chat page ownership issues</span></h3>
+              <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;" data-i18n="admin_ownership_desc">Pages whose owner no longer matches the agent's account, or whose agent was deleted. Read-only; repairs are manual.</p>
+              <div id="adminOwnershipIssues" style="font-size:13px; color:var(--text-muted);">—</div>
             </div>
           </div>
 

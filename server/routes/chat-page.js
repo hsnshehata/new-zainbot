@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { createChatPage, updateChatPage, getChatPageByLinkId, getChatPageByBotId, getPublicLinkIdByBot } = require('../controllers/chatPageController');
+const { createChatPage, updateChatPage, getChatPageByLinkId, getChatPageByBotId, getPublicLinkIdByBot, getChatPageOwnershipIssues } = require('../controllers/chatPageController');
 const authenticate = require('../middleware/authenticate');
+const { requireDirectSuperadmin } = require('./AiControlPlane');
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -18,6 +19,9 @@ const upload = multer({
 });
 
 // Routes
+// Admin-only ownership audit (declared before /:linkId so 'admin' is never
+// parsed as a link id).
+router.get('/admin/ownership-issues', authenticate, requireDirectSuperadmin, getChatPageOwnershipIssues);
 router.post('/', authenticate, createChatPage);
 router.put('/:id', authenticate, upload.single('logo'), updateChatPage);
 router.get('/public/bot/:botId', getPublicLinkIdByBot);

@@ -1,6 +1,7 @@
 // server/services/aiFailover.js
 const OpenAI = require('openai');
 const axios = require('axios');
+const crypto = require('crypto');
 const logger = require('../logger');
 const User = require('../models/User');
 const AiRoutingPolicy = require('../models/AiRoutingPolicy');
@@ -187,7 +188,12 @@ async function getAiCompletion(options, bot = null, useBackup = false) {
   }
 
   // Iterate over global admin keys and failover if they encounter errors
-  for (const keyDoc of globalKeys) {
+  const requestId = crypto.randomUUID();
+  let runningAttempt = 0;
+  for (let keyIndex = 0; keyIndex < globalKeys.length; keyIndex += 1) {
+    const keyDoc = globalKeys[keyIndex];
+    runningAttempt += 1;
+    const startedAt = Date.now();
     try {
       logger.info(`🤖 Attempting completion using ${keyDoc.source} key: ${keyDoc.name} (${keyDoc.provider})`);
       let response;
@@ -211,6 +217,18 @@ async function getAiCompletion(options, bot = null, useBackup = false) {
       }
 
       await keyDoc.markSuccess();
+      recordLegacyUsage({
+        requestId,
+        bot,
+        keyDoc,
+        options,
+        response,
+        attempt: runningAttempt,
+        success: true,
+        latencyMs: Date.now() - startedAt,
+        errorClass: 'none',
+        fallbackUsed: keyIndex > 0,
+      });
 
       return response;
     } catch (err) {
@@ -218,12 +236,80 @@ async function getAiCompletion(options, bot = null, useBackup = false) {
 
       // Record the failure and proceed to the next key in the loop
       await keyDoc.markFailure(err.code || err.message);
+      recordLegacyUsage({
+        requestId,
+        bot,
+        keyDoc,
+        options,
+        response: null,
+        attempt: runningAttempt,
+        success: false,
+        latencyMs: Date.now() - startedAt,
+        errorClass: classifyLegacyError(err),
+        fallbackUsed: keyIndex > 0,
+      });
     }
   }
 
   // If all keys fail
   logger.error('❌ All active global provider keys have failed.');
   throw new Error('جميع مفاتيح التشغيل معطلة حالياً، يرجى المحاولة لاحقاً');
+}
+
+// Real-usage ledger for the legacy global-key path (metrics only; never
+// blocks or alters the completion). Skips silently when no owning tenant is
+// known or the write itself fails.
+function legacyTokenUsage(response) {
+  const usage = response?.usage || {};
+  const inputTokens = Number(usage.prompt_tokens ?? usage.input_tokens) || 0;
+  const outputTokens = Number(usage.completion_tokens ?? usage.output_tokens) || 0;
+  const totalTokens = Number(usage.total_tokens) || (inputTokens + outputTokens);
+  return { inputTokens, outputTokens, totalTokens };
+}
+
+function classifyLegacyError(err) {
+  const status = Number(err?.status || err?.statusCode || err?.response?.status) || 0;
+  const code = String(err?.code || '');
+  if (status === 429 || code === 'rate_limit_exceeded') return 'rate_limit';
+  if (status === 401 || status === 403) return 'authentication';
+  if (status === 402 || code === 'insufficient_quota') return 'quota_exhausted';
+  if (status >= 500) return 'provider_unavailable';
+  if (code === 'ETIMEDOUT' || code === 'ECONNABORTED' || /timeout/i.test(String(err?.message || ''))) return 'timeout';
+  if (code === 'ENOTFOUND' || code === 'ECONNREFUSED' || code === 'ECONNRESET') return 'network';
+  return 'unknown';
+}
+
+async function recordLegacyUsage({ requestId, bot, keyDoc, options, response, attempt, success, latencyMs, errorClass, fallbackUsed }) {
+  try {
+    const userId = bot?.userId;
+    if (!userId) return;
+    const { inputTokens, outputTokens, totalTokens } = legacyTokenUsage(response);
+    await AiUsageEvent.create({
+      requestId,
+      userId,
+      botId: bot?._id || null,
+      credentialId: null,
+      modelCatalogId: null,
+      provider: ['openai', 'google', 'gemini', 'anthropic', 'openrouter', 'custom'].includes(keyDoc.provider)
+        ? keyDoc.provider
+        : 'custom',
+      modelId: String(keyDoc.defaultModel || options.model || 'unknown'),
+      tier: 'legacy',
+      useCase: 'general',
+      attempt,
+      success,
+      inputTokens,
+      outputTokens,
+      totalTokens,
+      latencyMs,
+      errorClass,
+      retryable: !success,
+      fallbackUsed,
+      source: 'legacy-global-key',
+    });
+  } catch (err) {
+    logger.warn('ai_legacy_usage_record_failed', { err: err.message });
+  }
 }
 
 module.exports = {

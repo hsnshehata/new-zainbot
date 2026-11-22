@@ -602,6 +602,15 @@
       label_instruction_content: 'Instruction',
       instruction_content_placeholder: 'For example, always greet customers in Egyptian Arabic and never quote prices outside the catalog.',
       training_empty_general: 'No general instructions yet. Add the directives that define your agent\'s identity.',
+      ai_usage_title: 'AI usage (last 30 days)',
+      ai_usage_requests: 'requests',
+      ai_usage_tokens: 'tokens',
+      ai_usage_caveat: 'Real recorded counts. Exact cost is unknown because provider unit rates are not tracked.',
+      admin_ownership_title: 'Chat page ownership issues',
+      admin_ownership_desc: 'Pages whose owner no longer matches the agent\'s account, or whose agent was deleted. Read-only; repairs are manual.',
+      admin_ownership_none: 'No ownership issues found.',
+      admin_ownership_mismatched: 'Owner mismatch',
+      admin_ownership_orphan: 'Agent deleted',
       ov_users_total: 'Total users',
       ov_users_active: 'Active users',
       ov_bots_total: 'Total agents',
@@ -1701,6 +1710,15 @@
       label_instruction_content: 'التعليمات',
       instruction_content_placeholder: 'مثال: رحب بالعميل دائماً بالعامية المصرية ولا تذكر أسعاراً خارج الكتالوج.',
       training_empty_general: 'لا توجد تعليمات عامة بعد. أضف التوجيهات التي تحدد هوية الوكيل.',
+      ai_usage_title: 'استخدام الذكاء الاصطناعي (آخر 30 يوم)',
+      ai_usage_requests: 'طلب',
+      ai_usage_tokens: 'رمز',
+      ai_usage_caveat: 'أعداد حقيقية مسجلة. التكلفة الدقيقة غير معروفة لأن أسعار الوحدات لدى المزود غير متتبعة.',
+      admin_ownership_title: 'مشاكل ملكية صفحات الدردشة',
+      admin_ownership_desc: 'صفحات مالكها لا يطابق حساب الوكيل، أو وكيلها محذوف. للعرض فقط؛ الإصلاح يدوي.',
+      admin_ownership_none: 'لا توجد مشاكل ملكية.',
+      admin_ownership_mismatched: 'عدم تطابق المالك',
+      admin_ownership_orphan: 'الوكيل محذوف',
       ov_users_total: 'إجمالي المستخدمين',
       ov_users_active: 'مستخدمون نشطون',
       ov_bots_total: 'إجمالي الوكلاء',
@@ -2939,6 +2957,29 @@
       document.getElementById('billingQuotaText').textContent = currentUser.subscriptionTier === 'unlimited' ? `${used} / ${(translations[currentLanguage] || translations.en).quota_unlimited}` : `${used} / ${quotaMax}`;
       document.getElementById('billingQuotaFill').style.width = pct + '%';
       renderAccountMenu();
+
+      // Real recorded AI usage for this tenant (metrics only; failure to
+      // load must never break the overview).
+      try {
+        const usage = await dashboardRequest('/api/ai-usage/summary?days=30');
+        if (run === overviewRun && usage && usage.success) {
+          const block = document.getElementById('aiUsageBlock');
+          if (block) {
+            block.hidden = false;
+            document.getElementById('aiUsageRequests').textContent = usage.totals?.requests ?? 0;
+            document.getElementById('aiUsageTokens').textContent = usage.totals?.totalTokens ?? 0;
+            const modelsEl = document.getElementById('aiUsageModels');
+            if (modelsEl) {
+              modelsEl.textContent = (usage.byModel || [])
+                .slice(0, 4)
+                .map((m) => `${m.modelId} (${m.provider}): ${m.requests}`)
+                .join(' · ');
+            }
+          }
+        }
+      } catch (usageErr) {
+        console.error('ai_usage_overview_failed', usageErr);
+      }
     } catch (e) {
       console.error(e);
       if (run !== overviewRun || String(currentBot?._id) !== botId) return;
@@ -6565,6 +6606,30 @@
       set('ovAuditEvents', stats.auditEvents ?? 0);
     } catch (e) {
       console.error(e);
+    }
+
+    // Read-only chat-page ownership audit (direct superadmin endpoint).
+    const issuesEl = document.getElementById('adminOwnershipIssues');
+    if (issuesEl) {
+      try {
+        const res = await apiFetch('/api/chat-page/admin/ownership-issues');
+        const t = translations[currentLanguage] || translations.en;
+        if (res && res.success) {
+          const lines = [];
+          for (const item of res.mismatched || []) {
+            lines.push(`<div style="padding:6px 0; border-bottom:1px solid var(--glass-border);"><span style="color:var(--orange); font-weight:600;">${escapeHtml(t.admin_ownership_mismatched)}</span> — ${escapeHtml(item.linkId)} → ${escapeHtml(item.botName || String(item.botId))}</div>`);
+          }
+          for (const item of res.orphans || []) {
+            lines.push(`<div style="padding:6px 0; border-bottom:1px solid var(--glass-border);"><span style="color:var(--red); font-weight:600;">${escapeHtml(t.admin_ownership_orphan)}</span> — ${escapeHtml(item.linkId)} (${escapeHtml(String(item.pageId))})</div>`);
+          }
+          issuesEl.innerHTML = lines.length > 0 ? lines.join('') : escapeHtml(t.admin_ownership_none);
+        } else {
+          issuesEl.textContent = '—';
+        }
+      } catch (issueErr) {
+        console.error('admin_ownership_issues_failed', issueErr);
+        issuesEl.textContent = '—';
+      }
     }
   }
 

@@ -39,15 +39,25 @@ const aiUsageEventSchema = new mongoose.Schema({
     ref: 'AiRoutingPolicy',
     default: null,
   },
+  // Nullable: legacy global-key completions (outside the Auto control
+  // plane) carry no credential/catalog ids.
   credentialId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'AiCredential',
-    required: true,
+    default: null,
   },
   modelCatalogId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'AiModelCatalog',
-    required: true,
+    default: null,
+  },
+  // Which dispatch path produced this event: 'auto-orchestrator' (default
+  // null for older rows) or 'legacy-global-key'.
+  source: {
+    type: String,
+    trim: true,
+    maxlength: 40,
+    default: null,
   },
   provider: {
     type: String,

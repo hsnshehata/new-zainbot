@@ -448,3 +448,59 @@ exports.getPublicLinkIdByBot = async (req, res) => {
 // submitFeedback was removed: it was unreachable dead code whose payload
 // shape could never satisfy the Feedback schema (missing type/userMessage).
 // Live feedback flows through POST /api/feedback in server.js.
+
+// Admin-only surface: chat pages whose owning user no longer matches the
+// bot's tenant, plus pages pointing at deleted bots. Read-only reporting;
+// repairs are explicit one-off operations, never automatic.
+exports.getChatPageOwnershipIssues = async (req, res) => {
+  try {
+    const pages = await ChatPage.find({})
+      .select('userId botId linkId title createdAt')
+      .lean();
+    const botIds = [...new Set(pages.map((page) => String(page.botId)))];
+    const bots = await Bot.find({ _id: { $in: botIds } })
+      .select('userId name archivedAt')
+      .lean();
+    const botById = new Map(bots.map((bot) => [String(bot._id), bot]));
+
+    const mismatched = [];
+    const orphans = [];
+    for (const page of pages) {
+      const bot = botById.get(String(page.botId));
+      if (!bot) {
+        orphans.push({
+          pageId: page._id,
+          linkId: page.linkId,
+          title: page.title,
+          pageUserId: page.userId,
+          botId: page.botId,
+          createdAt: page.createdAt,
+        });
+        continue;
+      }
+      if (String(bot.userId) !== String(page.userId)) {
+        mismatched.push({
+          pageId: page._id,
+          linkId: page.linkId,
+          title: page.title,
+          pageUserId: page.userId,
+          botId: page.botId,
+          botUserId: bot.userId,
+          botName: bot.name || null,
+          createdAt: page.createdAt,
+        });
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      totalPages: pages.length,
+      mismatched,
+      orphans,
+      counts: { mismatched: mismatched.length, orphans: orphans.length },
+    });
+  } catch (err) {
+    logger.error('chat_page_ownership_issues_error', { err: err.message, stack: err.stack });
+    res.status(500).json({ success: false, message: 'خطأ في فحص ملكية صفحات الدردشة' });
+  }
+};

@@ -400,6 +400,7 @@ app.use('/api/rules', rulesRoutes);
 app.use('/api/bot', botRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/chat-page', chatPageRoutes);
+app.use('/api/ai-usage', require('./routes/aiUsage'));
 app.use('/api/messages', messagesRoutes);
 app.use('/api/instagram', instagramAuthRoutes);
 app.use('/api/notifications', notificationRoutes);
