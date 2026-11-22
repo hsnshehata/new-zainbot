@@ -2,6 +2,7 @@
 (function(){
   window.StoreLandingTemplates = window.StoreLandingTemplates || {};
   const id = 'layout1';
+  const S = window.StorefrontSafe;
   // مرجع المتجر عشان السلة واللينكات
   let STORE_REF = null;
   // حالة الواجهة (بحث/مفضلة)
@@ -120,19 +121,19 @@
       const price = (p.hasOffer && p.discountedPrice) ? p.discountedPrice : p.price;
       total += Number(price||0) * qty;
       const opts = Array.isArray(selectedOptions) && selectedOptions.length
-        ? `<div style="color:#6b7280;font-size:12px;margin-top:2px;">${selectedOptions.map(o=>`${o.name}: ${o.value}`).join(' ، ')}</div>`
+        ? `<div style="color:#6b7280;font-size:12px;margin-top:2px;">${selectedOptions.map(o=>`${S.esc(o.name)}: ${S.esc(o.value)}`).join(' ، ')}</div>`
         : '';
       return `
-        <div class="cart-item" data-key="${id}" data-id="${p._id}">
-          <img src="${p.imageUrl||'/icons/icon-512.png'}" alt="${p.productName}">
+        <div class="cart-item" data-key="${S.esc(id)}" data-id="${S.esc(p._id)}">
+          <img src="${S.img(p.imageUrl,'/icons/icon-512.png')}" alt="${S.esc(p.productName)}">
           <div>
-            <div style="font-weight:700;">${p.productName}</div>
+            <div style="font-weight:700;">${S.esc(p.productName)}</div>
             ${opts}
-            <div style="color:var(--primary-color);font-weight:800;">${price} <small>${p.currency||''}</small></div>
+            <div style="color:var(--primary-color);font-weight:800;">${S.esc(price)} <small>${S.esc(p.currency||'')}</small></div>
           </div>
           <div class="qty">
             <button data-act="dec">-</button>
-            <span class="q">${qty}</span>
+            <span class="q">${S.esc(qty)}</span>
             <button data-act="inc">+</button>
             <button data-act="rm" title="إزالة" style="margin-inline-start:8px">✕</button>
           </div>
@@ -333,26 +334,26 @@
   // دالة مساعدة لبناء بطاقة منتج
   function productCard(p, enableCart){
     const price = p.hasOffer && p.discountedPrice ? p.discountedPrice : p.price;
-    const priceHtml = `<div class="price">${price} <span style="font-size:12px;color:#6b7280">${p.currency||''}</span></div>`;
+    const priceHtml = `<div class="price">${S.esc(price)} <span style="font-size:12px;color:#6b7280">${S.esc(p.currency||'')}</span></div>`;
     const offerHtml = p.hasOffer && p.originalPrice ? `<div class="badge" style="background:rgba(220,38,38,.08);color:#b91c1c;">عرض</div>` : '';
     const fav = isFavorite(p._id);
     return `
-      <div class="product-card" aria-label="${p.productName}" data-pid="${p._id}">
-        <a class="image" href="?product=${p._id}" data-view="${p._id}" aria-label="عرض سريع">
-          <img src="${p.imageUrl||'/icons/icon-512.png'}" alt="${p.productName}">
-          <button class="fav-toggle ${fav?'active':''}" title="أضف للمفضلة" aria-label="أضف للمفضلة" data-fav="${p._id}"><i class="${fav?'fa-solid fa-heart':'fa-regular fa-heart'}"></i></button>
+      <div class="product-card" aria-label="${S.esc(p.productName)}" data-pid="${S.esc(p._id)}">
+        <a class="image" href="?product=${S.esc(p._id)}" data-view="${S.esc(p._id)}" aria-label="عرض سريع">
+          <img src="${S.img(p.imageUrl,'/icons/icon-512.png')}" alt="${S.esc(p.productName)}">
+          <button class="fav-toggle ${fav?'active':''}" title="أضف للمفضلة" aria-label="أضف للمفضلة" data-fav="${S.esc(p._id)}"><i class="${fav?'fa-solid fa-heart':'fa-regular fa-heart'}"></i></button>
         </a>
         <div class="content">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-            <div style="font-weight:700;">${p.productName}</div>
+            <div style="font-weight:700;">${S.esc(p.productName)}</div>
             ${offerHtml}
           </div>
           ${priceHtml}
-          ${p.description?`<div class="desc">${p.description}</div>`:''}
+          ${p.description?`<div class="desc">${S.esc(p.description)}</div>`:''}
           <div class="actions">
-            ${enableCart?`<button class="btn btn-primary" data-add="${p._id}"><i class=\"fa-solid fa-cart-plus\"></i> أضف للسلة</button>`:''}
-            <button class="icon-btn" title="عرض المنتج" aria-label="عرض المنتج" data-view="${p._id}"><i class="fa-regular fa-eye"></i></button>
-            <button class="icon-btn" title="مشاركة" aria-label="مشاركة" data-share="${p._id}"><i class="fa-solid fa-share-nodes"></i></button>
+            ${enableCart?`<button class="btn btn-primary" data-add="${S.esc(p._id)}"><i class=\"fa-solid fa-cart-plus\"></i> أضف للسلة</button>`:''}
+            <button class="icon-btn" title="عرض المنتج" aria-label="عرض المنتج" data-view="${S.esc(p._id)}"><i class="fa-regular fa-eye"></i></button>
+            <button class="icon-btn" title="مشاركة" aria-label="مشاركة" data-share="${S.esc(p._id)}"><i class="fa-solid fa-share-nodes"></i></button>
           </div>
         </div>
       </div>`;
@@ -366,7 +367,7 @@
       ['youtube','fa-brands fa-youtube'],
       ['tiktok','fa-brands fa-tiktok'],
       ['linkedin','fa-brands fa-linkedin']
-    ].filter(([k])=>social?.[k]).map(([k,icon])=>`<a href="${social[k]}" target="_blank" rel="noopener" aria-label="${k}"><i class="${icon}"></i></a>`).join('');
+    ].filter(([k])=>social?.[k]).map(([k,icon])=>`<a href="${S.url(social[k],'#')}" target="_blank" rel="noopener" aria-label="${k}"><i class="${icon}"></i></a>`).join('');
     return items ? `<div class="social">${items}</div>` : '';
   }
 
@@ -375,8 +376,8 @@
     <header class="header-classic">
       <div class="wrap">
         <div class="brand">
-          ${store.storeLogoUrl?`<img src="${store.storeLogoUrl}" alt="${store.storeName}">`:''}
-          <span>${store.storeName||''}</span>
+          ${store.storeLogoUrl?`<img src="${S.img(store.storeLogoUrl)}" alt="${S.esc(store.storeName)}">`:''}
+          <span>${S.esc(store.storeName||'')}</span>
         </div>
         <nav class="nav" aria-label="قائمة التنقل">
           <a href="#featured">الرئيسية</a>
@@ -402,15 +403,15 @@
       const p = products?.find(x => String(x._id) === String(b.productId));
       if (p){
         ctas = `
-          <a class="cta" href="?product=${p._id}" data-view="${p._id}"><i class="fa-regular fa-eye"></i> عرض</a>
-          ${STORE_REF?.adminConfig?.enableCart?`<button class="cta" data-add="${p._id}" style="display:inline-flex;align-items:center;gap:6px;"><i class=\"fa-solid fa-cart-plus\"></i> أضف للسلة</button>`:''}
+          <a class="cta" href="?product=${S.esc(p._id)}" data-view="${S.esc(p._id)}"><i class="fa-regular fa-eye"></i> عرض</a>
+          ${STORE_REF?.adminConfig?.enableCart?`<button class="cta" data-add="${S.esc(p._id)}" style="display:inline-flex;align-items:center;gap:6px;"><i class=\"fa-solid fa-cart-plus\"></i> أضف للسلة</button>`:''}
         `;
       }
     } else if (b.linkType === 'external' && b.externalUrl){
-      ctas = `<a class="cta" href="${b.externalUrl}" target="_blank" rel="noopener">انتقل إلى</a>`;
+      ctas = `<a class="cta" href="${S.url(b.externalUrl,'#')}" target="_blank" rel="noopener">انتقل إلى</a>`;
     }
-    const text = b.text ? `<div class="banner-text">${b.text}</div>` : '';
-    const img = b.imageUrl ? `<img class="banner-img" src="${b.imageUrl}" alt="بنر">` : '';
+    const text = b.text ? `<div class="banner-text">${S.esc(b.text)}</div>` : '';
+    const img = b.imageUrl ? `<img class="banner-img" src="${S.img(b.imageUrl)}" alt="بنر">` : '';
     return `
       <div class="banner-classic">
         <div class="wrap">
@@ -425,9 +426,9 @@
 
   function renderCategoriesBar(categories, admin){
     const allPill = `<button class="pill active" data-cid="all"><i class="fa-regular fa-square"></i> الكل</button>`;
-    const pills = categories.map(c=>`<button class="pill" data-cid="${c._id}"><i class="fa-regular fa-folder"></i> ${c.name}</button>`).join('');
+    const pills = categories.map(c=>`<button class="pill" data-cid="${S.esc(c._id)}"><i class="fa-regular fa-folder"></i> ${S.esc(c.name)}</button>`).join('');
     const extra = admin?.extraSection?.enabled && admin.extraSection.url && admin.extraSection.label
-      ? `<a class="pill" href="${admin.extraSection.url}" target="_blank" rel="noopener">${admin.extraSection.label}</a>` : '';
+      ? `<a class="pill" href="${S.url(admin.extraSection.url,'#')}" target="_blank" rel="noopener">${S.esc(admin.extraSection.label)}</a>` : '';
     return `<div class="categories-bar"><div class="wrap">${allPill}${pills}${extra}</div></div>`;
   }
 
@@ -437,33 +438,33 @@
   }
 
   function renderCategoriesShow(categories){
-    const list = categories.slice(0,6).map(c=>`<div class="cat" data-cid="${c._id}" role="link" tabindex="0" aria-label="${c.name}"><span>${c.name}</span></div>`).join('');
+    const list = categories.slice(0,6).map(c=>`<div class="cat" data-cid="${S.esc(c._id)}" role="link" tabindex="0" aria-label="${S.esc(c.name)}"><span>${S.esc(c.name)}</span></div>`).join('');
     return `<section id="cats" class="section"><h2 class="section-title" style="text-align:center;">تصفح حسب القسم</h2><div class="categories-show">${list}</div></section>`;
   }
 
   function renderAbout(store){
     // إزالة أيقونات السوشيال من هنا بناءً على الطلب — ستظهر فقط في الفوتر
-    return `<section id="about" class="about-classic"><div class="wrap"><h2 class="section-title">عن المتجر</h2><p style="line-height:1.8;color:#374151;">${store.storeDescription||'مرحبا بك في متجرنا. نقدم لك أفضل المنتجات بأفضل الأسعار.'}</p></div></section>`;
+    return `<section id="about" class="about-classic"><div class="wrap"><h2 class="section-title">عن المتجر</h2><p style="line-height:1.8;color:#374151;">${S.esc(store.storeDescription||'مرحبا بك في متجرنا. نقدم لك أفضل المنتجات بأفضل الأسعار.')}</p></div></section>`;
   }
 
   function renderFooter(store){
     const socials = socialIcons(store.socialLinks);
-    const mapsBtn = store.googleMapsLink ? `<a href="${store.googleMapsLink}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#10b981;color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none;"><i class="fa-solid fa-map-location-dot"></i> خرائط جوجل</a>` : '';
-    const siteBtn = store.website ? `<a href="${store.website}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none;"><i class="fa-solid fa-globe"></i> الموقع الإلكتروني</a>` : '';
+    const mapsBtn = store.googleMapsLink ? `<a href="${S.url(store.googleMapsLink,'#')}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#10b981;color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none;"><i class="fa-solid fa-map-location-dot"></i> خرائط جوجل</a>` : '';
+    const siteBtn = store.website ? `<a href="${S.url(store.website,'#')}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none;"><i class="fa-solid fa-globe"></i> الموقع الإلكتروني</a>` : '';
     const hasActions = Boolean(mapsBtn || siteBtn);
     const contacts = `
       <ul style="list-style:none;padding:0;margin:10px 0 0;display:grid;gap:6px;">
-        ${store.whatsapp?`<li><a href="https://wa.me/${store.whatsapp}" target="_blank" rel="noopener"><i class=\"fa-brands fa-whatsapp\"></i> واتساب: ${store.whatsapp}</a></li>`:''}
-        ${store.mobilePhone?`<li><a href="tel:${store.mobilePhone}"><i class=\"fa-solid fa-phone\"></i> موبايل: ${store.mobilePhone}</a></li>`:''}
-        ${store.landline?`<li><a href="tel:${store.landline}"><i class=\"fa-solid fa-phone-volume\"></i> أرضي: ${store.landline}</a></li>`:''}
-        ${store.email?`<li><a href="mailto:${store.email}"><i class=\"fa-regular fa-envelope\"></i> البريد: ${store.email}</a></li>`:''}
-        ${store.address?`<li><i class=\"fa-solid fa-location-dot\"></i> ${store.address}</li>`:''}
+        ${store.whatsapp?`<li><a href="https://wa.me/${S.digits(store.whatsapp)}" target="_blank" rel="noopener"><i class=\"fa-brands fa-whatsapp\"></i> واتساب: ${S.esc(store.whatsapp)}</a></li>`:''}
+        ${store.mobilePhone?`<li><a href="tel:${S.tel(store.mobilePhone)}"><i class=\"fa-solid fa-phone\"></i> موبايل: ${S.esc(store.mobilePhone)}</a></li>`:''}
+        ${store.landline?`<li><a href="tel:${S.tel(store.landline)}"><i class=\"fa-solid fa-phone-volume\"></i> أرضي: ${S.esc(store.landline)}</a></li>`:''}
+        ${store.email?`<li><a href="mailto:${S.mail(store.email)}"><i class=\"fa-regular fa-envelope\"></i> البريد: ${S.esc(store.email)}</a></li>`:''}
+        ${store.address?`<li><i class=\"fa-solid fa-location-dot\"></i> ${S.esc(store.address)}</li>`:''}
       </ul>`;
     const actions = hasActions ? `<div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;">${mapsBtn}${siteBtn}</div>` : '';
     return `<footer class="footer-classic"><div class="wrap">
       <div>
-        <div class="brand" style="color:#fff;gap:10px;">${store.storeLogoUrl?`<img src="${store.storeLogoUrl}" alt="${store.storeName}" style="width:72px;height:72px;">`:''}<strong>${store.storeName||''}</strong></div>
-        <p style="opacity:.8;margin-top:8px;">${store.footerText||''}</p>
+        <div class="brand" style="color:#fff;gap:10px;">${store.storeLogoUrl?`<img src="${S.img(store.storeLogoUrl)}" alt="${S.esc(store.storeName)}" style="width:72px;height:72px;">`:''}<strong>${S.esc(store.storeName||'')}</strong></div>
+        <p style="opacity:.8;margin-top:8px;">${S.esc(store.footerText||'')}</p>
       </div>
       <div>
         <strong>تابعنا</strong>
@@ -474,7 +475,7 @@
         ${contacts}
         ${actions}
       </div>
-    </div><div class="copyright">© ${(new Date).getFullYear()} ${store.storeName||''} - جميع الحقوق محفوظة</div></footer>`;
+    </div><div class="copyright">© ${(new Date).getFullYear()} ${S.esc(store.storeName||'')} - جميع الحقوق محفوظة</div></footer>`;
   }
 
   function attachInteractions(root, ctx){
@@ -720,11 +721,11 @@
         ${p.optionGroups.filter(g=> normalizeValues(g.values).length).map(g=>{
             const vals = normalizeValues(g.values);
             return `
-          <div class="option-group" data-name="${g.name}" data-required="${g.required? 'true':'false'}">
-            <label style="display:block;margin-block-end:4px;">${g.name}${g.required?' *':''}</label>
+          <div class="option-group" data-name="${S.esc(g.name)}" data-required="${g.required? 'true':'false'}">
+            <label style="display:block;margin-block-end:4px;">${S.esc(g.name)}${g.required?' *':''}</label>
             <select data-opt style="inline-size:100%;padding:8px;border:1px solid #e5e7eb;border-radius:8px;">
-              <option value="">اختر ${g.name}...</option>
-              ${vals.map(v=>`<option value=\"${v}\">${v}</option>`).join('')}
+              <option value="">اختر ${S.esc(g.name)}...</option>
+              ${vals.map(v=>`<option value=\"${S.esc(v)}\">${S.esc(v)}</option>`).join('')}
             </select>
           </div>
         `}).join('')}
@@ -735,25 +736,25 @@
       <div class="product-detail">
         <button class="close" aria-label="إغلاق"><i class="fa-solid fa-xmark"></i></button>
         <div class="media">
-          <div class="main"><img src="${images[0]||'/icons/icon-512.png'}" alt="${p.productName}"></div>
+          <div class="main"><img src="${S.img(images[0],'/icons/icon-512.png')}" alt="${S.esc(p.productName)}"></div>
           <div class="thumbs">
-            ${images.map((src,i)=>`<button data-idx="${i}"><img src="${src}" alt="${p.productName} - صورة ${i+1}"></button>`).join('')}
+            ${images.map((src,i)=>`<button data-idx="${i}"><img src="${S.img(src)}" alt="${S.esc(p.productName)} - صورة ${i+1}"></button>`).join('')}
           </div>
         </div>
         <div class="info">
-          <div class="title">${p.productName}</div>
+          <div class="title">${S.esc(p.productName)}</div>
           <div class="price-line">
-            <div class="now">${nowPrice} <small>${p.currency||''}</small></div>
-            ${wasPrice?`<div class="was">${wasPrice}</div>`:''}
+            <div class="now">${S.esc(nowPrice)} <small>${S.esc(p.currency||'')}</small></div>
+            ${wasPrice?`<div class="was">${S.esc(wasPrice)}</div>`:''}
           </div>
-          ${p.description?`<div class="desc">${p.description}</div>`:''}
-          ${p.detailedDescription?`<div class="desc" style="margin-top:6px;">${p.detailedDescription}</div>`:''}
+          ${p.description?`<div class="desc">${S.esc(p.description)}</div>`:''}
+          ${p.detailedDescription?`<div class="desc" style="margin-top:6px;">${S.esc(p.detailedDescription)}</div>`:''}
           ${optionsHtml}
-          ${wasPrice?`<div class="offer-pill" title="وفرت ${saved} ${p.currency||''}">خصم ${percent||0}% • وفرت ${saved} ${p.currency||''}</div>`:''}
+          ${wasPrice?`<div class="offer-pill" title="وفرت ${S.esc(saved)} ${S.esc(p.currency||'')}">خصم ${S.esc(percent||0)}% • وفرت ${S.esc(saved)} ${S.esc(p.currency||'')}</div>`:''}
           <div class="actions" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-            ${STORE_REF?.adminConfig?.enableCart?`<button class="btn btn-primary" data-add="${p._id}"><i class=\"fa-solid fa-cart-plus\"></i> أضف للسلة</button>`:''}
+            ${STORE_REF?.adminConfig?.enableCart?`<button class="btn btn-primary" data-add="${S.esc(p._id)}"><i class=\"fa-solid fa-cart-plus\"></i> أضف للسلة</button>`:''}
             <button class="btn btn-outline" data-close>رجوع</button>
-            <button class="btn btn-outline" data-share="${p._id}"><i class="fa-solid fa-share-nodes"></i> مشاركة</button>
+            <button class="btn btn-outline" data-share="${S.esc(p._id)}"><i class="fa-solid fa-share-nodes"></i> مشاركة</button>
           </div>
         </div>
       </div>`;
@@ -764,7 +765,8 @@
     backdrop.querySelectorAll('.thumbs button').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         const idx = Number(btn.dataset.idx);
-        const src = images[idx];
+        const thumb = btn.querySelector('img');
+        const src = thumb && thumb.getAttribute('src');
         if (src) mainImg.src = src;
       });
     });
@@ -875,7 +877,7 @@
   <div id="chatIframeContainer" style="display: none; position: fixed; bottom: 20px; left: 20px; z-index: 1000;">
         <div style="position: relative; width: 350px; height: 530px; background: white; overflow: hidden;">
           <button id="closeChatIframe" style="position: absolute; top: 10px; left: 10px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; z-index: 1;">✕</button>
-          <iframe src="${cfg.chatLink}" style="position: absolute; top: -20px; width: 100%; height: 550px; border: none; border-radius: 8px;" scrolling="no"></iframe>
+          <iframe src="${S.url(cfg.chatLink,'about:blank')}" style="position: absolute; top: -20px; width: 100%; height: 550px; border: none; border-radius: 8px;" scrolling="no"></iframe>
         </div>
       </div>`;
       document.body.appendChild(wrapper);

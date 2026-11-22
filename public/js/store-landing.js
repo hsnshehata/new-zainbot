@@ -100,6 +100,7 @@
       // تحميل الـ CSS المشترك + CSS الخاص بالقالب + سكريبت القالب
       await loadCSS('/css/landing-base.css');
       await loadCSS(assets.css);
+      await loadScript('/js/storefront-safe.js');
       await loadScript(assets.js);
 
       // انتظار جاهزية القالب
@@ -143,7 +144,12 @@
     }catch(err){
       console.error('[Landing] ❌', err);
       const container = document.getElementById('store-app');
-      if (container) container.innerHTML = `<div style="padding:32px; color:#b91c1c;">حدث خطأ أثناء تحميل صفحة الهبوط: ${err.message}</div>`;
+      if (container){
+        const box = document.createElement('div');
+        box.style.cssText = 'padding:32px; color:#b91c1c;';
+        box.textContent = 'حدث خطأ أثناء تحميل صفحة الهبوط: ' + (err && err.message ? err.message : '');
+        container.replaceChildren(box);
+      }
     }
   }
 
