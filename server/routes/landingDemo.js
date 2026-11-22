@@ -209,7 +209,6 @@ router.post('/chat', async (req, res) => {
       throw new Error('empty_ai_reply');
     }
 
-    const confidence = 92 + Math.floor(Math.random() * 7); // 92-98
     logger.info('landing_demo_reply_ok', {
       requestId: req.requestId,
       lang,
@@ -217,10 +216,10 @@ router.post('/chat', async (req, res) => {
       replyLength: reply.length,
     });
 
+    // No fabricated confidence score: the demo returns the reply alone.
     return res.status(200).json({
       success: true,
       reply,
-      confidence,
     });
   } catch (err) {
     logger.warn('landing_demo_reply_failed', {

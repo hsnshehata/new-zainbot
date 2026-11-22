@@ -144,45 +144,36 @@
   const demoChatForm = document.getElementById('demoChatForm');
   const demoChatInput = document.getElementById('demoChatInput');
   const promptChips = document.querySelectorAll('.prompt-chip');
-  const confidenceFill = document.getElementById('confidenceFill');
-  const confidenceValue = document.getElementById('confidenceValue');
 
   const aiResponses = [
     {
       triggers: ['where is my order', 'track', 'order status', 'delivery', 'my order', 'shipped', 'package'],
-      response: 'I can help with order updates. In a connected workspace, the agent checks the information you provide and guides the customer to the next step.',
-      confidence: 97
+      response: 'I can help with order updates. In a connected workspace, the agent checks the information you provide and guides the customer to the next step.'
     },
     {
       triggers: ['pricing', 'price', 'cost', 'plan', 'how much', 'subscription', 'billing'],
-      response: 'The current workspace starts on the free plan. Your available quota and any enabled features are always visible from the account menu in the dashboard.',
-      confidence: 95
+      response: 'The current workspace starts on the free plan. Your available quota and any enabled features are always visible from the account menu in the dashboard.'
     },
     {
       triggers: ['book', 'appointment', 'schedule', 'meeting', 'demo', 'call'],
-      response: 'This is a chat preview, so I cannot see real appointment availability. In your workspace, add your booking details before testing a booking conversation.',
-      confidence: 93
+      response: 'This is a chat preview, so I cannot see real appointment availability. In your workspace, add your booking details before testing a booking conversation.'
     },
     {
       triggers: ['hello', 'hi', 'hey', 'greetings', 'good morning', 'good afternoon'],
-      response: "Hello! 👋 I'm ZainBot AI, your virtual assistant. I can help with orders, pricing, appointments, product questions, and more. What can I do for you today?",
-      confidence: 99
+      response: "Hello! 👋 I'm ZainBot AI, your virtual assistant. I can help with orders, pricing, appointments, product questions, and more. What can I do for you today?"
     },
     {
       triggers: ['refund', 'return', 'cancel', 'money back', 'exchange'],
-      response: 'This preview has no store return policy or order data. A business can add its own return guidance to its agent before answering customers.',
-      confidence: 91
+      response: 'This preview has no store return policy or order data. A business can add its own return guidance to its agent before answering customers.'
     },
     {
       triggers: ['thank', 'thanks', 'great', 'awesome', 'perfect', 'amazing'],
-      response: "You're welcome! 😊 Is there another question you'd like to try in this chat preview?",
-      confidence: 98
+      response: "You're welcome! 😊 Is there another question you'd like to try in this chat preview?"
     }
   ];
 
   const defaultResponse = {
-    response: "I'm here to help with orders, pricing, appointments, and product questions. Could you tell me a bit more about what you need? You can also try one of the suggested prompts below. 😊",
-    confidence: 88
+    response: "I'm here to help with orders, pricing, appointments, and product questions. Could you tell me a bit more about what you need? You can also try one of the suggested prompts below. 😊"
   };
 
   let demoHistory = [];
@@ -207,7 +198,7 @@
       if (!res.ok) return null;
       const data = await res.json();
       if (!data || !data.success || !data.reply) return null;
-      return { reply: data.reply, confidence: data.confidence };
+      return { reply: data.reply };
     } catch (err) {
       return null;
     } finally {
@@ -218,39 +209,32 @@
   const aiResponsesAr = [
     {
       triggers: ['طلب', 'طلبي', 'تتبع', 'شحن', 'توصيل', 'فين طلب'],
-      response: 'أقدر أساعدك في متابعة الطلبات. في مساحة العمل المربوطة، الوكيل بيراجع البيانات المتاحة ويرشد العميل للخطوة الجاية.',
-      confidence: 97
+      response: 'أقدر أساعدك في متابعة الطلبات. في مساحة العمل المربوطة، الوكيل بيراجع البيانات المتاحة ويرشد العميل للخطوة الجاية.'
     },
     {
       triggers: ['سعر', 'أسعار', 'باقة', 'باقات', 'اشتراك', 'بكام', 'تكلفة'],
-      response: 'مساحة العمل بتبدأ بالخطة المجانية. الاستهلاك المتاح وأي مزايا مفعلة ظاهرين دايمًا من قايمة الحساب في لوحة التحكم.',
-      confidence: 95
+      response: 'مساحة العمل بتبدأ بالخطة المجانية. الاستهلاك المتاح وأي مزايا مفعلة ظاهرين دايمًا من قايمة الحساب في لوحة التحكم.'
     },
     {
       triggers: ['احجز', 'حجز', 'موعد', 'ميعاد', 'مقابلة'],
-      response: 'دي معاينة دردشة ومفيش عندي مواعيد حقيقية متاحة. تقدر تضيف تفاصيل الحجز في مساحة عملك قبل ما تختبر محادثة حجز.',
-      confidence: 93
+      response: 'دي معاينة دردشة ومفيش عندي مواعيد حقيقية متاحة. تقدر تضيف تفاصيل الحجز في مساحة عملك قبل ما تختبر محادثة حجز.'
     },
     {
       triggers: ['سلام', 'صباح', 'مساء', 'أهلا', 'اهلا', 'ازيك', 'مرحبا'],
-      response: 'أهلًا بيك! 👋 أنا مساعد زين بوت. أقدر أساعدك في الطلبات والأسعار والحجوزات وأسئلة المنتجات. تحب أساعدك في إيه النهاردة؟',
-      confidence: 99
+      response: 'أهلًا بيك! 👋 أنا مساعد زين بوت. أقدر أساعدك في الطلبات والأسعار والحجوزات وأسئلة المنتجات. تحب أساعدك في إيه النهاردة؟'
     },
     {
       triggers: ['استرجاع', 'مرتجع', 'إلغاء', 'الغاء', 'استرداد'],
-      response: 'المعاينة دي مش مرتبطة بسياسة استرجاع أو بيانات طلبات. تقدر تضيف سياسة نشاطك للوكيل قبل ما يرد على العملاء.',
-      confidence: 91
+      response: 'المعاينة دي مش مرتبطة بسياسة استرجاع أو بيانات طلبات. تقدر تضيف سياسة نشاطك للوكيل قبل ما يرد على العملاء.'
     },
     {
       triggers: ['شكرا', 'متشكر', 'ممتاز', 'جميل', 'رائع', 'تمام'],
-      response: 'العفو! 😊 في سؤال تاني تحب تجربه في معاينة الدردشة؟',
-      confidence: 98
+      response: 'العفو! 😊 في سؤال تاني تحب تجربه في معاينة الدردشة؟'
     }
   ];
 
   const defaultResponseAr = {
-    response: 'أنا هنا للمساعدة في الطلبات والأسعار والحجوزات وأسئلة المنتجات. ممكن توضحلي أكتر محتاج إيه؟ أو جرب واحد من الاقتراحات تحت. 😊',
-    confidence: 88
+    response: 'أنا هنا للمساعدة في الطلبات والأسعار والحجوزات وأسئلة المنتجات. ممكن توضحلي أكتر محتاج إيه؟ أو جرب واحد من الاقتراحات تحت. 😊'
   };
 
   function getAIResponse(message) {
@@ -322,12 +306,6 @@
     if (typing) typing.remove();
   }
 
-  function updateConfidence(value) {
-    if (!confidenceFill || !confidenceValue) return;
-    confidenceFill.style.width = value + '%';
-    confidenceValue.textContent = value + '%';
-  }
-
   let isResponding = false;
 
   async function handleUserMessage(message) {
@@ -356,7 +334,6 @@
 
     if (liveResult && liveResult.reply) {
       appendMessage(liveResult.reply, 'out');
-      updateConfidence(liveResult.confidence || 96);
       demoHistory.push({ role: 'user', content: message });
       demoHistory.push({ role: 'assistant', content: liveResult.reply });
       if (demoHistory.length > 12) demoHistory = demoHistory.slice(-12);
@@ -367,7 +344,6 @@
         ? '\n\n— رد عينة جاهز: المعاينة الحية غير متاحة الآن.'
         : '\n\n— Sample reply: the live preview is unavailable right now.';
       appendMessage(aiResult.response + sampleNote, 'out');
-      updateConfidence(aiResult.confidence);
     }
 
     isResponding = false;

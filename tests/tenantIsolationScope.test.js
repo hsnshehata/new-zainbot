@@ -22,9 +22,11 @@
 //
 // Deliberately public surface (storefront reads, verified for isolation
 // only, not access-denied): productController.getProducts /
-// getBestsellers / getProduct, categoryController.getCategories without
+// getBestsellers, categoryController.getCategories without
 // auth, customersController.publicLookup. These serve the public store
 // pages and only filter by storeId / isActive by design.
+// getProduct is the authenticated full-document read: owners/superadmin
+// get the full doc, any other caller gets the public projection only.
 
 process.env.MONGOMS_VERSION = process.env.MONGOMS_VERSION || '7.0.24';
 
@@ -317,6 +319,37 @@ test('products: public storefront listing is isolated per store', async () => {
   const ids = items.map((p) => String(p._id));
   assert.ok(ids.includes(String(docs.productA._id)));
   assert.ok(!ids.includes(String(docs.productB._id)));
+});
+
+test('products: single-product read exposes internal fields only to the owning tenant', async () => {
+  // Owner: full document, including merchant-internal cost fields.
+  const own = await call(productController.getProduct, asOwnerA, {
+    params: { storeId: String(storeA._id), productId: String(docs.productA._id) },
+  });
+  assert.equal(own.statusCode, 200);
+  assert.notEqual(own.payload.costPrice, undefined, 'owner must see costPrice');
+
+  // Direct superadmin: full document as well.
+  const admin = await call(productController.getProduct, asAdmin, {
+    params: { storeId: String(storeA._id), productId: String(docs.productA._id) },
+  });
+  assert.equal(admin.statusCode, 200);
+  assert.notEqual(admin.payload.costPrice, undefined, 'superadmin must see costPrice');
+
+  // Another tenant: 200 but only the public projection (same data the
+  // anonymous storefront list already exposes) — never internal fields.
+  const other = await call(productController.getProduct, asOwnerB, {
+    params: { storeId: String(storeA._id), productId: String(docs.productA._id) },
+  });
+  assert.equal(other.statusCode, 200);
+  for (const field of ['costPrice', 'lowStockThreshold', 'barcode', 'generatedCodes']) {
+    assert.equal(
+      Object.prototype.hasOwnProperty.call(other.payload, field),
+      false,
+      `cross-tenant single-product read must not expose ${field}`
+    );
+  }
+  assert.equal(other.payload.productName, 'Product A', 'public fields stay available');
 });
 
 test('products: impersonating superadmin limited to subject tenant', async () => {

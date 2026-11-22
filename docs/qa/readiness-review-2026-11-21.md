@@ -47,8 +47,18 @@ external sends, no zainbot.com cutover without explicit approval.
 - No hardcoded secrets found in server/, public/, scripts/.
 
 ## Next review backlog
-- IDOR sweep: per-route ownership checks on object ids (orders, customers,
-  stores, bookings) for the store-scoped roles.
+- ~~IDOR sweep~~ DONE 2026-11-22: orders, customers, stores, bookings,
+  sales, expenses, suppliers, categories, products, chatOrders,
+  chatCustomers, notifications, uploads, rules, messages, ideaCouncil all
+  verify tenant scoping (ownership checks, loadAccessibleBot/Rule, or the
+  global auth gate). One real gap found and fixed: authenticated
+  getProduct returned FULL product docs (costPrice, lowStockThreshold,
+  barcode, generatedCodes) for any store to any authenticated user;
+  non-owners now get the public projection only (test-pinned in
+  tests/tenantIsolationScope.test.js).
+- ~~F1 fabricated landing-demo confidence~~ CLOSED 2026-11-22: random
+  92-98% confidence field removed from /api/landing-demo/chat and the
+  dead frontend confidence UI/code dropped.
 - assistant data tools: confirm store/user scoping on every query path
   (tests exist; re-verify against live-shaped data).
 - Landing alignment work for Business Assistant once gate 4 is scheduled.

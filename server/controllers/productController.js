@@ -642,8 +642,24 @@ exports.getProduct = async (req, res) => {
       return res.status(404).json({ message: 'المتجر غير موجود' });
     }
 
+    // Full product documents carry merchant-internal fields (costPrice,
+    // lowStockThreshold, barcode, generatedCodes). Only the store owner
+    // (bot-linked owner or superadmin) may read them; any other caller
+    // gets the same public projection the storefront list already exposes.
+    let fullAccess = false;
+    try {
+      await authorizeStoreAccess(storeId, userId, req.user ? req.user.role : null);
+      fullAccess = true;
+    } catch (authErr) {
+      fullAccess = false;
+    }
+
     // التحقق من وجود المنتج
-    const product = await Product.findOne({ _id: productId, storeId, isActive: true }).populate({
+    let productQuery = Product.findOne({ _id: productId, storeId, isActive: true });
+    if (!fullAccess) {
+      productQuery = productQuery.select(PUBLIC_PRODUCT_FIELDS).lean();
+    }
+    const product = await productQuery.populate({
       path: 'category',
       select: 'name',
       options: { lean: true }
