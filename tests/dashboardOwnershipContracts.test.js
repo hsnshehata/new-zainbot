@@ -644,9 +644,9 @@ test('[PROVEN-BUG → FP2] no auto-provision for an unowned bot: 404 with zero s
 
 test('[PROVEN-BUG → FP4] cross-user chat create is 404 with zero reads and zero saves', async () => {
   let existsFilter = null;
-  botExistsImpl = async (filter) => {
+  botFindOneImpl = (filter) => {
     existsFilter = filter;
-    return null;
+    return chain(null);
   };
   let findOneCalls = 0;
   chatFindOneImpl = async () => {
@@ -669,7 +669,7 @@ test('[PROVEN-BUG → FP4] cross-user chat create is 404 with zero reads and zer
 });
 
 test('[PROVEN-BUG → FP4] cross-user chat create oracle leaks nothing (no link, no id, no exists flag)', async () => {
-  botExistsImpl = async () => null;
+  botFindOneImpl = () => chain(null);
   chatFindOneImpl = async () => otherUserPage(); // existing victim page must stay hidden
   let saves = 0;
   ChatPage.prototype.save = async function save() {
@@ -689,9 +689,9 @@ test('[PROVEN-BUG → FP4] cross-user chat create oracle leaks nothing (no link,
 
 test('owner chat create succeeds and forces userId to the caller (body userId ignored)', async () => {
   let existsFilter = null;
-  botExistsImpl = async (filter) => {
+  botFindOneImpl = (filter) => {
     existsFilter = filter;
-    return { _id: OWN_BOT_ID };
+    return chain({ _id: OWN_BOT_ID, userId: OWNER_ID, name: 'Owner Bot' });
   };
   chatFindOneImpl = async () => null; // no existing page, no link clash
   let savedDoc = null;
@@ -713,7 +713,7 @@ test('owner chat create succeeds and forces userId to the caller (body userId ig
 });
 
 test('owner chat create for an existing page returns 200 exists:true without a new save', async () => {
-  botExistsImpl = async () => ({ _id: OWN_BOT_ID });
+  botFindOneImpl = () => chain({ _id: OWN_BOT_ID, userId: OWNER_ID });
   chatFindOneImpl = async () => otherUserPage();
   let saves = 0;
   ChatPage.prototype.save = async function save() {
@@ -730,11 +730,14 @@ test('owner chat create for an existing page returns 200 exists:true without a n
   assert.equal(saves, 0);
 });
 
-test('direct superadmin keeps chat create for any bot (FP4 bypass, userId forced to caller)', async () => {
+test('direct superadmin keeps chat create for any bot (FP4 bypass, page owned by the bot tenant)', async () => {
+  // Tenant consistency (2d7d5e3 contract): a superadmin creating for another
+  // tenant's bot provisions the page INTO that tenant, never a caller-owned
+  // page casually bound to a foreign bot.
   let existsFilter = null;
-  botExistsImpl = async (filter) => {
+  botFindOneImpl = (filter) => {
     existsFilter = filter;
-    return { _id: OTHER_BOT_ID };
+    return chain({ _id: OTHER_BOT_ID, userId: OTHER_ID, name: 'Victim Bot' });
   };
   chatFindOneImpl = async () => null;
   let savedDoc = null;
@@ -745,10 +748,10 @@ test('direct superadmin keeps chat create for any bot (FP4 bypass, userId forced
   const res = await supertest(app)
     .post('/api/chat-page/')
     .set('Authorization', `Bearer ${adminToken()}`)
-    .send({ userId: OTHER_ID, botId: OTHER_BOT_ID, linkId: 'adminlink123' });
+    .send({ userId: ADMIN_ID, botId: OTHER_BOT_ID, linkId: 'adminlink123' });
   assert.equal(res.status, 201);
   assert.deepEqual(existsFilter, { _id: OTHER_BOT_ID });
-  assert.equal(String(savedDoc.userId), ADMIN_ID);
+  assert.equal(String(savedDoc.userId), OTHER_ID);
 });
 
 test('chat create with a malformed bot id is 404 with no side effects', async () => {
@@ -873,9 +876,9 @@ test('chat create without botId is 400 with zero saves', async () => {
 test('impersonated superadmin chat create is scoped to the subject (201, no actor leak)', async () => {
   const token = impersonationToken();
   let existsFilter = null;
-  botExistsImpl = async (filter) => {
+  botFindOneImpl = (filter) => {
     existsFilter = filter;
-    return { _id: OWN_BOT_ID };
+    return chain({ _id: OWN_BOT_ID, userId: OWNER_ID, name: 'Owner Bot' });
   };
   chatFindOneImpl = async () => null; // no existing page, no link clash
   let savedDoc = null;

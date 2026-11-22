@@ -323,19 +323,39 @@ test('a durably confirmed order keeps the model confirmation reply verbatim', ()
   assert.equal(enforceTruthfulOrderReply(reply, result), reply);
 });
 
-test('a saved-but-pending order may not be called confirmed; truthful received wording replaces the claim', () => {
+test('a saved-but-pending order: every model status assertion is replaced by the deterministic durable-status line', () => {
+  // Fail-closed: confirmation claims AND shipping promises are both model
+  // assertions about unpersisted state; only the durable-status line renders.
   const reply = 'تم تأكيد طلبك! هيتم شحنه بكرة.';
   const result = { saved: true, outcome: 'saved', chatOrder: { _id: 'xyz', status: 'processing' } };
   const enforced = enforceTruthfulOrderReply(reply, result);
   assert.doesNotMatch(enforced, /تم تأكيد طلبك!/);
-  assert.match(enforced, /هيتم شحنه بكرة/);
+  assert.doesNotMatch(enforced, /هيتم شحنه بكرة/, 'shipping promises are assertions and must not render');
   assert.match(enforced, /استلام ومراجعة، وليس تأكيدًا نهائيًا/);
 });
 
-test('natural replies without confirmation claims pass through unchanged', () => {
-  const reply = 'عذرًا، هذا المنتج غير متوفر حاليًا. هل تريد منتجًا بديلًا؟';
+test('non-asserting replies keep their content and gain the deterministic status line for the outcome', () => {
   const result = { saved: false, outcome: 'unpriced_items', unpricedTitles: ['x'] };
-  assert.equal(enforceTruthfulOrderReply(reply, result), reply);
+  const enforced = enforceTruthfulOrderReply('عذرًا، هذا المنتج غير متوفر حاليًا. هل تريد منتجًا بديلًا؟', result);
+  assert.match(enforced, /عذرًا، هذا المنتج غير متوفر حاليًا/, 'non-order content preserved');
+  assert.match(enforced, /هل تريد منتجًا بديلًا؟/, 'questions preserved');
+  assert.match(enforced, /غير متوفر بسعر رسمي في متجرنا حاليًا/, 'deterministic status line appended');
+});
+
+test('non-order chat without any order outcome passes through completely unchanged', () => {
+  const reply = 'أهلاً بك! أقدر أساعدك في أي استفسار عن المنتجات.';
+  assert.equal(enforceTruthfulOrderReply(reply, null), reply);
+  assert.equal(enforceTruthfulOrderReply(reply, undefined), reply);
+  assert.equal(enforceTruthfulOrderReply(reply, { saved: false }), reply);
+});
+
+test('mixed-language paraphrase assertions are stripped and replaced by durable truth', () => {
+  const reply = 'Your order has been confirmed successfully! رقم الطلب: 999.';
+  const result = { saved: false, outcome: 'missing_data', missingFields: ['الاسم'] };
+  const enforced = enforceTruthfulOrderReply(reply, result);
+  assert.doesNotMatch(enforced, /confirmed/i);
+  assert.doesNotMatch(enforced, /999/);
+  assert.match(enforced, /لم يُسجل بعد/);
 });
 
 test('processMessage end-to-end: overclaiming main reply is neutralized before reaching the customer', async () => {

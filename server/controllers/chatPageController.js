@@ -87,10 +87,10 @@ exports.createChatPage = async (req, res) => {
     const callerUserId = req.user.userId;
     const isDirectSuperadmin = req.auth?.actorRole === 'superadmin'
       && !req.auth?.isImpersonating;
-    const accessibleBot = isDirectSuperadmin
-      ? await Bot.exists({ _id: botId })
-      : await Bot.exists({ _id: botId, userId: callerUserId });
-    if (!accessibleBot) {
+    const botDoc = await Bot.findOne(
+      isDirectSuperadmin ? { _id: botId } : { _id: botId, userId: callerUserId }
+    ).select('userId name');
+    if (!botDoc) {
       return res.status(404).json({ message: 'Bot not found' });
     }
 
@@ -98,11 +98,7 @@ exports.createChatPage = async (req, res) => {
     // caller creating on their own bot that is the caller; a direct superadmin
     // creating for another tenant's bot provisions the page INTO that tenant —
     // never a caller-owned page casually bound to a foreign bot.
-    let ownerUserId = callerUserId;
-    if (isDirectSuperadmin) {
-      const botDoc = await Bot.findById(botId);
-      if (botDoc?.userId) ownerUserId = String(botDoc.userId);
-    }
+    const ownerUserId = botDoc.userId ? String(botDoc.userId) : callerUserId;
 
     // إذا المستخدم مدخلش linkId، هنولد UUID تلقائيًا ونظبطه عشان يكون مناسب
     let finalLinkId = linkId;
@@ -125,10 +121,37 @@ exports.createChatPage = async (req, res) => {
       return res.status(400).json({ message: 'الرابط مستخدم بالفعل، يرجى اختيار رابط آخر' });
     }
 
+    // Brand defaults mirror the retired GET auto-provision contract: a new
+    // page starts from the branded dark chat theme with suggested questions
+    // and image upload enabled, customizable afterwards.
     const chatPage = new ChatPage({
       userId: ownerUserId,
       botId,
       linkId: finalLinkId,
+      title: botDoc.name || 'محادثة المبيعات الذكية',
+      titleColor: '#ffffff',
+      colors: {
+        header: '#0F172A',
+        titleColor: '#ffffff',
+        outerBackgroundColor: '#0A0F1D',
+        containerBackgroundColor: '#0F172A',
+        chatAreaBackground: '#0B1329',
+        userMessageBackground: '#06B6D4',
+        userMessageTextColor: '#ffffff',
+        botMessageBackground: '#1E293B',
+        botMessageTextColor: '#F8FAFC',
+        sendButtonColor: '#06B6D4',
+        button: '#06B6D4',
+        inputTextColor: '#ffffff',
+      },
+      suggestedQuestionsEnabled: true,
+      suggestedQuestions: [
+        'ما هي المنتجات والعروض المتوفرة؟',
+        'كيف يمكنني تأكيد موعد أو طلب؟',
+        'ما هي طرق الدفع والتوصيل المتاحة؟',
+      ],
+      imageUploadEnabled: true,
+      headerHidden: false,
     });
 
     await chatPage.save();

@@ -1,6 +1,6 @@
 'use strict';
 
-// tests/tenantIsolationProvisioning.test.js (adopted from the independent reviewer suite)
+// tests/tenantIsolationProvisioning.review.test.js
 // Independent reviewer regression tests (parallel review agent), written
 // against pushed master cefcb26. Scope: tenant selection + chat-page
 // provisioning correctness.
@@ -131,6 +131,23 @@ test('[DESIRED] page created for a tenant bot stays manageable by that tenant', 
   await controller.updateChatPage(upd.req, upd.res);
   assert.equal(upd.res.statusCode, 200,
     'tenant owner must be able to update the page bound to their own bot');
+});
+
+// 7. [DESIRED] R1 contract: intentional creation must yield the brand default
+// configuration the removed auto-provision used (dark theme, suggested
+// questions enabled with Arabic defaults, image upload enabled) — not the
+// stale light-theme schema defaults (#007bff). Fails on 2d7d5e3.
+test('[DESIRED] createChatPage applies brand default configuration', async () => {
+  const { req, res } = reqRes({ userId: TENANT_ID, body: { botId: String(tenantBot._id) } });
+  await controller.createChatPage(req, res);
+  assert.equal(res.statusCode, 201);
+  const page = await ChatPage.findOne({ botId: tenantBot._id }).lean();
+  assert.ok(page);
+  assert.equal(page.colors?.header, '#0F172A', 'brand dark header expected');
+  assert.equal(page.suggestedQuestionsEnabled, true);
+  assert.ok(Array.isArray(page.suggestedQuestions) && page.suggestedQuestions.length >= 3,
+    'default suggested questions expected');
+  assert.equal(page.imageUploadEnabled, true);
 });
 
 // 6. [GUARD] Impersonating superadmin is scoped to the subject tenant: foreign

@@ -17,13 +17,34 @@ const path = require('node:path');
 const js = fs.readFileSync(path.join(__dirname, '../public/js/dashboard_new.js'), 'utf8');
 const html = fs.readFileSync(path.join(__dirname, '../public/dashboard.html'), 'utf8');
 
-test('loadBots prefers the caller own bot over another tenant newest bot', () => {
+test('loadBots prefers the caller own bot and never silently anchors a foreign tenant', () => {
   const start = js.indexOf('async function loadBots()');
   assert.ok(start > -1);
   const body = js.slice(start, start + 2500);
-  assert.match(body, /bots\.find\(\(bot\) => String\(bot\._id\) === preferredBotId\)/, 'explicit selection still wins');
+  assert.match(body, /bots\.find\(\(bot\) => String\(bot\._id\) === sessionBotId\)/, 'current-session explicit pick is honored');
   assert.match(body, /bots\.find\(isOwn\)/, 'own bot is preferred before any foreign bot');
   assert.match(body, /isOwn = \(bot\) => String\(bot\?\.userId\?\._id \|\| bot\?\.userId \|\| ''\) === String\(currentUser\?\._id \|\| ''\)/, 'ownership compares bot owner to the signed-in user');
+  assert.doesNotMatch(body, /bots\[0\]/, 'no silent fallback to the newest foreign bot');
+});
+
+test('cross-tenant selection is intentional and session-scoped, never a persistent consent flag', () => {
+  const loadStart = js.indexOf('async function loadBots()');
+  const loadBody = js.slice(loadStart, loadStart + 2500);
+  assert.match(loadBody, /sessionStorage\.getItem\('zainbot_active_bot_session'\)/, 'foreign picks come from session-scoped consent');
+  assert.match(loadBody, /localStorage\.removeItem\('zainbot_active_bot_explicit'\)/, 'legacy persistent consent flag is retired');
+  assert.doesNotMatch(js, /localStorage\.setItem\('zainbot_active_bot_explicit'/, 'no new persistent consent flag is written');
+  const refresh = js.slice(js.indexOf('function refreshActiveBot(bot)'), js.indexOf('function refreshActiveBot(bot)') + 1200);
+  assert.match(refresh, /sessionStorage\.setItem\('zainbot_active_bot_session'/, 'explicit selection marks the session');
+  assert.match(refresh, /isForeignBot\(bot\)/, 'foreign selection skips the persistent own-bot slot');
+});
+
+test('a superadmin with no own bot sees an explicit selection state, not a silent tenant', () => {
+  assert.match(js, /function renderTenantPicker\(bots\)/);
+  assert.match(html, /id="workspaceTenantPicker" class="glass-card" hidden/);
+  assert.match(html, /id="workspaceTenantPickerList"/);
+  const loadStart = js.indexOf('async function loadBots()');
+  const loadBody = js.slice(loadStart, loadStart + 3500);
+  assert.match(loadBody, /renderTenantPicker\(bots\)/, 'empty selection with visible foreign bots renders the picker');
 });
 
 test('cross-tenant admin context is visibly marked in overview and agent cards', () => {
@@ -52,7 +73,7 @@ test('opening a direct chat link without a page routes to the create flow, never
 });
 
 test('new i18n keys exist in BOTH language tables and match HTML fallbacks', () => {
-  const keys = ['workspace_cross_tenant_badge', 'chat_page_missing', 'chat_page_create_btn', 'chat_page_create_failed'];
+  const keys = ['workspace_cross_tenant_badge', 'chat_page_missing', 'chat_page_create_btn', 'chat_page_create_failed', 'workspace_select_tenant_title', 'workspace_select_tenant_hint'];
   for (const key of keys) {
     const occurrences = js.split(`${key}:`).length - 1;
     assert.ok(occurrences >= 2, `${key} must exist in en and ar tables (found ${occurrences})`);

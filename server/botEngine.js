@@ -288,7 +288,14 @@ async function priceItemsFromCatalog(bot, items) {
 }
 
 // ادعاء نموذجي بتأكيد/حفظ الطلب في رد موجه للعميل (عربي/إنجليزي).
-const ORDER_CONFIRM_CLAIM = /(تم\s*(تأكيد|تسجيل|حفظ|استلام)\s*(الطلب|طلبك)|طلبك\s*(اتأكد|أُكّد|مؤكد|اتسجل|اتحفظ|محفوظ)|الطلب\s*(اتأكد|تم\s*تأكيده|تم\s*حفظه|تم\s*تسجيله)|order\s*(is\s*|has been\s*)?(confirmed|placed|saved))/i;
+// Fail-closed order-status assertion detector (Arabic + English, negation-
+// insensitive): any sentence ASSERTING order state — confirmation, saving,
+// receipt, shipping, cancellation — is treated as untrusted model paraphrase
+// and removed. Questions (asking the customer for details) and non-order chat
+// are preserved. This replaces the old confirmation-claim blacklist: the
+// customer-facing order status always comes from durable state, never from
+// however the model happened to phrase things.
+const ORDER_STATUS_ASSERTION = /(تم\s*(تأكيد|تسجيل|حفظ|استلام|شحن|إلغاء|الغاء|إرسال|ارسال)|ات(أكد|اكد|سجل|حفظ|شحن|لغى|ستلم)|طلبك\s*(اتأكد|أُكّد|مؤكد|اتسجل|اتحفظ|محفوظ|مسجل|وصل|جاهز|اتشحن|اتلغى)|الطلب\s*(اتأكد|مؤكد|محفوظ|مسجل|تم\s*(تأكيده|حفظه|تسجيله|استلامه|شحنه|إلغاؤه|الغاؤه))|سجلنا|استلمنا|أكدنا|اكدنا|حجزنا|شحننا|ألغينا|الغينا|وصلنا\s*(طلب|اوردر|أوردر)|order\s*(is|has been|was|got)?\s*(confirmed|placed|saved|received|registered|booked|shipped|cancelled|canceled)|(confirmed|received|registered|placed|booked|shipped|cancelled|canceled)\s+your\s+order|your\s+order\s+(is|has been|was)\s+\w+|successfully\s+(placed|confirmed|received|registered|booked))/i;
 
 // جملة الحقيقة الموجهة للعميل عندما لا يوجد طلب محفوظ بحالة مؤكدة.
 function customerTruthSentence(result) {
@@ -331,14 +338,29 @@ function enforceTruthfulOrderReply(reply, extractionResult) {
   const durableSaved = Boolean(extractionResult?.saved && extractionResult?.chatOrder);
   const durableConfirmed = Boolean(durableSaved && extractionResult.chatOrder.status === 'confirmed');
   if (durableConfirmed) return reply;
-  const hasConfirmClaim = ORDER_CONFIRM_CLAIM.test(reply);
-  const hasFabricatedId = !durableSaved && ORDER_ID_CITATION.test(reply);
-  if (!hasConfirmClaim && !hasFabricatedId) return reply;
+  const outcome = extractionResult?.outcome || null;
+  const parts = reply.match(/[^.!؟?\n]+[.!؟?\n]*/g) || [];
+  const kept = parts.filter((s) => {
+    const body = s.trim();
+    if (!body) return false;
+    if (/[؟?]\s*$/.test(body)) return true; // questions ask; they don't assert state
+    if (ORDER_STATUS_ASSERTION.test(body)) return false;
+    if (!durableSaved && ORDER_ID_CITATION.test(body)) return false;
+    return true;
+  });
+  const stripped = parts.length - kept.length;
+  // No order outcome and nothing order-related asserted: untouched reply.
+  if (!outcome && stripped === 0) return reply;
+  if (stripped > 0) {
+    logger.warn('chat_order_reply_overclaim_blocked', { outcome: outcome || 'none', stripped });
+  }
   const truthful = customerTruthSentence(extractionResult);
-  const sentences = reply.split(/[\n.!؟?]+/).map((s) => s.trim()).filter(Boolean);
-  const kept = sentences.filter((s) => !ORDER_CONFIRM_CLAIM.test(s) && (durableSaved || !ORDER_ID_CITATION.test(s)));
-  logger.warn('chat_order_reply_overclaim_blocked', { outcome: extractionResult?.outcome || 'none', fabricatedId: hasFabricatedId });
-  return [...kept, truthful].join('\n');
+  const keptText = kept.map((s) => s.trim()).filter(Boolean).join('\n');
+  // Fail-closed: for any order outcome the deterministic status line renders
+  // from durable state, and whenever an assertion was stripped the truth
+  // replaces it. Non-order chat around it is preserved verbatim.
+  if (keptText.includes(truthful)) return keptText;
+  return keptText ? `${keptText}\n${truthful}` : truthful;
 }
 
 // ملاحظة حالة الطلب الصادقة التي تُلحق بالـ system prompt بعد الاستخلاص وقبل

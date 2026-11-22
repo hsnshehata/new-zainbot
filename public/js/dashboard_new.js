@@ -246,6 +246,8 @@
       onboard_unavailable: 'Could not check progress. Return to Overview to retry.',
       onboard_chat_unavailable: 'Could not load the live chat link. Please try again.',
       workspace_cross_tenant_badge: "Admin view: another account's agent",
+      workspace_select_tenant_title: 'Choose a workspace to manage',
+      workspace_select_tenant_hint: 'You are signed in as an admin with no workspace selected. Pick one explicitly; the choice applies to this browser session only.',
       chat_page_missing: 'No dedicated chat page exists for this agent yet. Create it to get a shareable link.',
       chat_page_create_btn: 'Create chat page',
       chat_page_create_failed: 'Could not create the chat page. Please try again.',
@@ -1343,6 +1345,8 @@
       onboard_unavailable: 'تعذر التحقق من التقدم. ارجع إلى النظرة العامة للمحاولة مجددًا.',
       onboard_chat_unavailable: 'تعذر تحميل رابط الدردشة المباشرة. حاول مجددًا.',
       workspace_cross_tenant_badge: 'وضع المشرف: وكيل تابع لحساب آخر',
+      workspace_select_tenant_title: 'اختر مساحة عمل لإدارتها',
+      workspace_select_tenant_hint: 'أنت مسجل كمدير عام ولم يتم اختيار أي مساحة عمل. اختر واحدة بوضوح؛ يستمر الاختيار لهذه الجلسة فقط.',
       chat_page_missing: 'لا توجد صفحة دردشة مخصصة لهذا الوكيل بعد. أنشئها للحصول على رابط مشاركة.',
       chat_page_create_btn: 'إنشاء صفحة الدردشة',
       chat_page_create_failed: 'تعذر إنشاء صفحة الدردشة. حاول مجددًا.',
@@ -2727,20 +2731,27 @@
       const bots = (res && res.success) ? res.data : (Array.isArray(res) ? res : []);
       workspaceBots = bots;
       const preferredBotId = localStorage.getItem('zainbot_active_bot_id');
-      // A direct superadmin sees every tenant's bots (newest first). Never
-      // anchor the workspace to another tenant's bot by default: a stored
-      // preference counts only when it is the caller's OWN bot or was set by
-      // an explicit in-dashboard selection (refreshActiveBot sets the flag);
-      // stale/legacy foreign picks are ignored. Then: own bot, then first.
+      // Legacy persistent cross-tenant consent is retired: selecting another
+      // tenant's bot is an intentional, current-session choice only
+      // (sessionStorage), never a sticky flag surviving across sessions.
+      localStorage.removeItem('zainbot_active_bot_explicit');
+      const sessionBotId = sessionStorage.getItem('zainbot_active_bot_session');
+      // A direct superadmin sees every tenant's bots (newest first). Selection
+      // contract: (1) this session's explicit pick, (2) the stored pick when
+      // it is the caller's OWN bot, (3) the caller's own bot, (4) nothing — a
+      // superadmin with no own bot gets an explicit selection state, never a
+      // silent anchor on another tenant's bot.
       const isOwn = (bot) => String(bot?.userId?._id || bot?.userId || '') === String(currentUser?._id || '');
       const preferredBot = bots.find((bot) => String(bot._id) === preferredBotId) || null;
-      const explicitPick = localStorage.getItem('zainbot_active_bot_explicit') === '1';
-      currentBot = (preferredBot && (isOwn(preferredBot) || explicitPick) ? preferredBot : null)
+      const sessionBot = bots.find((bot) => String(bot._id) === sessionBotId) || null;
+      currentBot = sessionBot
+        || (preferredBot && isOwn(preferredBot) ? preferredBot : null)
         || bots.find(isOwn)
-        || bots[0]
         || null;
       updateCrossTenantMarker();
       if (currentBot) {
+        const picker = document.getElementById('workspaceTenantPicker');
+        if (picker) picker.hidden = true;
         const loadedBotId = String(currentBot._id);
         // Inject data-bot-id inside chat snippet
         const widgetSnippetCode = document.getElementById('widgetSnippetCode');
@@ -2762,6 +2773,11 @@
 
         // Load the initial overview only. Refreshing the agent page must not
         // switch the user away from the page they chose.
+        if (activeTab === 'page-overview') switchTab('page-overview');
+      } else if (bots.length > 0) {
+        // No own bot and no explicit session pick: show the explicit admin
+        // selection state instead of silently choosing a tenant.
+        renderTenantPicker(bots);
         if (activeTab === 'page-overview') switchTab('page-overview');
       } else {
         console.warn('No bots found for this user.');
@@ -5700,11 +5716,38 @@
     }
   }
 
+  // Explicit admin selection state: the visible tenants are listed and the
+  // admin intentionally picks one; the choice holds for this session only.
+  function renderTenantPicker(bots) {
+    const panel = document.getElementById('workspaceTenantPicker');
+    const list = document.getElementById('workspaceTenantPickerList');
+    if (!panel || !list) return;
+    panel.hidden = false;
+    list.replaceChildren();
+    bots.forEach((bot) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-secondary btn-sm';
+      const owner = bot.userId;
+      const ownerLabel = (owner && (owner.username || owner.email)) || '';
+      btn.textContent = ownerLabel ? `${bot.name} — ${ownerLabel}` : String(bot.name);
+      btn.addEventListener('click', () => refreshActiveBot(bot));
+      list.appendChild(btn);
+    });
+  }
+
   function refreshActiveBot(bot) {
     currentBot = bot;
     updateCrossTenantMarker();
-    localStorage.setItem('zainbot_active_bot_id', String(bot._id));
-    localStorage.setItem('zainbot_active_bot_explicit', '1');
+    if (isForeignBot(bot)) {
+      // Cross-tenant admin selection: intentional and session-scoped only.
+      localStorage.removeItem('zainbot_active_bot_id');
+    } else {
+      localStorage.setItem('zainbot_active_bot_id', String(bot._id));
+    }
+    sessionStorage.setItem('zainbot_active_bot_session', String(bot._id));
+    const picker = document.getElementById('workspaceTenantPicker');
+    if (picker) picker.hidden = true;
     const widgetSnippetCode = document.getElementById('widgetSnippetCode');
     if (widgetSnippetCode) widgetSnippetCode.textContent = `<script src="${window.location.origin}/widget.js" data-bot-id="${bot._id}"></script>`;
     loadAgents();

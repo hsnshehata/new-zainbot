@@ -986,6 +986,11 @@
             </div>
             <p id="onboardingFeedback" class="onboarding-feedback" role="status" hidden></p>
           </details>
+          <div id="workspaceTenantPicker" class="glass-card" hidden style="padding:18px; margin-bottom:16px;">
+            <h3 data-i18n="workspace_select_tenant_title">Choose a workspace to manage</h3>
+            <p data-i18n="workspace_select_tenant_hint" style="color:var(--text-muted); font-size:13px;">You are signed in as an admin with no workspace selected. Pick one explicitly; the choice applies to this browser session only.</p>
+            <div id="workspaceTenantPickerList" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;"></div>
+          </div>
           <div class="stats-grid">
             <div class="glass-card stat-card">
               <div class="stat-info">
