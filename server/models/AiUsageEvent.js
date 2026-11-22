@@ -52,7 +52,7 @@ const aiUsageEventSchema = new mongoose.Schema({
     default: null,
   },
   // Which dispatch path produced this event: 'auto-orchestrator' (default
-  // null for older rows) or 'legacy-global-key'.
+  // null for older rows), 'legacy-global-key', or 'user-key'.
   source: {
     type: String,
     trim: true,

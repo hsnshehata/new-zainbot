@@ -120,7 +120,9 @@ async function callAnthropicDirect(apiKey, model, messages, maxTokens, responseF
           content: text
         }
       }
-    ]
+    ],
+    // Real token usage for the metrics ledger (input_tokens/output_tokens).
+    usage: response.data?.usage,
   };
 }
 
@@ -140,19 +142,50 @@ async function getAiCompletion(options, bot = null, useBackup = false) {
 
     if (keyToUse) {
       logger.info(`🔑 Using user key for completion (useBackup: ${useBackup}, provider: ${providerToUse})`);
+      const requestId = crypto.randomUUID();
+      const startedAt = Date.now();
+      const usageKeyDoc = { provider: providerToUse, defaultModel: modelToUse };
       try {
+        let response;
         if (providerToUse === 'anthropic') {
-          return await callAnthropicDirect(keyToUse, modelToUse, options.messages, options.max_tokens, options.response_format);
+          response = await callAnthropicDirect(keyToUse, modelToUse, options.messages, options.max_tokens, options.response_format);
         } else {
           const client = getClient(providerToUse, keyToUse, baseUrlToUse);
-          return await client.chat.completions.create({
+          response = await client.chat.completions.create({
             model: modelToUse || options.model || 'gpt-4o-mini',
             messages: options.messages,
             max_tokens: options.max_tokens,
             response_format: options.response_format
           });
         }
+        recordLegacyUsage({
+          requestId,
+          bot,
+          keyDoc: usageKeyDoc,
+          options,
+          response,
+          attempt: 1,
+          success: true,
+          latencyMs: Date.now() - startedAt,
+          errorClass: 'none',
+          fallbackUsed: false,
+          source: 'user-key',
+        });
+        return response;
       } catch (err) {
+        recordLegacyUsage({
+          requestId,
+          bot,
+          keyDoc: usageKeyDoc,
+          options,
+          response: null,
+          attempt: 1,
+          success: false,
+          latencyMs: Date.now() - startedAt,
+          errorClass: classifyLegacyError(err),
+          fallbackUsed: false,
+          source: 'user-key',
+        });
         logger.error(`❌ User private key failed: ${err.message}`);
         throw new Error(`تعذر استخدام مفتاحك الخاص: ${err.message}`);
       }
@@ -279,7 +312,7 @@ function classifyLegacyError(err) {
   return 'unknown';
 }
 
-async function recordLegacyUsage({ requestId, bot, keyDoc, options, response, attempt, success, latencyMs, errorClass, fallbackUsed }) {
+async function recordLegacyUsage({ requestId, bot, keyDoc, options, response, attempt, success, latencyMs, errorClass, fallbackUsed, source = 'legacy-global-key' }) {
   try {
     const userId = bot?.userId;
     if (!userId) return;
@@ -305,7 +338,7 @@ async function recordLegacyUsage({ requestId, bot, keyDoc, options, response, at
       errorClass,
       retryable: !success,
       fallbackUsed,
-      source: 'legacy-global-key',
+      source,
     });
   } catch (err) {
     logger.warn('ai_legacy_usage_record_failed', { err: err.message });

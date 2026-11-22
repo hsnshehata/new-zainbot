@@ -39,6 +39,14 @@ class FakeOpenAI {
 }
 
 stubModule('openai', FakeOpenAI);
+stubModule('axios', {
+  post: async () => ({
+    data: {
+      content: [{ text: 'anthropic-ok' }],
+      usage: { input_tokens: 5, output_tokens: 3 },
+    },
+  }),
+});
 stubModule('../server/logger', { info() {}, warn() {}, error() {} });
 stubModule('../server/services/aiKeyResolver', {
   createAiKeyResolver: () => ({
@@ -157,6 +165,57 @@ test('usage recording is skipped when no owning tenant is known', async () => {
   await getAiCompletion(OPTIONS, null);
 
   assert.equal(state.events.length, 0);
+});
+
+test('a bot on its own user key records usage with source user-key', async () => {
+  reset();
+  state.createImpl = async () => ({
+    choices: [{ message: { content: 'own-key-ok' } }],
+    usage: { prompt_tokens: 9, completion_tokens: 4, total_tokens: 13 },
+  });
+  const ownKeyBot = { ...BOT, userApiKey: 'user-own-key', userProvider: 'openai', userModel: 'gpt-4o' };
+
+  const response = await getAiCompletion(OPTIONS, ownKeyBot);
+
+  assert.equal(response.choices[0].message.content, 'own-key-ok');
+  assert.equal(state.events.length, 1);
+  const event = state.events[0];
+  assert.equal(event.source, 'user-key');
+  assert.equal(event.success, true);
+  assert.equal(event.modelId, 'gpt-4o');
+  assert.equal(event.totalTokens, 13);
+});
+
+test('a failing user key records the failure, then throws the user-facing error', async () => {
+  reset();
+  state.createImpl = async () => {
+    const err = new Error('bad key');
+    err.status = 401;
+    throw err;
+  };
+  const ownKeyBot = { ...BOT, userApiKey: 'user-own-key', userProvider: 'openai', userModel: '' };
+
+  await assert.rejects(() => getAiCompletion(OPTIONS, ownKeyBot));
+
+  assert.equal(state.events.length, 1);
+  assert.equal(state.events[0].success, false);
+  assert.equal(state.events[0].errorClass, 'authentication');
+  assert.equal(state.events[0].source, 'user-key');
+});
+
+test('anthropic completions pass real token usage into the ledger', async () => {
+  reset();
+  state.keys = [fakeKey('claude', { provider: 'anthropic', defaultModel: 'claude-3-5-sonnet-20241022' })];
+
+  const response = await getAiCompletion(OPTIONS, BOT);
+
+  assert.equal(response.choices[0].message.content, 'anthropic-ok');
+  assert.equal(state.events.length, 1);
+  const event = state.events[0];
+  assert.equal(event.provider, 'anthropic');
+  assert.equal(event.inputTokens, 5);
+  assert.equal(event.outputTokens, 3);
+  assert.equal(event.totalTokens, 8);
 });
 
 test('a ledger write failure never breaks the completion', async () => {
