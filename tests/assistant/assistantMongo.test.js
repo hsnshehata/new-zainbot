@@ -208,3 +208,79 @@ test('assistant conversations persist per owner and reload intact', { timeout: 6
   const cross = await AssistantConversation.findOne({ _id: conv._id, user: ownerB }).lean();
   assert.equal(cross, null, 'another owner cannot read it by id');
 });
+
+
+test('all assistant data tools isolate real-Mongo fixtures and preserve useful names', { timeout: 60000 }, async () => {
+  const { createAssistantDataTools } = require('../../server/services/assistantDataTools');
+  const models = { Store, Bot, Sale, Expense, Conversation, ChatOrder, Booking, Customer, Order, Product };
+  const tools = createAssistantDataTools({ models });
+  const now = new Date();
+  const tenants = [];
+  for (const [marker, amount] of [['SYNTH_ALPHA', 111], ['SYNTH_BRAVO', 9999]]) {
+    const userId = new mongoose.Types.ObjectId();
+    const store = await Store.create({ userId, storeName: marker, storeLink: marker.toLowerCase(), templateId: 1 });
+    const bot = await Bot.create({ userId, name: marker, isActive: true });
+    await Sale.create({ storeId: store._id, total: amount, items: [{ name: marker, qty: 2, total: amount }], createdAt: now });
+    await Expense.create({ storeId: store._id, amount: amount - 100, reason: marker, payee: marker, createdAt: now });
+    await Conversation.create({ botId: bot._id, userId: marker, channel: 'web', messages: [{ role: 'user', content: marker, timestamp: now }, { role: 'assistant', content: marker, timestamp: now }] });
+    await Conversation.create({ botId: bot._id, userId: marker + '_old', channel: 'web', messages: [{ role: 'user', content: marker, timestamp: new Date(now.getTime() - 8 * 86400000) }] });
+    await ChatOrder.create({ botId: bot._id, sourceUserId: marker, channel: 'web', status: 'pending', totalAmount: amount });
+    // Only the real fields queried by the aggregate are required in these
+    // synthetic order fixtures. No order hooks or fulfillment are run.
+    await Order.collection.insertOne({ storeId: store._id, status: 'pending' });
+    await Product.create({ storeId: store._id, productName: marker, price: amount, stock: 1, lowStockThreshold: 5, stockTracked: true });
+    await Customer.create({ storeId: store._id, name: marker, phone: marker, totalSpent: amount, totalOrders: 1 });
+    await Booking.create({ botId: bot._id, customerName: marker, serviceType: marker, bookingDate: new Date(now.getTime() + 3600000), status: 'confirmed' });
+    tenants.push({ userId, marker, amount, store, bot });
+  }
+  for (const tenant of tenants) {
+    const other = tenants.find(x => x !== tenant);
+    const ctx = { now, storeIds: [tenant.store._id], botIds: [tenant.bot._id] };
+    const results = await tools.runTools(tools.tools, ctx);
+    for (const [id, result] of Object.entries(results)) {
+      assert.notEqual(result.error, 'unavailable', id);
+      assert.ok(!JSON.stringify(result).includes(other.marker), id + ' must exclude foreign names');
+    }
+    assert.equal(results.business_snapshot.stores, 1);
+    assert.equal(results.business_snapshot.bots.total, 1);
+    assert.equal(results.business_snapshot.salesToday.total, tenant.amount);
+    assert.equal(results.business_snapshot.expensesToday.total, tenant.amount - 100);
+    assert.equal(results.business_snapshot.pendingOrders, 1);
+    assert.equal(results.business_snapshot.upcomingBookingsNext7Days, 1);
+    assert.equal(results.sales_summary.today.total, tenant.amount);
+    assert.equal(results.sales_summary.recent[0].items[0], tenant.marker + ' x2');
+    assert.equal(results.expenses_summary.recent[0].reason, tenant.marker);
+    assert.deepEqual(results.orders_status.chatOrders, { pending: 1 });
+    assert.deepEqual(results.orders_status.storeOrders, { pending: 1 });
+    assert.equal(results.orders_status.openOrdersValue, tenant.amount);
+    assert.equal(results.top_products.top[0].name, tenant.marker);
+    assert.equal(results.top_products.lowStock[0].name, tenant.marker);
+    assert.equal(results.customers_summary.total, 1);
+    assert.equal(results.customers_summary.top[0].name, tenant.marker);
+    assert.equal(results.upcoming_bookings.upcoming[0].customer, tenant.marker);
+    assert.deepEqual(results.inbox_stats.channels, { web: 2 });
+    assert.equal(results.inbox_stats.today, 1);
+    assert.equal(results.inbox_stats.last7Days, 1);
+    assert.equal(results.business_snapshot.conversationsToday, 1);
+    assert.equal(results.bots_status.bots[0].name, tenant.marker);
+    // Exercise real service scope construction too. The completion is a
+    // local stub, so inspect every prompt without an AI call or cost.
+    const seen = new Set();
+    const service = createAssistantService({ models, hasAiKey: async () => true,
+      complete: async ({ messages, userId }) => {
+        assert.equal(String(userId), String(tenant.userId));
+        const payload = JSON.parse(messages.at(-1).content.split('\n')[1]);
+        for (const id of Object.keys(payload)) seen.add(id);
+        assert.ok(!JSON.stringify(payload).includes(other.marker));
+        assert.ok(!JSON.stringify(payload).includes(String(other.amount)));
+        return { choices: [{ message: { content: 'Synthetic completion' } }] };
+      },
+    });
+    for (const question of ['sales', 'expenses', 'orders', 'products', 'customers', 'bookings', 'inbox', 'bots']) {
+      const answer = await service.answer({ userId: tenant.userId, question });
+      assert.equal(answer.fallback, false);
+    }
+    assert.deepEqual([...seen].sort(), tools.tools.map(x => x.id).sort());
+
+  }
+});

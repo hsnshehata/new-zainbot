@@ -47,23 +47,28 @@ external sends, no zainbot.com cutover without explicit approval.
 - No hardcoded secrets found in server/, public/, scripts/.
 
 ## Next review backlog
-- ~~IDOR sweep~~ DONE 2026-11-22: orders, customers, stores, bookings,
-  sales, expenses, suppliers, categories, products, chatOrders,
-  chatCustomers, notifications, uploads, rules, messages, ideaCouncil all
-  verify tenant scoping (ownership checks, loadAccessibleBot/Rule, or the
-  global auth gate). One real gap found and fixed: authenticated
-  getProduct returned FULL product docs (costPrice, lowStockThreshold,
-  barcode, generatedCodes) for any store to any authenticated user;
-  non-owners now get the public projection only (test-pinned in
-  tests/tenantIsolationScope.test.js).
-- ~~F1 fabricated landing-demo confidence~~ CLOSED 2026-11-22: random
-  92-98% confidence field removed from /api/landing-demo/chat and the
-  dead frontend confidence UI/code dropped.
-- ~~assistant data tools~~ VERIFIED 2026-11-22 by code review: every query
-  in assistantDataTools.js filters by ctx.storeIds/ctx.botIds, and the
-  scope is loaded in assistantService.loadTenantScope from
-  Store/Bot.find({ userId }) with userId taken only from req.user
-  (controller comment: "never from body"). Tests already pin this.
+- IDOR review pass, 2026-11-22: reviewed ownership filters in orders,
+  customers, stores, bookings, sales, expenses, suppliers, categories,
+  products, chatOrders, chatCustomers, notifications, rules, messages and
+  ideaCouncil. This is a code review, not exhaustive live/HTTP acceptance.
+  Uploads have a global authentication gate; that alone is not proof of
+  tenant isolation. Found and fixed one concrete gap: authenticated
+  getProduct returned merchant-internal fields across tenants. Non-owners
+  now get the public projection. Real-Mongo controller tests pin owners,
+  bot-linked owners, direct admin and impersonated sessions. Malformed
+  IDs return 400 and server failures no longer expose raw database errors.
+- F1 CLOSED 2026-11-22: removed fabricated confidence from the demo API
+  and dead frontend code. The score had not been displayed by index.html.
+- Assistant data tools, 2026-11-22: all nine tools exercised against two
+  synthetic tenants in local MongoDB. Exact own values and foreign-name
+  exclusion checked. Every tool is also selected through the real service
+  scope builder; local completion stubs inspect prompts for foreign data.
+  No paid calls or live-user data involved. This found two functional
+  bugs: low-stock products read name instead of productName; conversation
+  counts queried nonexistent createdAt instead of messages.timestamp.
+  Both are fixed and regression-tested, including old conversations and
+  multiple messages counting as one conversation. This is local integration
+  proof, not deployed customer-channel acceptance.
 - Landing alignment work for Business Assistant once gate 4 is scheduled.
 
 ## 2026-11-22 security hardening batch (deployed to new.zainbot.com)

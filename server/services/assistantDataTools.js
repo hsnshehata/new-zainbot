@@ -120,7 +120,7 @@ function createAssistantDataTools(deps = {}) {
           ctx.storeIds.length ? sumSales(ctx.storeIds, todayStart) : { total: 0, count: 0 },
           ctx.storeIds.length ? sumExpenses(ctx.storeIds, todayStart) : { total: 0, count: 0 },
           ctx.botIds.length
-            ? models.Conversation.countDocuments({ botId: { $in: ctx.botIds }, createdAt: { $gte: todayStart } })
+            ? models.Conversation.countDocuments({ botId: { $in: ctx.botIds }, 'messages.timestamp': { $gte: todayStart } })
             : 0,
           ctx.botIds.length
             ? models.ChatOrder.countDocuments({ botId: { $in: ctx.botIds }, status: { $in: ['pending', 'processing'] } })
@@ -302,12 +302,12 @@ function createAssistantDataTools(deps = {}) {
           { $limit: 5 },
         ]);
         const lowStock = await models.Product.find({ storeId: { $in: ctx.storeIds }, stockTracked: true })
-          .select('name stock lowStockThreshold')
+          .select('productName stock lowStockThreshold')
           .lean();
         const low = lowStock
           .filter((product) => Number(product.stock) <= Number(product.lowStockThreshold ?? 5))
           .slice(0, 10)
-          .map((product) => ({ name: product.name, stock: product.stock, threshold: product.lowStockThreshold ?? 5 }));
+          .map((product) => ({ name: product.productName, stock: product.stock, threshold: product.lowStockThreshold ?? 5 }));
         return {
           periodDays: 30,
           top: rows.map((row) => ({ name: row._id || 'item', qty: row.qty, total: round2(row.total) })),
@@ -404,8 +404,8 @@ function createAssistantDataTools(deps = {}) {
         const todayStart = startOfDay(ctx.now);
         const weekStart = daysAgo(ctx.now, 7);
         const [today, week, byChannel] = await Promise.all([
-          models.Conversation.countDocuments({ botId: { $in: ctx.botIds }, createdAt: { $gte: todayStart } }),
-          models.Conversation.countDocuments({ botId: { $in: ctx.botIds }, createdAt: { $gte: weekStart } }),
+          models.Conversation.countDocuments({ botId: { $in: ctx.botIds }, 'messages.timestamp': { $gte: todayStart } }),
+          models.Conversation.countDocuments({ botId: { $in: ctx.botIds }, 'messages.timestamp': { $gte: weekStart } }),
           models.Conversation.aggregate([
             { $match: { botId: { $in: ctx.botIds } } },
             { $group: { _id: '$channel', count: { $sum: 1 } } },

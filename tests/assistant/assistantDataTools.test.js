@@ -67,8 +67,8 @@ function fakeModels(overrides = {}) {
       find: () => ({
         select: () => ({
           lean: async () => [
-            { name: 'Mug', stock: 2, lowStockThreshold: 5 },
-            { name: 'Table', stock: 20, lowStockThreshold: 5 },
+            { productName: 'Mug', stock: 2, lowStockThreshold: 5 },
+            { productName: 'Table', stock: 20, lowStockThreshold: 5 },
           ],
         }),
       }),
