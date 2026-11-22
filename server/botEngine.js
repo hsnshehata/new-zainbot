@@ -214,12 +214,19 @@ const placeholderForMedia = (isImage, isVoice) => {
 
 // أرقام مصر المسموح بها: 01xxxxxxxxx أو 00201xxxxxxxxx أو +201xxxxxxxxx
 const PHONE_REGEX = /(\+201\d{9}|00201\d{9}|01\d{9})/;
+// أرقام عربية شرقية (٠١٢٣) وفارسية (۰۱۲۳): عملاء مصر يكتبون بها أحيانًا؛
+// تُحوَّل إلى ASCII قبل الفحص والتخزين حتى لا يُرفض رقم صحيح شكلًا.
+const EASTERN_DIGIT = /[\u0660-\u0669\u06F0-\u06F9]/g;
+const normalizeDigits = (value = '') => String(value).replace(EASTERN_DIGIT, (d) => {
+  const code = d.charCodeAt(0);
+  return String(code < 0x06f0 ? code - 0x0660 : code - 0x06f0);
+});
 // تحديد إذا كانت الرسالة مجرد ردود تشكر/إيجابية
 const isSimpleAcknowledgement = (text = '') => /^(شكرا|تمام|بتمام|تمام تمام|اوكي|أوكي|يارب|ربنا يحفظك|ربنا يبارك|ايوه|ايوا|أيه|أه|اه|نعم|لا|كويس|تمام يا غالي|شكراً)(\s|$)/i.test(text.trim());
 
-const isValidPhone = (phone = '') => PHONE_REGEX.test(phone.trim());
+const isValidPhone = (phone = '') => PHONE_REGEX.test(normalizeDigits(phone).trim());
 const extractPhoneFromText = (text = '') => {
-  const match = text.match(PHONE_REGEX);
+  const match = normalizeDigits(text).match(PHONE_REGEX);
   return match ? match[0] : '';
 };
 
@@ -365,6 +372,12 @@ function customerTruthSentence(result) {
       return `طلبك رقم ${id} لا يمكن إلغاؤه بعد الشحن أو التسليم.`;
     case 'need_fresh_data':
       return 'محتاج تفاصيل طلبك من جديد عشان أقدر أسجله بشكل صحيح.';
+    case 'status_inquiry': {
+      if (result.chatOrder?._id) {
+        return `طلبك رقم ${id} مسجل وحالته "${statusText(result.chatOrder?.status)}".`;
+      }
+      return 'لا يوجد لديك طلب مسجل حتى الآن. إذا كنت تريد الطلب، أرسل اسم المنتج والكمية وبياناتك.';
+    }
     case 'ambiguous_items': {
       const parts = (result.ambiguousItems || [])
         .map((a) => `"${sanitizeForCustomer(a.title, 60)}" وقد تقصد: ${(a.candidates || []).map((c) => sanitizeForCustomer(c, 60)).join(' أو ')}`)
@@ -460,6 +473,10 @@ function buildOrderStateNote(result) {
       return `\n[حالة الطلب الفعلية]: الطلب رقم ${id} بحالة "${statusText(result.chatOrder?.status)}" ولا يمكن إلغاؤه بعد الشحن أو التسليم. اشرح ذلك للعميل ولا تعد بالإلغاء.\n`;
     case 'need_fresh_data':
       return `\n[حالة الطلب الفعلية]: مسودة الطلب السابقة منتهية الصلاحية ولم يُحفظ أي طلب. اطلب من العميل تفاصيل الطلب من جديد. ${neverConfirm}\n`;
+    case 'status_inquiry':
+      return result.chatOrder?._id
+        ? `\n[حالة الطلب الفعلية]: العميل يسأل عن حالة طلبه رقم ${id} وحالته المخزنة "${statusText(result.chatOrder?.status)}". أخبره بالحالة كما هي فقط.\n`
+        : `\n[حالة الطلب الفعلية]: العميل يسأل عن حالة طلب ولا يوجد طلب مسجل له. ${neverConfirm}\n`;
     case 'ambiguous_items': {
       const parts = (result.ambiguousItems || [])
         .map((a) => `"${a.title}" (قد تقصد: ${(a.candidates || []).join('، ')})`)
@@ -558,11 +575,12 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
     const statusInquiry = isStatusInquiry(userMessageContent);
     const confirmIntent = isConfirmIntent(userMessageContent);
 
-    // لو هو إلغاء فقط بدون بيانات كافية، لا نخرج مبكرًا لكي نلتقط الطلب المفتوح ونلغيه
-    if (!parsed || (parsed.intent === false && !cancelIntent && !confirmIntent)) return null;
+    // لو هو إلغاء فقط بدون بيانات كافية، لا نخرج مبكرًا لكي نلتقط الطلب المفتوح ونلغيه؛
+    // وكذلك استفسار الحالة الخالص يحتاج الوصول للطلب المخزن ليجيب بحقيقة محفوظة.
+    if (!parsed || (parsed.intent === false && !cancelIntent && !confirmIntent && !statusInquiry)) return null;
 
-    // حاول استخراج رقم صالح وفق الأنماط المسموحة
-    let phoneCandidate = parsed.customerPhone || '';
+    // حاول استخراج رقم صالح وفق الأنماط المسموحة (بعد توحيد الأرقام الشرقية)
+    let phoneCandidate = normalizeDigits(parsed.customerPhone || '').trim();
     if (!isValidPhone(phoneCandidate)) {
       phoneCandidate = extractPhoneFromText(transcriptText) || extractPhoneFromText(userMessageContent) || phoneCandidate;
     }
@@ -606,6 +624,17 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
     };
 
     let existingOpenOrder = await latestOpenOrder();
+
+    // استفسار حالة خالص (بلا تأكيد/تعديل/إلغاء/طلب جديد): الجواب حتمي من
+    // الحالة المخزنة فقط — لا تعديل على الطلب، لا حفظ، لا نص مولد عن الحالة.
+    if (statusInquiry && !cancelIntent && !confirmIntent && !modifyIntent && !newOrderIntent && !forceNewOrder) {
+      return {
+        chatOrder: existingOpenOrder || null,
+        saved: Boolean(existingOpenOrder),
+        outcome: 'status_inquiry',
+        customerPhone: parsed.customerPhone || '',
+      };
+    }
 
     // لا نثق بأي سعر من النموذج: نأخذ العنوان والكمية والملاحظة فقط.
     let safeItems = Array.isArray(parsed.items) ? parsed.items.map((it) => ({
@@ -1540,4 +1569,7 @@ module.exports = {
   customerTruthSentence,
   confirmedOrderTruthSentence,
   autoClassifyConversation,
+  normalizeDigits,
+  isValidPhone,
+  extractPhoneFromText,
 };
