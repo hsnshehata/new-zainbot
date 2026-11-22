@@ -59,8 +59,11 @@ external sends, no zainbot.com cutover without explicit approval.
 - ~~F1 fabricated landing-demo confidence~~ CLOSED 2026-11-22: random
   92-98% confidence field removed from /api/landing-demo/chat and the
   dead frontend confidence UI/code dropped.
-- assistant data tools: confirm store/user scoping on every query path
-  (tests exist; re-verify against live-shaped data).
+- ~~assistant data tools~~ VERIFIED 2026-11-22 by code review: every query
+  in assistantDataTools.js filters by ctx.storeIds/ctx.botIds, and the
+  scope is loaded in assistantService.loadTenantScope from
+  Store/Bot.find({ userId }) with userId taken only from req.user
+  (controller comment: "never from body"). Tests already pin this.
 - Landing alignment work for Business Assistant once gate 4 is scheduled.
 
 ## 2026-11-22 security hardening batch (deployed to new.zainbot.com)
