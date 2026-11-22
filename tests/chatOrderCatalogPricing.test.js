@@ -320,7 +320,7 @@ test('adversarial: overclaim neutralized even when extraction returned null (no 
   const enforced = enforceTruthfulOrderReply('تم تأكيد الطلب! هيوصلك خلال يومين.', null);
   assert.doesNotMatch(enforced, /تم تأكيد الطلب/);
   assert.match(enforced, /هيوصلك خلال يومين/);
-  assert.match(enforced, /لم يتم تسجيل أي طلب/);
+  assert.match(enforced, /لم يُسجل أي طلب من هذه المحادثة/);
 });
 
 test('a durably confirmed order renders a deterministic durable-facts body (contract change 2026-11-22)', () => {
@@ -375,7 +375,7 @@ test('no-outcome turns: freeform false claims are stripped and replaced by the d
   // must not survive even without an outcome, and the default truth renders.
   const enforced = enforceTruthfulOrderReply('تم تأكيد طلبك بنجاح! هيوصلك خلال يومين.', null);
   assert.doesNotMatch(enforced, /تم تأكيد طلبك/);
-  assert.match(enforced, /لم يتم تسجيل أي طلب حتى الآن/);
+  assert.match(enforced, /لم يُسجل أي طلب من هذه المحادثة حتى الآن/);
 });
 
 test('rhetorical-question assertions cannot survive on outcome turns (deterministic body only)', () => {
@@ -389,7 +389,7 @@ test('rhetorical-question assertions cannot survive on outcome turns (determinis
 test('no-outcome rhetorical-question claims are stripped and routed to the default durable truth', () => {
   const enforced = enforceTruthfulOrderReply('تم تأكيد طلبك؟', null);
   assert.doesNotMatch(enforced, /تم تأكيد طلبك/);
-  assert.match(enforced, /لم يتم تسجيل أي طلب حتى الآن/);
+  assert.match(enforced, /لم يُسجل أي طلب من هذه المحادثة حتى الآن/);
 });
 
 test('mixed-language paraphrase assertions are stripped and replaced by durable truth', () => {

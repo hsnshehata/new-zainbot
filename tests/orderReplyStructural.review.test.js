@@ -109,7 +109,7 @@ test('BACKSTOP: no-outcome spontaneous order claim cannot reach the customer (AR
   for (const [reply, fragment] of CLAIMS) {
     const out = enforceTruthfulOrderReply(reply, null);
     assert.doesNotMatch(out, fragment, `claim-bearing model text leaked on no-outcome path: ${reply}`);
-    assert.match(out, /لم يتم تسجيل أي طلب/, 'deterministic default truth must replace the stripped claim');
+    assert.match(out, /لم يُسجل أي طلب من هذه المحادثة/, 'deterministic default truth must replace the stripped claim');
   }
 });
 

@@ -124,13 +124,71 @@ test('pure status inquiry answers from durable state and does not mutate the ord
   assert.doesNotMatch(body, /هيوصلك بكرة/, 'model shipping promise must not reach the customer');
 });
 
+test('status inquiry for a cancelled order answers its true status, never a false absence', async () => {
+  const store = await makeStore();
+  const bot = botFor(store);
+  const conversationId = new mongoose.Types.ObjectId();
+  const sourceUserId = 'web_status_cancelled_1';
+
+  const saved = await runExtraction(bot, 'تمام، أكد الطلب', {
+    intent: true,
+    customerName: 'عميل اختبار',
+    customerPhone: '01012345678',
+    customerAddress: '١٢ شارع التحرير',
+    customerNote: '',
+    items: [{ title: 'كرة قدم', quantity: 1 }],
+    status: 'confirmed',
+    freeText: 'طلب اختبار',
+  }, { conversationId, sourceUserId });
+  assert.equal(saved.outcome, 'saved');
+  const orderId = saved.chatOrder._id;
+  await ChatOrder.findByIdAndUpdate(orderId, { status: 'cancelled', updatedAt: new Date() });
+
+  const inquiry = await runExtraction(bot, 'فين طلبي؟', { intent: false }, { conversationId, sourceUserId });
+  assert.equal(inquiry.outcome, 'status_inquiry');
+  assert.equal(String(inquiry.chatOrder?._id), String(orderId), 'cancelled order must be found');
+
+  const body = customerTruthSentence(inquiry);
+  assert.match(body, new RegExp(String(orderId)));
+  assert.match(body, /تم الإلغاء/, 'true cancelled status must be stated');
+  assert.doesNotMatch(body, /لم أجد طلب/, 'must never claim absence when a cancelled order exists');
+
+  const after = await ChatOrder.findById(orderId);
+  assert.equal(after.status, 'cancelled', 'inquiry must not mutate the order');
+});
+
+test('cancel intent still ignores already-cancelled orders', async () => {
+  const store = await makeStore();
+  const bot = botFor(store);
+  const conversationId = new mongoose.Types.ObjectId();
+  const sourceUserId = 'web_status_cancelled_2';
+
+  const saved = await runExtraction(bot, 'تمام، أكد الطلب', {
+    intent: true,
+    customerName: 'عميل اختبار',
+    customerPhone: '01012345678',
+    customerAddress: '١٢ شارع التحرير',
+    customerNote: '',
+    items: [{ title: 'كرة قدم', quantity: 1 }],
+    status: 'confirmed',
+    freeText: 'طلب اختبار',
+  }, { conversationId, sourceUserId });
+  assert.equal(saved.outcome, 'saved');
+  await ChatOrder.findByIdAndUpdate(saved.chatOrder._id, { status: 'cancelled', updatedAt: new Date() });
+
+  const result = await runExtraction(bot, 'الغي الطلب', { intent: false }, { conversationId, sourceUserId });
+  assert.notEqual(result?.chatOrder?.status, 'cancelled', 'cancel path must not re-target a cancelled order');
+  assert.notEqual(result?.outcome, 'cancelled', 'an already-cancelled order must not be re-cancelled');
+});
+
 test('status inquiry with no order gets an honest deterministic answer', async () => {
   const bot = botFor(null);
   const inquiry = await runExtraction(bot, 'وصل طلبي؟', { intent: false });
   assert.equal(inquiry.outcome, 'status_inquiry');
   assert.equal(inquiry.chatOrder, null);
   const body = customerTruthSentence(inquiry);
-  assert.match(body, /لا يوجد لديك طلب مسجل/);
+  assert.match(body, /لم أجد طلبًا مسجلًا مرتبطًا بهذه المحادثة/);
+  assert.match(body, /لدى هذا المتجر/, 'absence claim must be scoped to the actual lookup');
 });
 
 test('confirm-plus-status wording is NOT treated as a pure inquiry', async () => {

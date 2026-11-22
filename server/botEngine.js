@@ -379,7 +379,10 @@ function customerTruthSentence(result) {
       if (result.chatOrder?._id) {
         return `طلبك رقم ${id} مسجل وحالته "${statusText(result.chatOrder?.status)}".`;
       }
-      return 'لا يوجد لديك طلب مسجل حتى الآن. إذا كنت تريد الطلب، أرسل اسم المنتج والكمية وبياناتك.';
+      // Scoped honestly: the lookup covers only this conversation, the
+      // customer's sender id, and any phone shared here — never "you have
+      // no orders anywhere".
+      return 'لم أجد طلبًا مسجلًا مرتبطًا بهذه المحادثة أو برقم هاتفك لدى هذا المتجر. إذا كنت تريد الطلب، أرسل اسم المنتج والكمية وبياناتك.';
     }
     case 'ambiguous_items': {
       const parts = (result.ambiguousItems || [])
@@ -413,7 +416,7 @@ function customerTruthSentence(result) {
     case 'save_failed':
       return 'حدث خطأ تقني أثناء تسجيل الطلب ولم يُسجل، من فضلك حاول مرة أخرى.';
     default:
-      return 'لم يتم تسجيل أي طلب حتى الآن. إذا كنت تريد الطلب، أرسل اسم المنتج والكمية وبياناتك.';
+      return 'لم يُسجل أي طلب من هذه المحادثة حتى الآن. إذا كنت تريد الطلب، أرسل اسم المنتج والكمية وبياناتك.';
   }
 }
 
@@ -487,7 +490,7 @@ function buildOrderStateNote(result) {
     case 'status_inquiry':
       return result.chatOrder?._id
         ? `\n[حالة الطلب الفعلية]: العميل يسأل عن حالة طلبه رقم ${id} وحالته المخزنة "${statusText(result.chatOrder?.status)}". أخبره بالحالة كما هي فقط.\n`
-        : `\n[حالة الطلب الفعلية]: العميل يسأل عن حالة طلب ولا يوجد طلب مسجل له. ${neverConfirm}\n`;
+        : `\n[حالة الطلب الفعلية]: العميل يسأل عن حالة طلب ولم يُعثر على طلب مسجل مرتبط بهذه المحادثة أو برقم هاتفه لدى هذا المتجر. ${neverConfirm}\n`;
     case 'ambiguous_items': {
       const parts = (result.ambiguousItems || [])
         .map((a) => `"${a.title}" (قد تقصد: ${(a.candidates || []).join('، ')})`)
@@ -623,9 +626,15 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
 
       if (!filters.length) return null;
 
-      const statuses = cancelIntent || statusInquiry
+      // Status inquiries must see EVERY durable order — including cancelled
+      // ones — so a customer asking about a cancelled order hears its true
+      // status, never a false "no order found". Cancel intent still targets
+      // only cancellable (non-terminal) orders.
+      const statuses = cancelIntent
         ? ['pending', 'processing', 'confirmed', 'shipped', 'delivered']
-        : ['pending', 'processing', 'confirmed'];
+        : statusInquiry
+          ? ['pending', 'processing', 'confirmed', 'shipped', 'delivered', 'cancelled']
+          : ['pending', 'processing', 'confirmed'];
 
       return ChatOrder.findOne({
         botId: bot._id,
