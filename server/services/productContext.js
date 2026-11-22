@@ -36,7 +36,22 @@ function compact(value, limit) {
   return String(value || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, limit);
 }
 
-function buildProductContext(products, message, storeLink) {
+// Links must stay on this deployment. Never infer the primary domain when
+// configuration is absent or malformed, and never use request Host headers.
+function buildStorefrontUrl(storeLink, productId, origin = process.env.APP_URL || process.env.BASE_URL) {
+  if (!/^[a-zA-Z0-9_-]+$/.test(String(storeLink || ''))) return null;
+  if (productId != null && !/^[a-f\d]{24}$/i.test(String(productId))) return null;
+  try {
+    const base = new URL(origin);
+    if (!['https:', 'http:'].includes(base.protocol) || base.username || base.password ||
+        base.pathname !== '/' || base.search || base.hash) return null;
+    const link = new URL(`/store/${storeLink}/landing`, base.origin);
+    if (productId != null) link.searchParams.set('product', String(productId));
+    return link.href;
+  } catch { return null; }
+}
+
+function buildProductContext(products, message, storeLink, origin) {
   const active = (products || []).filter((product) => product && product.isActive !== false);
   if (!active.length) return 'لا توجد منتجات متاحة حاليًا في المتجر.\n';
 
@@ -66,7 +81,7 @@ function buildProductContext(products, message, storeLink) {
       Number.isFinite(discountedPrice) && discountedPrice >= 0 ? discountedPrice : basePrice;
     const currency = ['EGP', 'USD', 'SAR'].includes(product.currency) ? product.currency : '';
     const id = String(product._id || '');
-    const url = link && /^[a-f\d]{24}$/i.test(id) ? `https://zainbot.com/store/${link}?productId=${id}` : null;
+    const url = link ? buildStorefrontUrl(link, id, origin) : null;
     return `المنتج: ${compact(product.productName, 100)}، السعر: ${Number.isFinite(price) && price >= 0 ? price : 'غير متوفر'} ${currency || ''}، ` +
       `الرابط: ${url || 'غير متوفر'}، الوصف: ${compact(product.description, MAX_DESCRIPTION) || 'غير متوفر'}، ` +
        `المخزون: ${product.stockTracked === false ? 'غير متتبع' : Number.isFinite(Number(product.stock)) ? product.stock : 'غير متوفر'}.`;
@@ -83,4 +98,4 @@ function effectiveProductPrice(product) {
   return Number.isFinite(price) && price >= 0 ? price : 0;
 }
 
-module.exports = { buildProductContext, effectiveProductPrice, normalize, tokens };
+module.exports = { buildProductContext, buildStorefrontUrl, effectiveProductPrice, normalize, tokens };

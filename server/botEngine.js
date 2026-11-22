@@ -24,7 +24,7 @@ const { getAiCompletion } = require('./services/aiFailover');
 const { checkPlanLimitsAndIncrement, settleMessageQuota } = require('./services/billingLimits');
 const { dispatchWebhook } = require('./services/webhookDispatcher');
 const { dispatchMultiChannelNotification } = require('./services/notificationDispatcher');
-const { buildProductContext, effectiveProductPrice, normalize: normalizeCatalogText, tokens: catalogTokens } = require('./services/productContext');
+const { buildProductContext, buildStorefrontUrl, effectiveProductPrice, normalize: normalizeCatalogText, tokens: catalogTokens } = require('./services/productContext');
 
 // معرف المساعد الداخلي لتخطي هوكات الطلبات
 const ASSISTANT_BOT_ID = process.env.ASSISTANT_BOT_ID || '688ebdc24f6bd5cf70cb071d';
@@ -1218,7 +1218,7 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
     if (bot && bot.storeId) {
       const { store, products } = await getStoreWithProductsCache(bot.storeId);
       if (store) {
-        systemPrompt += `\nبيانات المتجر: الاسم: ${store.storeName}، الرابط: zainbot.com/${store.storeLink}.\n`;
+        systemPrompt += `\nبيانات المتجر: الاسم: ${store.storeName}، الرابط: ${buildStorefrontUrl(store.storeLink) || 'غير متوفر'}.\n`;
         if (products && products.length > 0) {
           systemPrompt += buildProductContext(products, message, store.storeLink);
         } else {

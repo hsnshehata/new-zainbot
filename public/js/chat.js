@@ -258,10 +258,41 @@ try {
     }
 
     function convertLinksToButtons(text) {
-      const urlRegex = /(https?:\/\/[^\s]+)/g;
-      return text.replace(urlRegex, (url) => {
-        return `<a href="${url}" target="_blank" class="link-button">اضغط هنا <i class="fas fa-external-link-alt"></i></a>`;
-      });
+      // Replies are untrusted text, never HTML. Build anchors through DOM
+      // properties so quotes/markup cannot become executable attributes.
+      const fragment = document.createElement('div');
+      const source = String(text || '');
+      const urlRegex = /https?:\/\/[^\s<>"']+/g;
+      let cursor = 0;
+      for (const match of source.matchAll(urlRegex)) {
+        fragment.appendChild(document.createTextNode(source.slice(cursor, match.index)));
+        const raw = match[0];
+        const url = raw.replace(/[.,;:!?،؛؟)\]}]+$/u, '');
+        const suffix = raw.slice(url.length);
+        let valid = false;
+        try {
+          const parsed = new URL(url);
+          valid = ['http:', 'https:'].includes(parsed.protocol) && !parsed.username && !parsed.password;
+        } catch { /* Invalid URLs remain plain text. */ }
+        if (valid) {
+          const anchor = document.createElement('a');
+          anchor.href = url;
+          anchor.target = '_blank';
+          anchor.rel = 'noopener noreferrer';
+          anchor.className = 'link-button';
+          anchor.appendChild(document.createTextNode('اضغط هنا '));
+          const icon = document.createElement('i');
+          icon.className = 'fas fa-external-link-alt';
+          anchor.appendChild(icon);
+          fragment.appendChild(anchor);
+          fragment.appendChild(document.createTextNode(suffix));
+        } else {
+          fragment.appendChild(document.createTextNode(raw));
+        }
+        cursor = match.index + raw.length;
+      }
+      fragment.appendChild(document.createTextNode(source.slice(cursor)));
+      return fragment.innerHTML;
     }
 
     async function sendMessage(message, isImage = false, imageData = null) {
