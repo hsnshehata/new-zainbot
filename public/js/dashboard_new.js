@@ -889,6 +889,7 @@
       btn_copy_code: 'Copy',
       btn_save_chat_page: 'Save Settings',
       chat_page_saved_ok: 'Chat page settings saved successfully!',
+      chat_logo_upload_failed: 'The logo could not be uploaded. Your chat page settings were not saved. Please try again.',
       link_copied_ok: 'Link copied to clipboard!',
       code_copied_ok: 'Widget code copied to clipboard!',
       label_preset_themes: 'Choose Default Theme',
@@ -1997,6 +1998,7 @@
       btn_copy_code: 'نسخ الكود',
       btn_save_chat_page: 'حفظ إعدادات الدردشة',
       chat_page_saved_ok: 'تم حفظ إعدادات صفحة الدردشة بنجاح!',
+      chat_logo_upload_failed: 'تعذر رفع الشعار. لم يتم حفظ إعدادات صفحة الدردشة. حاول مرة أخرى.',
       link_copied_ok: 'تم نسخ الرابط إلى الحافظة!',
       code_copied_ok: 'تم نسخ كود التضمين إلى الحافظة!',
       label_preset_themes: 'اختر نموذجاً افتراضياً',
@@ -5181,15 +5183,23 @@
         try {
           const formData = new FormData();
           formData.append('image', chatLogoFileToUpload);
-          const uploadRes = await fetch('/api/upload', {
+          const token = getToken();
+          if (!token) throw new Error('AUTH_REQUIRED');
+          const response = await fetch('/api/upload', {
             method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
             body: formData,
-          }).then(r => r.json());
-          if (uploadRes && uploadRes.imageUrl) {
-            finalLogoUrl = uploadRes.imageUrl;
+          });
+          if (!response.ok) throw new Error('LOGO_UPLOAD_FAILED');
+          const uploadRes = await response.json();
+          if (!uploadRes || typeof uploadRes.imageUrl !== 'string' || !uploadRes.imageUrl.trim()) {
+            throw new Error('LOGO_UPLOAD_FAILED');
           }
+          finalLogoUrl = uploadRes.imageUrl;
         } catch (uploadErr) {
-          console.warn('Logo upload failed, proceeding with previous logo url:', uploadErr);
+          console.warn('Logo upload failed; settings were not saved:', uploadErr);
+          alert(t.chat_logo_upload_failed);
+          return;
         }
       }
 
