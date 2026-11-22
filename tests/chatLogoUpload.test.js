@@ -51,3 +51,22 @@ test('saving without a new logo does not upload and preserves existing logo', as
   assert.equal(r.requests.length, 0);
   assert.equal(r.saves[0].payload.logoUrl, 'https://example.invalid/old-logo.png');
 });
+
+test('real app upload boundary: owner bearer accepted, anonymous rejected, no image means no provider call', async () => {
+  process.env.NODE_ENV='test';process.env.JWT_SECRET='test-only-secret-that-is-at-least-32-bytes-long';
+  const User=require('../server/models/User');
+  const original=User.findById;
+  const id='507f191e810c19729de86001';
+  User.findById=()=>({select(){return this;},lean:async()=>({_id:id,username:'synthetic',role:'user',status:'active',sessionVersion:0})});
+  const axios=require('axios');const originalPost=axios.post;let sends=0;
+  axios.post=async()=>{sends++;throw Error('Provider calls forbidden in fixture');};
+  try {
+    const app=require('../server/server');const request=require('supertest');
+    const {signAccessToken}=require('../server/utils/authTokens');
+    const token=signAccessToken({_id:id,role:'user',username:'synthetic',sessionVersion:0});
+    const anon=await request(app).post('/api/upload');assert.equal(anon.status,401);
+    const owner=await request(app).post('/api/upload').set('Authorization',`Bearer ${token}`);
+    assert.equal(owner.status,400);assert.equal(sends,0);
+    assert.match(source,/function getToken\(\)\s*\{\s*return localStorage.getItem\('token'\);/);
+  } finally {User.findById=original;axios.post=originalPost;}
+});
