@@ -42,7 +42,9 @@
 .product-card .icon-btn { width:40px; height:40px; border-radius:10px; display:grid; place-items:center; border:1px solid #e5e7eb; background:#fff; cursor:pointer; }
 
 /* صفحة تفاصيل المنتج (Overlay) */
-.product-detail-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.55); display:grid; place-items:center; z-index:100; }
+.product-detail-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.55); display:grid; justify-items:center; align-items:start; overflow-y:auto; overscroll-behavior:contain; padding-block:.75rem; z-index:100; }
+/* Tall details scroll inside the backdrop (auto margins keep short ones centred). */
+.product-detail-backdrop > .product-detail { margin-block:auto; }
 .product-detail { width:min(100%, 980px); background:#fff; border-radius:16px; box-shadow: var(--shadow-md); overflow:hidden; display:grid; grid-template-columns: 1.1fr .9fr; gap:0; }
 .product-detail .media { background:#f9fafb; padding:16px; display:grid; gap:10px; }
 .product-detail .media .main { width:100%; aspect-ratio: 1 / 1; background:#f3f4f6; border-radius:12px; overflow:hidden; display:grid; place-items:center; }
