@@ -339,31 +339,36 @@ function enforceTruthfulOrderReply(reply, extractionResult) {
   const durableConfirmed = Boolean(durableSaved && extractionResult.chatOrder.status === 'confirmed');
   if (durableConfirmed) return reply;
   const outcome = extractionResult?.outcome || null;
+  // STRUCTURAL fail-closed: for ANY non-confirmed order outcome the
+  // customer-facing body is authoritative deterministic text rendered from
+  // durable state (outcome, saved order, missing fields, unpriced titles) —
+  // never LLM prose that happened to pass a detector. The generated reply is
+  // discarded entirely on these turns, so no paraphrase in any language can
+  // reach the customer.
+  if (outcome) {
+    const truthful = customerTruthSentence(extractionResult);
+    if (reply.trim() !== truthful) {
+      logger.warn('chat_order_reply_replaced_by_deterministic', { outcome });
+    }
+    return truthful;
+  }
+  // No-outcome safe routing: an apparent order-state claim without any
+  // durable order activity this turn cannot be verified, so assertion-shaped
+  // sentences are removed and, if any were present, the deterministic
+  // default truth replaces them. Ordinary no-order conversation is untouched.
   const parts = reply.match(/[^.!؟?\n]+[.!؟?\n]*/g) || [];
-  // Assertion-based fail-closed on EVERY turn (outcome or not), with no
-  // question-mark exemption: a rhetorical question asserts state just as
-  // much as a declarative. Detail-asking sentences and ordinary chat have
-  // no assertion pattern and survive; the durable truth line always renders
-  // for an order outcome, and replaces whatever was stripped.
   const kept = parts.filter((s) => {
     const body = s.trim();
     if (!body) return false;
     if (ORDER_STATUS_ASSERTION.test(body)) return false;
-    if (!durableSaved && ORDER_ID_CITATION.test(body)) return false;
+    if (ORDER_ID_CITATION.test(body)) return false;
     return true;
   });
   const stripped = parts.length - kept.length;
-  // No order outcome and nothing order-related asserted: untouched reply.
-  if (!outcome && stripped === 0) return reply;
-  if (stripped > 0) {
-    logger.warn('chat_order_reply_overclaim_blocked', { outcome: outcome || 'none', stripped });
-  }
-  const truthful = customerTruthSentence(extractionResult);
+  if (stripped === 0) return reply;
+  logger.warn('chat_order_reply_overclaim_blocked', { outcome: 'none', stripped });
   const keptText = kept.map((s) => s.trim()).filter(Boolean).join('\n');
-  // Fail-closed: for any order outcome the deterministic status line renders
-  // from durable state, and whenever an assertion was stripped the truth
-  // replaces it. Non-order chat around it is preserved verbatim.
-  if (keptText.includes(truthful)) return keptText;
+  const truthful = customerTruthSentence(extractionResult);
   return keptText ? `${keptText}\n${truthful}` : truthful;
 }
 

@@ -66,11 +66,16 @@ test('[GUARD] fabricated order id is removed when nothing is saved', () => {
   assert.match(out, /الاسم/);
 });
 
-test('[GUARD] detail-asking content is preserved and truthful status appended', () => {
+test('[GUARD] non-confirmed outcomes render a fully deterministic durable-state body (structural gate, supersedes prose preservation)', () => {
+  // Structural contract: on order-outcome turns the customer-facing body is
+  // deterministic text rendered from durable state; model prose — even
+  // harmless detail-asking — is not part of the customer-facing reply.
   const out = enforceTruthfulOrderReply('محتاج اسمك ورقم تليفونك عشان أسجل الطلب. ما هو اسمك؟', SAVE_FAILED);
-  assert.match(out, /محتاج اسمك ورقم تليفونك/);
-  assert.match(out, /ما هو اسمك؟/);
   assert.match(out, /خطأ تقني/);
+  assert.doesNotMatch(out, /محتاج اسمك ورقم تليفونك/, 'model prose is replaced, not detector-passed');
+  const outMissing = enforceTruthfulOrderReply('أي نص مولد', MISSING);
+  assert.match(outMissing, /الاسم/, 'missing required fields come from durable state');
+  assert.doesNotMatch(outMissing, /أي نص مولد/);
 });
 
 test('[GUARD] non-order chat with no outcome passes through unchanged', () => {

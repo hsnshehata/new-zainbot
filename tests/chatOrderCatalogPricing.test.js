@@ -306,8 +306,8 @@ test('adversarial: an overclaiming model reply is neutralized when nothing was d
   const enforced = enforceTruthfulOrderReply(overclaiming, result);
   assert.doesNotMatch(enforced, /تم تأكيد/);
   assert.doesNotMatch(enforced, /12345/);
-  assert.match(enforced, /شكرًا لتسوقك معنا/, 'non-claim content is preserved');
-  assert.match(enforced, /غير متوفر بسعر رسمي/, 'truthful sentence appended');
+  assert.doesNotMatch(enforced, /شكرًا لتسوقك معنا/, 'outcome turns carry no model prose at all (structural gate)');
+  assert.match(enforced, /غير متوفر بسعر رسمي/, 'deterministic durable-state body rendered');
 });
 
 test('adversarial: overclaim neutralized even when extraction returned null (no order intent at all)', async () => {
@@ -334,12 +334,10 @@ test('a saved-but-pending order: every model status assertion is replaced by the
   assert.match(enforced, /استلام ومراجعة، وليس تأكيدًا نهائيًا/);
 });
 
-test('non-asserting replies keep their content and gain the deterministic status line for the outcome', () => {
+test('outcome turns render a fully deterministic body from durable state, not LLM prose', () => {
   const result = { saved: false, outcome: 'unpriced_items', unpricedTitles: ['x'] };
   const enforced = enforceTruthfulOrderReply('عذرًا، هذا المنتج غير متوفر حاليًا. هل تريد منتجًا بديلًا؟', result);
-  assert.match(enforced, /عذرًا، هذا المنتج غير متوفر حاليًا/, 'non-order content preserved');
-  assert.match(enforced, /هل تريد منتجًا بديلًا؟/, 'questions preserved');
-  assert.match(enforced, /غير متوفر بسعر رسمي في متجرنا حاليًا/, 'deterministic status line appended');
+  assert.equal(enforced, 'للأسف مش قادر أسجل الطلب لأن (x) غير متوفر بسعر رسمي في متجرنا حاليًا.');
 });
 
 test('non-order chat without any order outcome passes through completely unchanged', () => {
@@ -357,12 +355,18 @@ test('no-outcome turns: freeform false claims are stripped and replaced by the d
   assert.match(enforced, /لم يتم تسجيل أي طلب حتى الآن/);
 });
 
-test('rhetorical-question assertions get no question-mark exemption; harmless statements survive', () => {
+test('rhetorical-question assertions cannot survive on outcome turns (deterministic body only)', () => {
   const result = { saved: false, outcome: 'unpriced_items', unpricedTitles: ['x'] };
   const enforced = enforceTruthfulOrderReply('تم تأكيد طلبك؟ طلبك مهم عندنا.', result);
-  assert.doesNotMatch(enforced, /تم تأكيد طلبك/, 'rhetorical confirmation question stripped');
-  assert.match(enforced, /طلبك مهم عندنا/, 'harmless non-assertion statement preserved');
+  assert.doesNotMatch(enforced, /تم تأكيد طلبك/);
+  assert.doesNotMatch(enforced, /طلبك مهم عندنا/, 'outcome turns carry no LLM prose at all');
   assert.match(enforced, /غير متوفر بسعر رسمي في متجرنا حاليًا/);
+});
+
+test('no-outcome rhetorical-question claims are stripped and routed to the default durable truth', () => {
+  const enforced = enforceTruthfulOrderReply('تم تأكيد طلبك؟', null);
+  assert.doesNotMatch(enforced, /تم تأكيد طلبك/);
+  assert.match(enforced, /لم يتم تسجيل أي طلب حتى الآن/);
 });
 
 test('mixed-language paraphrase assertions are stripped and replaced by durable truth', () => {
