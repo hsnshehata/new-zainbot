@@ -16,7 +16,9 @@ for (const n of [1,2,3]){
  const long=await new Product({storeId:st._id,productName:'حقيبة جلد طويلة',price:750,stock:12,currency:'EGP',description:'وصف المنتج '.repeat(40),detailedDescription:'تفاصيل '.repeat(60),imageUrl:svg,images:[svg,svg],optionsEnabled:true,optionGroups:[{name:'اللون',values:['أحمر','أزرق'],required:true}]}).save({validateBeforeSave:false});
  const short=await new Product({storeId:st._id,productName:'حقيبة قصيرة',price:100,stock:12,currency:'EGP',description:'وصف',imageUrl:svg,images:[svg]}).save({validateBeforeSave:false});
  for (const [vp,w,h,mobile] of [['m390x667',390,667,true],['m390x844',390,844,true],['m360x640',360,640,true],['d1280x700',1280,700,false],['d1280x900',1280,900,false]]){
+  if(process.env.VISUAL_ONLY&&vp!=='m390x667')continue;
   for (const [pname,p] of [['long',long],['short',short]]){
+   if(process.env.VISUAL_ONLY&&pname!=='long')continue;
    const pg=await b.newPage();await pg.setViewport({width:w,height:h,isMobile:mobile,hasTouch:mobile});await pg.setRequestInterception(true);
    pg.on('request',r=>{const u=r.url();const m=u.match(/\/css\/layout(\d)\.css/);(u.startsWith(base)||u.startsWith('data:'))?r.continue():r.abort()});
    await pg.goto(`${base}/store/s${n}/landing?product=${p._id}`,{waitUntil:'networkidle0'});await pg.waitForSelector('.product-detail-backdrop');await new Promise(r=>setTimeout(r,700));
@@ -29,11 +31,11 @@ for (const n of [1,2,3]){
     const sel=await pg.$('.product-detail-backdrop select');if(sel)await pg.select('.product-detail-backdrop select','أحمر');
     const vis=()=>pg.$eval('.product-detail-backdrop [data-add]',x=>{const r=x.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth});
     out.topReachable=await pg.$eval('.product-detail .close, .product-detail [data-close]',x=>{const r=x.getBoundingClientRect();return r.top>=0});
-    if(['m390x667'].includes(vp)){await pg.screenshot({path:`${outDir}/l${n}-${vp}-top.png`});}
+    if(['m390x667'].includes(vp)){await pg.screenshot({path:`${outDir}/l${n}-${vp}-${pname}-top.png`});}
     out.addVisibleInitially=await vis();
     for(let i=0;i<30&&!(await vis());i++){await pg.mouse.move(w/2,h/2);await pg.mouse.wheel({deltaY:150});await new Promise(r=>setTimeout(r,60));}
     out.addVisibleAfterScroll=await vis();
-    if(['m390x667'].includes(vp))await pg.screenshot({path:`${outDir}/l${n}-${vp}-scrolled.png`});
+    if(['m390x667'].includes(vp))await pg.screenshot({path:`${outDir}/l${n}-${vp}-${pname}-scrolled.png`});
     if(out.addVisibleAfterScroll){
      const bx=await pg.$eval('.product-detail-backdrop [data-add]',x=>{const r=x.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}});
      const topEl=await pg.evaluate((x,y)=>{const e=document.elementFromPoint(x,y);return !!(e&&e.closest('[data-add]'))},bx.x,bx.y);
