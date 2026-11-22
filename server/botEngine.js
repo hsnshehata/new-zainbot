@@ -295,7 +295,13 @@ async function priceItemsFromCatalog(bot, items) {
 // are preserved. This replaces the old confirmation-claim blacklist: the
 // customer-facing order status always comes from durable state, never from
 // however the model happened to phrase things.
-const ORDER_STATUS_ASSERTION = /(تم\s*(تأكيد|تسجيل|حفظ|استلام|شحن|إلغاء|الغاء|إرسال|ارسال)|ات(أكد|اكد|سجل|حفظ|شحن|لغى|ستلم)|طلبك\s*(اتأكد|أُكّد|مؤكد|اتسجل|اتحفظ|محفوظ|مسجل|وصل|جاهز|اتشحن|اتلغى)|الطلب\s*(اتأكد|مؤكد|محفوظ|مسجل|تم\s*(تأكيده|حفظه|تسجيله|استلامه|شحنه|إلغاؤه|الغاؤه))|سجلنا|استلمنا|أكدنا|اكدنا|حجزنا|شحننا|ألغينا|الغينا|وصلنا\s*(طلب|اوردر|أوردر)|order\s*(is|has been|was|got)?\s*(confirmed|placed|saved|received|registered|booked|shipped|cancelled|canceled)|(confirmed|received|registered|placed|booked|shipped|cancelled|canceled)\s+your\s+order|your\s+order\s+(is|has been|was)\s+\w+|successfully\s+(placed|confirmed|received|registered|booked))/i;
+const ORDER_STATUS_ASSERTION = /(تم\s*(تأكيد|تسجيل|حفظ|استلام|شحن|إلغاء|الغاء|إرسال|ارسال|تجهيز|الدفع|دفع)|ات(أكد|اكد|سجل|حفظ|شحن|لغى|ستلم|دفع)|طلبك\s*(اتأكد|أُكّد|مؤكد|اتسجل|اتحفظ|محفوظ|مسجل|وصل|جاهز|اتشحن|اتلغى|اتدفع)|الطلب\s*(اتأكد|مؤكد|محفوظ|مسجل|تم\s*(تأكيده|حفظه|تسجيله|استلامه|شحنه|إلغاؤه|الغاؤه|دفعه))|سجلنا|استلمنا|أكدنا|اكدنا|حجزنا|شحننا|ألغينا|الغينا|جهزنا|وصلنا\s*(طلب|اوردر|أوردر)|order\s*(is|has been|was|got)?\s*(confirmed|placed|saved|received|registered|booked|shipped|cancelled|canceled|paid|processed|completed)|(confirmed|received|registered|placed|booked|shipped|cancelled|canceled|paid)\s+your\s+order|your\s+order\s+(is|has been|was)\s+\w+|successfully\s+(placed|confirmed|received|registered|booked|paid)|payment\s+(received|confirmed|completed))/i;
+
+// Order-domain mention: for turns WITH an extraction outcome the model has no
+// legitimate reason to discuss the order at all — the deterministic durable-
+// status line renders instead — so the filter is mention-based, not
+// claim-based: no phrasing games can slip an assertion past it.
+const ORDER_DOMAIN_MENTION = /(طلب|طلبك|اوردر|أوردر|\border\b)/i;
 
 // جملة الحقيقة الموجهة للعميل عندما لا يوجد طلب محفوظ بحالة مؤكدة.
 function customerTruthSentence(result) {
@@ -344,7 +350,14 @@ function enforceTruthfulOrderReply(reply, extractionResult) {
     const body = s.trim();
     if (!body) return false;
     if (/[؟?]\s*$/.test(body)) return true; // questions ask; they don't assert state
-    if (ORDER_STATUS_ASSERTION.test(body)) return false;
+    if (outcome) {
+      // Mention-based fail-closed: with an order outcome, only the durable-
+      // status line speaks about the order. Model order-talk is redundant at
+      // best and a paraphrased false claim at worst.
+      if (ORDER_DOMAIN_MENTION.test(body) || ORDER_STATUS_ASSERTION.test(body)) return false;
+    } else {
+      if (ORDER_STATUS_ASSERTION.test(body)) return false;
+    }
     if (!durableSaved && ORDER_ID_CITATION.test(body)) return false;
     return true;
   });

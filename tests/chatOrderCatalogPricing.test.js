@@ -349,6 +349,24 @@ test('non-order chat without any order outcome passes through completely unchang
   assert.equal(enforceTruthfulOrderReply(reply, { saved: false }), reply);
 });
 
+test('no-outcome turns: freeform false claims are stripped and replaced by the default durable truth', () => {
+  // Extraction found nothing, yet the model asserts order state — the claim
+  // must not survive even without an outcome, and the default truth renders.
+  const enforced = enforceTruthfulOrderReply('تم تأكيد طلبك بنجاح! هيوصلك خلال يومين.', null);
+  assert.doesNotMatch(enforced, /تم تأكيد طلبك/);
+  assert.match(enforced, /لم يتم تسجيل أي طلب حتى الآن/);
+});
+
+test('outcome turns are mention-based fail-closed: any model order-talk is replaced by the durable line', () => {
+  // Even a harmless-sounding order statement does not survive an outcome turn;
+  // only the deterministic durable-status line speaks about the order.
+  const result = { saved: false, outcome: 'unpriced_items', unpricedTitles: ['x'] };
+  const enforced = enforceTruthfulOrderReply('طلبك مهم عندنا وهنحاول نوفره قريب. عذرًا على الإزعاج.', result);
+  assert.doesNotMatch(enforced, /طلبك مهم عندنا/);
+  assert.match(enforced, /عذرًا على الإزعاج/, 'non-order content preserved');
+  assert.match(enforced, /غير متوفر بسعر رسمي في متجرنا حاليًا/);
+});
+
 test('mixed-language paraphrase assertions are stripped and replaced by durable truth', () => {
   const reply = 'Your order has been confirmed successfully! رقم الطلب: 999.';
   const result = { saved: false, outcome: 'missing_data', missingFields: ['الاسم'] };
