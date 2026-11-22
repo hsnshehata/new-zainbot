@@ -10,6 +10,7 @@ const ChatOrder = require('./models/ChatOrder');
 const Booking = require('./models/Booking');
 const axios = require('axios');
 const logger = require('./logger');
+const { redactSensitive } = require('./utils/logSanitize');
 const { dispatchMultiChannelNotification } = require('./services/notificationDispatcher');
 
 // دالة للتحقق من صلاحية التوكين
@@ -19,7 +20,7 @@ const isTokenValid = async (accessToken, pageId) => {
     logger.info('✅ Token is valid', { pageId });
     return true;
   } catch (err) {
-    logger.error('❌ Token validation failed', { pageId, error: err.response?.data || err.message });
+    logger.error('❌ Token validation failed', { pageId, error: err.response?.data ? redactSensitive(err.response.data) : err.message });
     return false;
   }
 };
@@ -39,7 +40,7 @@ const convertToLongLivedToken = async (shortLivedToken) => {
     }
     throw new Error('Failed to convert/renew token: No access_token in response');
   } catch (err) {
-    logger.error('❌ Error converting/renewing Facebook token', { error: err.response?.data || err.message });
+    logger.error('❌ Error converting/renewing Facebook token', { error: err.response?.data ? redactSensitive(err.response.data) : err.message });
     throw err;
   }
 };
@@ -151,7 +152,7 @@ const refreshInstagramTokens = () => {
 
           logger.info('✅ Successfully refreshed Instagram token', { botId: bot._id, expiresIn });
         } catch (err) {
-          logger.error('❌ Error refreshing Instagram token', { botId: bot._id, error: err.message, data: err.response?.data });
+          logger.error('❌ Error refreshing Instagram token', { botId: bot._id, error: err.message, data: redactSensitive(err.response?.data) });
           const notification = new Notification({
             user: bot.userId,
             title: `فشل تجديد توكن إنستجرام للبوت ${bot.name}`,
@@ -222,7 +223,7 @@ const refreshFacebookTokens = () => {
 
           logger.info('✅ Successfully refreshed Facebook token', { botId: bot._id });
         } catch (err) {
-          logger.error('❌ Error refreshing Facebook token', { botId: bot._id, error: err.message, data: err.response?.data });
+          logger.error('❌ Error refreshing Facebook token', { botId: bot._id, error: err.message, data: redactSensitive(err.response?.data) });
           const notification = new Notification({
             user: bot.userId,
             title: `فشل تجديد توكن فيسبوك للبوت ${bot.name}`,

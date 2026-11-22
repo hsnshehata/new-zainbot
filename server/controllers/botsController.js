@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Feedback = require('../models/Feedback');
 const axios = require('axios');
 const logger = require('../logger');
+const { redactSensitive } = require('../utils/logSanitize');
 const { serializeBot } = require('../utils/serializers');
 const { canCreateAgent } = require('../services/agentLimits');
 const { validateToolsAndSkillsLimits, normalizeSkills } = require('../services/agentToolsSkillsLimits');
@@ -532,7 +533,7 @@ exports.linkSocialPage = async (req, res) => {
       );
 
       if (!response.data.access_token) {
-        logger.warn('facebook_exchange_missing_token', { botId, response: response.data });
+        logger.warn('facebook_exchange_missing_token', { botId, response: redactSensitive(response.data) });
         return res.status(400).json({ message: 'فشل في جلب توكن طويل الأمد: ' + (response.data.error?.message || 'غير معروف') });
       }
 
@@ -577,7 +578,7 @@ exports.linkSocialPage = async (req, res) => {
           return res.status(400).json({ message: 'فشل في الاشتراك في Webhook Events: ' + (subscriptionResponse.data.error?.message || 'غير معروف') });
         }
       } catch (err) {
-        logger.error('bot_link_fb_subscribe_error', { botId, pageId, err: err.message, response: err.response?.data });
+        logger.error('bot_link_fb_subscribe_error', { botId, pageId, err: err.message, response: redactSensitive(err.response?.data) });
         return res.status(500).json({ message: 'خطأ أثناء الاشتراك في Webhook Events: ' + (err.response?.data?.error?.message || err.message) });
       }
     } else if (instagramApiKey && instagramPageId) {
@@ -647,12 +648,12 @@ exports.exchangeInstagramCode = async (req, res) => {
         },
       });
     } catch (err) {
-      logger.error('instagram_exchange_error', { botId, err: err.message, response: err.response?.data });
+      logger.error('instagram_exchange_error', { botId, err: err.message, response: redactSensitive(err.response?.data) });
       throw err;
     }
 
     if (!tokenResponse.data.access_token || !tokenResponse.data.user_id) {
-      logger.warn('instagram_exchange_missing_token', { botId, response: tokenResponse.data });
+      logger.warn('instagram_exchange_missing_token', { botId, response: redactSensitive(tokenResponse.data) });
       return res.status(400).json({ success: false, message: 'فشل في جلب التوكن: ' + (tokenResponse.data.error_message || 'غير معروف') });
     }
 
@@ -673,12 +674,12 @@ exports.exchangeInstagramCode = async (req, res) => {
         },
       });
     } catch (err) {
-      logger.error('instagram_exchange_long_error', { botId, err: err.message, response: err.response?.data });
+      logger.error('instagram_exchange_long_error', { botId, err: err.message, response: redactSensitive(err.response?.data) });
       return res.status(500).json({ success: false, message: 'خطأ في جلب توكن طويل الأمد: ' + (err.response?.data?.error?.message || err.message) });
     }
 
     if (!longLivedTokenResponse.data.access_token) {
-      logger.warn('instagram_exchange_long_missing_token', { botId, response: longLivedTokenResponse.data });
+      logger.warn('instagram_exchange_long_missing_token', { botId, response: redactSensitive(longLivedTokenResponse.data) });
       return res.status(400).json({ success: false, message: 'فشل في جلب توكن طويل الأمد: ' + (longLivedTokenResponse.data.error?.message || 'غير معروف') });
     }
 
@@ -696,7 +697,7 @@ exports.exchangeInstagramCode = async (req, res) => {
       instagramPageId = userResponse.data.user_id;
       logger.info('instagram_page_fetch_success', { botId, instagramPageId });
     } catch (err) {
-      logger.error('instagram_page_fetch_error', { botId, err: err.message, response: err.response?.data });
+      logger.error('instagram_page_fetch_error', { botId, err: err.message, response: redactSensitive(err.response?.data) });
       return res.status(500).json({ success: false, message: 'خطأ في جلب معرف الصفحة: ' + (err.response?.data?.error?.message || err.message) });
     }
 

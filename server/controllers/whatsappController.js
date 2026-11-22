@@ -26,7 +26,12 @@ const processWebhook = async (req, res) => {
       ) {
         const messageData = body.entry[0].changes[0].value.messages[0];
         const logger = require('../logger');
-        logger.info('whatsapp_message_data', { data: messageData });
+        // Metadata-only: sender number and text body are customer PII; log shape, not content.
+        logger.info('whatsapp_message_data', {
+          messageId: messageData.id,
+          type: messageData.type,
+          textLength: messageData.text && typeof messageData.text.body === 'string' ? messageData.text.body.length : 0,
+        });
 
         const userId = messageData.from; // WhatsApp user ID
         const messageId = messageData.id; // Unique message ID

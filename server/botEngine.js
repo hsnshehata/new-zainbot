@@ -952,11 +952,12 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
       try {
         const voiceSource = mediaUrl || message;
         if (voiceSource && (voiceSource.startsWith('http') || isDataUrl(voiceSource))) {
-          logger.info('🎙️ Voice message, transcribing from source', { source: voiceSource.slice(0, 80) });
+          // Media URLs can carry signed tokens in query params; log length only.
+          logger.info('🎙️ Voice message, transcribing from source', { sourceLength: voiceSource.length });
           userMessageContent = await transcribeAudio(voiceSource, finalChannel);
-          logger.info('💬 Transcribed audio message', { content: userMessageContent });
+          logger.info('💬 Transcribed audio message', { transcriptLength: (userMessageContent || '').length });
         } else {
-          logger.warn('⚠️ No valid mediaUrl or audio payload for voice', { mediaUrl, message });
+          logger.warn('⚠️ No valid mediaUrl or audio payload for voice', { hasMediaUrl: !!mediaUrl, messageLength: (message || '').length });
           return 'عذرًا، لم أتمكن من تحليل الصوت بسبب رابط غير صالح. أرسل المقطع الصوتي من جديد أو اكتب النص.';
         }
       } catch (err) {
@@ -966,7 +967,7 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
     } else if (isImage) {
       userMessageContent = message || mediaUrl || '[صورة]';
       if (isDataUrl(userMessageContent)) userMessageContent = placeholderForMedia(true, false);
-      logger.info('🖼️ Image message', { content: userMessageContent });
+      logger.info('🖼️ Image message', { contentLength: (userMessageContent || '').length });
     }
 
     conversation.messages.push({ 
@@ -977,7 +978,7 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
     });
 
     await conversation.save();
-    logger.info('💬 User message added to conversation', { userMessageContent });
+    logger.info('💬 User message added to conversation', { messageLength: (userMessageContent || '').length });
 
     // استخراج بيانات الطلب من المحادثة الحالية وحفظها في قاعدة البيانات
     try {
@@ -1113,7 +1114,7 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
             ...context,
             { role: 'user', content: userMessageContent },
           ];
-          logger.info('📤 Sending to OpenAI for processing', { userMessageContent });
+          logger.info('📤 Sending to OpenAI for processing', { messageLength: (userMessageContent || '').length });
           const response = await withTimeout(
             getAiCompletion({
               model: 'gpt-4o-mini',
@@ -1220,7 +1221,7 @@ async function processFeedback(botId, userId, messageId, feedback) {
       { upsert: true, new: true }
     );
 
-    logger.info('✅ Feedback saved', { type, messageId, messageContent, userMessage, feedbackId: feedbackEntry?._id });
+    logger.info('✅ Feedback saved', { type, messageId, feedbackId: feedbackEntry?._id });
   } catch (err) {
     logger.error('❌ Error processing feedback:', { err });
   }

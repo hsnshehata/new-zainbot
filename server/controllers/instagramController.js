@@ -4,6 +4,7 @@ const Bot = require('../models/Bot');
 const axios = require('axios');
 const { processMessage } = require('../botEngine');
 const logger = require('../logger');
+const { redactSensitive } = require('../utils/logSanitize');
 
 // دالة لجلب اسم المستخدم من إنستجرام
 const getInstagramUsername = async (userId, accessToken) => {
@@ -20,7 +21,7 @@ const getInstagramUsername = async (userId, accessToken) => {
     logger.warn('ig_get_username_no_name', { userId: cleanUserId });
     return cleanUserId;
   } catch (err) {
-    logger.error('ig_get_username_error', { userId, err: err.message, data: err.response?.data });
+    logger.error('ig_get_username_error', { userId, err: err.message, data: redactSensitive(err.response?.data) });
     return userId.replace(/^(instagram_|instagram_comment_)/, '');
   }
 };
@@ -37,7 +38,7 @@ const validateAccessToken = async (accessToken) => {
     }
     return false;
   } catch (err) {
-    logger.error('ig_token_invalid', { err: err.response?.data || err.message });
+    logger.error('ig_token_invalid', { err: err.response?.data ? redactSensitive(err.response.data) : err.message });
     return false;
   }
 };
