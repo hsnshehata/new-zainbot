@@ -14,6 +14,8 @@ const Feedback = require('./models/Feedback');
 const Store = require('./models/Store');
 const Product = require('./models/Product');
 const ChatOrder = require('./models/ChatOrder');
+const { beginChatWrite, endChatWrite } = require('./services/catalogTransition');
+const { chatInventoryHandoff } = require('./services/chatInventoryPolicy');
 const ChatCustomer = require('./models/ChatCustomer');
 const Booking = require('./models/Booking');
 const { createOrUpdateFromExtraction } = require('./controllers/chatOrdersController');
@@ -364,6 +366,8 @@ function confirmedOrderTruthSentence(order) {
 function customerTruthSentence(result) {
   const id = result?.chatOrder?._id ? String(result.chatOrder._id) : '';
   switch (result?.outcome) {
+    case 'inventory_storefront_required':
+      return 'لم يُسجل طلب جديد ولم يتغير أي طلب سابق. طلبات وتعديلات منتجات هذا المتجر تتم من صفحة المتجر للتحقق من المخزون وحجزه، ولا يمكن تأكيدها من المحادثة.' + (result.storefrontUrl ? ` افتح المتجر: ${result.storefrontUrl}` : ' اطلب من صاحب المتجر رابط المتجر الصحيح.');
     case 'saved':
       if (result.chatOrder?.status === 'confirmed') return confirmedOrderTruthSentence(result.chatOrder);
       return `تم استلام طلبك وتسجيله برقم ${id} وهو حاليًا "${statusText(result.chatOrder?.status)}" — استلام ومراجعة، وليس تأكيدًا نهائيًا بعد.`;
@@ -471,6 +475,7 @@ function buildOrderStateNote(result) {
   const neverConfirm = 'ممنوع منعًا باتًا قول أن الطلب تم أو مؤكد ما لم يُحفظ فعليًا بحالة مؤكدة كما هو موضح هنا.';
   const id = result.chatOrder?._id ? String(result.chatOrder._id) : '';
   switch (result.outcome) {
+    case 'inventory_storefront_required': return '\n[حالة الطلب الفعلية]: لم يتم حفظ أو تأكيد أو تعديل طلب. يجب استخدام صفحة المتجر المحمية للتحقق من المخزون.\n';
     case 'saved': {
       const status = result.chatOrder?.status;
       const total = Number(result.chatOrder?.totalAmount) || 0;
@@ -534,9 +539,9 @@ const DRAFT_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
 const DUP_CONFIRM_MS = 10 * 60 * 1000; // 10 minutes
 
 async function extractChatOrderIntent({ bot, channel, userMessageContent, conversationId, sourceUserId, sourceUsername, messageId, transcript = [], conversation = null }) {
+  let chatGuard;
   try {
     if (!userMessageContent || typeof userMessageContent !== 'string') return null;
-
     const transcriptText = Array.isArray(transcript)
       ? transcript
           .slice(-30) // نطاق أحدث الرسائل مع سياق كافٍ لاستخلاص العناصر
@@ -592,6 +597,11 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
     // لو هو إلغاء فقط بدون بيانات كافية، لا نخرج مبكرًا لكي نلتقط الطلب المفتوح ونلغيه؛
     // وكذلك استفسار الحالة الخالص يحتاج الوصول للطلب المخزن ليجيب بحقيقة محفوظة.
     if (!parsed || (parsed.intent === false && !cancelIntent && !confirmIntent && !statusInquiry)) return null;
+    const statusOnly = statusInquiry && !cancelIntent && !confirmIntent && !modifyIntent && !newOrderIntent && !forceNewOrder;
+    if (!cancelIntent && !statusOnly) {
+      chatGuard = await beginChatWrite(bot);
+      if (chatGuard?.blocked) return await chatInventoryHandoff(bot) || { outcome: 'inventory_storefront_required', saved: false };
+    }
 
     // حاول استخراج رقم صالح وفق الأنماط المسموحة (بعد توحيد الأرقام الشرقية)
     let phoneCandidate = normalizeDigits(parsed.customerPhone || '').trim();
@@ -734,6 +744,11 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
       existingOpenOrder.lastMessageId = messageId || existingOpenOrder.lastMessageId;
       await existingOpenOrder.save();
       return { chatOrder: existingOpenOrder, saved: true, outcome: 'cancelled', cancelled: true, customerPhone: effectivePhone, rememberPhone: isValidPhone(effectivePhone) ? effectivePhone : undefined };
+    }
+
+    if (!cancelIntent) {
+      const handoff = await chatInventoryHandoff(bot);
+      if (handoff) return handoff;
     }
 
     // تأكيد مكرر خلال مدة قصيرة بنفس البيانات
@@ -909,7 +924,7 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
   } catch (err) {
     logger.error('❌ فشل في استخراج طلب المحادثة:', { err });
     return null;
-  }
+  } finally { await endChatWrite(chatGuard); }
 }
 
 const isBookingQuery = (text = '') => /(حجز|احجز|موعد|ميعاد|جلسة|استشارة|معاينة|تأجيل|إلغاء الحجز|الغاء الحجز|book|appointment|schedule|reschedule)/i.test(text);

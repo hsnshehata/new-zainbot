@@ -5,6 +5,8 @@ const Order = require('../models/Order');
 const { notifyChatOrder, notifyOrderStatus } = require('../services/telegramService');
 const { dispatchMultiChannelNotification } = require('../services/notificationDispatcher');
 const logger = require('../logger');
+const { beginChatWrite, endChatWrite } = require('../services/catalogTransition');
+const { chatInventoryHandoff } = require('../services/chatInventoryPolicy');
 
 const STATUS_ENUM = ['pending', 'processing', 'confirmed', 'shipped', 'delivered', 'cancelled'];
 const PENDING_SET = new Set(['pending', 'processing']);
@@ -136,9 +138,11 @@ async function listOrders(req, res) {
 }
 
 async function updateOrder(req, res) {
+  let chatGuard;
   try {
     const { id } = req.params;
     const { status, note, items, deliveryFee, totalAmount } = req.body;
+    if (status === 'cancelled' && ['items','deliveryFee','totalAmount'].some(key => Object.hasOwn(req.body,key))) return res.status(400).json({ code: 'CANCELLATION_METADATA_ONLY', message: 'الإلغاء يغير الحالة والملاحظة فقط، ولا يغير البنود أو المبالغ.' });
     const userId = req.user.userId;
     const role = req.user.role;
 
@@ -150,8 +154,18 @@ async function updateOrder(req, res) {
     const allowed = await canAccessBot(order.botId, userId, role);
     if (!allowed) return res.status(403).json({ message: 'غير مصرح بالوصول لهذا الطلب' });
 
-    const bot = await Bot.findById(order.botId).select('userId name telegramUserId');
+    const bot = await Bot.findById(order.botId).select('userId name telegramUserId storeId');
 
+    const handoff = await chatInventoryHandoff(bot || order.botId);
+    const settlementTargets = { pending: ['cancelled','shipped','delivered'], processing: ['cancelled','shipped','delivered'], confirmed: ['cancelled','shipped','delivered'], shipped: ['shipped','delivered'], delivered: ['delivered'], cancelled: ['cancelled'] };
+    const terminalMetadata = Boolean(handoff) && (settlementTargets[order.status] || []).includes(status);
+    if (handoff && !terminalMetadata) return res.status(409).json({ code: 'CATALOG_STOREFRONT_REQUIRED', ...handoff });
+    if (terminalMetadata && ['items','deliveryFee','totalAmount'].some(key => Object.hasOwn(req.body,key))) return res.status(400).json({ code: 'CANCELLATION_METADATA_ONLY', message: 'تحديث الحالة لا يغير البنود أو المبالغ.' });
+    const metadataOnly = status === 'cancelled' || terminalMetadata;
+    if (!metadataOnly) {
+      chatGuard = await beginChatWrite(bot || order.botId);
+      if (chatGuard?.blocked) return res.status(409).json({ code: 'CATALOG_STOREFRONT_REQUIRED' });
+    }
     let touched = false;
 
     if (Array.isArray(items)) {
@@ -180,7 +194,7 @@ async function updateOrder(req, res) {
       touched = true;
     }
 
-    if (!order.totalAmount || order.totalAmount <= 0) {
+    if (!metadataOnly && (!order.totalAmount || order.totalAmount <= 0)) {
       const totals = calcTotals(order.items, order.deliveryFee);
       order.totalAmount = totals.grand;
       touched = true;
@@ -207,7 +221,7 @@ async function updateOrder(req, res) {
   } catch (err) {
     logger.error('chat_order_update_error', { orderId: req.params.id, err: err.message, stack: err.stack });
     return res.status(500).json({ message: 'خطأ في تحديث طلب المحادثة' });
-  }
+  } finally { await endChatWrite(chatGuard); }
 }
 
 async function deleteOrder(req, res) {
@@ -249,6 +263,9 @@ async function createOrUpdateFromExtraction({
   totalAmount,
 }) {
   if (!botId || !channel || !sourceUserId) throw new Error('botId, channel, sourceUserId مطلوبة');
+  const chatGuard = await beginChatWrite(botId);
+  if (chatGuard?.blocked) return { order: null, saved: false, outcome: 'inventory_storefront_required' };
+  try {
   const safeStatus = STATUS_ENUM.includes(status) ? status : 'pending';
   const normalizedItems = normalizeItems(items);
   const fee = Math.max(Number(deliveryFee) || 0, 0);
@@ -267,6 +284,9 @@ async function createOrUpdateFromExtraction({
     );
     return nameOk && phoneOk && addressOk && pricedItems.length > 0;
   };
+
+  const handoff = await chatInventoryHandoff(botId);
+  if (handoff) return { order: null, saved: false, outcome: handoff.outcome };
 
   const latestOrder = await ChatOrder.findOne({ botId, channel, conversationId }).sort({ createdAt: -1 });
 
@@ -438,6 +458,7 @@ async function createOrUpdateFromExtraction({
   }
 
   return { order: chatOrder, saved: true };
+  } finally { await endChatWrite(chatGuard); }
 }
 
 module.exports = {

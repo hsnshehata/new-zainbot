@@ -910,7 +910,7 @@
       btn_upload_logo: 'Upload Logo',
       btn_remove_logo: 'Remove',
       hint_logo_format: 'PNG or JPG up to 2MB',
-      store_sync_scope: 'Import runs only when you press Sync. Up to 500 products per run; Shopify uses the first variant. Imported products become available as store context for the agent.',
+      store_sync_scope: 'Import runs only when you press Sync. Up to 500 products per run; Shopify uses the first variant. Imported products become store context. Catalog activation routes new chat orders and edits to the storefront, including mixed catalogs. Finish in-flight chat writes and settle old chat orders before activation.',
       store_provider_label: 'Platform',
       store_url_label: 'HTTPS store origin (no path)',
       store_url_placeholder: 'https://example.myshopify.com',
@@ -950,6 +950,26 @@
       store_error_remote: 'Could not read the store catalog. Check the store API and try again.',
       store_error_limit: 'The catalog exceeds the 500-product limit. No new import was completed.',
       store_error_empty: 'The store returned no products to import.',
+      store_reconcile_review: "Review legacy inventory",
+      store_reconcile_title: "Confirm legacy sellable inventory",
+      store_reconcile_help: "Review the product and connected source, settle open orders, then count units actually free to sell. Nothing is inferred or written to your connected store.",
+      store_reconcile_quantity: "Physically free-to-sell units",
+      store_reconcile_confirm: "I checked this product, source and physical sellable count. I understand this establishes a local balance and does not update remote stock.",
+      store_reconcile_save: "Confirm this product balance",
+      store_reconcile_loading: "Reading inventory records...",
+      store_reconcile_empty: "No legacy products need an initial balance for this connection.",
+      store_reconcile_preview: "Local product: {local}\nRemote product: {remote}\nSource: {origin}\nRemote ID: {id}\nRemote quantity: {quantity}",
+      store_reconcile_unknown: "Unconfirmed",
+      store_reconcile_blocked: "This product cannot be reconciled yet. Settle open orders or reservation recovery and confirm tracked quantity in the connected store, then review it again.",
+      store_reconcile_count: "Enter a whole number from zero to the current remote quantity, then explicitly confirm your physical count.",
+      store_reconcile_saving: "Saving the confirmed local balance...",
+      store_reconcile_saved: "Product balance confirmed: {quantity} free-to-sell units. Remote stock was not changed.",
+      store_reconcile_refresh: "The product or stock snapshot changed. Select the product again for a fresh review before confirming.",
+      store_error_chat_busy: 'Catalog activation is waiting for a chat write to finish. Retry after it completes. If a save has stopped, checked recovery is required before activation. The safety guard is not cleared automatically.',
+      store_error_chat_orders: 'Catalog activation is paused. Settle the existing chat orders first using status-only cancellation or completed shipping/delivery, then retry. New chat orders are now routed to the storefront.',
+      store_error_reconcile: 'Existing imported inventory needs a confirmed sellable count before syncing. Review affected products with the account owner. No balance was guessed.',
+      store_error_source: 'This product is linked to a different catalog source or variant. Inventory was not rebound automatically.',
+      store_error_stale: 'This sync lost its lease to a newer operation. Refresh connection status before retrying.',
       store_error_unsafe: 'The store address or response is not supported. Check the HTTPS site address.',
       store_training_path: 'After importing, test an actual product question in chat. Add extra business rules in AI Training.',
       store_open_training: 'Open AI Training',
@@ -2019,7 +2039,7 @@
       btn_upload_logo: 'رفع شعار',
       btn_remove_logo: 'إزالة',
       hint_logo_format: 'PNG أو JPG حتى 2 ميجابايت',
-      store_sync_scope: 'الاستيراد يدوي عند الضغط على زر المزامنة فقط. الحد الأقصى ٥٠٠ منتج في كل مرة؛ في Shopify يُستخدم أول خيار للمنتج. المنتجات المستوردة تصبح متاحة للوكيل ضمن بيانات المتجر.',
+      store_sync_scope: 'الاستيراد يدوي عند الضغط على زر المزامنة فقط. الحد الأقصى ٥٠٠ منتج في كل مرة؛ في Shopify يُستخدم أول خيار للمنتج. المنتجات المستوردة تدخل ضمن بيانات المتجر. تفعيل الكتالوج يحوّل طلبات وتعديلات المحادثة الجديدة لصفحة المتجر، حتى في الكتالوج المختلط. أكمل الحفظ الجاري وأنهِ طلبات المحادثة القديمة قبل التفعيل.',
       store_provider_label: 'المنصة',
       store_url_label: 'رابط المتجر HTTPS (بدون مسار)',
       store_url_placeholder: 'https://example.myshopify.com',
@@ -2059,6 +2079,26 @@
       store_error_remote: 'تعذّرت قراءة كتالوج المتجر. تحقق من واجهة المتجر وحاول مجددًا.',
       store_error_limit: 'الكتالوج تجاوز حد ٥٠٠ منتج. لم يكتمل استيراد جديد.',
       store_error_empty: 'المتجر لم يرجع منتجات للاستيراد.',
+      store_reconcile_review: "مراجعة المخزون القديم",
+      store_reconcile_title: "تأكيد مخزون المنتجات المستوردة القديمة",
+      store_reconcile_help: "راجع المنتج ومصدره، وأكمل الطلبات المفتوحة، ثم عد الوحدات المتاحة فعليًا للبيع. لا نفترض أرصدة ولا نغير مخزون المتجر المتصل.",
+      store_reconcile_quantity: "الوحدات المتاحة فعليًا للبيع",
+      store_reconcile_confirm: "راجعت المنتج ومصدره وعددت الوحدات المتاحة فعليًا للبيع. أفهم أن هذا يحدد الرصيد المحلي ولا يغير مخزون المتجر المتصل.",
+      store_reconcile_save: "تأكيد رصيد هذا المنتج",
+      store_reconcile_loading: "جارٍ قراءة سجلات المخزون...",
+      store_reconcile_empty: "لا توجد منتجات قديمة تحتاج رصيدًا أوليًا لهذا الربط.",
+      store_reconcile_preview: "المنتج المحلي: {local}\nالمنتج المتصل: {remote}\nالمصدر: {origin}\nمعرف المنتج المتصل: {id}\nالكمية في المصدر: {quantity}",
+      store_reconcile_unknown: "غير مؤكدة",
+      store_reconcile_blocked: "لا يمكن تسوية هذا المنتج بعد. أكمل الطلبات المفتوحة أو استعادة الحجوزات، وأكد الكمية المتتبعة في المتجر المتصل، ثم راجعه مجددًا.",
+      store_reconcile_count: "أدخل عددًا صحيحًا من صفر إلى كمية المصدر الحالية، ثم أكد أنك راجعت العدد الفعلي.",
+      store_reconcile_saving: "جارٍ حفظ الرصيد المحلي المؤكد...",
+      store_reconcile_saved: "تم تأكيد الرصيد: {quantity} وحدة متاحة للبيع. لم يتغير مخزون المتجر المتصل.",
+      store_reconcile_refresh: "تغير المنتج أو رصيد المصدر. اختر المنتج مجددًا لمراجعة حديثة قبل التأكيد.",
+      store_error_chat_busy: 'تفعيل الكتالوج ينتظر انتهاء حفظ طلب من المحادثة. أعد المحاولة بعد انتهائه. لو الحفظ متوقف، نحتاج استعادة آمنة قبل التفعيل، ولا نزيل الحماية تلقائيًا.',
+      store_error_chat_orders: 'تفعيل الكتالوج متوقف مؤقتًا. أنهِ طلبات المحادثة القديمة بإلغاء الحالة فقط أو إتمام الشحن والتسليم، ثم أعد المحاولة. الطلبات الجديدة من المحادثة تتحول لصفحة المتجر.',
+      store_error_reconcile: 'مخزون المنتجات المستوردة القديمة يحتاج تأكيد الكمية المتاحة للبيع قبل المزامنة. راجع المنتجات المتأثرة مع صاحب الحساب. لم نفترض رصيدًا.',
+      store_error_source: 'المنتج مرتبط بمصدر كتالوج أو متغير مختلف. لم نغير مصدر المخزون تلقائيًا.',
+      store_error_stale: 'انتهت صلاحية هذه المزامنة أو بدأت عملية أحدث. حدّث حالة الربط قبل المحاولة.',
       store_error_unsafe: 'عنوان المتجر أو استجابته غير مدعومين. تحقق من رابط HTTPS.',
       store_training_path: 'بعد الاستيراد جرّب سؤالًا عن منتج حقيقي في الدردشة، وأضف قواعد عملك الإضافية في تدريب الذكاء الاصطناعي.',
       store_open_training: 'فتح تدريب الذكاء الاصطناعي',
@@ -3742,6 +3782,16 @@
   let catalogRequest = 0;
   let catalogFeedbackKey = '';
   let catalogFeedbackParams = {};
+  const catalogReviewButton = document.getElementById('reviewCatalogInventory');
+  const catalogRecoveryPanel = document.getElementById('catalogReconciliationPanel');
+  const catalogRecoveryProductsEl = document.getElementById('catalogReconciliationProducts');
+  const catalogRecoveryPreviewEl = document.getElementById('catalogReconciliationPreview');
+  const catalogRecoveryForm = document.getElementById('catalogReconciliationForm');
+  const catalogSellableQuantity = document.getElementById('catalogSellableQuantity');
+  const catalogCountConfirmed = document.getElementById('catalogReconcileConfirmed');
+  let catalogRecoveryProducts = [];
+  let catalogRecoveryPreview = null;
+
 
   function canManageCatalog() {
     if (!currentBot?._id || !currentUser?._id) return false;
@@ -3762,6 +3812,13 @@
       REMOTE_TIMEOUT: 'store_error_remote', REMOTE_RESPONSE_TOO_LARGE: 'store_error_remote',
       REMOTE_INVALID_RESPONSE: 'store_error_remote', REMOTE_INVALID_PRODUCT: 'store_error_remote',
       CATALOG_LIMIT_EXCEEDED: 'store_error_limit', EMPTY_CATALOG: 'store_error_empty',
+      CATALOG_RECONCILIATION_REQUIRED: 'store_error_reconcile',
+      CATALOG_CHAT_WRITES_ACTIVE: 'store_error_chat_busy', CATALOG_OPEN_CHAT_ORDERS: 'store_error_chat_orders', CATALOG_SOURCE_CHANGED: 'store_error_source',
+      STALE_CATALOG_SYNC: 'store_error_stale',
+      CATALOG_OPEN_ORDERS: 'store_reconcile_blocked', CATALOG_QUANTITY_UNCONFIRMED: 'store_reconcile_blocked',
+      CATALOG_SNAPSHOT_CHANGED: 'store_reconcile_refresh',
+      CATALOG_RECONCILIATION_CONFLICT: 'store_reconcile_refresh', CATALOG_ALREADY_RECONCILED: 'store_reconcile_refresh',
+      INVALID_RECONCILIATION_CONFIRMATION: 'store_reconcile_count',
       UNSAFE_HOST: 'store_error_unsafe', UNSAFE_PAGE: 'store_error_unsafe'
     })[code] || 'store_error_generic';
   }
@@ -3770,6 +3827,7 @@
     catalogFeedbackKey = key;
     catalogFeedbackParams = params;
     catalogFeedbackEl.textContent = key ? catalogText(key, params) : '';
+    document.getElementById('catalogReconciliationFeedback').textContent = catalogFeedbackEl.textContent;
   }
 
   function renderCatalogStatus() {
@@ -3806,6 +3864,7 @@
       catalogStatusEl.textContent = parts.join(' · ');
     }
     catalogFeedbackEl.textContent = catalogFeedbackKey ? catalogText(catalogFeedbackKey, catalogFeedbackParams) : '';
+    renderCatalogRecovery();
   }
 
   async function catalogRequestJson(url, options = {}) {
@@ -3828,6 +3887,8 @@
   }
 
   async function loadCatalogStatus() {
+    closeCatalogRecovery();
+    catalogBusy = false;
     const request = ++catalogRequest;
     catalogStatus = null;
     catalogLoadFailed = false;
@@ -3885,7 +3946,7 @@
     } catch (error) {
       if (request === catalogRequest) catalogFeedback(catalogErrorKey(error.message));
     } finally {
-      catalogBusy = false;
+      if (request === catalogRequest) catalogBusy = false;
       if (request === catalogRequest) renderCatalogStatus();
     }
   });
@@ -3905,7 +3966,7 @@
     } catch (error) {
       if (request === catalogRequest) catalogFeedback(catalogErrorKey(error.message));
     } finally {
-      catalogBusy = false;
+      if (request === catalogRequest) catalogBusy = false;
       if (request === catalogRequest) await loadCatalogStatusAfterSync(botId, provider, request);
     }
   });
@@ -3917,6 +3978,113 @@
     } catch { /* Keep the outcome visible if refreshing status fails. */ }
     if (request === catalogRequest) renderCatalogStatus();
   }
+
+  function closeCatalogRecovery() {
+    catalogRecoveryPanel.hidden = true;
+    catalogRecoveryProducts = [];
+    catalogRecoveryProductsEl.replaceChildren();
+    catalogRecoveryPreview = null;
+    catalogRecoveryForm.reset();
+    catalogRecoveryForm.hidden = true;
+    catalogRecoveryPreviewEl.textContent = '';
+  }
+
+  function renderCatalogRecovery() {
+    catalogReviewButton.disabled = catalogBusy || !canManageCatalog() || !catalogStatus?.configured || catalogStatus.state === 'running';
+    const preview = catalogRecoveryPreview;
+    catalogRecoveryForm.hidden = !preview;
+    if (preview) {
+      catalogRecoveryPreviewEl.textContent = catalogText('store_reconcile_preview', {
+        local: preview.localProductName, remote: preview.remoteProductName, origin: preview.origin,
+        id: preview.sourceId, quantity: preview.remoteQuantity === null ? catalogText('store_reconcile_unknown') : preview.remoteQuantity,
+      });
+      catalogSellableQuantity.max = String(preview.remoteQuantity ?? 0);
+    }
+    const disabled = catalogBusy || !canManageCatalog() || !preview?.canReconcile;
+    catalogSellableQuantity.disabled = catalogCountConfirmed.disabled = disabled;
+    const quantity = Number(catalogSellableQuantity.value);
+    document.getElementById('confirmCatalogInventory').disabled = disabled || !catalogCountConfirmed.checked ||
+      catalogSellableQuantity.value.trim() === '' || !Number.isSafeInteger(quantity) || quantity < 0 || quantity > preview?.remoteQuantity;
+    catalogRecoveryProductsEl.querySelectorAll('button').forEach(button => { button.disabled = catalogBusy || !canManageCatalog(); });
+    document.getElementById('catalogReconciliationFeedback').textContent = catalogFeedbackKey ? catalogText(catalogFeedbackKey, catalogFeedbackParams) : '';
+  }
+
+  function catalogRecoveryCurrent(request, botId, provider) {
+    return request === catalogRequest && String(currentBot?._id) === botId && catalogProvider.value === provider && canManageCatalog();
+  }
+
+  function renderCatalogRecoveryProducts() {
+    catalogRecoveryProductsEl.replaceChildren();
+    for (const product of catalogRecoveryProducts) {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'btn btn-secondary btn-sm';
+      button.style.cssText = 'white-space:normal; overflow-wrap:anywhere; min-width:0; max-width:100%; text-align:start;';
+      button.textContent = product.productName;
+      button.addEventListener('click', () => previewCatalogRecovery(product._id));
+      catalogRecoveryProductsEl.appendChild(button);
+    }
+  }
+
+  catalogReviewButton?.addEventListener('click', async () => {
+    if (catalogBusy || !canManageCatalog() || !catalogStatus?.configured) return;
+    const botId = String(currentBot._id), provider = catalogProvider.value, request = ++catalogRequest;
+    closeCatalogRecovery(); catalogRecoveryPanel.hidden = false; catalogBusy = true;
+    catalogFeedback('store_reconcile_loading'); renderCatalogStatus();
+    try {
+      const data = await catalogRequestJson(`${catalogEndpoint(botId, provider)}/reconciliation`);
+      if (!catalogRecoveryCurrent(request, botId, provider)) return;
+      catalogRecoveryProducts = Array.isArray(data.products) ? data.products : [];
+      renderCatalogRecoveryProducts(); catalogFeedback(catalogRecoveryProducts.length ? '' : 'store_reconcile_empty');
+    } catch (error) { if (catalogRecoveryCurrent(request, botId, provider)) catalogFeedback(catalogErrorKey(error.message)); }
+    finally { if (request === catalogRequest) catalogBusy = false; if (catalogRecoveryCurrent(request, botId, provider)) renderCatalogStatus(); }
+  });
+
+  async function previewCatalogRecovery(productId) {
+    if (catalogBusy || !canManageCatalog()) return;
+    const botId = String(currentBot._id), provider = catalogProvider.value, request = ++catalogRequest;
+    catalogRecoveryPreview = null; catalogRecoveryForm.reset(); catalogBusy = true;
+    catalogFeedback('store_reconcile_loading'); renderCatalogStatus();
+    try {
+      const data = await catalogRequestJson(`${catalogEndpoint(botId, provider)}/reconcile/${encodeURIComponent(productId)}`);
+      if (!catalogRecoveryCurrent(request, botId, provider)) return;
+      catalogRecoveryPreview = data;
+      catalogFeedback(data.canReconcile ? '' : 'store_reconcile_blocked');
+    } catch (error) { if (catalogRecoveryCurrent(request, botId, provider)) catalogFeedback(catalogErrorKey(error.message)); }
+    finally { if (request === catalogRequest) catalogBusy = false; if (catalogRecoveryCurrent(request, botId, provider)) renderCatalogStatus(); }
+  }
+
+  catalogSellableQuantity?.addEventListener('input', renderCatalogRecovery);
+  catalogCountConfirmed?.addEventListener('change', renderCatalogRecovery);
+  catalogRecoveryForm?.addEventListener('submit', async event => {
+    event.preventDefault();
+    const preview = catalogRecoveryPreview, quantity = Number(catalogSellableQuantity.value);
+    if (catalogBusy || !canManageCatalog() || !preview?.canReconcile) return;
+    if (!catalogCountConfirmed.checked || catalogSellableQuantity.value.trim() === '' || !Number.isSafeInteger(quantity) || quantity < 0 || quantity > preview.remoteQuantity) {
+      catalogFeedback('store_reconcile_count'); return;
+    }
+    const botId = String(currentBot._id), provider = catalogProvider.value, request = ++catalogRequest;
+    catalogBusy = true; catalogFeedback('store_reconcile_saving'); renderCatalogStatus();
+    try {
+      const result = await catalogRequestJson(`${catalogEndpoint(botId, provider)}/reconcile/${encodeURIComponent(preview.productId)}`, {
+        method: 'POST', body: JSON.stringify({ confirm: true, expectedSourceKey: preview.sourceKey,
+          expectedRemoteQuantity: preview.remoteQuantity, sellableQuantity: quantity }),
+      });
+      if (!catalogRecoveryCurrent(request, botId, provider)) return;
+      if (result.state !== 'reconciled') throw new Error('RECONCILIATION_FAILED');
+      catalogRecoveryProducts = catalogRecoveryProducts.filter(p => String(p._id) !== String(preview.productId));
+      renderCatalogRecoveryProducts(); catalogRecoveryPreview = null; catalogRecoveryForm.reset();
+      catalogRecoveryPreviewEl.textContent = ''; catalogFeedback('store_reconcile_saved', { quantity: result.sellableQuantity });
+    } catch (error) {
+      if (catalogRecoveryCurrent(request, botId, provider)) {
+        catalogCountConfirmed.checked = false;
+        if (catalogRecoveryPreview) catalogRecoveryPreview.canReconcile = false;
+        catalogFeedback(catalogErrorKey(error.message));
+      }
+    } finally {
+      if (request === catalogRequest) catalogBusy = false;
+      if (catalogRecoveryCurrent(request, botId, provider)) await loadCatalogStatusAfterSync(botId, provider, request);
+    }
+  });
 
   document.getElementById('openCatalogTrainingBtn')?.addEventListener('click', () => switchTab('page-training', { focusHeading: true }));
 

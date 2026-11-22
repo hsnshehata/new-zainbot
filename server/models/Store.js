@@ -2,6 +2,8 @@
 const mongoose = require('mongoose');
 
 const storeSchema = new mongoose.Schema({
+  catalogInventoryMode: { type: String, enum: ['local','transitioning','imported'], default: 'local', select: false },
+  catalogChatWrites: { type: [{ id: String, startedAt: Date, _id: false }], default: [], select: false },
   // صاحب المتجر (اختياري) — سيتم ملؤه من بيانات البوت لو الربط بالبِت مطلوب
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
   // ربط المتجر بالبوت بدل الاعتماد فقط على المستخدم

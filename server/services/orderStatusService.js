@@ -128,6 +128,7 @@ async function changeOrderStatus({ order, targetStatus, changedBy = null, note =
         );
         const name = reservation.product?.productName || item.name || String(item.productId);
         logger.warn('order_confirm_insufficient_stock', { orderId: claimed._id, productId: item.productId });
+        if (reservation.reason) return fail(409, 'كمية المنتج المستورد غير مؤكدة. يجب تسوية المخزون أو تأكيد الكمية في المتجر المتصل قبل تأكيد الطلب. / Imported inventory must be reconciled or confirmed in the connected store before confirming this order.', { code: reservation.reason });
         return fail(409, `لا يمكن تأكيد الطلب: المخزون غير كافٍ للمنتج ${name}`);
       }
     }

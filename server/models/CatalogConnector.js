@@ -11,6 +11,7 @@ const schema = new mongoose.Schema({
   consumerSecret: { type: mongoose.Schema.Types.Mixed, select: false },
   state: { type: String, enum: ['idle', 'running', 'succeeded', 'failed'], default: 'idle' },
   leaseUntil: Date,
+  syncGeneration: { type: Number, default: 0, min: 0 },
   lastError: String,
   lastSucceededAt: Date,
   lastImportedCount: Number,

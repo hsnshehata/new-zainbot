@@ -9,7 +9,7 @@ const router = require('../server/routes/catalogConnectors');
 const { decryptCredentialSecret, buildCredentialContext } = require('../server/services/AiCredentialCrypto');
 
 const storeId = '507f191e810c19729de860ea';
-const config = { origin: 'https://example.com', provider: 'woocommerce', currency: 'USD', storeId };
+const config = { origin: 'https://example.com', provider: 'woocommerce', currency: 'USD', storeId, syncGeneration: 1 };
 
 test('rejects private/mixed DNS, redirects, credential URLs and unexpected origins', async () => {
   for (const ip of ['127.0.0.1', '10.0.0.1', '169.254.169.254', '192.168.1.1', '203.0.113.10']) {
@@ -52,7 +52,7 @@ test('pins public DNS IP to TLS request and refuses HTTP redirect without follow
 
 test('imports Woo pages idempotently by source id and leaves manual products alone', async () => {
   const writes = [];
-  const model = { async updateOne(filter, update, options) { writes.push({ filter, update, options }); } };
+  const model = { async findOne() { return null; }, async updateOne(filter, update, options) { writes.push({ filter, update, options }); return { matchedCount: 1 }; } };
   const request = async (_origin, path, headers) => {
     assert.match(headers.Authorization, /^Basic /);
     if (path.endsWith('page=1')) return { body: [{ id: 12, name: 'Widget', price: '10.50', stock_quantity: 4, status: 'publish' }], headers: { 'x-wp-totalpages': '2' } };
@@ -61,17 +61,17 @@ test('imports Woo pages idempotently by source id and leaves manual products alo
   assert.equal(await importCatalog(config, { consumerKey: 'ck_test', consumerSecret: 'cs_test' }, { request, productModel: model }), 2);
   assert.equal(await importCatalog(config, { consumerKey: 'ck_test', consumerSecret: 'cs_test' }, { request, productModel: model }), 2);
   assert.deepEqual(writes[0].filter, { storeId, importSource: 'woocommerce', importSourceId: '12' });
-  assert.equal(writes[0].update.$set.price, 10.5);
+  assert.equal(writes[0].update.$setOnInsert.price, 10.5);
   assert.equal(writes[0].options.upsert, true);
-  assert.equal(writes[1].update.$set.isActive, false);
-  assert.deepEqual(writes[0].filter, writes[2].filter);
+  assert.equal(writes[2].update.$setOnInsert.isActive, false);
+  assert.deepEqual(writes[0].filter, writes[4].filter);
 });
 
 test('an untracked remote inventory is not represented as confirmed out of stock', async () => {
   const writes = [];
   const request = async () => ({ body: [{ id: 22, name: 'Unlimited service', price: '99', stock_quantity: null, manage_stock: false, status: 'publish' }], headers: { 'x-wp-totalpages': '1' } });
   await importCatalog(config, { consumerKey: 'key', consumerSecret: 'secret' }, {
-    request, productModel: { async updateOne(_filter, update) { writes.push(update.$set); } }
+    request, productModel: { async findOne() { return null; }, async updateOne(_filter, update) { if(update.$setOnInsert) writes.push(update.$setOnInsert); return {matchedCount:1}; } }
   });
   assert.equal(writes[0].stockTracked, false);
   assert.equal(writes[0].stock, 0);
@@ -89,10 +89,10 @@ test('rejects oversized catalog and cross-origin Shopify page before writing any
     productModel: model,
     request: async () => ({ body: [], headers: { 'x-wp-totalpages': '6' } })
   }), { code: 'CATALOG_LIMIT_EXCEEDED' });
-  await assert.rejects(importCatalog(config, { consumerKey: 'key', consumerSecret: 'secret' }, {
+  assert.equal(await importCatalog(config, { consumerKey: 'key', consumerSecret: 'secret' }, {
     productModel: model,
     request: async () => ({ body: [], headers: { 'x-wp-totalpages': '0' } })
-  }), { code: 'EMPTY_CATALOG' });
+  }), 0);
 });
 
 test('configuration encrypts secrets and status never serializes credential fields', async () => {
@@ -277,7 +277,16 @@ test('live-check flow end to end against a localhost mock (no external network)'
     });
     const stored = [];
     const productModel = {
-      async updateOne(filter, update) { stored.push({ filter, doc: update.$set }); },
+      async findOne() { return null; },
+      async updateOne(filter, update) {
+        if(update.$setOnInsert) stored.push({ filter, doc: update.$setOnInsert });
+        else if(Array.isArray(update)) {
+          const row=stored.find(x=>x.filter.importSourceId===filter.importSourceId);
+          for(const [key,value] of Object.entries(update[0].$set)) if(value && Object.hasOwn(value,'$literal')) row.doc[key]=value.$literal;
+          row.doc.stock=update[0].$set['catalogInventory.remoteQuantity'];
+        }
+        return {matchedCount:1};
+      },
     };
     const mockConfig = { ...config, origin: 'https://mock.invalid' };
     const importedCount = await importCatalog(

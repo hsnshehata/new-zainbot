@@ -1845,6 +1845,20 @@
                   <button id="syncStoreCatalog" type="button" class="btn btn-secondary btn-sm" data-i18n="store_sync" disabled>Sync saved connection</button>
                 </div>
               </form>
+              <button id="reviewCatalogInventory" type="button" class="btn btn-secondary btn-sm" data-i18n="store_reconcile_review" disabled style="margin-top:12px;">Review legacy inventory</button>
+              <section id="catalogReconciliationPanel" hidden aria-labelledby="catalogReconciliationTitle" style="min-width:0; overflow-wrap:anywhere; margin-top:16px; padding:16px; border:1px solid var(--glass-border); border-radius:12px;">
+                <h4 id="catalogReconciliationTitle" data-i18n="store_reconcile_title">Confirm legacy sellable inventory</h4>
+                <p data-i18n="store_reconcile_help" style="font-size:13px; color:var(--text-muted);">Review the product and connected source, settle open orders, then count units actually free to sell. Nothing is inferred or written to your connected store.</p>
+                <div id="catalogReconciliationProducts" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+                <p id="catalogReconciliationPreview" style="font-size:13px; white-space:pre-wrap; overflow-wrap:anywhere;"></p>
+                <form id="catalogReconciliationForm" hidden style="min-width:0;">
+                  <label for="catalogSellableQuantity" data-i18n="store_reconcile_quantity">Physically free-to-sell units</label>
+                  <input id="catalogSellableQuantity" style="width:100%; min-width:0; margin:12px 0;" type="number" min="0" step="1" required class="form-control" inputmode="numeric" autocomplete="off">
+                  <label style="display:flex; gap:8px; align-items:start; min-width:0; margin-bottom:12px;"><input id="catalogReconcileConfirmed" style="flex-shrink:0;" type="checkbox" required><span style="min-width:0;" data-i18n="store_reconcile_confirm">I checked this product, source and physical sellable count. I understand this establishes a local balance and does not update remote stock.</span></label>
+                  <button id="confirmCatalogInventory" type="submit" style="white-space:normal; width:100%;" class="btn btn-primary btn-sm" data-i18n="store_reconcile_save" disabled>Confirm this product balance</button>
+                </form>
+                <p id="catalogReconciliationFeedback" role="status" aria-live="polite" style="font-size:13px; margin-top:12px;"></p>
+              </section>
               <p id="storeConnectorStatus" role="status" aria-live="polite" style="font-size:13px; margin-top:12px; overflow-wrap:anywhere;"></p>
               <p id="storeConnectorFeedback" role="status" aria-live="polite" style="font-size:13px; margin-top:8px; overflow-wrap:anywhere;"></p>
               <p data-i18n="store_training_path" style="font-size:13px; color:var(--text-muted); margin:16px 0;">After importing, test an actual product question in chat. Add extra business rules in AI Training.</p>

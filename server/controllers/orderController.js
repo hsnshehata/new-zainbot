@@ -8,6 +8,7 @@ const Notification = require('../models/Notification');
 const Bot = require('../models/Bot');
 const { notifyOrderStatus } = require('../services/telegramService');
 const stockService = require('../services/stockService');
+const { inventoryUnavailable } = require('../services/catalogInventory');
 const { changeOrderStatus } = require('../services/orderStatusService');
 const orderOps = require('../services/orderOps');
 const { upsertFromOrder } = require('./customersController');
@@ -157,6 +158,10 @@ exports.createOrder = async (req, res) => {
         logger.warn('order_create_product_not_found', { storeId, productId });
         return res.status(404).json({ message: `المنتج ${productId} غير موجود` });
       }
+      if (product.isActive === false) return res.status(409).json({ code: 'PRODUCT_UNAVAILABLE', message: 'هذا المنتج غير متاح للطلب حاليًا.' });
+      const inventoryIssue = inventoryUnavailable(product);
+      if (inventoryIssue) return res.status(409).json({ code: inventoryIssue,
+        message: 'كمية المنتج المستورد غير مؤكدة. يجب تسوية المخزون أو تأكيد الكمية في المتجر المتصل قبل الطلب. / Imported inventory is unconfirmed. Reconcile stock or confirm quantity in the connected store before ordering.' });
       // الفحص المبكر للمخزون فقط لطلبات تأكيد واتساب (لا حجز عند الإنشاء
       // لها). للطلبات المؤكدة فورًا لا نرفض هنا أبدًا: الرفض المبكر قد يسبق
       // اكتمال طلب متزامن يحمل نفس مفتاح الطلبية فيعيد 'مخزون غير كافٍ'

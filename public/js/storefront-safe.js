@@ -33,5 +33,10 @@
   }
   // Allow-list for the enumerated link-type values stored in config.
   function token(v, allowed, fallback){ const raw = String(v == null ? '' : v); return allowed.includes(raw) ? raw : (fallback || ''); }
-  window.StorefrontSafe = { esc, url, img, digits, tel, mail, color, token };
+  function inventoryNotice(){
+    return /^en(?:-|$)/i.test(document.documentElement.lang || '')
+      ? 'Quantity is unconfirmed in the connected store. Confirm quantity before ordering.'
+      : 'الكمية غير مؤكدة في المتجر المتصل. يلزم تأكيدها قبل الشراء.';
+  }
+  window.StorefrontSafe = { esc, url, img, digits, tel, mail, color, token, inventoryNotice };
 })();

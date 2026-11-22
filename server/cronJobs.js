@@ -381,7 +381,7 @@ async function runBotDailySummary(botId) {
     ordersCount,
     revenue: totalRevenue,
     currency: 'EGP',
-    bookingsCount,
+    bookingsCount: bookings,
     hotLeadsCount
   };
 

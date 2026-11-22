@@ -24,6 +24,7 @@ const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const logger = require('../logger');
+const { inventoryAfterAllocation, stockAfterAllocation, inventoryUnavailable } = require('./catalogInventory');
 
 // An order whose stockStatus has been 'pending' longer than this is owned
 // by the sweep. Active HTTP requests complete in seconds, so 5 minutes of
@@ -43,20 +44,26 @@ async function reserveLine(productId, storeId, orderId, qty) {
       _id: productId,
       storeId,
       stock: { $gte: qty },
+      isActive: { $ne: false },
       'reservations.orderId': { $ne: orderId },
+      $or: [{ importSource: { $exists: false } }, { 'catalogInventory.sourceKey': { $exists: true }, 'catalogInventory.syncGeneration': { $gt: 0 }, stockTracked: true }],
     },
-    { $inc: { stock: -qty }, $push: { reservations: { orderId, qty, at: new Date() } } },
+    [{ $set: {
+      stock: { $subtract: ['$stock', qty] },
+      catalogInventory: inventoryAfterAllocation(qty),
+      reservations: { $concatArrays: [{ $ifNull: ['$reservations', []] }, { $literal: [{ orderId: new mongoose.Types.ObjectId(String(orderId)), qty, at: new Date() }] }] },
+    } }],
     { new: true }
   );
   if (updated) return { ok: true, product: updated };
 
   // Distinguish "we already reserved this line" (idempotent retry) from
   // genuine insufficient stock or a wrong store/product binding.
-  const existing = await Product.findOne({ _id: productId, storeId }).select('productName stock reservations');
+  const existing = await Product.findOne({ _id: productId, storeId }).select('productName stock stockTracked importSource catalogInventory reservations');
   if (existing && (existing.reservations || []).some((r) => String(r.orderId) === String(orderId))) {
     return { ok: true, already: true, product: existing };
   }
-  return { ok: false, product: existing };
+  return { ok: false, reason: inventoryUnavailable(existing), product: existing };
 }
 
 /**
@@ -71,24 +78,17 @@ async function releaseLineForOrder(productId, orderId) {
     [
       {
         $set: {
-          stock: {
-            $add: [
-              '$stock',
-              {
-                $ifNull: [
-                  {
-                    $first: {
-                      $map: {
-                        input: { $filter: { input: { $ifNull: ['$reservations', []] }, as: 'r', cond: { $eq: ['$$r.orderId', oid] } } },
-                        in: '$$this.qty',
-                      },
-                    },
-                  },
-                  0,
-                ],
-              },
-            ],
-          },
+          stock: stockAfterAllocation({ $multiply: [-1, { $ifNull: [{ $first: { $map: {
+            input: { $filter: { input: { $ifNull: ['$reservations', []] }, as: 'r', cond: { $eq: ['$$r.orderId', oid] } } },
+            in: '$$this.qty',
+          } } }, 0] }] }, { $add: ['$stock', { $ifNull: [{ $first: { $map: {
+            input: { $filter: { input: { $ifNull: ['$reservations', []] }, as: 'r', cond: { $eq: ['$$r.orderId', oid] } } },
+            in: '$$this.qty',
+          } } }, 0] }] }),
+          catalogInventory: inventoryAfterAllocation({ $multiply: [-1, { $ifNull: [{ $first: { $map: {
+            input: { $filter: { input: { $ifNull: ['$reservations', []] }, as: 'r', cond: { $eq: ['$$r.orderId', oid] } } },
+            in: '$$this.qty',
+          } } }, 0] }] }),
           reservations: { $filter: { input: { $ifNull: ['$reservations', []] }, as: 'r', cond: { $ne: ['$$r.orderId', oid] } } },
         },
       },
@@ -298,7 +298,11 @@ async function restoreLineForOrder(productId, orderId, qty, epoch = '') {
   const gen = String(epoch || '');
   const result = await Product.updateOne(
     { _id: productId, restorations: { $not: { $elemMatch: { orderId: oid, epoch: gen } } } },
-    { $inc: { stock: qty }, $push: { restorations: { orderId: oid, epoch: gen, qty, at: new Date() } } }
+    [{ $set: {
+      stock: stockAfterAllocation(-qty, { $add: ['$stock', qty] }),
+      catalogInventory: inventoryAfterAllocation(-qty),
+      restorations: { $concatArrays: [{ $ifNull: ['$restorations', []] }, { $literal: [{ orderId: oid, epoch: gen, qty, at: new Date() }] }] },
+    } }]
   );
   return result.modifiedCount;
 }

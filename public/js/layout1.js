@@ -28,6 +28,7 @@
   }
   function addToCart(p, qty=1, selectedOptions=null){
     if (!STORE_REF?.adminConfig?.enableCart) return; // لو السلة مقفولة
+    if (p?.stockTracked === false) { alert(S.inventoryNotice()); return; }
     const stock = Number(p?.stock ?? 0);
     if (stock <= 0){
       alert('المنتج غير متوفر حالياً وتم إخفاؤه من المتجر مؤقتًا');
@@ -749,6 +750,7 @@
           </div>
           ${p.description?`<div class="desc">${S.esc(p.description)}</div>`:''}
           ${p.detailedDescription?`<div class="desc" style="margin-top:6px;">${S.esc(p.detailedDescription)}</div>`:''}
+          ${p.stockTracked === false ? '<p class="inventory-notice" role="note" dir="auto">' + S.esc(S.inventoryNotice()) + '</p>' : ''}
           ${optionsHtml}
           ${wasPrice?`<div class="offer-pill" title="وفرت ${S.esc(saved)} ${S.esc(p.currency||'')}">خصم ${S.esc(percent||0)}% • وفرت ${S.esc(saved)} ${S.esc(p.currency||'')}</div>`:''}
           <div class="actions" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">

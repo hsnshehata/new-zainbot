@@ -1,3 +1,4 @@
+const { inventoryUnavailable } = require('./catalogInventory');
 const MAX_PRODUCTS = 10;
 const MAX_DESCRIPTION = 180;
 const STOP_WORDS = new Set([
@@ -55,6 +56,7 @@ function buildProductContext(products, message, storeLink, origin) {
   const active = (products || []).filter((product) => product && product.isActive !== false);
   if (!active.length) return 'لا توجد منتجات متاحة حاليًا في المتجر.\n';
 
+  const availability = active.some(p => p.importSource) ? 'بالكتالوج' : 'متاح';
   const query = new Set(tokens(message));
   const ranked = active.map((product, index) => {
     const names = new Set(tokens(product.productName));
@@ -70,7 +72,7 @@ function buildProductContext(products, message, storeLink, origin) {
     .slice(0, MAX_PRODUCTS);
 
   if (!ranked.length) {
-    return `المتجر لديه ${active.length} منتج متاح، لكن لم يُعثر على منتج يطابق رسالة العميل في بيانات الكتالوج. لا تفترض وجود منتج أو سعر؛ اطلب اسم المنتج أو تفاصيل أدق ووجّه العميل لرابط المتجر.\n`;
+    return `المتجر لديه ${active.length} منتج ${availability}، لكن لم يُعثر على منتج يطابق رسالة العميل في بيانات الكتالوج. لا تفترض وجود منتج أو سعر؛ اطلب اسم المنتج أو تفاصيل أدق ووجّه العميل لرابط المتجر.\n`;
   }
 
   const link = /^[a-zA-Z0-9_-]+$/.test(String(storeLink || '')) ? storeLink : null;
@@ -84,9 +86,10 @@ function buildProductContext(products, message, storeLink, origin) {
     const url = link ? buildStorefrontUrl(link, id, origin) : null;
     return `المنتج: ${compact(product.productName, 100)}، السعر: ${Number.isFinite(price) && price >= 0 ? price : 'غير متوفر'} ${currency || ''}، ` +
       `الرابط: ${url || 'غير متوفر'}، الوصف: ${compact(product.description, MAX_DESCRIPTION) || 'غير متوفر'}، ` +
-       `المخزون: ${product.stockTracked === false ? 'غير متتبع' : Number.isFinite(Number(product.stock)) ? product.stock : 'غير متوفر'}.`;
+       `المخزون: ${inventoryUnavailable(product) ? 'غير مؤكد، لا يمكن تأكيد الطلب قبل تسوية المخزون' : product.stockTracked === false ? 'غير متتبع' : Number.isFinite(Number(product.stock)) ? product.stock : 'غير متوفر'}.`;
   });
-  return `منتجات متاحة ذات صلة برسالة العميل (حتى ${MAX_PRODUCTS} من أصل ${active.length} منتج متاح؛ هذه ليست القائمة الكاملة). استخدم التفاصيل والأسعار والروابط أدناه فقط، ولا تفترض توفر منتج غير مذكور:\n${lines.join('\n')}\n`;
+  const safety = active.some(p => inventoryUnavailable(p)) ? 'تنبيه: وجود المنتج في الكتالوج لا يعني توفر وحدات للبيع. الكميات غير المؤكدة لا تقبل الطلب.\n' : '';
+  return safety + `${availability === 'بالكتالوج' ? 'منتجات مسجلة' : 'منتجات متاحة'} ذات صلة برسالة العميل (حتى ${MAX_PRODUCTS} من أصل ${active.length} منتج ${availability}؛ هذه ليست القائمة الكاملة). استخدم التفاصيل والأسعار والروابط أدناه فقط، ولا تفترض توفر منتج غير مذكور:\n${lines.join('\n')}\n`;
 }
 
 // Offer-aware catalog price: the only price an order may ever carry.

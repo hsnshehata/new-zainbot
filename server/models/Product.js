@@ -53,6 +53,16 @@ const productSchema = new mongoose.Schema({
     min: [0, 'المخزون يجب أن يكون أكبر من أو يساوي 0']
   },
   stockTracked: { type: Boolean, default: true },
+  // Undefined on historical imports: never invent their missing balance.
+  catalogInventory: {
+    type: new mongoose.Schema({
+      sourceKey: { type: String, required: true },
+      remoteQuantity: { type: Number, required: true, min: 0 },
+      localAllocated: { type: Number, required: true, min: 0 },
+      syncGeneration: { type: Number, required: true, min: 0 },
+    }, { _id: false }),
+    default: undefined,
+  },
   lowStockThreshold: {
     type: Number,
     min: [0, 'عتبة المخزون المنخفض يجب أن تكون أكبر من أو يساوي 0'],

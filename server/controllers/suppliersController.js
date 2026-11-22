@@ -138,6 +138,15 @@ exports.createPurchaseInvoice = async (req, res) => {
     await authorizeStoreAccess(storeId, userId, role);
     const supplier = await Supplier.findOne({ _id: supplierId, storeId });
     if (!supplier) return res.status(404).json({ message: 'المورد غير موجود' });
+    // Reject before invoice, payment/balance or upload side effects. Imported
+    // stock must not be incremented locally and again by its remote snapshot.
+    const requestedItems = Array.isArray(payload.items) ? payload.items : [];
+    const imported = await Product.exists({ storeId,
+      _id: { $in: requestedItems.filter(it => it.productId).map(it => it.productId) },
+      importSource: { $exists: true },
+    });
+    if (imported) return res.status(409).json({ code: 'CATALOG_STOCK_REMOTE_MANAGED',
+      message: 'سجل توريد المنتجات المستوردة في المتجر المتصل. لم تُحفظ الفاتورة. / Record imported-product restocks in the connected store. Invoice was not saved.' });
     const invoice = new PurchaseInvoice({ storeId, supplierId, invoiceNumber: payload.invoiceNumber || '', items: payload.items || [], subtotal: payload.subtotal||0, tax: payload.tax||0, total: payload.total||0, paid: payload.paid||0, paymentMethod: payload.paymentMethod||'cash', createdBy: userId });
     await invoice.save();
 

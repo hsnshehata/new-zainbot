@@ -31,7 +31,6 @@ async function authorizeStoreAccess(storeId, userId, userRole) {
 // expose merchant-internal fields (costPrice, lowStockThreshold, barcode,
 // generatedCodes). The dashboard reads full docs via the authenticated
 // getProduct endpoint instead.
-const PUBLIC_PRODUCT_FIELDS = '_id storeId productName description detailedDescription price hasOffer originalPrice discountedPrice currency stock salesCount imageUrl images optionsEnabled optionGroups isActive createdAt updatedAt';
 const PUBLIC_PRODUCT_PROJECTION = {
   _id: 1,
   storeId: 1,
@@ -44,6 +43,14 @@ const PUBLIC_PRODUCT_PROJECTION = {
   discountedPrice: 1,
   currency: 1,
   stock: 1,
+  // Compute the public availability flag without returning source/ledger data.
+  // A legacy or incomplete import is unconfirmed, not confirmed physical zero.
+  stockTracked: { $cond: [
+    { $in: ['$importSource', ['shopify', 'woocommerce']] },
+    { $and: [ { $eq: [{ $type: '$catalogInventory.sourceKey' }, 'string'] },
+      { $gt: ['$catalogInventory.syncGeneration', 0] }, { $ne: ['$stockTracked', false] } ] },
+    { $ifNull: ['$stockTracked', true] },
+  ] },
   salesCount: 1,
   imageUrl: 1,
   images: 1,
@@ -292,6 +299,11 @@ exports.updateProduct = async (req, res) => {
       return res.status(404).json({ message: 'المنتج غير موجود' });
     }
 
+    if (product.importSource && stock !== undefined && Number(stock) !== product.stock) {
+      return res.status(409).json({ code: 'CATALOG_STOCK_REMOTE_MANAGED',
+        message: 'عدّل كمية هذا المنتج في المتجر المتصل ثم زامن الكتالوج. / Change this product quantity in the connected store, then sync the catalog.' });
+    }
+
     // التحقق من القسم إذا تم إرساله
     let categoryId = product.category ? product.category._id : null;
     if (category && category !== 'null' && mongoose.isValidObjectId(category)) {
@@ -401,7 +413,11 @@ exports.deleteProduct = async (req, res) => {
       return res.status(404).json({ message: 'المنتج غير موجود' });
     }
 
-    await product.deleteOne();
+    if (product.importSource) {
+      // Keep the source row and durable allocations even after token cleanup.
+      // A later explicit import can reactivate it, but cannot recreate stock.
+      await Product.updateOne({ _id: product._id, storeId }, { $set: { isActive: false } });
+    } else await product.deleteOne();
     logger.info('product_deleted', { storeId, productId, productName: product.productName });
     res.status(200).json({ message: 'تم حذف المنتج بنجاح' });
   } catch (err) {
@@ -446,7 +462,7 @@ exports.getProducts = async (req, res) => {
       query.productName = { $regex: search, $options: 'i' };
     }
 
-    let productsQuery = Product.find(query).select(PUBLIC_PRODUCT_FIELDS).populate({
+    let productsQuery = Product.find(query).select(PUBLIC_PRODUCT_PROJECTION).populate({
       path: 'category',
       select: 'name',
       options: { lean: true }
@@ -610,7 +626,7 @@ exports.getBestsellers = async (req, res) => {
     if (bestsellers.length === 0) {
       logger.info('bestsellers_no_orders_fallback', { storeId });
       bestsellers = await Product.find({ storeId, isActive: true })
-        .select(PUBLIC_PRODUCT_FIELDS)
+        .select(PUBLIC_PRODUCT_PROJECTION)
         .sort({ createdAt: -1 })
         .limit(parseInt(limit))
         .populate({
@@ -661,7 +677,7 @@ exports.getProduct = async (req, res) => {
     // التحقق من وجود المنتج
     let productQuery = Product.findOne({ _id: productId, storeId, isActive: true });
     if (!fullAccess) {
-      productQuery = productQuery.select(PUBLIC_PRODUCT_FIELDS).lean();
+      productQuery = productQuery.select(PUBLIC_PRODUCT_PROJECTION).lean();
     }
     const product = await productQuery.populate({
       path: 'category',
