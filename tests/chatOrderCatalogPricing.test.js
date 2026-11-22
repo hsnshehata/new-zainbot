@@ -357,13 +357,11 @@ test('no-outcome turns: freeform false claims are stripped and replaced by the d
   assert.match(enforced, /لم يتم تسجيل أي طلب حتى الآن/);
 });
 
-test('outcome turns are mention-based fail-closed: any model order-talk is replaced by the durable line', () => {
-  // Even a harmless-sounding order statement does not survive an outcome turn;
-  // only the deterministic durable-status line speaks about the order.
+test('rhetorical-question assertions get no question-mark exemption; harmless statements survive', () => {
   const result = { saved: false, outcome: 'unpriced_items', unpricedTitles: ['x'] };
-  const enforced = enforceTruthfulOrderReply('طلبك مهم عندنا وهنحاول نوفره قريب. عذرًا على الإزعاج.', result);
-  assert.doesNotMatch(enforced, /طلبك مهم عندنا/);
-  assert.match(enforced, /عذرًا على الإزعاج/, 'non-order content preserved');
+  const enforced = enforceTruthfulOrderReply('تم تأكيد طلبك؟ طلبك مهم عندنا.', result);
+  assert.doesNotMatch(enforced, /تم تأكيد طلبك/, 'rhetorical confirmation question stripped');
+  assert.match(enforced, /طلبك مهم عندنا/, 'harmless non-assertion statement preserved');
   assert.match(enforced, /غير متوفر بسعر رسمي في متجرنا حاليًا/);
 });
 

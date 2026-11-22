@@ -295,13 +295,7 @@ async function priceItemsFromCatalog(bot, items) {
 // are preserved. This replaces the old confirmation-claim blacklist: the
 // customer-facing order status always comes from durable state, never from
 // however the model happened to phrase things.
-const ORDER_STATUS_ASSERTION = /(تم\s*(تأكيد|تسجيل|حفظ|استلام|شحن|إلغاء|الغاء|إرسال|ارسال|تجهيز|الدفع|دفع)|ات(أكد|اكد|سجل|حفظ|شحن|لغى|ستلم|دفع)|طلبك\s*(اتأكد|أُكّد|مؤكد|اتسجل|اتحفظ|محفوظ|مسجل|وصل|جاهز|اتشحن|اتلغى|اتدفع)|الطلب\s*(اتأكد|مؤكد|محفوظ|مسجل|تم\s*(تأكيده|حفظه|تسجيله|استلامه|شحنه|إلغاؤه|الغاؤه|دفعه))|سجلنا|استلمنا|أكدنا|اكدنا|حجزنا|شحننا|ألغينا|الغينا|جهزنا|وصلنا\s*(طلب|اوردر|أوردر)|order\s*(is|has been|was|got)?\s*(confirmed|placed|saved|received|registered|booked|shipped|cancelled|canceled|paid|processed|completed)|(confirmed|received|registered|placed|booked|shipped|cancelled|canceled|paid)\s+your\s+order|your\s+order\s+(is|has been|was)\s+\w+|successfully\s+(placed|confirmed|received|registered|booked|paid)|payment\s+(received|confirmed|completed))/i;
-
-// Order-domain mention: for turns WITH an extraction outcome the model has no
-// legitimate reason to discuss the order at all — the deterministic durable-
-// status line renders instead — so the filter is mention-based, not
-// claim-based: no phrasing games can slip an assertion past it.
-const ORDER_DOMAIN_MENTION = /(طلب|طلبك|اوردر|أوردر|\border\b)/i;
+const ORDER_STATUS_ASSERTION = /(تم\s*(تأكيد|تسجيل|حفظ|استلام|شحن|إلغاء|الغاء|إرسال|ارسال|تجهيز|الدفع|دفع|تنفيذ|استقبال|تثبيت|اعتماد)|ات(أكد|اكد|سجل|حفظ|شحن|لغى|ستلم|دفع)|سجلت\s*(طلب|الطلب|اوردر|الأوردر)|طلبك\s*(اتأكد|أُكّد|مؤكد|اتسجل|اتحفظ|محفوظ|مسجل|وصل|جاهز|اتشحن|اتلغى|اتدفع|اتعمل|هيوصل|هتوصل)|الطلب\s*(اتأكد|مؤكد|محفوظ|مسجل|اتعمل|تم\s*(تأكيده|حفظه|تسجيله|استلامه|شحنه|إلغاؤه|الغاؤه|دفعه|تنفيذه|استقباله))|(طلب|طلبك|الطلب|اوردر|أوردر)[^\n.!؟?]*?(هيوصل|هتوصل|هيتوصل|هيتسلم|هتتسلم)|سجلنا|استلمنا|أكدنا|اكدنا|حجزنا|شحننا|ألغينا|الغينا|جهزنا|نفذنا|استقبلنا|وصلنا\s*(طلب|اوردر|أوردر)|order\s*(is|has been|was|got|will be)?\s*(confirmed|placed|saved|received|registered|booked|shipped|cancelled|canceled|paid|processed|completed|delivered)|(confirmed|received|registered|placed|booked|shipped|cancelled|canceled|paid|delivered)\s+your\s+order|your\s+order\s+(is|has been|was|will be)\s+\w+|will be\s+(shipped|delivered|confirmed|processed)|successfully\s+(placed|confirmed|received|registered|booked|paid)|payment\s+(received|confirmed|completed)|on its way)/i;
 
 // جملة الحقيقة الموجهة للعميل عندما لا يوجد طلب محفوظ بحالة مؤكدة.
 function customerTruthSentence(result) {
@@ -346,18 +340,15 @@ function enforceTruthfulOrderReply(reply, extractionResult) {
   if (durableConfirmed) return reply;
   const outcome = extractionResult?.outcome || null;
   const parts = reply.match(/[^.!؟?\n]+[.!؟?\n]*/g) || [];
+  // Assertion-based fail-closed on EVERY turn (outcome or not), with no
+  // question-mark exemption: a rhetorical question asserts state just as
+  // much as a declarative. Detail-asking sentences and ordinary chat have
+  // no assertion pattern and survive; the durable truth line always renders
+  // for an order outcome, and replaces whatever was stripped.
   const kept = parts.filter((s) => {
     const body = s.trim();
     if (!body) return false;
-    if (/[؟?]\s*$/.test(body)) return true; // questions ask; they don't assert state
-    if (outcome) {
-      // Mention-based fail-closed: with an order outcome, only the durable-
-      // status line speaks about the order. Model order-talk is redundant at
-      // best and a paraphrased false claim at worst.
-      if (ORDER_DOMAIN_MENTION.test(body) || ORDER_STATUS_ASSERTION.test(body)) return false;
-    } else {
-      if (ORDER_STATUS_ASSERTION.test(body)) return false;
-    }
+    if (ORDER_STATUS_ASSERTION.test(body)) return false;
     if (!durableSaved && ORDER_ID_CITATION.test(body)) return false;
     return true;
   });
