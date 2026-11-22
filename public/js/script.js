@@ -188,7 +188,8 @@
   let demoHistory = [];
 
   // Real AI answer from the platform. Falls back to canned samples when the
-  // live demo is disabled, rate-limited, or temporarily unavailable.
+  // live demo is disabled, rate-limited, or temporarily unavailable — and the
+  // fallback bubble is LABELLED as a sample reply, never passed off as live.
   async function requestLiveDemoReply(message) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 20000);
@@ -361,7 +362,11 @@
       if (demoHistory.length > 12) demoHistory = demoHistory.slice(-12);
     } else {
       const aiResult = getAIResponse(message);
-      appendMessage(aiResult.response, 'out');
+      // صدق المعاينة: رد العينة الجاهز يُوسم بوضوح ولا يُقدَّم كرد حي.
+      const sampleNote = currentLang === 'ar'
+        ? '\n\n— رد عينة جاهز: المعاينة الحية غير متاحة الآن.'
+        : '\n\n— Sample reply: the live preview is unavailable right now.';
+      appendMessage(aiResult.response + sampleNote, 'out');
       updateConfidence(aiResult.confidence);
     }
 

@@ -352,6 +352,9 @@ function confirmedOrderTruthSentence(order) {
   const currency = ORDER_CURRENCY_LABELS[(order?.items || []).find((it) => it && it.currency)?.currency] || 'جنيه';
   const lines = [`تم تسجيل طلبك وتأكيده بنجاح${name ? ` يا ${name}` : ''}. رقم الطلب: ${id}.`];
   if (items) lines.push(`الطلب: ${items}.`);
+  // رسوم التوصيل من الحقل المخزن فقط؛ لا تُذكر بلا قيمة محفوظة فعلية.
+  const deliveryFee = Number(order?.deliveryFee) || 0;
+  if (deliveryFee > 0) lines.push(`رسوم التوصيل: ${deliveryFee} ${currency}.`);
   lines.push(`الإجمالي: ${total} ${currency}.`);
   lines.push(`الحالة: "${statusText(order?.status)}".`);
   return lines.join(' ');

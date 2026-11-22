@@ -115,6 +115,34 @@ test('clarification: unpriced outcome with suggestions asks هل تقصد withou
   assert.doesNotMatch(out, /300/, 'no catalog price leaks into an unpriced clarification');
 });
 
+test('confirmed body shows the stored delivery fee, and only when actually stored', () => {
+  const withFee = customerTruthSentence({
+    outcome: 'saved',
+    saved: true,
+    chatOrder: {
+      _id: 'ordF',
+      status: 'confirmed',
+      items: [{ title: 'كتاب', quantity: 1, price: 100, currency: 'EGP' }],
+      deliveryFee: 30,
+      totalAmount: 130,
+    },
+  });
+  assert.match(withFee, /رسوم التوصيل: 30 جنيه/);
+  assert.match(withFee, /الإجمالي: 130 جنيه/);
+
+  const noFee = customerTruthSentence({
+    outcome: 'saved',
+    saved: true,
+    chatOrder: {
+      _id: 'ordN',
+      status: 'confirmed',
+      items: [{ title: 'كتاب', quantity: 1, price: 100, currency: 'EGP' }],
+      totalAmount: 100,
+    },
+  });
+  assert.doesNotMatch(noFee, /رسوم التوصيل/, 'no fee line without a stored fee');
+});
+
 test('confirmed body is built from durable order fields only and sanitizes embedded markup', () => {
   const ctx = {
     outcome: 'saved',
