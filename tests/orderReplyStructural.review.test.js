@@ -2,10 +2,12 @@
 
 // tests/orderReplyStructural.review.test.js
 // Independent reviewer STRUCTURAL property tests for the deterministic
-// non-confirmed order reply (acceptance gate). Property: for any order
-// outcome that is not durably confirmed, the customer-facing body is a pure
-// function of durable state — identical for every possible model text, and
-// containing zero model prose in any language. No synonym lists involved.
+// order reply (acceptance gate). Property: for ANY order outcome — now
+// including durably confirmed saves (contract change directed 2026-11-22:
+// confirmed replies are constrained to durable facts after unsupported
+// shipping promises were observed in live freeform confirmations) — the
+// customer-facing body is a pure function of durable state, identical for
+// every possible model text, containing zero model prose in any language.
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -65,11 +67,28 @@ test('STRUCTURAL: deterministic body carries the durable fields, not model claim
   assert.match(unpriced, /قميص/);
 });
 
-test('STRUCTURAL: durably confirmed outcome keeps freeform, no-outcome benign chat untouched', () => {
-  const confirmed = { outcome: 'saved', saved: true, chatOrder: { _id: 'x', status: 'confirmed' } };
-  for (const reply of FUZZ) {
-    assert.equal(enforceTruthfulOrderReply(reply, confirmed), reply);
+test('STRUCTURAL: durably confirmed outcome also yields one deterministic body from durable facts', () => {
+  const confirmed = {
+    outcome: 'saved',
+    saved: true,
+    chatOrder: {
+      _id: 'x',
+      status: 'confirmed',
+      customerName: 'حسن',
+      items: [{ title: 'قميص', quantity: 2, price: 100, currency: 'EGP' }],
+      totalAmount: 200,
+    },
+  };
+  const outputs = FUZZ.map((reply) => enforceTruthfulOrderReply(reply, confirmed));
+  assert.equal(new Set(outputs).size, 1, 'confirmed body must be identical for every model text');
+  const body = outputs[0];
+  for (let i = 0; i < FUZZ.length; i++) {
+    assert.ok(!body.includes(`MARKER_${String.fromCharCode(65 + i)}`), 'model prose leaked into confirmed body');
   }
+  assert.match(body, /رقم الطلب: x/);
+  assert.match(body, /قميص ×2/);
+  assert.match(body, /الإجمالي: 200 جنيه/);
+  assert.match(body, /حسن/);
   const benign = ['أهلا بيك! MARKER_Z', 'الجو حار النهاردة. MARKER_Y'];
   for (const reply of benign) {
     assert.equal(enforceTruthfulOrderReply(reply, null), reply, 'benign no-outcome chat must pass verbatim');

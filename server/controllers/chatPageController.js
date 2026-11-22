@@ -183,6 +183,27 @@ exports.updateChatPage = async (req, res) => {
       return res.status(404).json({ message: 'Chat page not found' });
     }
 
+    // حماية السجلات غير المتسقة: إذا كانت ملكية الصفحة لا تطابق مالك البوت،
+    // يُرفض التعديل لغير السوبرأدمن المباشر بدل منح أي طرف تحكمًا في بيانات
+    // طرف آخر، ويُسجل الحدث لمعالجة السجل بقرار صريح لاحقًا.
+    const pageBot = await Bot.findById(chatPage.botId);
+    const botOwnerId = pageBot?.userId ? String(pageBot.userId) : null;
+    const pageOwnerId = chatPage.userId ? String(chatPage.userId) : null;
+    if (pageOwnerId && botOwnerId && pageOwnerId !== botOwnerId) {
+      logger.warn('chat_page_owner_mismatch', {
+        chatPageId: String(chatPage._id),
+        linkId: chatPage.linkId,
+        pageUserId: pageOwnerId,
+        botId: String(chatPage.botId),
+        botUserId: botOwnerId,
+        action: 'update',
+        callerUserId: String(req.user.userId),
+      });
+      if (!isDirectSuperadmin) {
+        return res.status(403).json({ message: 'ملكية صفحة الدردشة غير متسقة مع مالك البوت؛ تواصل مع الدعم لمعالجتها' });
+      }
+    }
+
     const title = req.body.title !== undefined ? req.body.title : chatPage.title;
     const titleColor = req.body.titleColor !== undefined ? req.body.titleColor : chatPage.titleColor;
     
@@ -308,6 +329,20 @@ exports.getChatPageByLinkId = async (req, res) => {
     }
     if (!chatPage) {
       return res.status(404).json({ message: 'Chat page not found' });
+    }
+    // كشف سجلات غير متسقة: ملكية الصفحة لا تطابق مالك البوت. الخدمة العامة
+    // لا تتوقف (روابط عملاء حية)، لكن يُسجل الحدث دائمًا للمعالجة.
+    const pageOwnerId = chatPage.userId ? String(chatPage.userId) : null;
+    const botOwnerId = chatPage.botId && chatPage.botId.userId ? String(chatPage.botId.userId) : null;
+    if (pageOwnerId && botOwnerId && pageOwnerId !== botOwnerId) {
+      logger.warn('chat_page_owner_mismatch', {
+        chatPageId: String(chatPage._id),
+        linkId: chatPage.linkId,
+        pageUserId: pageOwnerId,
+        botId: chatPage.botId?._id ? String(chatPage.botId._id) : String(chatPage.botId),
+        botUserId: botOwnerId,
+        action: 'serve',
+      });
     }
     res.status(200).json({
       title: chatPage.title,

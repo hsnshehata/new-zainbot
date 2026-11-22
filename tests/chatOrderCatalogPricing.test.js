@@ -164,12 +164,18 @@ test('ambiguous item (multiple catalog matches) is never priced and never saved'
 
   const result = await runExtraction(bot, 'تمام، أكد الطلب', fullOrderReply([{ title: 'كرة مقاس 5', quantity: 1 }]));
 
-  assert.equal(result.outcome, 'unpriced_items');
+  assert.equal(result.outcome, 'ambiguous_items');
   assert.deepEqual(result.ambiguousTitles, ['كرة مقاس 5']);
+  assert.deepEqual(
+    (result.ambiguousItems || []).map((a) => a.candidates.sort()),
+    [['كرة قدم مقاس 5', 'كرة طائرة مقاس 5'].sort()],
+    'clarification carries the durable candidate names'
+  );
   assert.equal(await ChatOrder.countDocuments({ botId: bot._id }), 0);
 
   const note = buildOrderStateNote(result);
-  assert.match(note, /أكثر من منتج/);
+  assert.match(note, /تحديدًا أدق/);
+  assert.match(note, /كرة قدم مقاس 5/);
 });
 
 test('bot without a store cannot price or save any order', async () => {
@@ -317,10 +323,27 @@ test('adversarial: overclaim neutralized even when extraction returned null (no 
   assert.match(enforced, /لم يتم تسجيل أي طلب/);
 });
 
-test('a durably confirmed order keeps the model confirmation reply verbatim', () => {
-  const reply = 'تم تأكيد طلبك بنجاح! رقم الطلب: abc.';
-  const result = { saved: true, outcome: 'saved', chatOrder: { _id: 'abc', status: 'confirmed' } };
-  assert.equal(enforceTruthfulOrderReply(reply, result), reply);
+test('a durably confirmed order renders a deterministic durable-facts body (contract change 2026-11-22)', () => {
+  // Supersedes the old verbatim-freeform contract: confirmed replies are
+  // constrained to durable facts after live confirmations carried
+  // unsupported shipping promises.
+  const reply = 'تم تأكيد طلبك بنجاح! رقم الطلب: abc. وهيوصلك بكرة.';
+  const result = {
+    saved: true,
+    outcome: 'saved',
+    chatOrder: {
+      _id: 'abc',
+      status: 'confirmed',
+      customerName: 'علي',
+      items: [{ title: 'كرة قدم مقاس 5', quantity: 1, price: 250, currency: 'EGP' }],
+      totalAmount: 250,
+    },
+  };
+  const enforced = enforceTruthfulOrderReply(reply, result);
+  assert.match(enforced, /رقم الطلب: abc/);
+  assert.match(enforced, /كرة قدم مقاس 5 ×1/);
+  assert.match(enforced, /الإجمالي: 250 جنيه/);
+  assert.doesNotMatch(enforced, /وهيوصلك بكرة/, 'shipping promise must not render');
 });
 
 test('a saved-but-pending order: every model status assertion is replaced by the deterministic durable-status line', () => {

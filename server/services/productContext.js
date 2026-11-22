@@ -16,13 +16,20 @@ function normalize(text) {
 }
 
 function tokens(text) {
-  return (normalize(text).match(/[\p{L}\p{N}]+/gu) || []).flatMap((word) => {
+  const words = normalize(text).match(/[\p{L}\p{N}]+/gu) || [];
+  return words.flatMap((word) => {
     const variants = [word];
     if (word.startsWith('ال') && word.length > 4) variants.push(word.slice(2));
     if (word.endsWith('ات') && word.length > 5) variants.push(word.slice(0, -2));
     if (word.endsWith('s') && word.length > 4) variants.push(word.replace(/(?:es|s)$/, ''));
     return variants;
-  }).filter((word) => word.length > 1 && !STOP_WORDS.has(word));
+  }).filter((word) =>
+    !STOP_WORDS.has(word) &&
+    // Single-character tokens are kept when the name has more than one word:
+    // they are often the only distinguishing part (منتج أ / منتج ب). A lone
+    // one-character word on its own carries no signal and is still dropped.
+    (word.length > 1 || words.length > 1)
+  );
 }
 
 function compact(value, limit) {

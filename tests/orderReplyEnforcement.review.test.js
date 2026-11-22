@@ -83,8 +83,19 @@ test('[GUARD] non-order chat with no outcome passes through unchanged', () => {
   assert.equal(enforceTruthfulOrderReply(reply, null), reply);
 });
 
-test('[GUARD] durably confirmed order leaves the reply untouched', () => {
-  const reply = 'تم تأكيد طلبك بنجاح! 🎉';
-  const ctx = { outcome: 'saved', saved: true, chatOrder: { _id: 'x', status: 'confirmed' } };
-  assert.equal(enforceTruthfulOrderReply(reply, ctx), reply);
+test('[GUARD] durably confirmed order reply is a deterministic durable-facts body (contract change 2026-11-22, supersedes freeform)', () => {
+  // Confirmed saves no longer pass model prose: live freeform confirmations
+  // carried unsupported shipping promises, so the body is rendered from the
+  // stored order only.
+  const reply = 'تم تأكيد طلبك بنجاح! 🎉 وهنشحنه بكرة إن شاء الله';
+  const ctx = {
+    outcome: 'saved',
+    saved: true,
+    chatOrder: { _id: 'x', status: 'confirmed', customerName: '', items: [], totalAmount: 150 },
+  };
+  const out = enforceTruthfulOrderReply(reply, ctx);
+  assert.match(out, /رقم الطلب: x/);
+  assert.match(out, /الإجمالي: 150 جنيه/);
+  assert.doesNotMatch(out, /وهنشحنه/, 'unsupported shipping promise must not reach the customer');
+  assert.doesNotMatch(out, /🎉/, 'model prose is replaced, not preserved');
 });

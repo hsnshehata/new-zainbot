@@ -238,39 +238,55 @@ const statusText = (status) => STATUS_LABELS[status] || status || 'غير معر
 // مطابقة تامة أولًا ثم مطابقة ضببية بالرموز؛ أكثر من منتج مطابق = غموض = بلا سعر.
 function findCatalogProductMatch(products, title) {
   const active = (products || []).filter((p) => p && p.isActive !== false);
+  const nameOf = (p) => String(p.productName || '');
   const normTitle = normalizeCatalogText(title).trim();
-  if (!normTitle) return { status: 'unknown' };
+  if (!normTitle) return { status: 'unknown', candidates: [] };
   const exact = active.filter((p) => normalizeCatalogText(p.productName).trim() === normTitle);
   if (exact.length === 1) return { status: 'priced', product: exact[0] };
-  if (exact.length > 1) return { status: 'ambiguous' };
+  if (exact.length > 1) return { status: 'ambiguous', candidates: exact.map(nameOf) };
   const titleTokens = new Set(catalogTokens(title));
-  if (!titleTokens.size) return { status: 'unknown' };
+  if (!titleTokens.size) return { status: 'unknown', candidates: [] };
   const subset = (a, b) => [...a].every((x) => b.has(x));
-  const fuzzy = active.filter((p) => {
+  const scored = active.map((p) => {
     const pt = new Set(catalogTokens(p.productName));
-    if (!pt.size) return false;
-    return subset(pt, titleTokens) || subset(titleTokens, pt);
+    if (!pt.size) return { product: p, subsetMatch: false, overlap: 0 };
+    const subsetMatch = subset(pt, titleTokens) || subset(titleTokens, pt);
+    let overlap = 0;
+    for (const t of titleTokens) if (pt.has(t)) overlap += 1;
+    return { product: p, subsetMatch, overlap };
   });
-  if (fuzzy.length === 1) return { status: 'priced', product: fuzzy[0] };
-  if (fuzzy.length > 1) return { status: 'ambiguous' };
-  return { status: 'unknown' };
+  const fuzzy = scored.filter((s) => s.subsetMatch);
+  if (fuzzy.length === 1) return { status: 'priced', product: fuzzy[0].product };
+  // أكثر من منتج مطابق = غموض = بلا سعر، مع أسماء المرشحين لتوضيح حتمي للعميل.
+  if (fuzzy.length > 1) return { status: 'ambiguous', candidates: fuzzy.map((s) => nameOf(s.product)) };
+  // بلا مطابقة واثقة: اقتراحات ذات تداخل رمزي فقط، لا تُسعّر أبدًا.
+  const candidates = scored
+    .filter((s) => s.overlap > 0)
+    .sort((a, b) => b.overlap - a.overlap)
+    .slice(0, 3)
+    .map((s) => nameOf(s.product));
+  return { status: 'unknown', candidates };
 }
 
 // يسعّر البنود من متجر البوت نفسه حصرًا (عزل المستأجرين: storeId الخاص بالبوت فقط).
 // بلا متجر أو بلا مطابقة وحيدة ⇒ السعر 0 ⇒ لن يُحفظ الطلب (بوابة المتحكم).
 async function priceItemsFromCatalog(bot, items) {
   const safe = (items || []).filter((it) => it && it.title);
-  if (!safe.length) return { items: [], unpricedTitles: [], ambiguousTitles: [] };
+  if (!safe.length) return { items: [], unpricedTitles: [], ambiguousTitles: [], ambiguousItems: [], unknownItems: [] };
   if (!bot?.storeId) {
     return {
       items: safe.map((it) => ({ ...it, price: 0 })),
       unpricedTitles: safe.map((it) => it.title),
       ambiguousTitles: [],
+      ambiguousItems: [],
+      unknownItems: safe.map((it) => ({ title: it.title, suggestions: [] })),
     };
   }
   const { products } = await getStoreWithProductsCache(bot.storeId);
   const unpricedTitles = [];
   const ambiguousTitles = [];
+  const ambiguousItems = [];
+  const unknownItems = [];
   const priced = safe.map((it) => {
     const match = findCatalogProductMatch(products, it.title);
     if (match.status === 'priced') {
@@ -281,10 +297,15 @@ async function priceItemsFromCatalog(bot, items) {
       };
     }
     unpricedTitles.push(it.title);
-    if (match.status === 'ambiguous') ambiguousTitles.push(it.title);
+    if (match.status === 'ambiguous') {
+      ambiguousTitles.push(it.title);
+      ambiguousItems.push({ title: it.title, candidates: match.candidates || [] });
+    } else {
+      unknownItems.push({ title: it.title, suggestions: match.candidates || [] });
+    }
     return { ...it, price: 0 };
   });
-  return { items: priced, unpricedTitles, ambiguousTitles };
+  return { items: priced, unpricedTitles, ambiguousTitles, ambiguousItems, unknownItems };
 }
 
 // ادعاء نموذجي بتأكيد/حفظ الطلب في رد موجه للعميل (عربي/إنجليزي).
@@ -297,11 +318,44 @@ async function priceItemsFromCatalog(bot, items) {
 // however the model happened to phrase things.
 const ORDER_STATUS_ASSERTION = /(تم\s*(تأكيد|تسجيل|حفظ|استلام|شحن|إلغاء|الغاء|إرسال|ارسال|تجهيز|الدفع|دفع|تنفيذ|استقبال|تثبيت|اعتماد)|ات(أكد|اكد|سجل|حفظ|شحن|لغى|ستلم|دفع)|سجلت\s*(طلب|الطلب|اوردر|الأوردر)|طلبك\s*(اتأكد|أُكّد|مؤكد|اتسجل|اتحفظ|محفوظ|مسجل|وصل|جاهز|اتشحن|اتلغى|اتدفع|اتعمل|هيوصل|هتوصل)|الطلب\s*(اتأكد|مؤكد|محفوظ|مسجل|اتعمل|تم\s*(تأكيده|حفظه|تسجيله|استلامه|شحنه|إلغاؤه|الغاؤه|دفعه|تنفيذه|استقباله))|(طلب|طلبك|الطلب|اوردر|أوردر)[^\n.!؟?]*?(هيوصل|هتوصل|هيتوصل|هيتسلم|هتتسلم)|سجلنا|استلمنا|أكدنا|اكدنا|حجزنا|شحننا|ألغينا|الغينا|جهزنا|نفذنا|استقبلنا|وصلنا\s*(طلب|اوردر|أوردر)|order\s*(is|has been|was|got|will be)?\s*(confirmed|placed|saved|received|registered|booked|shipped|cancelled|canceled|paid|processed|completed|delivered)|(confirmed|received|registered|placed|booked|shipped|cancelled|canceled|paid|delivered)\s+your\s+order|your\s+order\s+(is|has been|was|will be)\s+\w+|will be\s+(shipped|delivered|confirmed|processed)|successfully\s+(placed|confirmed|received|registered|booked|paid)|payment\s+(received|confirmed|completed)|on its way)/i;
 
-// جملة الحقيقة الموجهة للعميل عندما لا يوجد طلب محفوظ بحالة مؤكدة.
+// تنظيف نصوص متغيرة (أسماء منتجات/عملاء) قبل إدراجها في جملة حتمية
+// موجهة للعميل: إزالة الوسوم والمحارف الخطرة وقص الطول.
+function sanitizeForCustomer(value, limit = 80) {
+  return String(value || '')
+    .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/[<>&"']/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, limit);
+}
+
+const ORDER_CURRENCY_LABELS = { EGP: 'جنيه', USD: 'دولار', SAR: 'ريال' };
+
+// جسم التأكيد الحتمي: يُبنى من الحقول المخزنة فقط (رقم، بنود، إجمالي، حالة)؛
+// لا وعود شحن ولا نص حر مهما قرر النموذج.
+function confirmedOrderTruthSentence(order) {
+  const id = order?._id ? String(order._id) : '';
+  const name = sanitizeForCustomer(order?.customerName || '', 60);
+  const items = (order?.items || [])
+    .filter((it) => it && it.title)
+    .map((it) => `${sanitizeForCustomer(it.title, 60)} ×${Math.max(Number(it.quantity) || 1, 1)}`)
+    .join('، ');
+  const total = Number(order?.totalAmount) || 0;
+  const currency = ORDER_CURRENCY_LABELS[(order?.items || []).find((it) => it && it.currency)?.currency] || 'جنيه';
+  const lines = [`تم تسجيل طلبك وتأكيده بنجاح${name ? ` يا ${name}` : ''}. رقم الطلب: ${id}.`];
+  if (items) lines.push(`الطلب: ${items}.`);
+  lines.push(`الإجمالي: ${total} ${currency}.`);
+  lines.push(`الحالة: "${statusText(order?.status)}".`);
+  return lines.join(' ');
+}
+
+// جملة الحقيقة الموجهة للعميل: تُبنى دائمًا من الحالة المخزنة وحدها.
 function customerTruthSentence(result) {
   const id = result?.chatOrder?._id ? String(result.chatOrder._id) : '';
   switch (result?.outcome) {
     case 'saved':
+      if (result.chatOrder?.status === 'confirmed') return confirmedOrderTruthSentence(result.chatOrder);
       return `تم استلام طلبك وتسجيله برقم ${id} وهو حاليًا "${statusText(result.chatOrder?.status)}" — استلام ومراجعة، وليس تأكيدًا نهائيًا بعد.`;
     case 'already_confirmed':
       return `طلبك مسجل بالفعل برقم ${id} وحالته "${statusText(result.chatOrder?.status)}".`;
@@ -311,9 +365,22 @@ function customerTruthSentence(result) {
       return `طلبك رقم ${id} لا يمكن إلغاؤه بعد الشحن أو التسليم.`;
     case 'need_fresh_data':
       return 'محتاج تفاصيل طلبك من جديد عشان أقدر أسجله بشكل صحيح.';
+    case 'ambiguous_items': {
+      const parts = (result.ambiguousItems || [])
+        .map((a) => `"${sanitizeForCustomer(a.title, 60)}" وقد تقصد: ${(a.candidates || []).map((c) => sanitizeForCustomer(c, 60)).join(' أو ')}`)
+        .filter((p) => !p.endsWith('وقد تقصد: '))
+        .join('؛ ');
+      if (!parts) return 'لم يُسجل طلبك لأن اسم المنتج غير محدد. أرسل اسم المنتج كما يظهر في المتجر.';
+      return `لم يُسجل طلبك لأن اسم المنتج يحتاج تحديدًا أدق: ${parts}. أرسل اسم المنتج كما يظهر في المتجر.`;
+    }
     case 'unpriced_items': {
-      const titles = (result.unpricedTitles || []).join('، ');
-      return `للأسف مش قادر أسجل الطلب لأن (${titles}) غير متوفر بسعر رسمي في متجرنا حاليًا.`;
+      const titles = (result.unpricedTitles || []).map((t) => sanitizeForCustomer(t, 60)).join('، ');
+      const suggestions = [...new Set((result.unknownItems || []).flatMap((u) => u.suggestions || []))]
+        .slice(0, 3)
+        .map((s) => sanitizeForCustomer(s, 60))
+        .filter(Boolean);
+      const hint = suggestions.length ? ` هل تقصد: ${suggestions.join('، ')}؟` : '';
+      return `للأسف مش قادر أسجل الطلب لأن (${titles}) غير متوفر بسعر رسمي في متجرنا حاليًا.${hint}`;
     }
     case 'missing_data': {
       const fields = (result.missingFields || []).join('، ');
@@ -335,16 +402,14 @@ const ORDER_ID_CITATION = /رقم\s*(الطلب|الاوردر|الأوردر)\s
 // محفوظ إطلاقًا، أي رقم طلب مذكور هو رقم مختلق ويُزال أيضًا.
 function enforceTruthfulOrderReply(reply, extractionResult) {
   if (!reply || typeof reply !== 'string') return reply;
-  const durableSaved = Boolean(extractionResult?.saved && extractionResult?.chatOrder);
-  const durableConfirmed = Boolean(durableSaved && extractionResult.chatOrder.status === 'confirmed');
-  if (durableConfirmed) return reply;
   const outcome = extractionResult?.outcome || null;
-  // STRUCTURAL fail-closed: for ANY non-confirmed order outcome the
-  // customer-facing body is authoritative deterministic text rendered from
-  // durable state (outcome, saved order, missing fields, unpriced titles) —
-  // never LLM prose that happened to pass a detector. The generated reply is
-  // discarded entirely on these turns, so no paraphrase in any language can
-  // reach the customer.
+  // STRUCTURAL fail-closed: for ANY order outcome — including a durably
+  // confirmed save — the customer-facing body is authoritative deterministic
+  // text rendered from durable state (outcome, saved order, items, total,
+  // missing fields, unpriced/ambiguous titles) — never LLM prose that
+  // happened to pass a detector. The generated reply is discarded entirely
+  // on these turns, so no paraphrase, shipping promise, or unsupported claim
+  // in any language can reach the customer.
   if (outcome) {
     const truthful = customerTruthSentence(extractionResult);
     if (reply.trim() !== truthful) {
@@ -395,6 +460,12 @@ function buildOrderStateNote(result) {
       return `\n[حالة الطلب الفعلية]: الطلب رقم ${id} بحالة "${statusText(result.chatOrder?.status)}" ولا يمكن إلغاؤه بعد الشحن أو التسليم. اشرح ذلك للعميل ولا تعد بالإلغاء.\n`;
     case 'need_fresh_data':
       return `\n[حالة الطلب الفعلية]: مسودة الطلب السابقة منتهية الصلاحية ولم يُحفظ أي طلب. اطلب من العميل تفاصيل الطلب من جديد. ${neverConfirm}\n`;
+    case 'ambiguous_items': {
+      const parts = (result.ambiguousItems || [])
+        .map((a) => `"${a.title}" (قد تقصد: ${(a.candidates || []).join('، ')})`)
+        .join('، ');
+      return `\n[حالة الطلب الفعلية]: لم يُحفظ أي طلب. أسماء منتجات تحتاج تحديدًا أدق: ${parts}. اطلب من العميل اختيار المنتج بالاسم كما يظهر في المتجر. لا تذكر أي سعر لهذه الأسماء إطلاقًا ولا تخترع سعرًا. ${neverConfirm}\n`;
+    }
     case 'unpriced_items': {
       const titles = (result.unpricedTitles || []).join('، ');
       const ambiguous = (result.ambiguousTitles || []).length
@@ -549,6 +620,10 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
     safeItems = pricing.items;
     const unpricedTitles = pricing.unpricedTitles;
     const ambiguousTitles = pricing.ambiguousTitles;
+    const ambiguousItems = pricing.ambiguousItems || [];
+    const unknownItems = pricing.unknownItems || [];
+    // غموض المطابقة له نتيجة خاصة: توضيح حتمي بأسماء المرشحين بدل رفض عام.
+    const unpricedOutcome = () => (ambiguousItems.length ? 'ambiguous_items' : 'unpriced_items');
 
     const effectiveName = (parsed.customerName || existingOpenOrder?.customerName || existingCustomer?.name || '').trim();
     const effectivePhone = (parsed.customerPhone || existingOpenOrder?.customerPhone || existingCustomer?.phone || '').trim();
@@ -627,10 +702,10 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
     // عناصر بلا سعر رسمي: لا حفظ ولا تحديث ولا تأكيد، فقط توضيح صادق للعميل.
     if (hasUnpricedItems) {
       if (existingOpenOrder && !['shipped', 'delivered', 'cancelled'].includes(existingOpenOrder.status)) {
-        return { conflict: true, existingOrder: existingOpenOrder, saved: false, outcome: 'unpriced_items', unpricedTitles, ambiguousTitles, customerPhone: effectivePhone, reason: 'unpriced-items' };
+        return { conflict: true, existingOrder: existingOpenOrder, saved: false, outcome: unpricedOutcome(), unpricedTitles, ambiguousTitles, ambiguousItems, unknownItems, customerPhone: effectivePhone, reason: 'unpriced-items' };
       }
       if (!cancelIntent) {
-        return { chatOrder: null, saved: false, outcome: 'unpriced_items', unpricedTitles, ambiguousTitles, customerPhone: effectivePhone };
+        return { chatOrder: null, saved: false, outcome: unpricedOutcome(), unpricedTitles, ambiguousTitles, ambiguousItems, unknownItems, customerPhone: effectivePhone };
       }
     }
 
@@ -662,7 +737,7 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
           return { chatOrder: existingOpenOrder, saved: true, outcome: 'saved', conflict: false, customerPhone: effectivePhone, rememberPhone: isValidPhone(effectivePhone) ? effectivePhone : undefined };
         }
         // لو البيانات ناقصة رغم وجود طلب مفتوح، نرجع تعارض لكن بدون حفظ
-        return { conflict: true, existingOrder: existingOpenOrder, saved: false, outcome: unpricedTitles.length ? 'unpriced_items' : 'missing_data', unpricedTitles, ambiguousTitles, missingFields: missingFieldsList(), customerPhone: effectivePhone, reason: 'missing-data' };
+        return { conflict: true, existingOrder: existingOpenOrder, saved: false, outcome: unpricedTitles.length ? unpricedOutcome() : 'missing_data', unpricedTitles, ambiguousTitles, ambiguousItems, unknownItems, missingFields: missingFieldsList(), customerPhone: effectivePhone, reason: 'missing-data' };
       }
     }
 
@@ -721,7 +796,7 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
       ? 'save_failed'
       : chatOrder
         ? 'saved'
-        : (effectiveItems.length && hasUnpricedItems ? 'unpriced_items' : 'missing_data');
+        : (effectiveItems.length && hasUnpricedItems ? unpricedOutcome() : 'missing_data');
 
     logger.info('🧾 Chat order extracted/updated', { orderId: chatOrder?._id || 'none', outcome });
     if (chatOrder) {
@@ -776,6 +851,8 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
       outcome,
       unpricedTitles,
       ambiguousTitles,
+      ambiguousItems,
+      unknownItems,
       missingFields: chatOrder ? undefined : missingFieldsList(),
       rememberPhone: isValidPhone(effectivePhone) ? effectivePhone : undefined,
       pendingDraftAt: chatOrder ? null : undefined,
@@ -1460,5 +1537,7 @@ module.exports = {
   buildOrderStateNote,
   findCatalogProductMatch,
   enforceTruthfulOrderReply,
+  customerTruthSentence,
+  confirmedOrderTruthSentence,
   autoClassifyConversation,
 };
