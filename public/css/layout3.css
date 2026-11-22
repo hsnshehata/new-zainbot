@@ -361,11 +361,12 @@
 /* حاوية ASTRO لعرض المنتج */
 .product-detail.product-detail-astro {
 	position:relative; inline-size:min(100%, 62rem); border-radius:16px; overflow:hidden;
+	--pd-brand: #1e3a5f; /* conservative dark fallback; brand hue is applied inside @supports below */
 	background:
 		linear-gradient(180deg,
-			color-mix(in oklab,var(--primary-color) 60%, #183244) 0%,
-			color-mix(in oklab,var(--primary-color) 44%, #142a3b) 55%,
-			color-mix(in oklab,var(--primary-color) 32%, #112433) 100%
+			color-mix(in oklab,var(--pd-brand) 60%, #183244) 0%,
+			color-mix(in oklab,var(--pd-brand) 44%, #142a3b) 55%,
+			color-mix(in oklab,var(--pd-brand) 32%, #112433) 100%
 		);
 	border:1px solid rgba(255,255,255,.08);
 	box-shadow:0 24px 60px -24px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.04);
@@ -397,6 +398,20 @@
 /* زر مفضلة داخل صفحة التفاصيل */
 .product-detail-astro .detail-fav{ position:absolute; inset-inline-end:.625rem; inset-block-start:.625rem; background:#fff; border:1px solid #e5e7eb; border-radius:999px; inline-size:2.5rem; block-size:2.5rem; display:grid; place-items:center; z-index:2; cursor:pointer; color:#111827; }
 .product-detail-astro .detail-fav.active{ background:#fee2e2; color:#dc2626; border-color:#fecaca; }
+
+/* The generic .product-detail price/offer rules come later in this file and tie on
+   specificity, so they turned the dark-panel price black. Pin the astro colours. */
+.product-detail.product-detail-astro .price-line .now{ color: color-mix(in oklab,var(--primary-color) 25%, #eaf6ff); }
+.product-detail.product-detail-astro .price-line .was{ color:#b8c4d6; }
+.product-detail.product-detail-astro .offer-pill{ color:#fecaca; border-color:rgba(254,202,202,.6); }
+
+/* Light brand colours must not wash out the dark panel. Without relative colours the panel and
+   buttons use the dark fallback above; with them, the brand hue is kept at a capped lightness. */
+@supports (color: oklch(from red l c h)) {
+	.product-detail.product-detail-astro { --pd-brand: oklch(from var(--primary-color) min(l, .42) c h); }
+}
+.product-detail.product-detail-astro .actions .btn.btn-primary{ background: var(--pd-brand); color:#fff; border:1px solid rgba(255,255,255,.6); }
+.product-detail.product-detail-astro .actions .btn.btn-outline{ background:#fff; color: color-mix(in oklab, var(--pd-brand) 70%, #000); border:1px solid color-mix(in oklab, var(--pd-brand) 70%, #000); }
 
 @media (max-width: 920px){
 	.product-detail.product-detail-astro{ grid-template-columns: 1fr; }
