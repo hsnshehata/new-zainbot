@@ -383,8 +383,16 @@ function customerTruthSentence(result) {
         .map((a) => `"${sanitizeForCustomer(a.title, 60)}" وقد تقصد: ${(a.candidates || []).map((c) => sanitizeForCustomer(c, 60)).join(' أو ')}`)
         .filter((p) => !p.endsWith('وقد تقصد: '))
         .join('؛ ');
-      if (!parts) return 'لم يُسجل طلبك لأن اسم المنتج غير محدد. أرسل اسم المنتج كما يظهر في المتجر.';
-      return `لم يُسجل طلبك لأن اسم المنتج يحتاج تحديدًا أدق: ${parts}. أرسل اسم المنتج كما يظهر في المتجر.`;
+      const unknown = (result.unknownItems || [])
+        .map((u) => sanitizeForCustomer(u.title, 60))
+        .filter(Boolean);
+      if (!parts) {
+        return unknown.length
+          ? `لم يُسجل طلبك لأن الأسماء التالية غير موجودة في المتجر: ${unknown.join('، ')}. أرسل اسم المنتج كما يظهر في المتجر.`
+          : 'لم يُسجل طلبك لأن اسم المنتج غير محدد. أرسل اسم المنتج كما يظهر في المتجر.';
+      }
+      const unknownPart = unknown.length ? ` والأسماء التالية غير موجودة في المتجر: ${unknown.join('، ')}.` : '';
+      return `لم يُسجل طلبك لأن اسم المنتج يحتاج تحديدًا أدق: ${parts}.${unknownPart} أرسل اسم المنتج كما يظهر في المتجر.`;
     }
     case 'unpriced_items': {
       const titles = (result.unpricedTitles || []).map((t) => sanitizeForCustomer(t, 60)).join('، ');
@@ -409,10 +417,10 @@ function customerTruthSentence(result) {
 // استشهاد برقم طلب: صادق فقط عند وجود طلب محفوظ فعليًا؛ وإلا فهو مختلق.
 const ORDER_ID_CITATION = /رقم\s*(الطلب|الاوردر|الأوردر)\s*[:：]/;
 
-// قيد حتمي بعد التوليد: الرد المواجه للعميل لا يجوز أن يدّعي تأكيد/حفظ طلب
-// لم يُحفظ فعليًا بحالة مؤكدة — بغض النظر عما قرره النموذج. الجمل المدّعية
-// تُزال وتُستبدل بجملة الحقيقة، وباقي الرد الطبيعي يُحفظ كما هو. وبلا طلب
-// محفوظ إطلاقًا، أي رقم طلب مذكور هو رقم مختلق ويُزال أيضًا.
+// قيد حتمي بعد التوليد: عند وجود نتيجة طلب (أي outcome) يُستبدل الرد كله
+// بجسم حتمي من الحالة المخزنة وحدها. وفي المنعطفات بلا نتيجة (محادثة عادية)
+// تمر النصوص كما هي، مع مرشح احتياطي يزيل جمل الادعاء بحالة طلب وأرقام
+// الطلبات المختلقة ويستبدلها بجملة الحقيقة الافتراضية.
 function enforceTruthfulOrderReply(reply, extractionResult) {
   if (!reply || typeof reply !== 'string') return reply;
   const outcome = extractionResult?.outcome || null;

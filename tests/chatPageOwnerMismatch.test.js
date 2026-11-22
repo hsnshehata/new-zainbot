@@ -126,6 +126,19 @@ test('consistent page: owner update unaffected (no regression)', async () => {
   assert.equal(after.title, 'جديدة');
 });
 
+test('orphan page (deleted bot): serve and update do not crash, record untouched', async () => {
+  const deadBotId = new mongoose.Types.ObjectId();
+  const page = await ChatPage.create({ userId: STRAY_PAGE_OWNER, botId: deadBotId, linkId: 'orphan01', title: 'قديمة' });
+  const serve = reqRes({ userId: STRAY_PAGE_OWNER, params: { linkId: 'orphan01' } });
+  await controller.getChatPageByLinkId(serve.req, serve.res);
+  assert.equal(serve.res.statusCode, 200, 'public serving continues for orphan page (detection is log-only)');
+  const upd = reqRes({ userId: STRAY_PAGE_OWNER, params: { id: String(page._id) }, body: { title: 'جديدة' } });
+  await controller.updateChatPage(upd.req, upd.res);
+  assert.equal(upd.res.statusCode, 200, 'page-owner update still works when the bot no longer exists');
+  const after = await ChatPage.findById(page._id);
+  assert.equal(after.title, 'جديدة');
+});
+
 test('new pages are always provisioned with the bot tenant as owner', async () => {
   const { req, res } = reqRes({
     userId: BOT_OWNER,

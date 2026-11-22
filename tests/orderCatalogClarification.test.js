@@ -89,6 +89,19 @@ test('clarification: ambiguous outcome renders deterministic candidate names, ze
   assert.doesNotMatch(out, /سجلت/, 'model claim must not survive');
 });
 
+test('clarification: mixed ambiguous + unknown items names both kinds in one deterministic body', () => {
+  const ctx = {
+    outcome: 'ambiguous_items',
+    saved: false,
+    ambiguousItems: [{ title: 'تجريبي', candidates: ['منتج تجريبي أ', 'منتج تجريبي ب'] }],
+    unknownItems: [{ title: 'ثلاجة', suggestions: [] }],
+  };
+  const out = customerTruthSentence(ctx);
+  assert.match(out, /منتج تجريبي أ/);
+  assert.match(out, /ثلاجة/, 'unknown titles must not be omitted from a mixed reply');
+  assert.match(out, /غير موجودة في المتجر/);
+});
+
 test('clarification: unpriced outcome with suggestions asks هل تقصد without inventing a price', () => {
   const ctx = {
     outcome: 'unpriced_items',

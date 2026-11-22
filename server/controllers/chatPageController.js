@@ -189,6 +189,14 @@ exports.updateChatPage = async (req, res) => {
     const pageBot = await Bot.findById(chatPage.botId);
     const botOwnerId = pageBot?.userId ? String(pageBot.userId) : null;
     const pageOwnerId = chatPage.userId ? String(chatPage.userId) : null;
+    if (!pageBot) {
+      logger.warn('chat_page_orphan_bot', {
+        chatPageId: String(chatPage._id),
+        linkId: chatPage.linkId,
+        botId: String(chatPage.botId),
+        action: 'update',
+      });
+    }
     if (pageOwnerId && botOwnerId && pageOwnerId !== botOwnerId) {
       logger.warn('chat_page_owner_mismatch', {
         chatPageId: String(chatPage._id),
@@ -334,6 +342,13 @@ exports.getChatPageByLinkId = async (req, res) => {
     // لا تتوقف (روابط عملاء حية)، لكن يُسجل الحدث دائمًا للمعالجة.
     const pageOwnerId = chatPage.userId ? String(chatPage.userId) : null;
     const botOwnerId = chatPage.botId && chatPage.botId.userId ? String(chatPage.botId.userId) : null;
+    if (!chatPage.botId) {
+      logger.warn('chat_page_orphan_bot', {
+        chatPageId: String(chatPage._id),
+        linkId: chatPage.linkId,
+        action: 'serve',
+      });
+    }
     if (pageOwnerId && botOwnerId && pageOwnerId !== botOwnerId) {
       logger.warn('chat_page_owner_mismatch', {
         chatPageId: String(chatPage._id),
