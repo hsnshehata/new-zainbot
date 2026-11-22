@@ -72,7 +72,7 @@ async function deleteFromImgbb(deleteUrl) {
 // Create a new chat page
 exports.createChatPage = async (req, res) => {
   try {
-    // Body userId is ignored: the page is always owned by the caller.
+    // Body userId is ignored: the page is always owned by the bot's tenant.
     const { botId, linkId } = req.body;
     if (!botId) {
       return res.status(400).json({ message: 'Bot ID is required' });
@@ -92,6 +92,16 @@ exports.createChatPage = async (req, res) => {
       : await Bot.exists({ _id: botId, userId: callerUserId });
     if (!accessibleBot) {
       return res.status(404).json({ message: 'Bot not found' });
+    }
+
+    // Tenant consistency: the page lives in the bot's owning tenant. For a
+    // caller creating on their own bot that is the caller; a direct superadmin
+    // creating for another tenant's bot provisions the page INTO that tenant —
+    // never a caller-owned page casually bound to a foreign bot.
+    let ownerUserId = callerUserId;
+    if (isDirectSuperadmin) {
+      const botDoc = await Bot.findById(botId);
+      if (botDoc?.userId) ownerUserId = String(botDoc.userId);
     }
 
     // إذا المستخدم مدخلش linkId، هنولد UUID تلقائيًا ونظبطه عشان يكون مناسب
@@ -116,7 +126,7 @@ exports.createChatPage = async (req, res) => {
     }
 
     const chatPage = new ChatPage({
-      userId: callerUserId,
+      userId: ownerUserId,
       botId,
       linkId: finalLinkId,
     });
@@ -313,49 +323,12 @@ exports.getChatPageByBotId = async (req, res) => {
       return res.status(404).json({ message: 'Bot not found' });
     }
 
-    let chatPage = await ChatPage.findOne({ botId });
-    
-    // Auto provision chat page if not existing yet for this bot
+    const chatPage = await ChatPage.findOne({ botId });
+
+    // لا إنشاء تلقائي عند القراءة: إنشاء صفحة الدردشة إجراء مقصود ومصرّح عبر
+    // POST /api/chat-page فقط. صفحة غير موجودة = 404 بلا أي آثار جانبية.
     if (!chatPage) {
-      const bot = await Bot.findById(botId);
-      if (!bot) {
-        return res.status(404).json({ message: 'Bot not found' });
-      }
-
-      const rawUuid = uuidv4().replace(/-/g, '');
-      const linkId = rawUuid.substring(0, 10);
-
-      chatPage = new ChatPage({
-        userId: bot.userId,
-        botId: bot._id,
-        linkId,
-        title: bot.name || 'محادثة المبيعات الذكية',
-        titleColor: '#ffffff',
-        colors: {
-          header: '#0F172A',
-          titleColor: '#ffffff',
-          outerBackgroundColor: '#0A0F1D',
-          containerBackgroundColor: '#0F172A',
-          chatAreaBackground: '#0B1329',
-          userMessageBackground: '#06B6D4',
-          userMessageTextColor: '#ffffff',
-          botMessageBackground: '#1E293B',
-          botMessageTextColor: '#F8FAFC',
-          sendButtonColor: '#06B6D4',
-          button: '#06B6D4',
-          inputTextColor: '#ffffff',
-        },
-        suggestedQuestionsEnabled: true,
-        suggestedQuestions: [
-          'ما هي المنتجات والعروض المتوفرة؟',
-          'كيف يمكنني تأكيد موعد أو طلب؟',
-          'ما هي طرق الدفع والتوصيل المتاحة؟',
-        ],
-        imageUploadEnabled: true,
-        headerHidden: false,
-      });
-
-      await chatPage.save();
+      return res.status(404).json({ success: false, message: 'لا توجد صفحة دردشة لهذا البوت بعد' });
     }
 
     const chatLink = `${process.env.APP_URL || 'https://zainbot.com'}/chat/${chatPage.linkId}`;

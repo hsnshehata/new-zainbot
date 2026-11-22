@@ -245,6 +245,10 @@
       onboard_create: 'Create an agent',
       onboard_unavailable: 'Could not check progress. Return to Overview to retry.',
       onboard_chat_unavailable: 'Could not load the live chat link. Please try again.',
+      workspace_cross_tenant_badge: "Admin view: another account's agent",
+      chat_page_missing: 'No dedicated chat page exists for this agent yet. Create it to get a shareable link.',
+      chat_page_create_btn: 'Create chat page',
+      chat_page_create_failed: 'Could not create the chat page. Please try again.',
       agents_desc: 'Build distinct agents for support, sales, and lead qualification. Choose one active agent for the workspace.',
       agents_create: 'Create agent',
       agent_modal_create: 'Create agent',
@@ -1338,6 +1342,10 @@
       onboard_create: 'إنشاء وكيل',
       onboard_unavailable: 'تعذر التحقق من التقدم. ارجع إلى النظرة العامة للمحاولة مجددًا.',
       onboard_chat_unavailable: 'تعذر تحميل رابط الدردشة المباشرة. حاول مجددًا.',
+      workspace_cross_tenant_badge: 'وضع المشرف: وكيل تابع لحساب آخر',
+      chat_page_missing: 'لا توجد صفحة دردشة مخصصة لهذا الوكيل بعد. أنشئها للحصول على رابط مشاركة.',
+      chat_page_create_btn: 'إنشاء صفحة الدردشة',
+      chat_page_create_failed: 'تعذر إنشاء صفحة الدردشة. حاول مجددًا.',
       agents_desc: 'أنشئ وكلاء منفصلين للدعم والمبيعات وتأهيل العملاء، ثم اختر الوكيل النشط لمساحة العمل.',
       agents_create: 'إنشاء وكيل',
       agent_modal_create: 'إنشاء وكيل',
@@ -2719,7 +2727,19 @@
       const bots = (res && res.success) ? res.data : (Array.isArray(res) ? res : []);
       workspaceBots = bots;
       const preferredBotId = localStorage.getItem('zainbot_active_bot_id');
-      currentBot = bots.find((bot) => String(bot._id) === preferredBotId) || bots[0] || null;
+      // A direct superadmin sees every tenant's bots (newest first). Never
+      // anchor the workspace to another tenant's bot by default: a stored
+      // preference counts only when it is the caller's OWN bot or was set by
+      // an explicit in-dashboard selection (refreshActiveBot sets the flag);
+      // stale/legacy foreign picks are ignored. Then: own bot, then first.
+      const isOwn = (bot) => String(bot?.userId?._id || bot?.userId || '') === String(currentUser?._id || '');
+      const preferredBot = bots.find((bot) => String(bot._id) === preferredBotId) || null;
+      const explicitPick = localStorage.getItem('zainbot_active_bot_explicit') === '1';
+      currentBot = (preferredBot && (isOwn(preferredBot) || explicitPick) ? preferredBot : null)
+        || bots.find(isOwn)
+        || bots[0]
+        || null;
+      updateCrossTenantMarker();
       if (currentBot) {
         const loadedBotId = String(currentBot._id);
         // Inject data-bot-id inside chat snippet
@@ -4892,9 +4912,20 @@
       ? document.activeElement
       : undefined;
 
+    const createPanel = document.getElementById('chatPageCreatePanel');
+    const linkBar = document.getElementById('chatPageLinkBar');
+    const chatForm = document.getElementById('chatPageForm');
+    const showCreatePanel = (show) => {
+      if (createPanel) createPanel.hidden = !show;
+      if (linkBar) linkBar.style.display = show ? 'none' : '';
+      if (chatForm) chatForm.style.display = show ? 'none' : '';
+    };
+
     try {
+      document.getElementById('chatPageBotId').value = targetBot._id;
       const res = await apiFetch(`/api/chat-page/bot/${targetBot._id}`);
       if (res && (res.success || res.link)) {
+        showCreatePanel(false);
         document.getElementById('chatPageId').value = res.chatPageId || '';
         document.getElementById('chatPageBotId').value = targetBot._id;
         document.getElementById('chatPageTitleInput').value = res.title || targetBot.name || 'ZainBot AI Sales Agent';
@@ -4956,12 +4987,40 @@
 
         // Trigger Live Preview Update
         window.updateLivePreview();
+      } else {
+        // No page yet: creation is an intentional action, never a read side effect.
+        showCreatePanel(true);
       }
     } catch (e) {
       console.error('Error fetching chat page:', e);
     }
 
     openChatPageDialog(opener);
+  };
+
+  window.createChatPageForCurrentBot = async function() {
+    const botId = document.getElementById('chatPageBotId').value || currentBot?._id;
+    if (!botId) return;
+    const t = translations[currentLanguage] || translations.en;
+    const btn = document.getElementById('createChatPageBtn');
+    if (btn) btn.disabled = true;
+    try {
+      const res = await apiFetch('/api/chat-page/', {
+        method: 'POST',
+        body: JSON.stringify({ botId })
+      });
+      if (res && (res.chatPageId || res.link)) {
+        const bot = (workspaceBots || []).find((b) => String(b._id) === String(botId)) || currentBot;
+        await window.openChatPageModal(bot);
+      } else {
+        alert(t.chat_page_create_failed);
+      }
+    } catch (e) {
+      console.error('Error creating chat page:', e);
+      alert(t.chat_page_create_failed);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
   };
 
   window.copyChatPageDirectLink = function() {
@@ -4992,10 +5051,11 @@
         const url = res.link || `${window.location.origin}/chat/${res.linkId}`;
         window.open(url, '_blank');
       } else {
-        window.open(`${window.location.origin}/chat/${targetBot._id}`, '_blank');
+        // No page yet: opening is impossible until one is intentionally created.
+        window.openChatPageModal(targetBot);
       }
     } catch (e) {
-      window.open(`${window.location.origin}/chat/${targetBot._id}`, '_blank');
+      console.error('Error opening direct chat page:', e);
     }
   };
 
@@ -5618,9 +5678,33 @@
     return ({ free: 1, growth_1k: 5, growth_10k: 15, growth_50k: 50, unlimited: Infinity })[tier] || 1;
   }
 
+  // Cross-tenant admin context: true when the selected bot belongs to another
+  // account (only possible for a direct superadmin's all-tenants list).
+  function isForeignBot(bot) {
+    if (!bot?._id || !currentUser?._id) return false;
+    return String(bot.userId?._id || bot.userId || '') !== String(currentUser._id);
+  }
+
+  function updateCrossTenantMarker() {
+    const badge = document.getElementById('overviewCrossTenantBadge');
+    if (!badge) return;
+    const foreign = isForeignBot(currentBot);
+    badge.hidden = !foreign;
+    if (foreign) {
+      const owner = currentBot?.userId;
+      const ownerLabel = (owner && (owner.username || owner.email)) || '';
+      const t = translations[currentLanguage] || translations.en;
+      badge.textContent = ownerLabel
+        ? `${t.workspace_cross_tenant_badge}: ${ownerLabel}`
+        : t.workspace_cross_tenant_badge;
+    }
+  }
+
   function refreshActiveBot(bot) {
     currentBot = bot;
+    updateCrossTenantMarker();
     localStorage.setItem('zainbot_active_bot_id', String(bot._id));
+    localStorage.setItem('zainbot_active_bot_explicit', '1');
     const widgetSnippetCode = document.getElementById('widgetSnippetCode');
     if (widgetSnippetCode) widgetSnippetCode.textContent = `<script src="${window.location.origin}/widget.js" data-bot-id="${bot._id}"></script>`;
     loadAgents();
@@ -5648,6 +5732,14 @@
       const description = document.createElement('p');
       description.textContent = bot.description || bot.welcomeMessage || t.agent_no_description;
       description.style.cssText = 'font-size:13px; color:var(--text-muted); min-height:40px;';
+      let foreign = null;
+      if (isForeignBot(bot)) {
+        const owner = bot.userId;
+        const ownerLabel = (owner && (owner.username || owner.email)) || '';
+        foreign = document.createElement('p');
+        foreign.textContent = ownerLabel ? `${t.workspace_cross_tenant_badge}: ${ownerLabel}` : t.workspace_cross_tenant_badge;
+        foreign.style.cssText = 'font-size:11px; color:#f59e0b; font-weight:700; margin-bottom:6px;';
+      }
       const actions = document.createElement('div');
       actions.style.cssText = 'display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;';
       const select = document.createElement('button');
@@ -5659,7 +5751,10 @@
       const chatBtn = document.createElement('button');
       chatBtn.type = 'button'; chatBtn.className = 'btn btn-primary btn-sm'; chatBtn.innerHTML = `<i class="fas fa-comments"></i> ${t.agent_customize_chat}`;
       chatBtn.addEventListener('click', () => window.openChatPageModal(bot));
-      actions.append(select, edit, chatBtn); card.append(title, meta, description, actions); list.appendChild(card);
+      actions.append(select, edit, chatBtn);
+      if (foreign) card.append(title, foreign, meta, description, actions);
+      else card.append(title, meta, description, actions);
+      list.appendChild(card);
     });
     if (workspaceBots.length === 0) {
       const empty = document.createElement('div'); empty.className = 'glass-card'; empty.textContent = t.agents_empty_create_first; list.appendChild(empty);

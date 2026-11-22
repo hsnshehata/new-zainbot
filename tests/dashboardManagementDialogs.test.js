@@ -205,7 +205,7 @@ test('chatPageModal carries dialog semantics and a translated close name', () =>
 test('chatPageModal captures its opener pre-fetch and opens through the lifecycle', () => {
   assert.match(dashboardScript, /window\.openChatPageModal = async function\(bot = null\)/);
   const openStart = dashboardScript.indexOf('window.openChatPageModal = async function');
-  const openBlock = dashboardScript.slice(openStart, openStart + 800);
+  const openBlock = dashboardScript.slice(openStart, openStart + 1800);
   // E03b lesson applied: snapshot activeElement BEFORE the customizer fetch.
   assert.match(openBlock, /const opener = document\.activeElement && document\.activeElement\.nodeType === 1/);
   assert.ok(

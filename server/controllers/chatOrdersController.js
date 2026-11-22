@@ -272,7 +272,7 @@ async function createOrUpdateFromExtraction({
 
   if (latestOrder && messageId && latestOrder.lastMessageId && latestOrder.lastMessageId === messageId) {
     logger.info('chat_order_deduped', { botId, conversationId, orderId: latestOrder._id, messageId });
-    return latestOrder;
+    return { order: latestOrder, saved: true };
   }
 
   if (latestOrder) {
@@ -309,10 +309,11 @@ async function createOrUpdateFromExtraction({
 
       latestOrder.deliveryFee = fee;
       latestOrder.totalAmount = totalAmount && totalAmount > 0 ? totalAmount : totals.grand;
-      // لا نقوم بالحفظ إذا لم تكتمل البيانات المطلوبة
+      // لا نقوم بالحفظ إذا لم تكتمل البيانات المطلوبة. نرجع order=null حتى لا
+      // يُقرأ المستند غير المحفوظ كطلب محفوظ فعليًا (تأكيد زائف للعميل).
       if (!hasRequiredOrderData()) {
         logger.warn('chat_order_skipped_missing_data', { botId, channel, conversationId });
-        return latestOrder;
+        return { order: null, saved: false };
       }
       await latestOrder.save();
       logger.info('chat_order_updated', { botId, orderId: latestOrder._id, status: latestOrder.status });
@@ -365,7 +366,7 @@ async function createOrUpdateFromExtraction({
         logger.warn('chat_order_notify_update_failed', { orderId: latestOrder?._id || 'unknown', err: notifyErr.message });
       }
 
-      return latestOrder;
+      return { order: latestOrder, saved: true };
     }
   }
 
@@ -374,7 +375,7 @@ async function createOrUpdateFromExtraction({
   // منع إنشاء طلب ببيانات ناقصة (اسم، هاتف، عنوان، بنود مسعّرة)
   if (!hasRequiredOrderData()) {
     logger.warn('chat_order_create_skipped_missing_data', { botId, channel, conversationId });
-    return null;
+    return { order: null, saved: false };
   }
 
   const chatOrder = await ChatOrder.create({
@@ -436,7 +437,7 @@ async function createOrUpdateFromExtraction({
     logger.warn('chat_order_notify_create_failed', { orderId: chatOrder?._id || 'unknown', err: notifyErr.message });
   }
 
-  return chatOrder;
+  return { order: chatOrder, saved: true };
 }
 
 module.exports = {

@@ -67,4 +67,13 @@ function buildProductContext(products, message, storeLink) {
   return `منتجات متاحة ذات صلة برسالة العميل (حتى ${MAX_PRODUCTS} من أصل ${active.length} منتج متاح؛ هذه ليست القائمة الكاملة). استخدم التفاصيل والأسعار والروابط أدناه فقط، ولا تفترض توفر منتج غير مذكور:\n${lines.join('\n')}\n`;
 }
 
-module.exports = { buildProductContext };
+// Offer-aware catalog price: the only price an order may ever carry.
+function effectiveProductPrice(product) {
+  const basePrice = Number(product?.price);
+  const discountedPrice = Number(product?.discountedPrice);
+  const price = product?.hasOffer && product?.discountedPrice != null &&
+    Number.isFinite(discountedPrice) && discountedPrice >= 0 ? discountedPrice : basePrice;
+  return Number.isFinite(price) && price >= 0 ? price : 0;
+}
+
+module.exports = { buildProductContext, effectiveProductPrice, normalize, tokens };

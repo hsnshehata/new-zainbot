@@ -895,3 +895,54 @@ test('impersonated superadmin chat create is scoped to the subject (201, no acto
   assert.equal(String(savedDoc.botId), OWN_BOT_ID);
   assert.equal(JSON.stringify(res.body).includes(ADMIN_ID), false);
 });
+
+// ---------- chat-page read never provisions (no hidden writes on navigation) ----------
+
+test('GET chat config for an OWN bot without a page: 404 with zero saves (no auto-provision on read)', async () => {
+  botExistsImpl = async () => ({ _id: OWN_BOT_ID });
+  botFindByIdImpl = async () => ({ _id: OWN_BOT_ID, userId: OWNER_ID, name: 'Owner Bot' });
+  chatFindOneImpl = async () => null;
+  let saves = 0;
+  ChatPage.prototype.save = async function save() {
+    saves += 1;
+    return this;
+  };
+  const res = await supertest(app)
+    .get(`/api/chat-page/bot/${OWN_BOT_ID}`)
+    .set('Authorization', `Bearer ${ownerToken()}`);
+  assert.equal(res.status, 404);
+  assert.equal(res.body.success, false);
+  assert.equal(res.body.linkId, undefined);
+  assert.equal(saves, 0, 'a GET must never write a ChatPage');
+});
+
+test('direct superadmin GET chat config without a page: 404 with zero saves (no cross-tenant auto-provision)', async () => {
+  botExistsImpl = async () => ({ _id: OTHER_BOT_ID });
+  botFindByIdImpl = async () => ({ _id: OTHER_BOT_ID, userId: OTHER_ID, name: 'Victim Bot' });
+  chatFindOneImpl = async () => null;
+  let saves = 0;
+  ChatPage.prototype.save = async function save() {
+    saves += 1;
+    return this;
+  };
+  const res = await supertest(app)
+    .get(`/api/chat-page/bot/${OTHER_BOT_ID}`)
+    .set('Authorization', `Bearer ${adminToken()}`);
+  assert.equal(res.status, 404);
+  assert.equal(saves, 0, 'superadmin navigation must not provision tenant-owned pages');
+});
+
+test('GET chat config returns an existing page for its owner with zero writes', async () => {
+  const page = otherUserPage();
+  page.userId = OWNER_ID;
+  page.botId = OWN_BOT_ID;
+  chatFindOneImpl = async () => page;
+  botExistsImpl = async () => ({ _id: OWN_BOT_ID });
+  const res = await supertest(app)
+    .get(`/api/chat-page/bot/${OWN_BOT_ID}`)
+    .set('Authorization', `Bearer ${ownerToken()}`);
+  assert.equal(res.status, 200);
+  assert.equal(res.body.success, true);
+  assert.equal(res.body.linkId, 'victim-link');
+  assert.equal(page.__saved || 0, 0);
+});

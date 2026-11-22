@@ -24,7 +24,7 @@ const { getAiCompletion } = require('./services/aiFailover');
 const { checkPlanLimitsAndIncrement, settleMessageQuota } = require('./services/billingLimits');
 const { dispatchWebhook } = require('./services/webhookDispatcher');
 const { dispatchMultiChannelNotification } = require('./services/notificationDispatcher');
-const { buildProductContext } = require('./services/productContext');
+const { buildProductContext, effectiveProductPrice, normalize: normalizeCatalogText, tokens: catalogTokens } = require('./services/productContext');
 
 // معرف المساعد الداخلي لتخطي هوكات الطلبات
 const ASSISTANT_BOT_ID = process.env.ASSISTANT_BOT_ID || '688ebdc24f6bd5cf70cb071d';
@@ -233,6 +233,154 @@ const STATUS_LABELS = {
 };
 
 const statusText = (status) => STATUS_LABELS[status] || status || 'غير معروف';
+
+// تسعير من كتالوج المتجر فقط: لا يُقبل أي سعر من النموذج أو من ثوابت مضمّنة.
+// مطابقة تامة أولًا ثم مطابقة ضببية بالرموز؛ أكثر من منتج مطابق = غموض = بلا سعر.
+function findCatalogProductMatch(products, title) {
+  const active = (products || []).filter((p) => p && p.isActive !== false);
+  const normTitle = normalizeCatalogText(title).trim();
+  if (!normTitle) return { status: 'unknown' };
+  const exact = active.filter((p) => normalizeCatalogText(p.productName).trim() === normTitle);
+  if (exact.length === 1) return { status: 'priced', product: exact[0] };
+  if (exact.length > 1) return { status: 'ambiguous' };
+  const titleTokens = new Set(catalogTokens(title));
+  if (!titleTokens.size) return { status: 'unknown' };
+  const subset = (a, b) => [...a].every((x) => b.has(x));
+  const fuzzy = active.filter((p) => {
+    const pt = new Set(catalogTokens(p.productName));
+    if (!pt.size) return false;
+    return subset(pt, titleTokens) || subset(titleTokens, pt);
+  });
+  if (fuzzy.length === 1) return { status: 'priced', product: fuzzy[0] };
+  if (fuzzy.length > 1) return { status: 'ambiguous' };
+  return { status: 'unknown' };
+}
+
+// يسعّر البنود من متجر البوت نفسه حصرًا (عزل المستأجرين: storeId الخاص بالبوت فقط).
+// بلا متجر أو بلا مطابقة وحيدة ⇒ السعر 0 ⇒ لن يُحفظ الطلب (بوابة المتحكم).
+async function priceItemsFromCatalog(bot, items) {
+  const safe = (items || []).filter((it) => it && it.title);
+  if (!safe.length) return { items: [], unpricedTitles: [], ambiguousTitles: [] };
+  if (!bot?.storeId) {
+    return {
+      items: safe.map((it) => ({ ...it, price: 0 })),
+      unpricedTitles: safe.map((it) => it.title),
+      ambiguousTitles: [],
+    };
+  }
+  const { products } = await getStoreWithProductsCache(bot.storeId);
+  const unpricedTitles = [];
+  const ambiguousTitles = [];
+  const priced = safe.map((it) => {
+    const match = findCatalogProductMatch(products, it.title);
+    if (match.status === 'priced') {
+      return {
+        ...it,
+        price: effectiveProductPrice(match.product),
+        currency: ['EGP', 'USD', 'SAR'].includes(match.product.currency) ? match.product.currency : 'EGP',
+      };
+    }
+    unpricedTitles.push(it.title);
+    if (match.status === 'ambiguous') ambiguousTitles.push(it.title);
+    return { ...it, price: 0 };
+  });
+  return { items: priced, unpricedTitles, ambiguousTitles };
+}
+
+// ادعاء نموذجي بتأكيد/حفظ الطلب في رد موجه للعميل (عربي/إنجليزي).
+const ORDER_CONFIRM_CLAIM = /(تم\s*(تأكيد|تسجيل|حفظ|استلام)\s*(الطلب|طلبك)|طلبك\s*(اتأكد|أُكّد|مؤكد|اتسجل|اتحفظ|محفوظ)|الطلب\s*(اتأكد|تم\s*تأكيده|تم\s*حفظه|تم\s*تسجيله)|order\s*(is\s*|has been\s*)?(confirmed|placed|saved))/i;
+
+// جملة الحقيقة الموجهة للعميل عندما لا يوجد طلب محفوظ بحالة مؤكدة.
+function customerTruthSentence(result) {
+  const id = result?.chatOrder?._id ? String(result.chatOrder._id) : '';
+  switch (result?.outcome) {
+    case 'saved':
+      return `تم استلام طلبك وتسجيله برقم ${id} وهو حاليًا "${statusText(result.chatOrder?.status)}" — استلام ومراجعة، وليس تأكيدًا نهائيًا بعد.`;
+    case 'already_confirmed':
+      return `طلبك مسجل بالفعل برقم ${id} وحالته "${statusText(result.chatOrder?.status)}".`;
+    case 'cancelled':
+      return `تم إلغاء طلبك رقم ${id} كما طلبت.`;
+    case 'cancel_blocked':
+      return `طلبك رقم ${id} لا يمكن إلغاؤه بعد الشحن أو التسليم.`;
+    case 'need_fresh_data':
+      return 'محتاج تفاصيل طلبك من جديد عشان أقدر أسجله بشكل صحيح.';
+    case 'unpriced_items': {
+      const titles = (result.unpricedTitles || []).join('، ');
+      return `للأسف مش قادر أسجل الطلب لأن (${titles}) غير متوفر بسعر رسمي في متجرنا حاليًا.`;
+    }
+    case 'missing_data': {
+      const fields = (result.missingFields || []).join('، ');
+      return `طلبك لم يُسجل بعد لأنه يحتاج: ${fields}. أرسلها لي لأتمكن من تسجيله.`;
+    }
+    case 'save_failed':
+      return 'حدث خطأ تقني أثناء تسجيل الطلب ولم يُسجل، من فضلك حاول مرة أخرى.';
+    default:
+      return 'لم يتم تسجيل أي طلب حتى الآن. إذا كنت تريد الطلب، أرسل اسم المنتج والكمية وبياناتك.';
+  }
+}
+
+// استشهاد برقم طلب: صادق فقط عند وجود طلب محفوظ فعليًا؛ وإلا فهو مختلق.
+const ORDER_ID_CITATION = /رقم\s*(الطلب|الاوردر|الأوردر)\s*[:：]/;
+
+// قيد حتمي بعد التوليد: الرد المواجه للعميل لا يجوز أن يدّعي تأكيد/حفظ طلب
+// لم يُحفظ فعليًا بحالة مؤكدة — بغض النظر عما قرره النموذج. الجمل المدّعية
+// تُزال وتُستبدل بجملة الحقيقة، وباقي الرد الطبيعي يُحفظ كما هو. وبلا طلب
+// محفوظ إطلاقًا، أي رقم طلب مذكور هو رقم مختلق ويُزال أيضًا.
+function enforceTruthfulOrderReply(reply, extractionResult) {
+  if (!reply || typeof reply !== 'string') return reply;
+  const durableSaved = Boolean(extractionResult?.saved && extractionResult?.chatOrder);
+  const durableConfirmed = Boolean(durableSaved && extractionResult.chatOrder.status === 'confirmed');
+  if (durableConfirmed) return reply;
+  const hasConfirmClaim = ORDER_CONFIRM_CLAIM.test(reply);
+  const hasFabricatedId = !durableSaved && ORDER_ID_CITATION.test(reply);
+  if (!hasConfirmClaim && !hasFabricatedId) return reply;
+  const truthful = customerTruthSentence(extractionResult);
+  const sentences = reply.split(/[\n.!؟?]+/).map((s) => s.trim()).filter(Boolean);
+  const kept = sentences.filter((s) => !ORDER_CONFIRM_CLAIM.test(s) && (durableSaved || !ORDER_ID_CITATION.test(s)));
+  logger.warn('chat_order_reply_overclaim_blocked', { outcome: extractionResult?.outcome || 'none', fabricatedId: hasFabricatedId });
+  return [...kept, truthful].join('\n');
+}
+
+// ملاحظة حالة الطلب الصادقة التي تُلحق بالـ system prompt بعد الاستخلاص وقبل
+// توليد الرد: النموذج لا يؤكد إلا طلبًا محفوظًا فعليًا بحالة مؤكدة.
+function buildOrderStateNote(result) {
+  if (!result || !result.outcome) return '';
+  const neverConfirm = 'ممنوع منعًا باتًا قول أن الطلب تم أو مؤكد ما لم يُحفظ فعليًا بحالة مؤكدة كما هو موضح هنا.';
+  const id = result.chatOrder?._id ? String(result.chatOrder._id) : '';
+  switch (result.outcome) {
+    case 'saved': {
+      const status = result.chatOrder?.status;
+      const total = Number(result.chatOrder?.totalAmount) || 0;
+      if (status === 'confirmed') {
+        return `\n[حالة الطلب الفعلية]: تم حفظ طلب العميل بنجاح وتأكيده. رقم الطلب: ${id}. الإجمالي: ${total} جنيه. يمكنك تأكيد الطلب للعميل وذكر رقمه.\n`;
+      }
+      return `\n[حالة الطلب الفعلية]: تم استلام طلب العميل وحفظه برقم ${id} وهو الآن "${statusText(status)}" وليس مؤكدًا نهائيًا بعد. أخبر العميل أن طلبه مستلم وقيد المراجعة وسيتم تأكيده، ولا تقل أنه مؤكد. الإجمالي: ${total} جنيه.\n`;
+    }
+    case 'already_confirmed':
+      return `\n[حالة الطلب الفعلية]: الطلب رقم ${id} مسجل مسبقًا بحالة "${statusText(result.chatOrder?.status)}". طمّن العميل أن طلبه مسجل كما هو ولا تنشئ أو تلمّح لطلب جديد.\n`;
+    case 'cancelled':
+      return `\n[حالة الطلب الفعلية]: تم إلغاء الطلب رقم ${id} بناءً على طلب العميل. أبلغ العميل بتأكيد الإلغاء فقط.\n`;
+    case 'cancel_blocked':
+      return `\n[حالة الطلب الفعلية]: الطلب رقم ${id} بحالة "${statusText(result.chatOrder?.status)}" ولا يمكن إلغاؤه بعد الشحن أو التسليم. اشرح ذلك للعميل ولا تعد بالإلغاء.\n`;
+    case 'need_fresh_data':
+      return `\n[حالة الطلب الفعلية]: مسودة الطلب السابقة منتهية الصلاحية ولم يُحفظ أي طلب. اطلب من العميل تفاصيل الطلب من جديد. ${neverConfirm}\n`;
+    case 'unpriced_items': {
+      const titles = (result.unpricedTitles || []).join('، ');
+      const ambiguous = (result.ambiguousTitles || []).length
+        ? ` بعض هذه الأسماء يطابق أكثر من منتج في الكتالوج (${(result.ambiguousTitles || []).join('، ')})؛ اطلب من العميل تحديد المنتج بدقة كما يظهر في المتجر.`
+        : '';
+      return `\n[حالة الطلب الفعلية]: لم يُحفظ أي طلب. العناصر التالية لا يوجد لها سعر رسمي في كتالوج المتجر: ${titles}.${ambiguous} الأسعار تأتي من كتالوج المتجر فقط؛ لا تذكر أي سعر لهذه العناصر إطلاقًا ولا تخترع سعرًا. اعتذر ووضح أن المنتج غير متوفر حاليًا أو اطلب اسم المنتج كما في المتجر. ${neverConfirm}\n`;
+    }
+    case 'missing_data': {
+      const fields = (result.missingFields || []).join('، ');
+      return `\n[حالة الطلب الفعلية]: لم يُحفظ الطلب لأن البيانات التالية ناقصة: ${fields}. اطلب من العميل استكمالها بوضوح. ${neverConfirm}\n`;
+    }
+    case 'save_failed':
+      return `\n[حالة الطلب الفعلية]: حدث خطأ تقني أثناء حفظ الطلب ولم يُحفظ أي طلب. اعتذر للعميل واطلب منه المحاولة مرة أخرى. ${neverConfirm}\n`;
+    default:
+      return '';
+  }
+}
 const isStatusInquiry = (text = '') => /(حالة|متابعة|وصل|الشحنة|الشحن|تتبع|اوردر|أوردر|طلبى|طلبي|رقم الطلب|order|tracking)/i.test(text);
 const isModifyIntent = (text = '') => /(تعديل|عدّل|عدل|غير|غيّر).*طلب/i.test(text) || /(عايز|حابب).*أعدل/i.test(text);
 // التمييز بين استفسار عن السعر/الشحن وبين تعديل فعلي للطلب
@@ -334,15 +482,6 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
       ].filter(Boolean),
     }).sort({ updatedAt: -1 });
 
-    const extractQuantity = () => {
-      const haystack = `${transcriptText}\n${userMessageContent}`;
-      const m1 = haystack.match(/العدد\s*[:\-]?\s*(\d{1,3})/i);
-      if (m1 && Number(m1[1]) > 0) return Number(m1[1]);
-      const m2 = haystack.match(/(\d{1,3})\s*(كرة|كرات|كوره|كورة)/i);
-      if (m2 && Number(m2[1]) > 0) return Number(m2[1]);
-      return null;
-    };
-
     const latestOpenOrder = async () => {
       const filters = [];
       const phoneToUse = isValidPhone(parsed.customerPhone) ? parsed.customerPhone : phoneFromThread;
@@ -366,44 +505,44 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
 
     let existingOpenOrder = await latestOpenOrder();
 
+    // لا نثق بأي سعر من النموذج: نأخذ العنوان والكمية والملاحظة فقط.
     let safeItems = Array.isArray(parsed.items) ? parsed.items.map((it) => ({
       title: (it.title || '').trim(),
       quantity: Math.max(Number(it.quantity) || 0, 0),
       note: (it.note || '').trim(),
-      price: it.price
-    })) : [];
+    })).filter((it) => it.title && it.quantity > 0) : [];
 
-    const ensurePrice = (title = '', price, quantity = 1) => {
-      const numeric = Number(price) || 0;
-      if (numeric > 0) return numeric;
-
-      // استخدم تسعير النظام الافتراضي للكور في حال غياب السعر من النموذج
-      const name = (title || '').toLowerCase();
-      const isBall = ['كرة', 'كور', 'كوره', 'كورة', 'ball', 'ميكاسا'].some((kw) => name.includes(kw));
-      if (!isBall) return 0;
-
-      const qty = Math.max(Number(quantity) || 1, 1);
-      if (qty >= 5) return 1900; // خمس الواحد ب 1900
-      if (qty === 2) return 1950; // الكورتين 3900
-      return 2100; // الكورة الواحد 2100
-    };
-
-    // إذا لم يعد النموذج عناصر أو كانت الكميات غير صالحة، أنشئ بند افتراضي من المحادثة
-    if (!safeItems.length || safeItems.every((it) => !it.quantity)) {
-      const qty = extractQuantity() || 1;
-      safeItems = [{ title: safeItems[0]?.title || 'كرة', quantity: qty, note: parsed.customerNote || '', price: ensurePrice('كرة', parsed.items?.[0]?.price, qty) }];
-    } else {
-      safeItems = safeItems.map((it) => {
-        const qty = Math.max(Number(it.quantity) || 1, 1);
-        return { ...it, quantity: qty, price: ensurePrice(it.title, it.price, qty) };
-      });
-    }
+    // التسعير من كتالوج متجر البوت حصرًا؛ بلا متجر أو بلا مطابقة وحيدة ⇒ بند بلا سعر
+    // ⇒ لا يُحفظ الطلب (بوابة المتحكم) ولا يجوز تأكيده للعميل.
+    const pricing = await priceItemsFromCatalog(bot, safeItems);
+    safeItems = pricing.items;
+    const unpricedTitles = pricing.unpricedTitles;
+    const ambiguousTitles = pricing.ambiguousTitles;
 
     const effectiveName = (parsed.customerName || existingOpenOrder?.customerName || existingCustomer?.name || '').trim();
     const effectivePhone = (parsed.customerPhone || existingOpenOrder?.customerPhone || existingCustomer?.phone || '').trim();
     const effectiveAddress = (parsed.customerAddress || existingOpenOrder?.customerAddress || existingCustomer?.address || '').trim();
     const effectiveEmail = (parsed.customerEmail || existingOpenOrder?.customerEmail || existingCustomer?.email || '').trim();
     const effectiveItems = safeItems.length ? safeItems : (existingOpenOrder?.items || []);
+
+    // أي بند بلا سعر رسمي من الكتالوج يمنع حفظ/تأكيد الطلب كله: لا طلب جزئي
+    // ببند سعره صفر يصل للتاجر كأنه محفوظ.
+    const hasUnpricedItems = (effectiveItems || []).some(
+      (it) => Math.max(Number(it.quantity) || 0, 0) > 0 && !(Number(it.price) > 0)
+    );
+
+    const missingFieldsList = () => {
+      const missing = [];
+      if (!effectiveName) missing.push('اسم العميل');
+      if (!isValidPhone(effectivePhone || '')) missing.push('رقم الهاتف');
+      if (!effectiveAddress) missing.push('العنوان');
+      const pricedCount = (effectiveItems || []).filter(
+        (it) => Math.max(Number(it.quantity) || 0, 0) > 0 && Math.max(Number(it.price) || 0, 0) > 0
+      ).length;
+      if (!pricedCount) missing.push('عناصر بأسعار رسمية من كتالوج المتجر');
+      if (!(effectiveItems || []).length) missing.push('عناصر الطلب');
+      return missing;
+    };
 
     const hasRequiredData = () => {
       const nameOk = Boolean(effectiveName);
@@ -432,14 +571,14 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
         existingOpenOrder.history.push({ status: existingOpenOrder.status, changedBy: null, note: 'رفض إلغاء بعد الشحن', changedAt: new Date() });
         existingOpenOrder.lastMessageId = messageId || existingOpenOrder.lastMessageId;
         await existingOpenOrder.save();
-        return { chatOrder: existingOpenOrder, cancelled: false, cancelBlocked: true, customerPhone: effectivePhone };
+        return { chatOrder: existingOpenOrder, saved: true, outcome: 'cancel_blocked', cancelled: false, cancelBlocked: true, customerPhone: effectivePhone };
       }
       existingOpenOrder.status = 'cancelled';
       if (!Array.isArray(existingOpenOrder.history)) existingOpenOrder.history = [];
       existingOpenOrder.history.push({ status: 'cancelled', changedBy: null, note: 'إلغاء من المحادثة', changedAt: new Date() });
       existingOpenOrder.lastMessageId = messageId || existingOpenOrder.lastMessageId;
       await existingOpenOrder.save();
-      return { chatOrder: existingOpenOrder, cancelled: true, customerPhone: effectivePhone, rememberPhone: isValidPhone(effectivePhone) ? effectivePhone : undefined };
+      return { chatOrder: existingOpenOrder, saved: true, outcome: 'cancelled', cancelled: true, customerPhone: effectivePhone, rememberPhone: isValidPhone(effectivePhone) ? effectivePhone : undefined };
     }
 
     // تأكيد مكرر خلال مدة قصيرة بنفس البيانات
@@ -450,7 +589,17 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
         (existingOpenOrder.customerPhone || '') === (effectivePhone || '');
       const recentUpdate = existingOpenOrder.updatedAt ? (nowTs - new Date(existingOpenOrder.updatedAt).getTime()) < DUP_CONFIRM_MS : false;
       if (samePayload && recentUpdate) {
-        return { chatOrder: existingOpenOrder, alreadyConfirmed: true, customerPhone: effectivePhone };
+        return { chatOrder: existingOpenOrder, saved: true, outcome: 'already_confirmed', alreadyConfirmed: true, customerPhone: effectivePhone };
+      }
+    }
+
+    // عناصر بلا سعر رسمي: لا حفظ ولا تحديث ولا تأكيد، فقط توضيح صادق للعميل.
+    if (hasUnpricedItems) {
+      if (existingOpenOrder && !['shipped', 'delivered', 'cancelled'].includes(existingOpenOrder.status)) {
+        return { conflict: true, existingOrder: existingOpenOrder, saved: false, outcome: 'unpriced_items', unpricedTitles, ambiguousTitles, customerPhone: effectivePhone, reason: 'unpriced-items' };
+      }
+      if (!cancelIntent) {
+        return { chatOrder: null, saved: false, outcome: 'unpriced_items', unpricedTitles, ambiguousTitles, customerPhone: effectivePhone };
       }
     }
 
@@ -479,10 +628,10 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
         if (itemsTotal > 0) existingOpenOrder.totalAmount = itemsTotal + Math.max(Number(existingOpenOrder.deliveryFee) || 0, 0);
         if (hasRequiredData()) {
           await existingOpenOrder.save();
-          return { chatOrder: existingOpenOrder, conflict: false, customerPhone: effectivePhone, rememberPhone: isValidPhone(effectivePhone) ? effectivePhone : undefined };
+          return { chatOrder: existingOpenOrder, saved: true, outcome: 'saved', conflict: false, customerPhone: effectivePhone, rememberPhone: isValidPhone(effectivePhone) ? effectivePhone : undefined };
         }
         // لو البيانات ناقصة رغم وجود طلب مفتوح، نرجع تعارض لكن بدون حفظ
-        return { conflict: true, existingOrder: existingOpenOrder, customerPhone: effectivePhone, reason: 'missing-data' };
+        return { conflict: true, existingOrder: existingOpenOrder, saved: false, outcome: unpricedTitles.length ? 'unpriced_items' : 'missing_data', unpricedTitles, ambiguousTitles, missingFields: missingFieldsList(), customerPhone: effectivePhone, reason: 'missing-data' };
       }
     }
 
@@ -497,12 +646,12 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
     // لو العميل طلب إلغاء ومافيش طلب مفتوح، ما تنشئش جديد
     if (cancelIntent && !existingOpenOrder) {
       logger.warn('⚠️ Cancel intent with no existing order; skipping creation');
-      return { chatOrder: null, cancelled: false };
+      return { chatOrder: null, saved: false, outcome: 'cancel_no_order', cancelled: false };
     }
 
     // لو محاولة تأكيد لكن الدرفت أقدم من 30 دقيقة، اطلب البيانات من جديد
     if (confirmIntent && draftExpired && hasRequiredData() && !existingOpenOrder) {
-      return { chatOrder: null, needFreshData: true, pendingDraftAt: null };
+      return { chatOrder: null, saved: false, outcome: 'need_fresh_data', needFreshData: true, pendingDraftAt: null };
     }
 
     // لو البيانات كاملة لكن مفيش تأكيد صريح ولسه مفيش طلب مفتوح، نوقف الحفظ ونطلب تأكيد
@@ -510,24 +659,40 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
       parsed.status = 'processing';
     }
 
-    const chatOrder = await createOrUpdateFromExtraction({
-      botId: bot._id,
-      channel,
-      conversationId,
-      sourceUserId,
-      sourceUsername,
-      customerName: effectiveName || '',
-      customerPhone: effectivePhone || '',
-      customerEmail: effectiveEmail,
-      customerAddress: effectiveAddress || '',
-      customerNote: parsed.customerNote || '',
-      items: effectiveItems,
-      freeText: parsed.freeText || userMessageContent,
-      status: confirmIntent ? 'confirmed' : (parsed.status || 'pending'),
-      messageId
-    });
+    // الحفظ الفعلي هو المرجع الوحيد للحقيقة: المتحكم يرجع { order, saved } وأي
+    // فشل حفظ يُترجم إلى حالة صادقة بدل تأكيد زائف.
+    let chatOrder = null;
+    let saveFailed = false;
+    try {
+      const saveResult = await createOrUpdateFromExtraction({
+        botId: bot._id,
+        channel,
+        conversationId,
+        sourceUserId,
+        sourceUsername,
+        customerName: effectiveName || '',
+        customerPhone: effectivePhone || '',
+        customerEmail: effectiveEmail,
+        customerAddress: effectiveAddress || '',
+        customerNote: parsed.customerNote || '',
+        items: effectiveItems,
+        freeText: parsed.freeText || userMessageContent,
+        status: confirmIntent ? 'confirmed' : (parsed.status || 'pending'),
+        messageId
+      });
+      chatOrder = saveResult?.order || null;
+    } catch (saveErr) {
+      saveFailed = true;
+      logger.error('chat_order_save_failed', { err: saveErr.message, stack: saveErr.stack });
+    }
 
-    logger.info('🧾 Chat order extracted/updated', { orderId: chatOrder?._id || 'none' });
+    const outcome = saveFailed
+      ? 'save_failed'
+      : chatOrder
+        ? 'saved'
+        : (effectiveItems.length && hasUnpricedItems ? 'unpriced_items' : 'missing_data');
+
+    logger.info('🧾 Chat order extracted/updated', { orderId: chatOrder?._id || 'none', outcome });
     if (chatOrder) {
       dispatchWebhook(bot.userId, bot._id, 'order.created', {
         orderId: chatOrder._id,
@@ -540,9 +705,11 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
         timestamp: new Date()
       });
     }
-    if (!chatOrder) {
+    if (!chatOrder && !saveFailed) {
       logger.warn('⚠️ Chat order not saved (missing required data after controller validation)', {
+        outcome,
         hasRequiredData: hasRequiredData(),
+        unpricedTitles,
         effectiveName,
         effectivePhone,
         effectiveAddress,
@@ -574,6 +741,11 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
 
     return {
       chatOrder,
+      saved: Boolean(chatOrder),
+      outcome,
+      unpricedTitles,
+      ambiguousTitles,
+      missingFields: chatOrder ? undefined : missingFieldsList(),
       rememberPhone: isValidPhone(effectivePhone) ? effectivePhone : undefined,
       pendingDraftAt: chatOrder ? null : undefined,
     };
@@ -981,6 +1153,7 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
     logger.info('💬 User message added to conversation', { messageLength: (userMessageContent || '').length });
 
     // استخراج بيانات الطلب من المحادثة الحالية وحفظها في قاعدة البيانات
+    let extractionResult = null;
     try {
       // بناء النسخة المحدثة من transcript بعد إضافة آخر رسالة
       const updatedTranscript = conversation.messages
@@ -991,7 +1164,7 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
           timestamp: msg.timestamp,
         }));
       
-      const extractionResult = await extractChatOrderIntent({
+      extractionResult = await extractChatOrderIntent({
         bot,
         channel: finalChannel,
         userMessageContent,
@@ -1031,6 +1204,14 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
     } catch (e) {
       logger.warn('⚠️ Failed to extract order/booking/classification during message processing:', { err: e });
       // لا نرجع error هنا، نستمر في معالجة الرسالة
+    }
+
+    // حالة الطلب الصادقة بعد الاستخلاص وقبل توليد الرد: النموذج يرى نتيجة الحفظ
+    // الفعلية (محفوظ/قيد المراجعة/بيانات ناقصة/عناصر بلا سعر/فشل حفظ) ولا يؤكد
+    // طلبًا لم يُحفظ فعليًا.
+    const orderStateNote = buildOrderStateNote(extractionResult);
+    if (orderStateNote) {
+      systemPrompt += orderStateNote;
     }
 
     const muteUntil = conversation.mutedUntil ? new Date(conversation.mutedUntil) : null;
@@ -1133,6 +1314,9 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
           return 'عذرًا، حدث خطأ أثناء معالجة طلبك. حاول مرة أخرى.';
         }
       }
+
+    // قيد الحقيقة النهائي: لا تأكيد موجه للعميل بدون حفظ فعلي بحالة مؤكدة.
+    reply = enforceTruthfulOrderReply(reply, extractionResult);
 
     const responseMessageId = `response_${messageId || uuidv4()}`;
     conversation.messages.push({ 
@@ -1241,5 +1425,9 @@ module.exports = {
   invalidateBotCache,
   invalidateStoreCache,
   extractBookingIntent,
+  extractChatOrderIntent,
+  buildOrderStateNote,
+  findCatalogProductMatch,
+  enforceTruthfulOrderReply,
   autoClassifyConversation,
 };
