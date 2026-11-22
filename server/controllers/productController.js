@@ -633,6 +633,10 @@ exports.getProduct = async (req, res) => {
   const { storeId, productId } = req.params;
   const userId = req.user ? req.user.userId : null;
 
+  if (!mongoose.isObjectIdOrHexString(storeId) || !mongoose.isObjectIdOrHexString(productId)) {
+    return res.status(400).json({ message: 'معرّف المتجر أو المنتج غير صالح' });
+  }
+
   try {
     logger.info('product_fetch_attempt', { storeId, productId, userId: userId || 'public' });
     // التحقق من وجود المتجر
@@ -673,6 +677,6 @@ exports.getProduct = async (req, res) => {
     res.status(200).json(product);
   } catch (err) {
     logger.error('product_fetch_error', { storeId, productId, err: err.message, stack: err.stack });
-    res.status(500).json({ message: 'خطأ في جلب المنتج: ' + (err.message || 'غير معروف') });
+    res.status(500).json({ message: 'خطأ في جلب المنتج' });
   }
 };

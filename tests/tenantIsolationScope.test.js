@@ -352,6 +352,41 @@ test('products: single-product read exposes internal fields only to the owning t
   assert.equal(other.payload.productName, 'Product A', 'public fields stay available');
 });
 
+test('products: single-product read respects bot-linked ownership and impersonation', async () => {
+  const linkedStore = await Store.create({ userId: OWNER_B, botId: botA._id, storeName: 'Linked fixture', storeLink: 'linked-fixture', templateId: 1 });
+  const product = await Product.create({ storeId: linkedStore._id, productName: 'Linked product', price: 100, costPrice: 73, stock: 1 });
+  const params = { storeId: String(linkedStore._id), productId: String(product._id) };
+  try {
+    for (const actor of [asOwnerA, asAdminAsA]) {
+      const result = await call(productController.getProduct, actor, { params });
+      assert.equal(result.statusCode, 200);
+      assert.equal(result.payload.costPrice, 73);
+    }
+    const foreign = await call(productController.getProduct, asAdminAsB, {
+      params: { storeId: String(storeA._id), productId: String(docs.productA._id) },
+    });
+    assert.equal(foreign.statusCode, 200);
+    for (const field of ['costPrice', 'lowStockThreshold', 'barcode', 'generatedCodes']) {
+      assert.equal(Object.hasOwn(foreign.payload, field), false);
+    }
+  } finally {
+    await Product.deleteOne({ _id: product._id });
+    await Store.deleteOne({ _id: linkedStore._id });
+  }
+});
+
+test('products: malformed single-product ids return a safe client error', async () => {
+  for (const params of [
+    { storeId: 'malformed-store', productId: String(docs.productA._id) },
+    { storeId: String(storeA._id), productId: 'malformed-product' },
+  ]) {
+    const result = await call(productController.getProduct, asOwnerA, { params });
+    assert.equal(result.statusCode, 400);
+    assert.equal(Object.hasOwn(result.payload, 'error'), false);
+    assert.doesNotMatch(JSON.stringify(result.payload), /CastError|ObjectId|malformed-/);
+  }
+});
+
 test('products: impersonating superadmin limited to subject tenant', async () => {
   const asB = await call(productController.createProduct, asAdminAsB, {
     params: { storeId: String(storeA._id) },
