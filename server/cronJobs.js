@@ -12,35 +12,54 @@ const axios = require('axios');
 const logger = require('./logger');
 const { redactSensitive } = require('./utils/logSanitize');
 const { dispatchMultiChannelNotification } = require('./services/notificationDispatcher');
+const { exchangeLongLivedToken, getFacebookAppCredentials, classifyGraphFailure } = require('./services/metaAppCredentials');
+const { decryptChannelToken } = require('./services/channelTokenCrypto');
 
 // دالة للتحقق من صلاحية التوكين
+// Returns 'valid', 'invalid' (the provider rejected the TOKEN under primary Graph code 190/102 with no transient/throttle evidence;
+// see classifyGraphFailure) or 'unknown' (transient, or any other 4xx such as 400 code 100 or a permission code). Only 'invalid'
+// may lead to a relink notice. The token goes in params, never in a URL string, and only
+// the HTTP status and a fixed error code are logged (never the message, body or config).
+const SAFE_VALIDATION_CODES = new Set(['ECONNABORTED', 'ETIMEDOUT', 'ECONNRESET', 'ENOTFOUND', 'EAI_AGAIN', 'ERR_NETWORK']);
 const isTokenValid = async (accessToken, pageId) => {
   try {
-    await axios.get(`https://graph.facebook.com/v20.0/${pageId}?fields=id&access_token=${accessToken}`);
+    await axios.get(`https://graph.facebook.com/v20.0/${encodeURIComponent(pageId)}`, {
+      params: { fields: 'id', access_token: accessToken },
+      timeout: 10000,
+    });
     logger.info('✅ Token is valid', { pageId });
-    return true;
+    return 'valid';
   } catch (err) {
-    logger.error('❌ Token validation failed', { pageId, error: err.response?.data ? redactSensitive(err.response.data) : err.message });
-    return false;
+    const c = classifyGraphFailure(err);
+    const code = err && SAFE_VALIDATION_CODES.has(err.code) ? err.code : undefined;
+    logger.error('❌ Token validation failed', { pageId, code, ...c });
+    return c.kind === 'invalid' ? 'invalid' : 'unknown';
+  }
+};
+
+// Bot.facebookApiKey / instagramApiKey are encrypted at rest by the schema setter and the
+// getter returns the stored ciphertext ('chv1:...'), so every Graph call must use the
+// decrypted value. A decrypt failure is a server-side key/config fault, never the
+// merchant's: return null (caller skips, logs a fixed code, sends no relink notice).
+const readChannelToken = (bot, field, logEvent) => {
+  try {
+    const token = decryptChannelToken(bot[field]);
+    return token && token.trim() ? token : null;
+  } catch (err) {
+    logger.error(logEvent, { botId: bot._id, code: err && err.code ? String(err.code) : 'DECRYPT_FAILED' });
+    return null;
   }
 };
 
 // دالة لتحويل توكن قصير أو تجديد توكن طويل لفيسبوك
 const convertToLongLivedToken = async (shortLivedToken) => {
-  const appId = '499020366015281'; // App ID بتاع تطبيق فيسبوك
-  const appSecret = process.env.FACEBOOK_APP_SECRET; // لازم يكون موجود في .env
-  const url = `https://graph.facebook.com/v20.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${shortLivedToken}`;
-
   try {
-    const response = await axios.get(url);
-    if (response.data.access_token) {
-      // Never log token material, not even a prefix.
-      logger.info('✅ Successfully converted/renewed Facebook token');
-      return response.data.access_token;
-    }
-    throw new Error('Failed to convert/renew token: No access_token in response');
+    const newToken = await exchangeLongLivedToken(shortLivedToken, { graphVersion: 'v20.0' }); // pinned to the pre-extraction version
+    // Never log token material, not even a prefix.
+    logger.info('✅ Successfully converted/renewed Facebook token');
+    return newToken;
   } catch (err) {
-    logger.error('❌ Error converting/renewing Facebook token', { error: err.response?.data ? redactSensitive(err.response.data) : err.message });
+    logger.error('❌ Error converting/renewing Facebook token', { error: err.response?.data ? redactSensitive(err.response.data) : err.message, code: err.code });
     throw err;
   }
 };
@@ -123,15 +142,27 @@ const refreshInstagramTokens = () => {
             continue;
           }
 
-          const currentToken = bot.instagramApiKey;
+          const currentToken = readChannelToken(bot, 'instagramApiKey', 'instagram_token_decrypt_failed_skipped');
+          if (!currentToken) continue;
           logger.info('🔄 Attempting to refresh Instagram token', { botId: bot._id });
 
-          const refreshResponse = await axios.get(
-            `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${currentToken}`
-          );
+          let refreshResponse;
+          try {
+            refreshResponse = await axios.get('https://graph.instagram.com/refresh_access_token', {
+              params: { grant_type: 'ig_refresh_token', access_token: currentToken },
+              timeout: 10000,
+            });
+          } catch (httpErr) {
+            // Log only the HTTP status and a fixed code. Transient failures (no response, timeout,
+            // 5xx, 408, 429) are retried by the next daily run without notifying the merchant.
+            const c = classifyGraphFailure(httpErr);
+            logger.error('instagram_token_refresh_http_failed', { botId: bot._id, ...c });
+            if (c.kind !== 'invalid') continue;
+            throw new Error('Instagram token refresh rejected by provider');
+          }
 
-          if (!refreshResponse.data.access_token) {
-            logger.error('❌ Failed to refresh Instagram token', { botId: bot._id, error: refreshResponse.data });
+          if (typeof refreshResponse.data?.access_token !== 'string' || !refreshResponse.data.access_token.trim() || refreshResponse.data.access_token !== refreshResponse.data.access_token.trim()) {
+            logger.error('❌ Failed to refresh Instagram token', { botId: bot._id, hasBody: Boolean(refreshResponse.data) });
             const notification = new Notification({
               user: bot.userId,
               title: `فشل تجديد توكن إنستجرام للبوت ${bot.name}`,
@@ -144,7 +175,9 @@ const refreshInstagramTokens = () => {
           }
 
           const newToken = refreshResponse.data.access_token;
-          const expiresIn = refreshResponse.data.expires_in;
+          // Provider-controlled and unvalidated: log it only as a bounded non-negative integer.
+          const rawExpires = refreshResponse.data.expires_in;
+          const expiresIn = Number.isInteger(rawExpires) && rawExpires >= 0 && rawExpires <= 31536000 * 2 ? rawExpires : undefined;
 
           bot.instagramApiKey = newToken;
           bot.lastInstagramTokenRefresh = new Date();
@@ -152,7 +185,7 @@ const refreshInstagramTokens = () => {
 
           logger.info('✅ Successfully refreshed Instagram token', { botId: bot._id, expiresIn });
         } catch (err) {
-          logger.error('❌ Error refreshing Instagram token', { botId: bot._id, error: err.message, data: redactSensitive(err.response?.data) });
+          logger.error('❌ Error refreshing Instagram token', { botId: bot._id, code: err && err.code ? String(err.code) : undefined });
           const notification = new Notification({
             user: bot.userId,
             title: `فشل تجديد توكن إنستجرام للبوت ${bot.name}`,
@@ -191,6 +224,18 @@ const refreshFacebookTokens = () => {
 
       logger.info('🔄 Bots with Facebook tokens to refresh', { count: botsWithFacebook.length });
 
+      // A server-side setup fault (Meta app not configured) is not a merchant fault:
+      // check before any Graph request and never tell merchants to relink for it.
+      try {
+        getFacebookAppCredentials();
+      } catch (configErr) {
+        if (configErr.code === 'META_APP_NOT_CONFIGURED') {
+          logger.error('facebook_token_refresh_skipped_app_not_configured', { missing: configErr.missing, botCount: botsWithFacebook.length });
+          return;
+        }
+        throw configErr;
+      }
+
       const fiftyDaysInMs = 50 * 24 * 60 * 60 * 1000;
       const currentDate = new Date();
 
@@ -204,13 +249,19 @@ const refreshFacebookTokens = () => {
             continue;
           }
 
-          const currentToken = bot.facebookApiKey;
+          const currentToken = readChannelToken(bot, 'facebookApiKey', 'facebook_token_decrypt_failed_skipped');
+          if (!currentToken) continue;
           logger.info('🔄 Attempting to validate Facebook token', { botId: bot._id });
 
           // التحقق من صلاحية التوكين
-          const isValid = await isTokenValid(currentToken, bot.facebookPageId);
-          if (isValid) {
+          const validity = await isTokenValid(currentToken, bot.facebookPageId);
+          if (validity === 'valid') {
             logger.info('✅ Facebook token still valid', { botId: bot._id });
+            continue;
+          }
+          if (validity === 'unknown') {
+            // Transient or unclassifiable failure: do not exchange, do not tell the merchant to relink.
+            logger.warn('facebook_token_validation_inconclusive_skipped', { botId: bot._id });
             continue;
           }
 
@@ -223,7 +274,17 @@ const refreshFacebookTokens = () => {
 
           logger.info('✅ Successfully refreshed Facebook token', { botId: bot._id });
         } catch (err) {
-          logger.error('❌ Error refreshing Facebook token', { botId: bot._id, error: err.message, data: redactSensitive(err.response?.data) });
+          if (err.code === 'META_APP_NOT_CONFIGURED') {
+            logger.error('facebook_token_refresh_skipped_app_not_configured', { botId: bot._id, missing: err.missing });
+            continue;
+          }
+          if (err && err.name === 'MetaTokenExchangeError' && err.kind === 'transient') {
+            // The token was definitively rejected by validation, but the exchange failed for a
+            // temporary reason: retry on the next run, do not send a relink notice yet.
+            logger.warn('facebook_token_exchange_transient_skipped', { botId: bot._id, status: err.status, graphCode: err.graphCode });
+            continue;
+          }
+          logger.error('❌ Error refreshing Facebook token', { botId: bot._id, errorName: err && err.name, code: err && err.code ? String(err.code) : undefined, status: Number.isInteger(err && err.status) ? err.status : undefined, graphCode: Number.isInteger(err && err.graphCode) ? err.graphCode : undefined });
           const notification = new Notification({
             user: bot.userId,
             title: `فشل تجديد توكن فيسبوك للبوت ${bot.name}`,

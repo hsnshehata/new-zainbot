@@ -3,6 +3,7 @@ const rateLimit = require('express-rate-limit');
 const logger = require('../logger');
 const LandingDemoConfig = require('../models/LandingDemoConfig');
 const { getAiCompletion } = require('../services/aiFailover');
+const { describeCaughtError } = require('../services/metaSendErrors');
 
 const router = express.Router();
 
@@ -224,7 +225,7 @@ router.post('/chat', async (req, res) => {
   } catch (err) {
     logger.warn('landing_demo_reply_failed', {
       requestId: req.requestId,
-      message: err.message,
+      err: describeCaughtError(err),
     });
     return res.status(503).json({
       success: false,

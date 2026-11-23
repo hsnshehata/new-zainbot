@@ -29,7 +29,9 @@ test('provider rejection returns failure once, without raw-text fallback or retr
  const original=axios.post; let calls=0;
  axios.post=async (_url,payload)=>{calls++;assert.equal(payload.parse_mode,'HTML');throw {response:{data:{description:'synthetic oversized rejection'}}};};
  try {
-  assert.deepEqual(await sendTelegramMessage('synthetic','&amp;'.repeat(5000)), {ok:false,reason:'synthetic oversized rejection'});
+  // Contract change (booking-truth v2, review-PASS): provider text never leaves the send path;
+  // the failure reason is the fixed 'send_failed' (pinned by telegramSendFailure.test.js).
+  assert.deepEqual(await sendTelegramMessage('synthetic','&amp;'.repeat(5000)), {ok:false,reason:'send_failed'});
   assert.equal(calls,1);
  } finally {axios.post=original;}
 });

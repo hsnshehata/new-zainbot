@@ -26,6 +26,7 @@ const { getAiCompletion } = require('./services/aiFailover');
 const { checkPlanLimitsAndIncrement, settleMessageQuota } = require('./services/billingLimits');
 const { dispatchWebhook } = require('./services/webhookDispatcher');
 const { dispatchMultiChannelNotification } = require('./services/notificationDispatcher');
+const { describeCaughtError } = require('./services/metaSendErrors');
 const { buildProductContext, buildStorefrontUrl, effectiveProductPrice, normalize: normalizeCatalogText, tokens: catalogTokens } = require('./services/productContext');
 
 // معرف المساعد الداخلي لتخطي هوكات الطلبات
@@ -123,7 +124,7 @@ async function fetchImageAsBase64(imageUrl, channel = 'web') {
     logger.info('✅ تم تحميل الصورة وتحويلها إلى base64');
     return `data:image/jpeg;base64,${base64Image}`;
   } catch (err) {
-    logger.error('❌ خطأ أثناء تحميل الصورة:', { err });
+    logger.error('image_download_error', { err: describeCaughtError(err) });
     throw new Error('عذرًا، لم أتمكن من تحميل الصورة. حاول مرة أخرى أو أرسل صورة أخرى.');
   }
 }
@@ -201,7 +202,7 @@ async function transcribeAudio(audioUrl, channel = 'web') {
     logger.info('✅ Audio transcribed with LemonFox', { text: response.data.text });
     return response.data.text;
   } catch (err) {
-    logger.error('❌ Error transcribing audio with LemonFox', { err });
+    logger.error('voice_transcription_provider_error', { err: describeCaughtError(err) });
     throw new Error('عذرًا، لم أتمكن من تحليل الصوت. ممكن تبعتلي نص بدل الصوت؟');
   }
 }
@@ -424,6 +425,58 @@ function customerTruthSentence(result) {
   }
 }
 
+// حالة الحجز العربية الموجهة للعميل: من الحالة المخزنة فقط.
+const BOOKING_STATUS_LABELS = { pending: 'قيد المراجعة', confirmed: 'مؤكد', rescheduled: 'معدَّل', completed: 'مكتمل', cancelled: 'ملغي' };
+const bookingStatusText = (status) => BOOKING_STATUS_LABELS[status] || String(status || 'قيد المراجعة');
+const bookingDateText = (booking) => {
+  const d = booking && booking.bookingDate ? new Date(booking.bookingDate) : null;
+  return d && !isNaN(d.getTime()) ? d.toLocaleString('ar-EG', { timeZone: 'Africa/Cairo' }) : '';
+};
+
+// جملة حقيقة الحجز الموجهة للعميل: تُبنى دائمًا من نتيجة الحفظ الفعلية وحدها.
+function bookingTruthSentence(result) {
+  const b = (result && result.booking) || {};
+  switch (result && result.outcome) {
+    case 'saved': {
+      const date = bookingDateText(b);
+      const service = b.serviceType ? ` (${String(b.serviceType).slice(0, 60)})` : '';
+      return `تم حفظ حجزك${service}${date ? ` بتاريخ ${date}` : ''}. حالته الآن "${bookingStatusText(b.status)}"${b.status === 'confirmed' ? '' : ' — سيتم تأكيده النهائي من المتجر'}.`;
+    }
+    case 'cancelled':
+      return 'تم إلغاء حجزك كما طلبت.';
+    case 'cancel_not_found':
+      return 'لم أجد حجزًا مفتوحًا مرتبطًا بهذه المحادثة أو ببياناتك لإلغائه.';
+    case 'missing_date':
+      return 'لم يُحفظ الحجز لأن تاريخ الموعد غير محدد. أرسل اليوم والوقت المناسبين لإتمام الحجز.';
+    case 'save_failed':
+      return 'حدث خطأ تقني أثناء حفظ الحجز ولم يُحفظ. من فضلك حاول مرة أخرى.';
+    default:
+      return 'لم يُحفظ أي حجز من هذه المحادثة حتى الآن. إذا كنت تريد حجز موعد، أرسل الخدمة واليوم والوقت المناسبين.';
+  }
+}
+
+// ملاحظة حالة الحجز الصادقة التي تُلحق بالـ system prompt: النموذج لا يؤكد
+// إلا حجزًا محفوظًا فعليًا.
+function buildBookingStateNote(result) {
+  if (!result || !result.outcome) return '';
+  const neverConfirm = 'ممنوع منعًا باتًا قول أن الحجز تم أو مؤكد ما لم يُحفظ فعليًا كما هو موضح هنا.';
+  const b = result.booking || {};
+  switch (result.outcome) {
+    case 'saved':
+      return `\n[حالة الحجز الفعلية]: تم حفظ حجز العميل فعليًا. الخدمة: ${b.serviceType || 'موعد عام'}. الموعد: ${bookingDateText(b) || 'غير محدد'}. الحالة: "${bookingStatusText(b.status)}". أخبر العميل بحفظ الحجز بهذه التفاصيل كما هي فقط.\n`;
+    case 'cancelled':
+      return '\n[حالة الحجز الفعلية]: تم إلغاء حجز العميل بناءً على طلبه. أبلغ العميل بتأكيد الإلغاء فقط.\n';
+    case 'cancel_not_found':
+      return `\n[حالة الحجز الفعلية]: طلب العميل إلغاء حجز ولم يُعثر على حجز مفتوح مرتبط به. وضّح ذلك ولا تؤكد إلغاءً لم يحدث. ${neverConfirm}\n`;
+    case 'missing_date':
+      return `\n[حالة الحجز الفعلية]: لم يُحفظ أي حجز لأن تاريخ الموعد غير محدد. اطلب من العميل اليوم والوقت بوضوح. ${neverConfirm}\n`;
+    case 'save_failed':
+      return `\n[حالة الحجز الفعلية]: حدث خطأ تقني أثناء حفظ الحجز ولم يُحفظ أي حجز. اعتذر للعميل واطلب منه المحاولة مرة أخرى. ${neverConfirm}\n`;
+    default:
+      return '';
+  }
+}
+
 // استشهاد برقم طلب: صادق فقط عند وجود طلب محفوظ فعليًا؛ وإلا فهو مختلق.
 const ORDER_ID_CITATION = /رقم\s*(الطلب|الاوردر|الأوردر)\s*[:：]/;
 
@@ -431,9 +484,12 @@ const ORDER_ID_CITATION = /رقم\s*(الطلب|الاوردر|الأوردر)\s
 // بجسم حتمي من الحالة المخزنة وحدها. وفي المنعطفات بلا نتيجة (محادثة عادية)
 // تمر النصوص كما هي، مع مرشح احتياطي يزيل جمل الادعاء بحالة طلب وأرقام
 // الطلبات المختلقة ويستبدلها بجملة الحقيقة الافتراضية.
-function enforceTruthfulOrderReply(reply, extractionResult) {
+function enforceTruthfulOrderReply(reply, extractionResult, bookingResult = null, opts = {}) {
   if (!reply || typeof reply !== 'string') return reply;
-  const outcome = extractionResult?.outcome || null;
+  const orderOutcome = extractionResult?.outcome || null;
+  const bookingOutcome = bookingResult?.outcome || null;
+  // missing_date is soft: it must not hijack a natural data-collection turn.
+  const hardBookingOutcome = bookingOutcome && bookingOutcome !== 'missing_date' ? bookingOutcome : null;
   // STRUCTURAL fail-closed: for ANY order outcome — including a durably
   // confirmed save — the customer-facing body is authoritative deterministic
   // text rendered from durable state (outcome, saved order, items, total,
@@ -441,10 +497,16 @@ function enforceTruthfulOrderReply(reply, extractionResult) {
   // happened to pass a detector. The generated reply is discarded entirely
   // on these turns, so no paraphrase, shipping promise, or unsupported claim
   // in any language can reach the customer.
-  if (outcome) {
-    const truthful = customerTruthSentence(extractionResult);
+  if (orderOutcome || hardBookingOutcome) {
+    // الرد النهائي حتمي من الحالة المخزنة وحدها. عند وجود نتيجة طلب أو حجز
+    // يُستبدل الرد كله بجمل الحقيقة الخاصة بكل نتيجة موجودة؛ لا يمر أي
+    // ادعاء من توليد النموذج في هذه المنعطفات.
+    const truthParts = [];
+    if (orderOutcome) truthParts.push(customerTruthSentence(extractionResult));
+    if (hardBookingOutcome) truthParts.push(bookingTruthSentence(bookingResult));
+    const truthful = truthParts.join('\n');
     if (reply.trim() !== truthful) {
-      logger.warn('chat_order_reply_replaced_by_deterministic', { outcome });
+      logger.warn('chat_order_reply_replaced_by_deterministic', { outcome: orderOutcome, bookingOutcome: hardBookingOutcome });
     }
     return truthful;
   }
@@ -464,7 +526,11 @@ function enforceTruthfulOrderReply(reply, extractionResult) {
   if (stripped === 0) return reply;
   logger.warn('chat_order_reply_overclaim_blocked', { outcome: 'none', stripped });
   const keptText = kept.map((s) => s.trim()).filter(Boolean).join('\n');
-  const truthful = customerTruthSentence(extractionResult);
+  // On a turn where the customer was talking bookings, the honest default is
+  // about bookings, not orders - an order-denial after a booking claim would
+  // itself be a false statement.
+  const bookingTalk = opts.bookingTalk || bookingOutcome === 'missing_date';
+  const truthful = bookingTalk ? bookingTruthSentence(bookingResult) : customerTruthSentence(extractionResult);
   return keptText ? `${keptText}\n${truthful}` : truthful;
 }
 
@@ -853,7 +919,7 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
       chatOrder = saveResult?.order || null;
     } catch (saveErr) {
       saveFailed = true;
-      logger.error('chat_order_save_failed', { err: saveErr.message, stack: saveErr.stack });
+      logger.error('chat_order_save_failed', { err: describeCaughtError(saveErr) });
     }
 
     const outcome = saveFailed
@@ -906,7 +972,7 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
         });
       }
     } catch (e) {
-      logger.warn('⚠️ تعذر تحديث بيانات العميل:', { err: e });
+      logger.warn('customer_profile_update_error', { err: describeCaughtError(e) });
     }
 
     return {
@@ -922,7 +988,7 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
       pendingDraftAt: chatOrder ? null : undefined,
     };
   } catch (err) {
-    logger.error('❌ فشل في استخراج طلب المحادثة:', { err });
+    logger.error('chat_order_extraction_error', { err: describeCaughtError(err) });
     return null;
   } finally { await endChatWrite(chatGuard); }
 }
@@ -968,30 +1034,40 @@ async function extractBookingIntent({ bot, channel, userMessageContent, conversa
     if (!parsed.isBooking) return null;
 
     if (parsed.bookingDate || parsed.isCancel || parsed.customerName || parsed.customerPhone) {
-      const parsedDate = parsed.bookingDate ? new Date(parsed.bookingDate) : new Date(Date.now() + 24 * 60 * 60 * 1000);
-      const safeDate = isNaN(parsedDate.getTime()) ? new Date(Date.now() + 24 * 60 * 60 * 1000) : parsedDate;
+      // Only a date the customer actually gave may be written. No default date
+      // is fabricated here: a booking without a real date must not be created.
+      const parsedDate = parsed.bookingDate ? new Date(parsed.bookingDate) : null;
+      const explicitDate = parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate : null;
 
-      const booking = await bookingsController.createOrUpdateFromExtraction({
-        botId: bot._id,
-        channel,
-        conversationId,
-        sourceUserId,
-        sourceUsername,
-        customerName: parsed.customerName || sourceUsername || 'عميل المحادثة',
-        customerPhone: parsed.customerPhone || '',
-        customerEmail: parsed.customerEmail || '',
-        serviceType: parsed.serviceType || bot?.agentTools?.bookingTool?.defaultService || 'General Appointment',
-        bookingDate: safeDate,
-        notes: parsed.notes || userMessageContent,
-        isReschedule: Boolean(parsed.isReschedule),
-        isCancel: Boolean(parsed.isCancel),
-      });
+      let booking = null;
+      try {
+        booking = await bookingsController.createOrUpdateFromExtraction({
+          botId: bot._id,
+          channel,
+          conversationId,
+          sourceUserId,
+          sourceUsername,
+          customerName: parsed.customerName || sourceUsername || 'عميل المحادثة',
+          customerPhone: parsed.customerPhone || '',
+          customerEmail: parsed.customerEmail || '',
+          serviceType: parsed.serviceType || bot?.agentTools?.bookingTool?.defaultService || 'General Appointment',
+          bookingDate: explicitDate,
+          notes: parsed.notes || userMessageContent,
+          isReschedule: Boolean(parsed.isReschedule),
+          isCancel: Boolean(parsed.isCancel),
+        });
+      } catch (saveErr) {
+        logger.warn('booking_intent_save_failed', { err: describeCaughtError(saveErr) });
+        return { outcome: 'save_failed', booking: null };
+      }
 
-      return booking;
+      if (booking) return { outcome: parsed.isCancel ? 'cancelled' : 'saved', booking };
+      if (parsed.isCancel) return { outcome: 'cancel_not_found', booking: null };
+      return { outcome: 'missing_date', booking: null };
     }
     return null;
   } catch (err) {
-    logger.warn('booking_intent_extraction_error', { err: err.message });
+    logger.warn('booking_intent_extraction_error', { err: describeCaughtError(err) });
     return null;
   }
 }
@@ -1042,16 +1118,16 @@ async function autoClassifyConversation({ bot, conversation, userMessageContent 
           userMessageContent,
           conversationId: conversation._id,
         },
-      }).catch((err) => logger.warn('complaint_alert_dispatch_failed', { err: err.message }));
+      }).catch((err) => logger.warn('complaint_alert_dispatch_failed', { err: describeCaughtError(err) }));
     }
   } catch (err) {
-    logger.warn('auto_classify_conversation_error', { err: err.message });
+    logger.warn('auto_classify_conversation_error', { err: describeCaughtError(err) });
   }
 }
 
 async function processMessage(botId, userId, message, isImage = false, isVoice = false, messageId = null, channel = 'web', mediaUrl = null) {
   try {
-    logger.info('📢 Raw userId received', { userId, type: typeof userId });
+    logger.info('process_message_received', { hasUserId: Boolean(userId) });
 
     let finalUserId = userId;
     let finalUsername = undefined;
@@ -1176,7 +1252,7 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
             userMessageContent: message,
             conversationId: conversation._id,
           },
-        }).catch((err) => logger.warn('handoff_alert_dispatch_failed', { err: err.message }));
+        }).catch((err) => logger.warn('handoff_alert_dispatch_failed', { err: describeCaughtError(err) }));
 
         return null;
       }
@@ -1264,7 +1340,7 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
           logger.info('📋 Latest order found for context', { orderId: latestOrder._id, status: latestOrder.status });
         }
       } catch (e) {
-        logger.warn('⚠️ Failed to fetch latest order info:', { err: e });
+        logger.warn('order_info_fetch_error', { err: describeCaughtError(e) });
       }
     }
 
@@ -1305,8 +1381,8 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
           return 'عذرًا، لم أتمكن من تحليل الصوت بسبب رابط غير صالح. أرسل المقطع الصوتي من جديد أو اكتب النص.';
         }
       } catch (err) {
-        logger.error('❌ Failed to transcribe audio', { err });
-        return err.message;
+        logger.error('voice_transcription_failed', { err: describeCaughtError(err) });
+        return 'عذرًا، لم أتمكن من تحليل المقطع الصوتي. حاول إرساله مرة أخرى أو اكتب النص.';
       }
     } else if (isImage) {
       userMessageContent = message || mediaUrl || '[صورة]';
@@ -1326,6 +1402,7 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
 
     // استخراج بيانات الطلب من المحادثة الحالية وحفظها في قاعدة البيانات
     let extractionResult = null;
+    let bookingResult = null;
     try {
       // بناء النسخة المحدثة من transcript بعد إضافة آخر رسالة
       const updatedTranscript = conversation.messages
@@ -1353,7 +1430,7 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
       }
 
       // استخراج بيانات المواعيد والحجوزات إن وجدت
-      const bookingResult = await extractBookingIntent({
+      bookingResult = await extractBookingIntent({
         bot,
         channel: finalChannel,
         userMessageContent,
@@ -1363,8 +1440,8 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
         transcript: updatedTranscript,
       });
 
-      if (bookingResult) {
-        logger.info('📅 Booking auto-extracted/updated after message processing', { bookingId: bookingResult._id });
+      if (bookingResult?.booking) {
+        logger.info('booking_extraction_saved', { bookingId: bookingResult.booking._id, outcome: bookingResult.outcome });
       }
 
       // تصنيف المحادثة التلقائي وإضافة الشارات والبادجات
@@ -1374,7 +1451,7 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
         userMessageContent,
       });
     } catch (e) {
-      logger.warn('⚠️ Failed to extract order/booking/classification during message processing:', { err: e });
+      logger.warn('order_booking_classification_extraction_error', { err: describeCaughtError(e) });
       // لا نرجع error هنا، نستمر في معالجة الرسالة
     }
 
@@ -1384,6 +1461,12 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
     const orderStateNote = buildOrderStateNote(extractionResult);
     if (orderStateNote) {
       systemPrompt += orderStateNote;
+    }
+    // حالة الحجز الصادقة بعد الاستخلاص وقبل توليد الرد: النموذج يرى نتيجة
+    // حفظ الحجز الفعلية ولا يؤكد حجزًا لم يُحفظ فعليًا.
+    const bookingStateNote = buildBookingStateNote(bookingResult);
+    if (bookingStateNote) {
+      systemPrompt += bookingStateNote;
     }
 
     const muteUntil = conversation.mutedUntil ? new Date(conversation.mutedUntil) : null;
@@ -1420,15 +1503,15 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
           imageDataUrl = mediaUrl;
           logger.info('🖼️ Image provided as data URL, skipping download');
         } else if (mediaUrl.startsWith('http')) {
-          logger.info('🖼️ Processing image with mediaUrl', { mediaUrl });
+          logger.info('image_media_download_start', { hasMediaUrl: true });
           try {
             imageDataUrl = await downloadImageToBase64(mediaUrl, finalChannel);
           } catch (err) {
-            logger.error('❌ Failed to download image', { err });
-            return err.message;
+            logger.error('image_media_download_failed', { err: describeCaughtError(err) });
+            return 'عذرًا، لم أتمكن من تحميل الصورة. حاول إرسالها مرة أخرى.';
           }
         } else {
-          logger.error('❌ Invalid or unsupported mediaUrl for image', { mediaUrl });
+          logger.error('image_media_url_invalid', { hasMediaUrl: Boolean(mediaUrl) });
           return 'عذرًا، رابط الصورة غير مدعوم. أرسل صورة جديدة من فضلك.';
         }
 
@@ -1454,7 +1537,7 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
           reply = response.choices[0].message.content || 'عذرًا، لم أتمكن من تحليل الصورة.';
           logger.info('🖼️ Image processed', { reply });
         } catch (err) {
-          logger.error('❌ Error processing image with OpenAI', { err });
+          logger.error('image_analysis_error', { err: describeCaughtError(err) });
           // Quota is reserved before generation (checkPlanLimitsAndIncrement above);
           // refund the reservation once when the billable completion itself fails.
           if (bot && !isAssistantBotId) await settleMessageQuota({ userId: bot.userId });
@@ -1477,9 +1560,9 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
             20000 // timeout 20 ثانية
           );
           reply = response.choices[0].message.content;
-          logger.info('💬 Assistant reply', { reply });
+          logger.info('assistant_reply_generated', { replyLength: (reply || '').length });
         } catch (err) {
-          logger.error('❌ Error calling OpenAI:', { err });
+          logger.error('openai_completion_error', { err: describeCaughtError(err) });
           // Quota is reserved before generation (checkPlanLimitsAndIncrement above);
           // refund the reservation once when the billable completion itself fails.
           if (bot && !isAssistantBotId) await settleMessageQuota({ userId: bot.userId });
@@ -1488,7 +1571,10 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
       }
 
     // قيد الحقيقة النهائي: لا تأكيد موجه للعميل بدون حفظ فعلي بحالة مؤكدة.
-    reply = enforceTruthfulOrderReply(reply, extractionResult);
+    // A message mentioning orders keeps the order default even when a loose
+    // booking keyword also matched (e.g. "ميعاد تسليم الاوردر").
+    const bookingTalk = isBookingQuery(userMessageContent) && !/(طلب|اوردر|أوردر|order)/i.test(userMessageContent || '');
+    reply = enforceTruthfulOrderReply(reply, extractionResult, bookingResult, { bookingTalk });
 
     const responseMessageId = `response_${messageId || uuidv4()}`;
     conversation.messages.push({ 
@@ -1512,7 +1598,7 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
 
     return reply;
   } catch (err) {
-    logger.error('❌ Error processing message:', { err });
+    logger.error('process_message_error', { err: describeCaughtError(err) });
     return 'عذرًا، حدث خطأ أثناء معالجة طلبك. حاول مرة أخرى.';
   }
 }
@@ -1579,7 +1665,7 @@ async function processFeedback(botId, userId, messageId, feedback) {
 
     logger.info('✅ Feedback saved', { type, messageId, feedbackId: feedbackEntry?._id });
   } catch (err) {
-    logger.error('❌ Error processing feedback:', { err });
+    logger.error('feedback_processing_error', { err: describeCaughtError(err) });
   }
 }
 
@@ -1601,6 +1687,9 @@ module.exports = {
   buildOrderStateNote,
   findCatalogProductMatch,
   enforceTruthfulOrderReply,
+  bookingTruthSentence,
+  buildBookingStateNote,
+  isBookingQuery,
   customerTruthSentence,
   confirmedOrderTruthSentence,
   autoClassifyConversation,

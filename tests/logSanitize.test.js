@@ -69,3 +69,36 @@ test('provider token-exchange paths log only redacted payloads', () => {
   const cron = read('server/cronJobs.js');
   assert.ok(!cron.includes('error: err.response?.data ||'), 'raw cron token error payload log returned');
 });
+
+test('botEngine reply text, raw userId and provider error objects stay out of logs (B3)', () => {
+  const src = read('server/botEngine.js');
+  assert.ok(!src.includes("logger.info('💬 Assistant reply', { reply })"), 'full assistant reply log returned');
+  assert.ok(!src.includes('📢 Raw userId received'), 'raw sender-id debug log returned');
+  assert.ok(!src.includes('return err.message;'), 'provider error text must not be returned to the customer');
+  assert.ok(!src.includes("logger.error('❌ Error calling OpenAI:', { err })"), 'raw OpenAI error object log returned');
+  assert.ok(!src.includes('{ err: e }'), 'raw caught-error object log returned');
+  assert.ok(!src.includes("{ mediaUrl }"), 'raw media URL log returned');
+});
+
+test('telegram send errors log fixed metadata only', () => {
+  const tg = read('server/services/telegramService.js');
+  assert.ok(!tg.includes('err.response?.data?.description || err.message'), 'telegram provider text log returned');
+});
+
+test('booking extraction: no silent dispatch catches, no customer name in logs', () => {
+  const bk = read('server/controllers/bookingsController.js');
+  assert.ok(!bk.includes('.catch(() => {})'), 'silent notification catch returned');
+  assert.ok(!bk.includes('customerName, bookingDate'), 'customer name in creation log returned');
+});
+
+test('AI provider key failures log fixed metadata only (L1/L2)', () => {
+  const src = read('server/services/aiFailover.js');
+  assert.ok(!src.includes('User private key failed: ${err.message}'), 'raw provider error in user-key log returned');
+  assert.ok(!src.includes('تعذر استخدام مفتاحك الخاص: ${err.message}'), 'provider error text rethrown to caller returned');
+  assert.ok(!src.includes('Error: ${err.message}'), 'raw provider error in platform-key log returned');
+});
+
+test('landing demo failure logs fixed metadata only (L3)', () => {
+  const src = read('server/routes/landingDemo.js');
+  assert.ok(!src.includes('message: err.message'), 'raw provider error in demo log returned');
+});

@@ -1,4 +1,5 @@
 const logger = require('../logger');
+const { redactSensitive } = require('../utils/logSanitize');
 const path = require('path');
 
 const GENERIC_MESSAGE = 'حدث خطأ غير متوقع';
@@ -41,8 +42,8 @@ module.exports = (err, req, res, next) => { // eslint-disable-line no-unused-var
     traceId,
     code,
     statusCode,
-    err: err.message,
-    stack: err.stack,
+    err: redactSensitive(err.message),
+    stack: redactSensitive(err.stack),
     path: req && req.originalUrl,
     method: req && req.method,
   });

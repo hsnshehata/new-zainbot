@@ -3,6 +3,7 @@ const OpenAI = require('openai');
 const axios = require('axios');
 const crypto = require('crypto');
 const logger = require('../logger');
+const { describeCaughtError } = require('./metaSendErrors');
 const User = require('../models/User');
 const AiRoutingPolicy = require('../models/AiRoutingPolicy');
 const AiTierEntitlement = require('../models/AiTierEntitlement');
@@ -186,8 +187,10 @@ async function getAiCompletion(options, bot = null, useBackup = false) {
           fallbackUsed: false,
           source: 'user-key',
         });
-        logger.error(`❌ User private key failed: ${err.message}`);
-        throw new Error(`تعذر استخدام مفتاحك الخاص: ${err.message}`);
+        // Provider error text can echo the submitted key (OpenAI 401s embed a
+        // truncated copy): fixed metadata in logs, fixed text to the caller.
+        logger.error('ai_user_key_failed', { err: describeCaughtError(err) });
+        throw new Error('تعذر استخدام مفتاحك الخاص. تحقق من المفتاح وحاول مرة أخرى.');
       }
     }
   }
@@ -265,7 +268,7 @@ async function getAiCompletion(options, bot = null, useBackup = false) {
 
       return response;
     } catch (err) {
-      logger.error(`❌ Failed ${keyDoc.source} key: ${keyDoc.name}. Error: ${err.message}`);
+      logger.error('ai_provider_key_failed', { source: keyDoc.source, keyName: keyDoc.name, err: describeCaughtError(err) });
 
       // Record the failure and proceed to the next key in the loop
       await keyDoc.markFailure(err.code || err.message);

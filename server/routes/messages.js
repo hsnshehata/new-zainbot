@@ -8,6 +8,7 @@ const authenticate = require("../middleware/authenticate");
 const axios = require("axios");
 const messagesController = require("../controllers/messagesController");
 const logger = require("../logger");
+const { describeGraphFailure, describeCaughtError } = require('../services/metaSendErrors');
 const { getBotAccessFilter, loadAccessibleBot } = require("../middleware/botAccess");
 const {
   getWhatsAppSessionManager,
@@ -130,7 +131,7 @@ async function getSocialUsername(userId, bot, platform) {
       const res = await axios.get(requestUrl, { params: requestParams });
       response = res.data;
     } catch (err) {
-      logger.error("❌ خطأ في طلب API لجلب الاسم", { cleanUserId, attempt, err: err.message });
+      logger.error("❌ خطأ في طلب API لجلب الاسم", { cleanUserId, attempt, ...describeGraphFailure(err) });
       throw err;
     }
 
@@ -138,8 +139,7 @@ async function getSocialUsername(userId, bot, platform) {
       logger.error("❌ خطأ في استجابة API لجلب الاسم", {
         cleanUserId,
         attempt,
-        error: response.error?.message,
-        raw: response.error,
+        ...describeGraphFailure({ data: response }),
       });
       if (platform === "facebook" && attempt === "فيسبوك (المحاولة الأولى)") {
         // جرب إنستجرام كمحاولة ثانية
@@ -157,7 +157,7 @@ async function getSocialUsername(userId, bot, platform) {
           const res = await axios.get(`${apiUrl}/${cleanUserId}`, { params: { access_token: accessToken, fields: 'name' } });
           retryResponse = res.data;
         } catch (err) {
-          logger.error("❌ خطأ في طلب API لجلب الاسم (محاولة ثانية)", { cleanUserId, attempt, err: err.message });
+          logger.error("❌ خطأ في طلب API لجلب الاسم (محاولة ثانية)", { cleanUserId, attempt, ...describeGraphFailure(err) });
           return "مستخدم فيسبوك";
         }
 
@@ -165,8 +165,7 @@ async function getSocialUsername(userId, bot, platform) {
           logger.error("❌ خطأ في استجابة API لجلب الاسم (محاولة ثانية)", {
             cleanUserId,
             attempt,
-            error: retryResponse.error?.message,
-            raw: retryResponse.error,
+            ...describeGraphFailure({ data: retryResponse }),
           });
           return "مستخدم فيسبوك";
         }
@@ -185,7 +184,7 @@ async function getSocialUsername(userId, bot, platform) {
       ? response.data[0]?.phone_number || cleanUserId
       : response.name || "مستخدم فيسبوك";
   } catch (err) {
-    logger.error("❌ خطأ في جلب اسم المستخدم", { userId, platform, err });
+    logger.error("❌ خطأ في جلب اسم المستخدم", { userId, platform, ...describeGraphFailure(err) });
     return platform === "whatsapp"
       ? userId.replace("whatsapp_", "")
       : "مستخدم فيسبوك";
@@ -312,7 +311,7 @@ router.get("/social-user/:userId", authenticate, loadAccessibleBot, async (req, 
     const username = await getSocialUsername(userId, bot, platform);
     res.status(200).json({ name: username });
   } catch (err) {
-    logger.error("Error fetching social user", { err });
+    logger.error("Error fetching social user", { name: err && err.name, ...describeGraphFailure(err) });
     res.status(500).json({ message: "خطأ في جلب اسم المستخدم" });
   }
 });
@@ -461,7 +460,7 @@ router.post("/reply", authenticate, async (req, res) => {
       logger.error("manual_reply_delivery_failed", {
         conversationId,
         channel: conversation.channel,
-        err: err.message,
+        ...describeCaughtError(err),
       });
     }
 
@@ -476,7 +475,7 @@ router.post("/reply", authenticate, async (req, res) => {
 
     return res.status(200).json({ success: true, delivered });
   } catch (err) {
-    logger.error("manual_reply_error", { err: err.message, stack: err.stack });
+    logger.error("manual_reply_error", describeCaughtError(err));
     return res.status(500).json({ success: false, message: "خطأ في إرسال الرد" });
   }
 });

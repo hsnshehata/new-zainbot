@@ -2,6 +2,9 @@
 const { processMessage } = require("../botEngine");
 const WhatsAppSession = require("../models/WhatsAppSession");
 const mongoose = require("mongoose");
+const { describeCaughtError } = require("../services/metaSendErrors");
+// Module scope: the outer catch below also logs, and a block-scoped logger made that catch throw a ReferenceError.
+const logger = require("../logger");
 
 // Webhook verification: the old verifyWebhook handler was removed. It was
 // never mounted (the real GET verification lives in routes/webhook.js via
@@ -25,7 +28,6 @@ const processWebhook = async (req, res) => {
         body.entry[0].changes[0].value.messages[0]
       ) {
         const messageData = body.entry[0].changes[0].value.messages[0];
-        const logger = require('../logger');
         // Metadata-only: sender number and text body are customer PII; log shape, not content.
         logger.info('whatsapp_message_data', {
           messageId: messageData.id,
@@ -76,13 +78,14 @@ const processWebhook = async (req, res) => {
             logger.info('whatsapp_media_fetch_response', { hasUrl: !!(mediaData && mediaData.url), mimeType: mediaData && mediaData.mime_type });
             if (mediaData.url) {
               mediaUrl = mediaData.url; // Update mediaUrl with the actual URL
-              logger.info('whatsapp_media_url_fetched', { mediaId: mediaUrl });
+              // mediaUrl is now a signed provider URL: never log it.
+              logger.info('whatsapp_media_url_fetched', { hasUrl: true });
             } else {
-              logger.warn('whatsapp_media_url_fetch_failed', { mediaUrl });
+              logger.warn('whatsapp_media_url_fetch_failed', { mediaUrl, status: Number.isInteger(response && response.status) ? response.status : undefined });
               return res.sendStatus(200);
             }
           } catch (err) {
-            logger.error('whatsapp_media_url_error', { err: err.message, stack: err.stack });
+            logger.error('whatsapp_media_url_error', describeCaughtError(err));
             return res.sendStatus(200);
           }
         }
@@ -124,7 +127,7 @@ const processWebhook = async (req, res) => {
         }
 
         // Send reply back to WhatsApp
-        await fetch(
+        const sendResponse = await fetch(
           `https://graph.facebook.com/v20.0/${body.entry[0].changes[0].value.metadata.phone_number_id}/messages`,
           {
             method: "POST",
@@ -145,7 +148,17 @@ const processWebhook = async (req, res) => {
         // variable does not exist in this scope, and the ReferenceError
         // after the reply is sent makes Meta retry the webhook and
         // deliver duplicate replies to the customer.
-        logger.info('whatsapp_reply_sent', { userId, botId: bot._id, reply });
+        // A rejected send used to be logged as sent. Surface it with fixed metadata only (no reply
+        // text, no provider body). The webhook is still acknowledged with 200 so Meta does not
+        // re-deliver the inbound message and trigger a second AI reply.
+        if (!sendResponse || sendResponse.ok !== true) {
+          logger.error('whatsapp_reply_send_failed', {
+            botId: bot._id,
+            status: Number.isInteger(sendResponse && sendResponse.status) ? sendResponse.status : undefined,
+          });
+        } else {
+          logger.info('whatsapp_reply_sent', { botId: bot._id, replyLength: typeof reply === 'string' ? reply.length : 0 });
+        }
       }
       res.sendStatus(200);
     } else {
@@ -153,7 +166,7 @@ const processWebhook = async (req, res) => {
       res.sendStatus(404);
     }
   } catch (err) {
-    logger.error('whatsapp_webhook_error', { err: err.message, stack: err.stack });
+    logger.error('whatsapp_webhook_error', describeCaughtError(err));
     res.sendStatus(500);
   }
 };

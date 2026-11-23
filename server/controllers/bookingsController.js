@@ -3,6 +3,7 @@ const Booking = require('../models/Booking');
 const Bot = require('../models/Bot');
 const logger = require('../logger');
 const { dispatchMultiChannelNotification } = require('../services/notificationDispatcher');
+const { describeCaughtError } = require('../services/metaSendErrors');
 
 const STATUS_ENUM = ['pending', 'confirmed', 'completed', 'rescheduled', 'cancelled'];
 
@@ -252,14 +253,17 @@ async function createOrUpdateFromExtraction({
   isReschedule,
   isCancel,
 }) {
-  if (!botId || !customerName || !bookingDate) {
-    logger.warn('booking_extraction_skipped_missing_required_fields', { botId, customerName, bookingDate });
+  if (!botId || !customerName) {
+    logger.warn('booking_extraction_skipped_missing_required_fields', { botId, hasCustomerName: Boolean(customerName) });
     return null;
   }
 
-  const parsedDate = new Date(bookingDate);
-  if (isNaN(parsedDate.getTime())) {
-    logger.warn('booking_extraction_invalid_date', { bookingDate });
+  // Only a customer-supplied date is written. A missing date is not an error
+  // for updates of an existing booking (it keeps its date), but a new booking
+  // without a real date must not be created.
+  const parsedDate = bookingDate ? new Date(bookingDate) : null;
+  if (parsedDate && isNaN(parsedDate.getTime())) {
+    logger.warn('booking_extraction_invalid_date', { botId });
     return null;
   }
 
@@ -281,6 +285,12 @@ async function createOrUpdateFromExtraction({
     }).sort({ createdAt: -1 });
   }
 
+  if (isCancel && !existingBooking) {
+    // A cancellation with no open booking is not a new booking.
+    logger.warn('booking_extraction_cancel_without_booking', { botId });
+    return null;
+  }
+
   if (isCancel && existingBooking) {
     existingBooking.status = 'cancelled';
     existingBooking.history.push({
@@ -295,13 +305,13 @@ async function createOrUpdateFromExtraction({
       botId,
       event: 'booking_cancelled',
       data: existingBooking,
-    }).catch(() => {});
+    }).catch((e) => logger.warn('booking_notification_dispatch_failed', { err: describeCaughtError(e) }));
 
     return existingBooking;
   }
 
   if (existingBooking && (isReschedule || ['pending', 'confirmed'].includes(existingBooking.status))) {
-    existingBooking.bookingDate = parsedDate;
+    if (parsedDate) existingBooking.bookingDate = parsedDate;
     if (customerName) existingBooking.customerName = customerName;
     if (customerPhone) existingBooking.customerPhone = customerPhone;
     if (serviceType) existingBooking.serviceType = serviceType;
@@ -322,9 +332,14 @@ async function createOrUpdateFromExtraction({
       botId,
       event: isReschedule ? 'booking_rescheduled' : 'booking_created',
       data: existingBooking,
-    }).catch(() => {});
+    }).catch((e) => logger.warn('booking_notification_dispatch_failed', { err: describeCaughtError(e) }));
 
     return existingBooking;
+  }
+
+  if (!parsedDate) {
+    logger.warn('booking_extraction_missing_date', { botId });
+    return null;
   }
 
   const safeStatus = STATUS_ENUM.includes(status) ? status : 'pending';
@@ -349,13 +364,13 @@ async function createOrUpdateFromExtraction({
     }],
   });
 
-  logger.info('booking_created_by_ai', { botId, bookingId: booking._id, customerName, bookingDate });
+  logger.info('booking_created_by_ai', { botId, bookingId: booking._id, bookingDate: parsedDate });
 
   dispatchMultiChannelNotification({
     botId,
     event: 'booking_created',
     data: booking,
-  }).catch(() => {});
+  }).catch((e) => logger.warn('booking_notification_dispatch_failed', { err: describeCaughtError(e) }));
 
   return booking;
 }

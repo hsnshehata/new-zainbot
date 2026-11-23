@@ -4,7 +4,7 @@ const Bot = require('../models/Bot');
 const axios = require('axios');
 const { processMessage } = require('../botEngine');
 const logger = require('../logger');
-const { redactSensitive } = require('../utils/logSanitize');
+const { describeGraphFailure, describeCaughtError } = require('../services/metaSendErrors');
 
 // دالة لجلب اسم المستخدم من إنستجرام
 const getInstagramUsername = async (userId, accessToken) => {
@@ -21,7 +21,7 @@ const getInstagramUsername = async (userId, accessToken) => {
     logger.warn('ig_get_username_no_name', { userId: cleanUserId });
     return cleanUserId;
   } catch (err) {
-    logger.error('ig_get_username_error', { userId, err: err.message, data: redactSensitive(err.response?.data) });
+    logger.error('ig_get_username_error', { userId, ...describeGraphFailure(err) });
     return userId.replace(/^(instagram_|instagram_comment_)/, '');
   }
 };
@@ -38,7 +38,7 @@ const validateAccessToken = async (accessToken) => {
     }
     return false;
   } catch (err) {
-    logger.error('ig_token_invalid', { err: err.response?.data ? redactSensitive(err.response.data) : err.message });
+    logger.error('ig_token_invalid', describeGraphFailure(err));
     return false;
   }
 };
@@ -51,7 +51,7 @@ const sendMessage = async (recipientId, messageText, accessToken) => {
     const res = await axios.post(url, payload);
     if (res.status < 200 || res.status >= 300) {
       const body = res.data;
-      logger.error('ig_send_message_failed', { error: body?.error || res.status });
+      logger.error('ig_send_message_failed', describeGraphFailure(res));
       if (body?.error?.error_subcode === 2534014) {
         logger.warn('ig_send_message_user_unavailable', { recipientId });
         return;
@@ -62,7 +62,7 @@ const sendMessage = async (recipientId, messageText, accessToken) => {
     return res.data;
   } catch (error) {
     const body = error.response?.data || null;
-    logger.error('ig_send_message_error', { error: body?.error || error.message });
+    logger.error('ig_send_message_error', describeGraphFailure(error));
     if (body?.error?.error_subcode === 2534014) {
       logger.warn('ig_send_message_user_unavailable', { recipientId });
       return;
@@ -78,7 +78,7 @@ const replyToComment = async (commentId, messageText, accessToken) => {
     const res = await axios.post(url, { message: messageText });
     if (res.status < 200 || res.status >= 300) {
       const body = res.data;
-      logger.error('ig_reply_comment_failed', { commentId, error: body?.error || res.status });
+      logger.error('ig_reply_comment_failed', { commentId, ...describeGraphFailure(res) });
       if (body?.error?.error_subcode === 2534014) {
         logger.warn('ig_reply_comment_unavailable', { commentId });
         return;
@@ -89,7 +89,7 @@ const replyToComment = async (commentId, messageText, accessToken) => {
     return res.data;
   } catch (error) {
     const body = error.response?.data || null;
-    logger.error('ig_reply_comment_error', { commentId, error: body?.error || error.message });
+    logger.error('ig_reply_comment_error', { commentId, ...describeGraphFailure(error) });
     if (body?.error?.error_subcode === 2534014) {
       logger.warn('ig_reply_comment_unavailable', { commentId });
       return;
@@ -391,7 +391,7 @@ const handleMessage = async (req, res) => {
 
     res.sendStatus(200);
   } catch (err) {
-    logger.error('ig_handle_error', { err: err.message, stack: err.stack });
+    logger.error('ig_handle_error', describeCaughtError(err));
     res.sendStatus(500);
   }
 };

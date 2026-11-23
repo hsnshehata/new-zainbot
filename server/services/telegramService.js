@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { describeCaughtError } = require('./metaSendErrors');
 const User = require('../models/User');
 const Bot = require('../models/Bot');
 const logger = require('../logger');
@@ -61,9 +62,10 @@ async function sendTelegramMessage(chatId, text, extra = {}) {
     });
     return { ok: true, data: res.data };
   } catch (err) {
-    const reason = err.response?.data?.description || err.message;
-    logger.error('Telegram send error', { reason });
-    return { ok: false, reason };
+    // Telegram/axios errors can echo the bot token (it sits in the request
+    // URL) or provider text: fixed metadata only.
+    logger.error('Telegram send error', { err: describeCaughtError(err) });
+    return { ok: false, reason: 'send_failed' };
   }
 }
 

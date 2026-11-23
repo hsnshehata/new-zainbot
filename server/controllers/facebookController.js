@@ -4,6 +4,7 @@ const Bot = require('../models/Bot');
 const Conversation = require('../models/Conversation');
 const { processMessage, processFeedback } = require('../botEngine');
 const logger = require('../logger');
+const { describeGraphFailure, describeCaughtError } = require('../services/metaSendErrors');
 
 const handleMessage = async (req, res) => {
   try {
@@ -344,7 +345,7 @@ const handleMessage = async (req, res) => {
                 try {
                   await sendPrivateReply(commentId, responseText, decryptChannelToken(bot.facebookApiKey));
                 } catch (err) {
-                  logger.error('fb_private_reply_failed', { err: err.message });
+                  logger.error('fb_private_reply_failed', describeCaughtError(err));
                   // Fallback or log?
                 }
               }
@@ -367,7 +368,7 @@ const handleMessage = async (req, res) => {
 
     res.status(200).send('EVENT_RECEIVED');
   } catch (err) {
-    logger.error('fb_webhook_error_outer', { err: err.message, stack: err.stack });
+    logger.error('fb_webhook_error_outer', describeCaughtError(err));
     res.sendStatus(500);
   }
 };
@@ -390,7 +391,7 @@ const sendMessage = (senderPsid, responseText, facebookApiKey) => {
       logger.info('fb_send_message_success', { senderPsid });
       resolve(response.data);
     }).catch(err => {
-      logger.error('fb_send_message_error', { err: err.response?.data || err.message });
+      logger.error('fb_send_message_error', describeGraphFailure(err));
       reject(err);
     });
   });
@@ -413,7 +414,7 @@ const replyToComment = (commentId, responseText, facebookApiKey) => {
       logger.info('fb_reply_comment_success', { commentId });
       resolve(response.data);
     }).catch(err => {
-      logger.error('fb_reply_comment_error', { err: err.response?.data || err.message });
+      logger.error('fb_reply_comment_error', describeGraphFailure(err));
       reject(err);
     });
   });
@@ -437,7 +438,7 @@ const sendPrivateReply = (commentId, responseText, facebookApiKey) => {
       logger.info('fb_send_private_reply_success', { commentId });
       resolve(response.data);
     }).catch(err => {
-      logger.error('fb_send_private_reply_error', { err: err.response?.data || err.message });
+      logger.error('fb_send_private_reply_error', describeGraphFailure(err));
       reject(err);
     });
   });

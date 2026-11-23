@@ -11,6 +11,7 @@ const { invalidateBotCache } = require('../botEngine');
 const AiTierEntitlement = require('../models/AiTierEntitlement');
 const AiUserOverride = require('../models/AiUserOverride');
 const AiModelCatalog = require('../models/AiModelCatalog');
+const { exchangeLongLivedToken } = require('../services/metaAppCredentials');
 const {
   createAiModelAccessService,
 } = require('../services/aiModelAccessService');
@@ -528,16 +529,16 @@ exports.linkSocialPage = async (req, res) => {
     if (facebookApiKey && facebookPageId) {
       platform = 'facebook';
       // طلب توكن طويل الأمد لفيسبوك
-      const response = await axios.get(
-        `https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=499020366015281&client_secret=${process.env.FACEBOOK_APP_SECRET}&fb_exchange_token=${facebookApiKey}`
-      );
-
-      if (!response.data.access_token) {
-        logger.warn('facebook_exchange_missing_token', { botId, response: redactSensitive(response.data) });
-        return res.status(400).json({ message: 'فشل في جلب توكن طويل الأمد: ' + (response.data.error?.message || 'غير معروف') });
+      try {
+        longLivedToken = await exchangeLongLivedToken(facebookApiKey, { graphVersion: '' }); // legacy unversioned endpoint preserved
+      } catch (exchangeErr) {
+        if (exchangeErr.code === 'META_APP_NOT_CONFIGURED') {
+          logger.error('facebook_exchange_app_not_configured', { botId, missing: exchangeErr.missing });
+          return res.status(503).json({ message: 'ربط فيسبوك غير مُعد على السيرفر' });
+        }
+        logger.warn('facebook_exchange_missing_token', { botId, response: redactSensitive(exchangeErr.response?.data || { message: exchangeErr.message }) });
+        return res.status(400).json({ message: 'فشل في جلب توكن طويل الأمد: ' + (exchangeErr.response?.data?.error?.message || 'غير معروف') });
       }
-
-      longLivedToken = response.data.access_token;
       pageId = facebookPageId;
 
       // تحديث البوت بالتوكن ومعرف الصفحة

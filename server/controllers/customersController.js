@@ -73,7 +73,7 @@ exports.lookupByPhone = async (req, res) => {
     if (!customer) return res.status(404).json({ message: 'لا يوجد عميل لهذا الرقم' });
     res.status(200).json(customer);
   } catch (err) {
-    logger.error('customer_lookup_phone_error', { storeId, phone, err: err.message, stack: err.stack });
+    logger.error('customer_lookup_phone_error', { storeId, err: err.message, stack: err.stack });
     res.status(500).json({ message: 'خطأ في البحث عن العميل' });
   }
 };
@@ -92,9 +92,9 @@ exports.upsertFromOrder = async ({ storeId, name, phone, email, address, orderTo
       updatedAt: now,
     };
     await Customer.updateOne({ storeId, phone }, update, { upsert: true });
-    logger.info('customer_upsert_from_order', { storeId, phone });
+    logger.info('customer_upsert_from_order', { storeId });
   } catch (err) {
-    logger.error('customer_upsert_from_order_error', { storeId, phone, err: err.message, stack: err.stack });
+    logger.error('customer_upsert_from_order_error', { storeId, err: err.message, stack: err.stack });
   }
 };
 
