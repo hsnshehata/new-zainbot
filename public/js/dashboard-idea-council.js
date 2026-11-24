@@ -47,7 +47,7 @@
 
     // Session-expiry behavior, verbatim from apiFetch (401 matrix: D02).
     function handleUnauthorized() {
-      try { localStorage.removeItem('token'); } catch (_ignored) { /* storage blocked */ }
+      try { localStorage.removeItem('token'); ['tokenExpiry', 'role', 'userId'].forEach((k) => localStorage.removeItem(k)); } catch (_ignored) { /* storage blocked */ }
       window.location.href = '/login';
     }
 

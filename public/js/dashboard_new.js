@@ -2445,7 +2445,7 @@
     });
 
     if (response.status === 401) {
-      localStorage.removeItem('token');
+      clearSessionKeys();
       window.location.href = '/login';
       return null;
     }
@@ -2457,13 +2457,17 @@
   // present (15s read timeout, 401-only session callback, no auto-retry);
   // falls back to apiFetch otherwise. Login redirect happens ONLY via the
   // 401 callback or a missing token — never on network/HTTP failures.
+  function clearSessionKeys() {
+    if (window.clearAuthSession) window.clearAuthSession();
+    else ['token', 'tokenExpiry', 'role', 'userId'].forEach((k) => localStorage.removeItem(k));
+  }
   function dashboardRequest(url, options, policy) {
     const core = window.ZainBotRequest;
     if (core && typeof core.requestJson === 'function') {
       return core.requestJson(url, options || {}, {
         operation: (policy && policy.operation) || 'read',
         timeoutMs: policy && policy.timeoutMs,
-        onUnauthorized: () => { window.location.href = '/login'; },
+        onUnauthorized: () => { clearSessionKeys(); window.location.href = '/login'; },
       });
     }
     return apiFetch(url, options);
@@ -3873,7 +3877,7 @@
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` }
     });
     if (response.status === 401) {
-      localStorage.removeItem('token');
+      clearSessionKeys();
       window.location.href = '/login';
       throw new Error('unauthorized');
     }
@@ -7652,7 +7656,7 @@
   };
 
   function logout() {
-    localStorage.removeItem('token');
+    clearSessionKeys();
     window.location.href = '/login';
   }
 

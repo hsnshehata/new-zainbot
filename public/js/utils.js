@@ -27,7 +27,7 @@ async function handleApiRequest(url, options, errorElement = null, errorMessageP
         if (typeof logoutUser === 'function') {
           logoutUser();
         } else {
-          localStorage.removeItem('token');
+          (window.clearAuthSession ? window.clearAuthSession() : ['token', 'tokenExpiry', 'role', 'userId'].forEach((k) => localStorage.removeItem(k)));
           window.location.href = '/login.html';
         }
       }
@@ -111,12 +111,26 @@ function saveAuthSession(session, ttlMs = DEFAULT_TOKEN_TTL_MS) {
   if (session.username) localStorage.setItem('username', session.username);
 }
 
+// Expiry (ms) read from the JWT payload; null when the token is not a readable JWT.
+function getJwtExpiryMs(token) {
+  try {
+    const part = String(token).split('.')[1];
+    if (!part) return null;
+    const json = atob(part.replace(/-/g, '+').replace(/_/g, '/'));
+    const payload = JSON.parse(json);
+    return payload && payload.exp ? payload.exp * 1000 : null;
+  } catch (_err) {
+    return null;
+  }
+}
+
 function getAuthToken() {
   const token = localStorage.getItem(TOKEN_KEY);
   if (!token) return null;
   const expiryRaw = localStorage.getItem(TOKEN_EXPIRY_KEY);
   const expiry = expiryRaw ? parseInt(expiryRaw, 10) : null;
-  if (expiry && Date.now() > expiry) {
+  const jwtExpiry = getJwtExpiryMs(token);
+  if ((expiry && Date.now() > expiry) || (jwtExpiry && Date.now() >= jwtExpiry)) {
     clearAuthSession();
     return null;
   }
@@ -146,5 +160,6 @@ window.escapeHtml = escapeHtml;
 
 window.saveAuthSession = saveAuthSession;
 window.getAuthToken = getAuthToken;
+window.getJwtExpiryMs = getJwtExpiryMs;
 window.clearAuthSession = clearAuthSession;
 window.ensureValidSession = ensureValidSession;

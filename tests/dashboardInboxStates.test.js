@@ -35,7 +35,7 @@ test('bootstrap redirects only on absent token or 401, else recovers with retry'
   const boot = sliceBetween('async function checkAuthAndLoad', 'async function loadBots');
   assert.match(boot, /dashboardRequest\('\/api\/users\/profile'\)/, 'profile uses the request core');
   assert.doesNotMatch(boot, /apiFetch\('\/api\/users\/profile'\)/);
-  assert.match(script, /onUnauthorized: \(\) => \{ window\.location\.href = '\/login'; \}/, '401-only session callback lives in the request helper');
+  assert.match(script, /onUnauthorized: \(\) => \{ clearSessionKeys\(\); window\.location\.href = '\/login'; \}/, '401-only session callback lives in the request helper');
   assert.equal(
     count(boot, "window.location.href = '/login'"),
     1,
