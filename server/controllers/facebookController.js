@@ -27,6 +27,11 @@ const handleMessage = async (req, res) => {
         continue;
       }
 
+      if (!require('../services/channelGuard').isBotAllowed(bot._id)) {
+        logger.warn('fb_channels_disabled', { botId: bot._id });
+        continue;
+      }
+
       if (!bot.isActive) {
         logger.warn('fb_bot_inactive', { botId: bot._id, name: bot.name });
         continue;

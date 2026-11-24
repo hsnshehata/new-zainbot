@@ -25,6 +25,7 @@ for (const filePath of testFiles) {
     env: {
       ...process.env,
       NODE_ENV: 'test',
+      CHANNELS_MODE: process.env.CHANNELS_MODE || 'on',
       JWT_SECRET: process.env.JWT_SECRET || 'test-only-secret-that-is-at-least-32-bytes-long',
     },
   });

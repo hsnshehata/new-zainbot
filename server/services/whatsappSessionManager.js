@@ -1,4 +1,5 @@
 const path = require('path');
+const channelGuard = require('./channelGuard');
 const mongoose = require('mongoose');
 const QRCode = require('qrcode');
 const { Client, RemoteAuth } = require('whatsapp-web.js');
@@ -436,6 +437,7 @@ function createWhatsAppSessionManager(options = {}) {
   }
 
   async function connect(input) {
+    channelGuard.assertBotAllowed(input.botId);
     const key = String(input.botId);
     if (!pendingStarts.has(key)) {
       pendingStarts.set(
@@ -514,6 +516,7 @@ function createWhatsAppSessionManager(options = {}) {
   }
 
   async function sendMessage(botId, chatId, text) {
+    channelGuard.assertBotAllowed(botId);
     const runtime = runtimes.get(String(botId));
     if (!runtime) {
       throw new WhatsAppSessionError(
@@ -545,6 +548,10 @@ function createWhatsAppSessionManager(options = {}) {
 
     const results = [];
     for (const connection of connections) {
+      if (!channelGuard.isBotAllowed(connection.botId)) {
+        results.push({ botId: String(connection.botId), restored: false, error: 'CHANNELS_DISABLED' });
+        continue;
+      }
       try {
         await connect({
           botId: connection.botId,

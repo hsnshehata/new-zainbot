@@ -774,6 +774,10 @@ async function startServer() {
 // set CRON_JOBS_ENABLED=false so no scheduled sends, recovery runs, or
 // subscription sweeps run against their database at all.
 function startBackgroundJobs() {
+  if (!require('./services/channelGuard').backgroundJobsAllowed()) {
+    logger.info('background_jobs_disabled', { reason: 'CHANNELS_MODE is not on' });
+    return false;
+  }
   if (String(process.env.CRON_JOBS_ENABLED || 'true').trim().toLowerCase() === 'false') {
     logger.info('background_jobs_disabled', { reason: 'CRON_JOBS_ENABLED=false' });
     return false;

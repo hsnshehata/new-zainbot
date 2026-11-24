@@ -100,6 +100,11 @@ const processWebhook = async (req, res) => {
           return res.sendStatus(200);
         }
 
+        if (!require('../services/channelGuard').isBotAllowed(bot._id)) {
+          logger.warn('whatsapp_channels_disabled', { botId: bot._id });
+          return res.sendStatus(200);
+        }
+
         // Align with facebookController: an inactive bot must not process
         // messages. Still ack 200 so Meta does not retry-deliver.
         if (!bot.isActive) {

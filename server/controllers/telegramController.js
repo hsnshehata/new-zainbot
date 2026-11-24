@@ -471,6 +471,15 @@ exports.unlink = async (req, res) => {
 
 exports.handleWebhook = async (req, res) => {
   try {
+    {
+      const guard = require('../services/channelGuard');
+      if (!guard.anyChannelsEnabled()) return res.status(200).json({ ok: true });
+      if (guard.mode() === 'allowlist') {
+        const chat = req.body?.message?.chat || req.body?.callback_query?.message?.chat;
+        const linked = chat ? await Bot.findOne({ telegramUserId: String(chat.id) }).select('_id') : null;
+        if (!linked || !guard.isBotAllowed(linked._id)) return res.status(200).json({ ok: true });
+      }
+    }
     const update = req.body;
     const callback = update?.callback_query;
     if (callback?.data) {

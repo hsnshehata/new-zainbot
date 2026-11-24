@@ -141,6 +141,11 @@ const handleMessage = async (req, res) => {
         continue;
       }
 
+      if (!require('../services/channelGuard').isBotAllowed(bot._id)) {
+        logger.warn('ig_channels_disabled', { botId: bot._id });
+        continue;
+      }
+
       const isTokenValid = await validateAccessToken(decryptChannelToken(bot.instagramApiKey));
       if (!isTokenValid) {
         logger.error('ig_bot_token_invalid', { botId: bot._id });
