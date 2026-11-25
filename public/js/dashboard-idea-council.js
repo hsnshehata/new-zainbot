@@ -11,8 +11,9 @@
   // Contract: window.ZainBotIdeaCouncil.create({ requestJson, fetchBlob,
   // getLanguage, t, feedback, a11y, onListReady })
   //   -> { init, load, dispose, refreshLanguage, ...transitional surface }.
-  // requestJson/t/getLanguage/fetchBlob are consumed; feedback is accepted
-  // + reserved (confirm/alert stay verbatim per D09-F4); a11y feeds the two
+  // requestJson/t/getLanguage/fetchBlob are consumed; feedback renders the
+  // list error state and retires the host loading note with a real error
+  // on list-API failure (confirm/alert stay verbatim per D09-F4); a11y feeds the two
   // E03-owned modals with live-DOM fallback. onListReady is an optional
   // host hook fired after a successful list paint so the host can retire
   // its own loading announcement (the global live region keeps the last
@@ -38,7 +39,6 @@
       throw new Error('[idea-council] create() requires fetchBlob(url, options, policy)');
     }
     const { feedback } = opts;
-    void feedback;
     // Explicit a11y dep (E01 primitive); live-DOM fallback keeps the two
     // E03-owned modals working exactly as before if not injected.
     const a11y = opts.a11y
@@ -1079,6 +1079,12 @@
     } catch (err) {
       console.error('Failed to load Idea Council list:', err);
       renderIdeaListError();
+      // The host loading note (feedback_loading in the shared live region)
+      // is only retired by onListReady on success — a list-API failure would
+      // leave "loading…" stuck, so replace it with the real error.
+      if (feedback && typeof feedback.notify === 'function') {
+        try { feedback.notify({ level: 'error', key: 'idea_list_error' }, (key) => t(key)); } catch (_notifyErr) { /* never break the list */ }
+      }
     }
   }
 

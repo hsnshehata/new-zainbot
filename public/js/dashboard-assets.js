@@ -8,7 +8,7 @@
 (function (global) {
   'use strict';
 
-  var VERSION = '20261121-assistant';
+  var VERSION = '20261125-council';
 
   // Static same-origin map. Versions bump here (F-owned) when a chunk changes;
   // the SW stays query-blind (one entry per path), so no SW edit is needed.

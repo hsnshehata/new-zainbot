@@ -59,3 +59,12 @@ test('chunk calls onListReady after successful list paint (guarded)', () => {
 test('host wires onListReady into create()', () => {
   assert.ok(/onListReady: \(\) => clearCouncilLiveNote\(\)/.test(dashboardSource), 'host passes the hook');
 });
+
+test('stale council load (user navigated away) retires the loading note', () => {
+  const hits = dashboardSource.match(/if \(!stillActive\(\)\) \{ clearCouncilLiveNote\(\); return; \}/g) || [];
+  assert.equal(hits.length, 2, 'both then() and catch() clear the note on stale runs, none stuck');
+});
+
+test('chunk list-API failure replaces the stuck loading note with a real error', () => {
+  assert.ok(/feedback\.notify\(\{ level: 'error', key: 'idea_list_error' \}/.test(chunkSource), 'catch notifies idea_list_error');
+});

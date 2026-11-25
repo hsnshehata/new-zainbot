@@ -7791,12 +7791,15 @@
     }
     if (!councilChunkReady) showCouncilLoading();
     window.ZainBotDashboardAssets.loadFeature('ideaCouncil').then(() => {
-      if (!stillActive()) return;
+      // Stale resolve (user left the tab mid-load): the loading note from
+      // showCouncilLoading() would otherwise stick in the shared live
+      // region forever — retire it, onListReady will never fire for this run.
+      if (!stillActive()) { clearCouncilLiveNote(); return; }
       councilChunkReady = true;
       ensureCouncilModule().init();
       ensureCouncilModule().load();
     }).catch(() => {
-      if (!stillActive()) return;
+      if (!stillActive()) { clearCouncilLiveNote(); return; }
       showCouncilLoadError(() => enterCouncilTab());
     });
   }
