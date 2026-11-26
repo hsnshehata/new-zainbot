@@ -33,9 +33,11 @@ function isChatCapableModelId(id) {
   // 'chat-latest' is the API alias for the current ChatGPT model; it does not
   // match the gpt-/chatgpt-/oN prefixes but is a valid chat model.
   if (lower === 'chat-latest') return true;
-  // Reasoning 'pro' variants (o3-pro, o3-pro-2025-..., ...) are not served on
-  // /v1/chat/completions; the API answers 404 'not a chat model'.
-  if (/^o\d+-pro/.test(lower)) return false;
+  // 'pro' reasoning variants (o3-pro, gpt-5-pro, gpt-5.5-pro, ...) and the
+  // gpt-live family are not served on /v1/chat/completions; the API answers
+  // 404 'not a chat model' / 'only supported in v1/responses' (verified live).
+  if (/-pro($|-)/.test(lower)) return false;
+  if (lower.startsWith('gpt-live')) return false;
   if (!/^(gpt-|chatgpt-|o\d)/.test(lower)) return false;
   return !NON_CHAT_MARKERS.some((marker) => lower.includes(marker));
 }
