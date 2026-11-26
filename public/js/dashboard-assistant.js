@@ -71,6 +71,41 @@
       meta.style.cssText = 'font-size:11px; color:var(--text-muted);';
       meta.textContent = isUser ? t('assistant_you') : t('assistant_name');
       row.appendChild(bubble);
+      if (opts.pendingAction && opts.pendingAction.id) {
+        const actionBar = global.document.createElement('div');
+        actionBar.style.cssText = 'display:flex; gap:8px; margin-top:4px;';
+        const confirmBtn = global.document.createElement('button');
+        confirmBtn.type = 'button';
+        confirmBtn.className = 'btn btn-primary btn-sm';
+        confirmBtn.style.cssText = 'padding:4px 12px; font-size:12px;';
+        confirmBtn.textContent = t('assistant_action_confirm');
+        const rejectBtn = global.document.createElement('button');
+        rejectBtn.type = 'button';
+        rejectBtn.className = 'btn btn-secondary btn-sm';
+        rejectBtn.style.cssText = 'padding:4px 12px; font-size:12px;';
+        rejectBtn.textContent = t('assistant_action_reject');
+        const decide = async (actionKind) => {
+          confirmBtn.disabled = true;
+          rejectBtn.disabled = true;
+          try {
+            const res = await requestJson(
+              '/api/assistant/actions/' + encodeURIComponent(opts.pendingAction.id) + '/' + actionKind,
+              { method: 'POST', body: JSON.stringify({}) },
+              { operation: 'mutation' }
+            );
+            if (res && res.message) {
+              renderMessage('assistant', res.message);
+            }
+          } catch (_err) {
+            notify('error', 'assistant_error');
+          }
+        };
+        confirmBtn.addEventListener('click', () => decide('confirm'));
+        rejectBtn.addEventListener('click', () => decide('reject'));
+        actionBar.appendChild(confirmBtn);
+        actionBar.appendChild(rejectBtn);
+        row.appendChild(actionBar);
+      }
       if (opts.fallbackBadge) {
         const badge = global.document.createElement('span');
         badge.style.cssText = 'font-size:10px; color:var(--orange,#f59e0b);';
@@ -234,7 +269,10 @@
         }, { operation: 'mutation' });
         if (data && data.reply) {
           activeConversationId = data.conversationId || activeConversationId;
-          renderMessage('assistant', data.reply, { fallbackBadge: Boolean(data.fallback) });
+          renderMessage('assistant', data.reply, {
+            fallbackBadge: Boolean(data.fallback),
+            pendingAction: data.pendingAction || null,
+          });
           loadConversations();
         } else {
           notify('error', 'assistant_error');

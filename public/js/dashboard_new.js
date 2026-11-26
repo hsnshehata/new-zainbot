@@ -1364,7 +1364,9 @@
       assistant_reminder_status_pending: 'Pending',
       assistant_reminder_status_sent: 'Sent',
       assistant_reminder_status_done: 'Done',
-      assistant_reminder_status_cancelled: 'Cancelled'
+      assistant_reminder_status_cancelled: 'Cancelled',
+      assistant_action_confirm: 'Confirm',
+      assistant_action_reject: 'Cancel'
     },
     ar: {
       menu_assistant: 'مساعد زين',
@@ -1394,6 +1396,8 @@
       assistant_reminder_status_sent: 'تم الإرسال',
       assistant_reminder_status_done: 'مكتمل',
       assistant_reminder_status_cancelled: 'ملغي',
+      assistant_action_confirm: 'تأكيد التنفيذ',
+      assistant_action_reject: 'إلغاء',
       menu_overview: 'نظرة عامة',
       menu_inbox: 'صندوق الوارد الموحد',
       inbox_select_chat: 'اختر محادثة',

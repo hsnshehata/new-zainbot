@@ -79,6 +79,7 @@ const {
   checkSubscriptionExpiringSoon,
   cleanupOldLogs,
   checkDueReminders,
+  checkExpiredAssistantActions,
 } = require('./cronJobs');
 const authenticate = require('./middleware/authenticate');
 const { loadAccessibleBot } = require('./middleware/botAccess');
@@ -803,6 +804,7 @@ function startBackgroundJobs() {
   checkSubscriptionExpiringSoon();
   cleanupOldLogs();
   checkDueReminders();
+  checkExpiredAssistantActions();
   startIdeaEvaluationWorker();
   startOrderOpsSweep();
   return true;

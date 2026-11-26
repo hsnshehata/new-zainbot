@@ -658,6 +658,25 @@ const checkDueReminders = () => {
   }, { timezone: 'Africa/Cairo' });
 };
 
+// انتهاء صلاحية إجراءات مساعد زين المعلّقة (كل 5 دقائق) وتسجيلها في سجل التدقيق.
+async function expireStaleAssistantActions({ now = new Date(), limit = 100 } = {}) {
+  const { expireStaleActions } = require('./services/assistantPendingActionService');
+  return expireStaleActions({ now, limit });
+}
+
+const checkExpiredAssistantActions = () => {
+  return cron.schedule('*/5 * * * *', async () => {
+    try {
+      const result = await expireStaleAssistantActions();
+      if (result.expired > 0) {
+        logger.info('⏰ Expired stale assistant pending actions.', result);
+      }
+    } catch (err) {
+      logger.error('❌ Error expiring stale assistant pending actions', { err: err.message });
+    }
+  }, { timezone: 'Africa/Cairo' });
+};
+
 module.exports = {
   checkAutoStopBots,
   refreshInstagramTokens,
@@ -670,5 +689,7 @@ module.exports = {
   runBotSalesRecovery,
   runBotDailySummary,
   checkDueReminders,
-  sendDueReminders
+  sendDueReminders,
+  expireStaleAssistantActions,
+  checkExpiredAssistantActions,
 };

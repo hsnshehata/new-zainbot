@@ -42,4 +42,8 @@ router.patch('/settings', assistantController.updateSettings);
 router.post('/whatsapp/link-code', assistantController.createWhatsappLinkCode);
 router.get('/audit', assistantController.listAudit);
 
+// Phase 3 Slice 2: Explicit confirmation / rejection endpoints for pending write actions
+router.post('/actions/:id/confirm', assistantController.confirmAction);
+router.post('/actions/:id/reject', assistantController.rejectAction);
+
 module.exports = router;

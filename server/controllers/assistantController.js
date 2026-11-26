@@ -41,6 +41,8 @@ const {
   isCopilotEnabled,
 } = require('../services/platformSettingsService');
 const { listMerchantAudits } = require('../services/assistantActionAuditService');
+const pendingActionService = require('../services/assistantPendingActionService');
+const assistantWriteTools = require('../services/assistantWriteTools');
 const {
   maskPhone,
   normalizePhoneToE164Digits,
@@ -108,11 +110,107 @@ function readMessage(body) {
   return message;
 }
 
+function detectMessageLanguage(text) {
+  return /[\u0600-\u06ff]/.test(String(text || '')) ? 'ar' : 'en';
+}
+
+function serializePendingAction(doc) {
+  if (!doc) return null;
+  return {
+    id: String(doc._id),
+    actionCode: doc.actionCode,
+    toolName: doc.toolName,
+    status: doc.status,
+    summaryText: doc.summaryText,
+    expiresAt: doc.expiresAt,
+  };
+}
+
+function buildWriteArgExtractionPrompt(toolName) {
+  if (toolName === 'create_order') {
+    return 'Extract a JSON object with keys: customerName (string), customerPhone (string), customerAddress (string), items (array of { title, quantity, price? }), deliveryFee (number, default 0), customerNote (string), botName (optional string). Return ONLY valid JSON. Omit unknown fields.';
+  }
+  if (toolName === 'update_inventory') {
+    return 'Extract a JSON object with keys: productName (string), operation ("set" | "increment" | "decrement"), value (integer >= 0). Return ONLY valid JSON. Omit unknown fields.';
+  }
+  if (toolName === 'message_customer') {
+    return 'Extract a JSON object with keys: customerName (optional string), customerPhone (optional string), text (exact message string to send to the customer). Return ONLY valid JSON. Omit unknown fields.';
+  }
+  return 'Return ONLY a valid JSON object.';
+}
+
+async function extractWriteArgsWithOptionalAi({ userId, toolName, message, history }) {
+  const deterministic = assistantWriteTools.parseStructuredArgsDeterministically(toolName, message);
+  if (assistantWriteTools.validateArgs(toolName, deterministic).valid) {
+    return deterministic;
+  }
+
+  let keyAvailable = false;
+  try {
+    keyAvailable = await ownerHasAiKey({ userId });
+  } catch {
+    keyAvailable = false;
+  }
+  if (!keyAvailable) {
+    return deterministic;
+  }
+
+  try {
+    const bot = await findKeyBot(userId);
+    const trimmedHistory = (history || []).slice(-4);
+    const messages = [
+      { role: 'system', content: buildWriteArgExtractionPrompt(toolName) },
+      ...trimmedHistory,
+      { role: 'user', content: message },
+    ];
+    const response = await getAiCompletion(
+      {
+        messages,
+        max_tokens: 400,
+        response_format: { type: 'json_object' },
+      },
+      bot,
+      {
+        userId,
+        feature: 'assistant_write_tools',
+        stage: 'intent_extract',
+        useCase: 'assistant_write_tools',
+      }
+    );
+    const raw = response?.choices?.[0]?.message?.content?.trim() || '';
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return deterministic;
+    const parsed = JSON.parse(jsonMatch[0]);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return deterministic;
+    }
+    return { ...deterministic, ...parsed };
+  } catch (err) {
+    logger.warn('assistant_write_args_extract_failed', {
+      toolName,
+      err: err?.message || String(err),
+    });
+    return deterministic;
+  }
+}
+
+async function saveConversationTurn(conversation, userMessage, assistantReply) {
+  conversation.messages.push({ role: 'user', content: userMessage });
+  conversation.messages.push({ role: 'assistant', content: assistantReply });
+  if (conversation.messages.length > HISTORY_CAP) {
+    conversation.messages = conversation.messages.slice(-HISTORY_CAP);
+  }
+  conversation.updatedAt = new Date();
+  await conversation.save();
+}
+
 async function chat(req, res, next) {
   try {
     const userId = req.user.userId;
+    const actorUserId = req.user.actorUserId || userId;
     const message = readMessage(req.body);
     const conversationId = req.body?.conversationId;
+    const language = detectMessageLanguage(message);
 
     let conversation = null;
     if (conversationId) {
@@ -133,15 +231,141 @@ async function chat(req, res, next) {
     }
 
     const history = conversation.messages.map((turn) => ({ role: turn.role, content: turn.content }));
-    const result = await assistantService.answer({ userId, question: message, history });
+    const dbConnected = mongoose.connection && mongoose.connection.readyState === 1;
 
-    conversation.messages.push({ role: 'user', content: message });
-    conversation.messages.push({ role: 'assistant', content: result.answer });
-    if (conversation.messages.length > HISTORY_CAP) {
-      conversation.messages = conversation.messages.slice(-HISTORY_CAP);
+    // 1. Check active pending write action for this dashboard conversation (when DB is live)
+    if (dbConnected && conversationId) {
+      const { pendingAction, expiredAction } = await pendingActionService.findActivePendingAction({
+        merchantUserId: userId,
+        channel: 'dashboard_assistant',
+        conversationId: conversation._id,
+      });
+
+      if (expiredAction && !pendingAction) {
+        const parsedExpired = pendingActionService.parseDecisionMessage(message);
+        if (parsedExpired.decision === 'confirm') {
+          const expiredReply = 'انتهت صلاحية الإجراء المقترح (5 دقائق) ولم يُنفّذ شيء.';
+          await saveConversationTurn(conversation, message, expiredReply);
+          return res.json({
+            success: true,
+            conversationId: String(conversation._id),
+            reply: expiredReply,
+            usedTools: [expiredAction.toolName],
+            fallback: false,
+            language,
+            actionResult: { ok: false, status: 'expired', errorCode: 'PENDING_ACTION_EXPIRED' },
+          });
+        }
+      }
+
+      if (pendingAction) {
+        const parsed = pendingActionService.parseDecisionMessage(message, pendingAction.actionCode);
+        if (parsed.decision === 'confirm') {
+          const confirmed = await pendingActionService.confirmAction({
+            pendingActionId: pendingAction._id,
+            merchantUserId: userId,
+            actorUserId,
+            channel: 'dashboard_assistant',
+            actionCode: parsed.actionCode,
+          });
+          await saveConversationTurn(conversation, message, confirmed.message);
+          return res.json({
+            success: true,
+            conversationId: String(conversation._id),
+            reply: confirmed.message,
+            usedTools: [pendingAction.toolName],
+            fallback: false,
+            language,
+            actionResult: confirmed,
+          });
+        }
+
+        if (parsed.decision === 'reject') {
+          const rejected = await pendingActionService.rejectAction({
+            pendingActionId: pendingAction._id,
+            merchantUserId: userId,
+            actorUserId,
+            channel: 'dashboard_assistant',
+          });
+          await saveConversationTurn(conversation, message, rejected.message);
+          return res.json({
+            success: true,
+            conversationId: String(conversation._id),
+            reply: rejected.message,
+            usedTools: [pendingAction.toolName],
+            fallback: false,
+            language,
+            actionResult: rejected,
+          });
+        }
+
+        // Code mismatch or ambiguous text: neither execute nor cancel; re-show pending card
+        const remainingMinutes = Math.max(
+          1,
+          Math.ceil((new Date(pendingAction.expiresAt).getTime() - Date.now()) / 60000)
+        );
+        const prefix = parsed.decision === 'code_mismatch'
+          ? '⚠️ رمز التأكيد غير مطابق للإجراء المعلّق. لم يتم تنفيذ أو إلغاء أي شيء.\n\n'
+          : `⏳ يوجد إجراء معلّق بانتظار قرارك (المتبقي ~${remainingMinutes} دقيقة). لم يتم تنفيذه أو إلغاؤه:\n\n`;
+        const repromptReply = `${prefix}${pendingAction.summaryText}`;
+        await saveConversationTurn(conversation, message, repromptReply);
+        return res.json({
+          success: true,
+          conversationId: String(conversation._id),
+          reply: repromptReply,
+          usedTools: [pendingAction.toolName],
+          fallback: false,
+          language,
+          pendingAction: serializePendingAction(pendingAction),
+        });
+      }
     }
-    conversation.updatedAt = new Date();
-    await conversation.save();
+
+    // 2. Check for write-tool intent (explicit writeAction payload or natural-language trigger)
+    const explicitTool = req.body?.writeAction?.toolName;
+    const detectedTool = (explicitTool && assistantWriteTools.TOOL_NAMES.includes(explicitTool))
+      ? explicitTool
+      : assistantWriteTools.detectWriteToolIntent(message);
+
+    if (detectedTool) {
+      const candidateArgs = (req.body?.writeAction?.args && typeof req.body.writeAction.args === 'object')
+        ? req.body.writeAction.args
+        : await extractWriteArgsWithOptionalAi({
+          userId,
+          toolName: detectedTool,
+          message,
+          history,
+        });
+
+      const proposed = await pendingActionService.proposeAction({
+        merchantUserId: userId,
+        actorUserId,
+        channel: 'dashboard_assistant',
+        toolName: detectedTool,
+        args: candidateArgs,
+        conversationId: conversation._id,
+      });
+
+      const replyText = proposed.ok ? proposed.summaryText : proposed.message;
+      await saveConversationTurn(conversation, message, replyText);
+
+      return res.json({
+        success: true,
+        conversationId: String(conversation._id),
+        reply: replyText,
+        usedTools: proposed.denied ? [] : [detectedTool],
+        fallback: Boolean(proposed.denied),
+        language,
+        pendingAction: proposed.ok ? serializePendingAction(proposed.pendingAction) : null,
+        writeToolDenied: Boolean(proposed.denied),
+        errorCode: proposed.ok ? undefined : proposed.errorCode,
+        candidates: proposed.candidates,
+      });
+    }
+
+    // 3. Read-only flow (completely unchanged when no write intent is detected)
+    const result = await assistantService.answer({ userId, question: message, history });
+    await saveConversationTurn(conversation, message, result.answer);
 
     return res.json({
       success: true,
@@ -150,6 +374,85 @@ async function chat(req, res, next) {
       usedTools: result.usedTools,
       fallback: result.fallback,
       language: result.language,
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function confirmAction(req, res, next) {
+  try {
+    const actionId = req.params.id;
+    if (!isValidObjectId(actionId)) {
+      throw new AppError('معرّف الإجراء غير صالح / Invalid action id', 400, 'AssistantActionInvalid');
+    }
+
+    const result = await pendingActionService.confirmAction({
+      pendingActionId: actionId,
+      merchantUserId: req.user.userId,
+      actorUserId: req.user.actorUserId || req.user.userId,
+      channel: 'dashboard_assistant',
+      actionCode: typeof req.body?.actionCode === 'string' ? req.body.actionCode : null,
+    });
+
+    if (result.ok) {
+      return res.json({
+        success: true,
+        status: result.status,
+        alreadyExecuted: Boolean(result.alreadyExecuted),
+        message: result.message,
+        executionResult: result.executionResult,
+        pendingAction: serializePendingAction(result.pendingAction),
+      });
+    }
+
+    let statusCode = 409;
+    if (result.status === 'not_found') statusCode = 404;
+    else if (result.status === 'code_mismatch') statusCode = 400;
+    else if (result.denied) statusCode = 403;
+    else if (result.status === 'failed' && result.errorCode !== 'CHANNELS_DISABLED') statusCode = 422;
+
+    return res.status(statusCode).json({
+      success: false,
+      status: result.status,
+      errorCode: result.errorCode,
+      message: result.message,
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function rejectAction(req, res, next) {
+  try {
+    const actionId = req.params.id;
+    if (!isValidObjectId(actionId)) {
+      throw new AppError('معرّف الإجراء غير صالح / Invalid action id', 400, 'AssistantActionInvalid');
+    }
+
+    const result = await pendingActionService.rejectAction({
+      pendingActionId: actionId,
+      merchantUserId: req.user.userId,
+      actorUserId: req.user.actorUserId || req.user.userId,
+      channel: 'dashboard_assistant',
+    });
+
+    if (result.ok) {
+      return res.json({
+        success: true,
+        status: result.status,
+        alreadyRejected: Boolean(result.alreadyRejected),
+        message: result.message,
+        pendingAction: serializePendingAction(result.pendingAction),
+      });
+    }
+
+    const statusCode = result.status === 'not_found' ? 404 : 409;
+    return res.status(statusCode).json({
+      success: false,
+      status: result.status,
+      errorCode: result.errorCode,
+      message: result.message,
     });
   } catch (error) {
     return next(error);
@@ -587,9 +890,12 @@ module.exports = {
   updateSettings,
   createWhatsappLinkCode,
   listAudit,
+  confirmAction,
+  rejectAction,
   _internals: {
     formatAssistantSettings,
     generateWhatsappLinkCode,
     hashWhatsappLinkCode,
+    serializePendingAction,
   },
 };
