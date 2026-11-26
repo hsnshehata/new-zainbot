@@ -7432,7 +7432,9 @@
     }
 
     if (phoneEl) {
-      phoneEl.textContent = data?.phone ? data.phone : '—';
+      // Never show a stale number: only a live connected session owns the phone.
+      const showPhone = data?.phone && data?.status === 'connected';
+      phoneEl.textContent = showPhone ? data.phone : '—';
     }
 
     if (healthEl) {

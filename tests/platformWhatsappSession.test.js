@@ -560,7 +560,8 @@ test('buildBrowserlessUrl and killOrphanedBrowserlessSession follow Gharam patte
   const parsed = new URL(wsEndpoint);
   assert.equal(parsed.hostname, '1.2.3.4');
   assert.equal(wsHeaders.Host, '1.2.3.4.sslip.io:3000');
-  assert.equal(parsed.searchParams.get('timeout'), '86400000');
+  // 10 min keep-alive: survives deploy restarts, self-cleans zombie browsers that otherwise conflict with fresh pairings.
+  assert.equal(parsed.searchParams.get('timeout'), '600000');
   const launch = JSON.parse(parsed.searchParams.get('launch'));
   assert.ok(launch.args.includes(`--user-data-dir=${BROWSERLESS_PROFILE_DIR}`));
   assert.ok(launch.args.includes('--no-sandbox'));

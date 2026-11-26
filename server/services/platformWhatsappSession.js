@@ -25,6 +25,7 @@ const EXPOSE_MAX_RETRIES = 3;
 const EXPOSE_RETRY_DELAY_MS = 2_000;
 const BROWSERLESS_COOLDOWN_MS = 3_000;
 const HEARTBEAT_INTERVAL_MS = 120_000;
+const QR_CHANNEL_MAX_AGE_MS = 20 * 60 * 1000;
 const HEARTBEAT_PROBE_TIMEOUT_MS = 8_000;
 const HEARTBEAT_RECONNECT_COOLDOWN_MS = 2 * 60 * 1000;
 const RECENT_MESSAGE_TTL_MS = 10 * 60 * 1000;
@@ -76,7 +77,7 @@ function buildBrowserlessUrl(browserlessUrlOverride) {
     ],
   };
   wsUrl.searchParams.append('launch', JSON.stringify(launchConfig));
-  wsUrl.searchParams.append('timeout', '86400000'); // 24 hours keep-alive
+  wsUrl.searchParams.append('timeout', '600000'); // 10 min keep-alive: long enough for restarts, short enough to self-clean zombies
 
   return { wsEndpoint: wsUrl.toString(), wsHeaders };
 }
@@ -104,13 +105,26 @@ async function killOrphanedBrowserlessSession(options = {}) {
     const sessions = response?.data;
 
     if (Array.isArray(sessions)) {
-      const sessionsToKill = sessions.filter((s) => (
-        (s.userDataDir && s.userDataDir.includes(BROWSERLESS_PROFILE_MATCH))
-        || (s.initialConnectURL && s.initialConnectURL.includes(BROWSERLESS_PROFILE_MATCH))
-      ));
+      const sessionsToKill = sessions.filter((s) => {
+        let decodedUrl = '';
+        try {
+          decodedUrl = s.initialConnectURL ? decodeURIComponent(s.initialConnectURL) : '';
+        } catch (_e) {
+          decodedUrl = s.initialConnectURL || '';
+        }
+        return (
+          (s.userDataDir && s.userDataDir.includes(BROWSERLESS_PROFILE_MATCH))
+          || (decodedUrl && decodedUrl.includes(BROWSERLESS_PROFILE_MATCH))
+        );
+      });
 
       const uniqueBrowserIds = [
-        ...new Set(sessionsToKill.map((s) => s.browserId).filter(Boolean)),
+        ...new Set(sessionsToKill.map((s) => {
+          if (s.browserId) return s.browserId;
+          const wsEp = s.browserWSEndpoint || '';
+          const m = wsEp.match(/\/devtools\/browser\/([a-f0-9-]+)/i);
+          return m ? m[1] : null;
+        }).filter(Boolean)),
       ];
 
       for (const browserId of uniqueBrowserIds) {
@@ -178,6 +192,7 @@ function createPlatformWhatsappSession(options = {}) {
   let reconnectAttempts = 0;
   let safetyTimer = null;
   let safetyRetryTimer = null;
+  let qrChannelTimer = null;
   let heartbeatInterval = null;
   const statusWaiters = new Set();
   const recentMessages = new Map();
@@ -197,6 +212,10 @@ function createPlatformWhatsappSession(options = {}) {
     if (safetyRetryTimer) {
       clearTimeout(safetyRetryTimer);
       safetyRetryTimer = null;
+    }
+    if (qrChannelTimer) {
+      clearTimeout(qrChannelTimer);
+      qrChannelTimer = null;
     }
   }
 
@@ -525,6 +544,39 @@ function createPlatformWhatsappSession(options = {}) {
         client = new ClientClass(clientOptions);
         activeClient = client;
 
+        // WA QR channels go stale: a scan on an old channel authenticates then
+        // gets force-logged-out. Recycle the client with a fresh channel if the
+        // QR sits unscanned for too long.
+        qrChannelTimer = setTimeout(() => {
+          qrChannelTimer = null;
+          if (manualDisconnect || activeClient !== client) return;
+          if (sessionBecameReady) return;
+          log.warn('platform_whatsapp_qr_channel_recycled', { sessionId });
+          (async () => {
+            if (activeClient === client) activeClient = null;
+            latestQrRaw = null;
+            latestQrDataUrl = null;
+            try {
+              await client.destroy();
+            } catch (_e) {
+              // Ignore destroy errors during channel recycle.
+            }
+            await updateSession({
+              status: 'loading',
+              qrCodeData: null,
+              connected: false,
+            }).catch(() => {});
+            notifyWaiters();
+            init(initOptions).catch((retryErr) => {
+              log.error('platform_whatsapp_qr_channel_recycle_failed', {
+                sessionId,
+                error: retryErr?.message || String(retryErr),
+              });
+            });
+          })();
+        }, QR_CHANNEL_MAX_AGE_MS);
+        qrChannelTimer.unref?.();
+
         installInjectPatch(client);
 
         let sessionBecameReady = false;
@@ -549,8 +601,15 @@ function createPlatformWhatsappSession(options = {}) {
           }
         });
 
+        let authenticatedHandled = false;
         client.on('authenticated', async () => {
-          log.info('platform_whatsapp_authenticated', { sessionId });
+          log.info('platform_whatsapp_authenticated', { sessionId, duplicate: authenticatedHandled });
+          if (qrChannelTimer) {
+            clearTimeout(qrChannelTimer);
+            qrChannelTimer = null;
+          }
+          if (authenticatedHandled) return;
+          authenticatedHandled = true;
           latestQrRaw = null;
           latestQrDataUrl = null;
           await updateSession({
@@ -562,6 +621,10 @@ function createPlatformWhatsappSession(options = {}) {
         });
 
         client.on('ready', async () => {
+          if (sessionBecameReady) {
+            log.info('platform_whatsapp_ready_duplicate_suppressed', { sessionId });
+            return;
+          }
           sessionBecameReady = true;
           clearSafetyTimers();
           clearReconnectState();
@@ -630,6 +693,8 @@ function createPlatformWhatsappSession(options = {}) {
             status: 'disconnected',
             qrCodeData: null,
             connected: false,
+            phone: '',
+            disconnectReason: reason || '',
             healthStatus: 'disconnected',
           }).catch(() => {});
           notifyWaiters();

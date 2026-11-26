@@ -729,11 +729,13 @@ function installFatalProcessHandlers() {
     process.exit(1);
   });
 
-  process.once('unhandledRejection', (reason) => {
+  process.on('unhandledRejection', (reason) => {
+    // Log and continue: transient rejections from browser/CDP clients (puppeteer,
+    // whatsapp-web.js destroy races) must not take down the whole server.
     logger.error('unhandled_rejection', {
       error: reason instanceof Error ? reason.message : String(reason),
+      stack: reason instanceof Error ? reason.stack : undefined,
     });
-    process.exit(1);
   });
 
   const gracefulShutdown = async (signal) => {
