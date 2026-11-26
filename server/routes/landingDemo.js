@@ -26,6 +26,21 @@ const MAX_HISTORY_MESSAGES = 10;
 const MAX_HISTORY_ITEM_LENGTH = 1000;
 const AI_TIMEOUT_MS = 25000;
 
+// Owner rule: the public demo agent must not answer programming/code or
+// other off-topic technical requests. Detected deterministically BEFORE any
+// paid completion or quota consumption; the system prompt also redirects.
+const OFF_TOPIC_TECH_PATTERN = /(برمج|بايثون|بيثون|جافا|اكواد|أكواد|كود\s+(برمجي|مصدري)|اكتب(لي)?\s+(كود|برنامج|سكريبت)|سوي(لي)?\s+(كود|برنامج)|python|javascript|typescript|\bjava\b|c\+\+|c#|\bsql\b|\bhtml\b|\bcss\b|\breact\b|node\.?js|debug|algorithm|compile|function\s*\(|write\s+(me\s+)?(a\s+)?(code|script|program)|code\s+(for|to)\s)/i;
+
+function isOffTopicTechRequest(text) {
+  return OFF_TOPIC_TECH_PATTERN.test(String(text || ''));
+}
+
+function offTopicRedirectMessage(lang) {
+  return lang === 'ar'
+    ? 'أنا المساعد التجريبي لمنصة زين بوت، فمش بقدر أساعد في الأكواد أو البرمجة. اسألني عن المنصة: المميزات، الأسعار، أو إزاي بتساعد التجار في البيع والمتابعة، ولو عجبتك تقدر تنشئ حساب مجاني من /register.'
+    : 'I am the ZainBot platform demo assistant, so I cannot help with code or programming. Ask me about the platform: features, pricing, or how it helps merchants sell and follow up, or create a free account at /register.';
+}
+
 // Cache the config document for one minute so every demo message does not hit
 // the database. Invalidated by the admin route when settings change.
 let configCache = null;
@@ -112,6 +127,7 @@ function buildSystemPrompt(customInstructions) {
     '- Reply in the same language the visitor writes in (Arabic or English). Keep replies warm, concise (2-6 sentences unless more detail is clearly needed), and professional.',
     '- You are not connected to any real store or customer data. Never invent order statuses, customer records, or private data. If asked for something only a real workspace could do, explain that in a real workspace the agent connects to the merchant\'s own data.',
     '- Never request or accept passwords, payment card numbers, or API keys. Politely refuse and redirect.',
+    '- You only discuss the ZainBot platform and its use for merchants. If the visitor asks about programming, code, homework, or any off-topic technical subject, politely decline in the visitor\'s language, say you are the ZainBot demo assistant, and redirect them to platform topics or /register.',
     '- When the visitor shows interest, encourage them to create a free workspace at /register (no credit card needed) or to start with the free plan.',
     '- Use at most one emoji per message, and only when it fits the tone.',
   ].join('\n');
@@ -156,6 +172,12 @@ router.post('/chat', async (req, res) => {
 
     const lang = req.body?.lang === 'ar' ? 'ar' : 'en';
     const history = sanitizeHistory(req.body?.history);
+
+    // Off-topic tech/code requests get a polite redirect before any paid
+    // completion or quota consumption (owner rule, fail-safe).
+    if (isOffTopicTechRequest(message)) {
+      return res.json({ success: true, reply: offTopicRedirectMessage(lang), redirected: true });
+    }
 
     const config = await getDemoConfig();
     if (!config.isEnabled) {
@@ -240,3 +262,5 @@ router.post('/chat', async (req, res) => {
 module.exports = router;
 module.exports.invalidateConfigCache = invalidateConfigCache;
 module.exports.tryConsumeDailyQuota = tryConsumeDailyQuota;
+module.exports.isOffTopicTechRequest = isOffTopicTechRequest;
+module.exports.offTopicRedirectMessage = offTopicRedirectMessage;
