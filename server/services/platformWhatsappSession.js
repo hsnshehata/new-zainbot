@@ -900,14 +900,21 @@ function createPlatformWhatsappSession(options = {}) {
   async function getStatus() {
     const doc = await SessionModel.findOne({ sessionId });
     const raw = doc?.toObject ? doc.toObject() : (doc || {});
-    const status = raw.status || 'disconnected';
-    const qrCodeData = latestQrDataUrl || raw.qrCodeData || null;
+    let status = raw.status || 'disconnected';
+    const live = Boolean(activeClient || pendingInit);
+    // After a crash/restart the doc can claim qr_ready/connected with no live
+    // client; normalize so the UI and route never act on a phantom session.
+    if (!live && status !== 'disconnected') {
+      status = 'disconnected';
+    }
+    const qrCodeData = (status === 'qr_ready') ? (latestQrDataUrl || raw.qrCodeData || null) : null;
     const hasQr = Boolean(qrCodeData);
 
     return {
       sessionId,
       status,
-      connected: Boolean(raw.connected && status === 'connected'),
+      connected: Boolean(raw.connected && status === 'connected' && Boolean(activeClient)),
+      live,
       phone: raw.phone || '',
       qrCodeData,
       hasQr,
@@ -1134,6 +1141,22 @@ function createPlatformWhatsappSession(options = {}) {
     }
   }
 
+  async function recoverAfterBoot() {
+    if (activeClient || pendingInit || manualDisconnect) return;
+    const doc = await SessionModel.findOne({ sessionId }).catch(() => null);
+    if (!doc) return;
+    const status = doc.status || 'disconnected';
+    if (status === 'disconnected') return;
+    log.info('platform_whatsapp_boot_recovery', { sessionId, status });
+    await killOrphanedBrowserlessSession({
+      browserlessUrl: options.browserlessUrl,
+      axiosInstance,
+      browserlessCooldownMs,
+      logger: log,
+    });
+    await init();
+  }
+
   async function shutdown() {
     stopWhatsAppHeartbeat();
     clearReconnectState();
@@ -1163,6 +1186,7 @@ function createPlatformWhatsappSession(options = {}) {
     checkSessionHealth,
     startWhatsAppHeartbeat,
     stopWhatsAppHeartbeat,
+    recoverAfterBoot,
     shutdown,
   };
 }
@@ -1171,6 +1195,17 @@ const defaultSession = createPlatformWhatsappSession();
 
 if (process.env.NODE_ENV !== 'test') {
   defaultSession.startWhatsAppHeartbeat();
+  // Recover sessions interrupted by a restart (crash mid-pairing or while
+  // connected). NoAuth + persistent profile restores valid pairings without a
+  // rescan; dead pairings fall back to a fresh QR.
+  const bootRecoverTimer = setTimeout(() => {
+    defaultSession.recoverAfterBoot().catch((err) => {
+      logger.error('platform_whatsapp_boot_recovery_failed', {
+        error: err?.message || String(err),
+      });
+    });
+  }, 5_000);
+  bootRecoverTimer.unref?.();
 }
 
 module.exports = {
@@ -1191,5 +1226,6 @@ module.exports = {
   checkSessionHealth: (...args) => defaultSession.checkSessionHealth(...args),
   startWhatsAppHeartbeat: (...args) => defaultSession.startWhatsAppHeartbeat(...args),
   stopWhatsAppHeartbeat: (...args) => defaultSession.stopWhatsAppHeartbeat(...args),
+  recoverAfterBoot: (...args) => defaultSession.recoverAfterBoot(...args),
   shutdown: (...args) => defaultSession.shutdown(...args),
 };
