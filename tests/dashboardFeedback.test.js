@@ -386,6 +386,57 @@ test('notify routes politely except errors, persists, never focuses', () => {
   delete global.document;
 });
 
+test('clearNotify is exported, safe before any notify, and needs no DOM', () => {
+  const mod = loadFresh();
+  assert.equal(typeof mod.clearNotify, 'function');
+  assert.doesNotThrow(() => mod.clearNotify());
+  assert.doesNotThrow(() => mod.clearNotify(['feedback_loading']));
+});
+
+test('clearNotify(matchKeys) stops refreshLanguage from re-posting retired loading note without touching tracked renders', () => {
+  const mod = loadFresh();
+  const doc = makeDocument();
+  global.document = doc;
+  const box = doc.createElement('section');
+  mod.renderState(box, { phase: 'empty', key: 'orders_empty' }, { t: makeT('en', DICT) });
+  mod.notify({ level: 'info', key: 'feedback_loading' }, makeT('en', DICT));
+  const region = doc.getElementById('feedbackLiveRegion');
+  assert.equal(region.textContent, 'Loading…');
+  region.textContent = '';
+  mod.clearNotify(['feedback_loading']);
+  mod.refreshLanguage(makeT('ar', DICT));
+  assert.equal(region.textContent, '', 'retired loading notification must not reappear after language switch');
+  assert.equal(findByRole(box, 'status').textContent, 'لا توجد طلبات بعد.', 'tracked renders still update on language switch');
+  delete global.document;
+});
+
+test('clearNotify(matchKeys) is key-scoped and preserves unrelated lastNotify', () => {
+  const mod = loadFresh();
+  const doc = makeDocument();
+  global.document = doc;
+  mod.notify({ level: 'error', key: 'orders_failed' }, makeT('en', DICT));
+  const region = doc.getElementById('feedbackLiveRegion');
+  assert.equal(region.textContent, 'Could not load orders.');
+  mod.clearNotify(['feedback_loading', 'lazy_load_failed']);
+  mod.refreshLanguage(makeT('ar', DICT));
+  assert.equal(region.getAttribute('role'), 'alert');
+  assert.equal(region.textContent, 'تعذر تحميل الطلبات.');
+  delete global.document;
+});
+
+test('clearNotify() without matchKeys clears lastNotify unconditionally', () => {
+  const mod = loadFresh();
+  const doc = makeDocument();
+  global.document = doc;
+  mod.notify({ level: 'error', key: 'orders_failed' }, makeT('en', DICT));
+  const region = doc.getElementById('feedbackLiveRegion');
+  region.textContent = '';
+  mod.clearNotify();
+  mod.refreshLanguage(makeT('ar', DICT));
+  assert.equal(region.textContent, '');
+  delete global.document;
+});
+
 // ---------- withPending ----------
 
 test('withPending guards controls and restores original disabled states', async () => {

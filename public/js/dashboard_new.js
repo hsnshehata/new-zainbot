@@ -7762,8 +7762,10 @@
     function clearCouncilLiveNote() {
       try {
         const region = document.getElementById('feedbackLiveRegion');
-        if (!region) return;
-        if (shouldClearCouncilLiveNote(region.textContent)) region.textContent = '';
+        if (region && shouldClearCouncilLiveNote(region.textContent)) region.textContent = '';
+        if (window.ZainBotFeedback && typeof window.ZainBotFeedback.clearNotify === 'function') {
+          window.ZainBotFeedback.clearNotify(['feedback_loading', 'lazy_load_failed']);
+        }
       } catch (_ignored) { /* never break the list render */ }
     }
 

@@ -7,6 +7,7 @@
  *
  *   renderState(container, state, { t, onRetry?, retryKey?, colSpan? })
  *   notify({ level: 'success'|'info'|'error', key, params? }, t)
+ *   clearNotify(matchKeys?)
  *   withPending(key, controls, operation) -> Promise
  *   refreshLanguage(t)
  *
@@ -27,6 +28,11 @@
  *   disabled), on success, rejection, and synchronous throw alike.
  * - `refreshLanguage(t)` re-renders every tracked container and the last
  *   notification in place: no refetch, no state loss.
+ * - `clearNotify(matchKeys?)` clears the remembered last notification so
+ *   `refreshLanguage(t)` does not re-announce a retired transient note.
+ *   When `matchKeys` is an array, clears only if `lastNotify` exists and
+ *   `matchKeys` includes `lastNotify.key`; otherwise clears unconditionally.
+ *   Does not touch tracked containers.
  */
 
 var PHASES = ['loading', 'ready', 'empty', 'filtered-empty', 'error', 'stale', 'no-bot'];
@@ -213,6 +219,24 @@ function notify(payload, t) {
 }
 
 /**
+ * Clear the remembered last notification so a later refreshLanguage(t)
+ * will not re-announce a retired transient note. Does not touch tracked
+ * containers. If `matchKeys` is an array, only clears when `lastNotify`
+ * exists and `matchKeys` includes `lastNotify.key`; otherwise clears
+ * unconditionally.
+ */
+function clearNotify(matchKeys) {
+  if (!lastNotify) return;
+  if (Array.isArray(matchKeys)) {
+    if (matchKeys.indexOf(lastNotify.key) !== -1) {
+      lastNotify = null;
+    }
+    return;
+  }
+  lastNotify = null;
+}
+
+/**
  * Disable `controls` while `operation()` runs, then restore every control's
  * original disabled state (success, rejection, and sync throw alike).
  * `key` names the logical operation; it never skips or dedupes the run —
@@ -279,6 +303,7 @@ var ZainBotFeedback = {
   LIVE_REGION_ID: LIVE_REGION_ID,
   renderState: renderState,
   notify: notify,
+  clearNotify: clearNotify,
   withPending: withPending,
   refreshLanguage: refreshLanguage
 };
