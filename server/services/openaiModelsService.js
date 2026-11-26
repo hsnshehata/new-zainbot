@@ -30,6 +30,9 @@ let modelsCacheAt = 0;
 function isChatCapableModelId(id) {
   if (typeof id !== 'string' || !id) return false;
   const lower = id.toLowerCase();
+  // 'chat-latest' is the API alias for the current ChatGPT model; it does not
+  // match the gpt-/chatgpt-/oN prefixes but is a valid chat model.
+  if (lower === 'chat-latest') return true;
   if (!/^(gpt-|chatgpt-|o\d)/.test(lower)) return false;
   return !NON_CHAT_MARKERS.some((marker) => lower.includes(marker));
 }

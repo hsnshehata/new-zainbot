@@ -26,7 +26,7 @@ test.afterEach(() => {
 });
 
 test('isChatCapableModelId keeps chat/reasoning families and drops non-chat models', () => {
-  const keep = ['gpt-4o', 'gpt-4o-mini', 'gpt-4.1-2025-04-14', 'chatgpt-4o-latest', 'o3', 'o4-mini', 'gpt-5.1'];
+  const keep = ['gpt-4o', 'gpt-4o-mini', 'gpt-4.1-2025-04-14', 'chatgpt-4o-latest', 'o3', 'o4-mini', 'gpt-5.1', 'chat-latest', 'gpt-6.2-sol', 'gpt-6.1-terra', 'gpt-6-luna', 'gpt-6-astra'];
   for (const id of keep) {
     assert.equal(isChatCapableModelId(id), true, `expected keep: ${id}`);
   }
