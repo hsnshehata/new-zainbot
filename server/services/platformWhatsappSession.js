@@ -196,6 +196,19 @@ function createPlatformWhatsappSession(options = {}) {
   let heartbeatInterval = null;
   const statusWaiters = new Set();
   const recentMessages = new Map();
+  // Last reaction emoji per sender, so consecutive reactions never repeat.
+  // Small, capped, and reset with the process (variety, not history).
+  const lastReactionBySender = new Map();
+  const LAST_REACTION_MAX_SENDERS = 1000;
+
+  function rememberLastReaction(sender, emoji) {
+    if (!sender || !emoji) return;
+    if (lastReactionBySender.size >= LAST_REACTION_MAX_SENDERS) {
+      const oldest = lastReactionBySender.keys().next();
+      if (!oldest.done) lastReactionBySender.delete(oldest.value);
+    }
+    lastReactionBySender.set(sender, emoji);
+  }
 
   function notifyWaiters() {
     if (!statusWaiters.size) return;
@@ -304,14 +317,21 @@ function createPlatformWhatsappSession(options = {}) {
 
     // Best-effort native WhatsApp reaction when enabled on the bound platform bot.
     // The platform session reacts to every clean inbound message (always
-    // mode); complaint/anger signals still suppress the reaction inside
-    // pickReaction, and merchant sessions keep the category-only default.
-    const reactionEmoji = pickMessageReaction(messageText, { always: true });
+    // mode, rich meaning-based variety); complaint/anger signals still
+    // suppress the reaction inside pickReaction, merchant sessions keep the
+    // category-only default, and avoid keeps consecutive reactions to the
+    // same sender from repeating.
+    const reactionEmoji = pickMessageReaction(messageText, {
+      always: true,
+      avoid: lastReactionBySender.get(message.from),
+      rng: Math.random,
+    });
     if (reactionEmoji && typeof message.react === 'function') {
       try {
         const bot = await getBot(botId);
         if (bot?.agentTools?.whatsappReactionsTool?.enabled === true) {
           await message.react(reactionEmoji);
+          rememberLastReaction(message.from, reactionEmoji);
         }
       } catch (error) {
         log.warn('platform_whatsapp_message_reaction_failed', {

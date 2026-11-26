@@ -420,9 +420,9 @@ test('handleIncomingMessage skips react() for complaints, media-only, and duplic
 });
 
 test('pickReaction always mode reacts to every clean message, keeps category emojis, and still suppresses complaints', () => {
-  // Unknown clean text: null by default, neutral fallback in always mode.
+  // Price question: null by default, money reaction in always mode.
   assert.equal(pickReaction('عايز اعرف اسعار الباقات'), null);
-  assert.equal(pickReaction('عايز اعرف اسعار الباقات', { always: true }), REACTIONS.DEFAULT);
+  assert.equal(pickReaction('عايز اعرف اسعار الباقات', { always: true }), '💰');
 
   // Media-only placeholders: skipped by default, reacted in always mode.
   assert.equal(pickReaction('[صورة]'), null);
@@ -444,4 +444,41 @@ test('pickReaction always mode reacts to every clean message, keeps category emo
   // Empty input stays silent either way.
   assert.equal(pickReaction('', { always: true }), null);
   assert.equal(pickReaction('   ', { always: true }), null);
+});
+
+test('pickReaction always mode: rich meaning-based categories with deterministic pool heads', () => {
+  const cases = [
+    ['مبروك التخرج يا بطل', '🎉'],
+    ['هههههههه', '😂'],
+    ['ده نار بجد 🔥', '🔥'],
+    ['حبيبي يا بطل', '❤️'],
+    ['استنى ثانيه واحده', '⏳'],
+    ['ليه الرد اتاخر؟', '🤔'],
+    ['how much is the plan', '💰'],
+    ['well done everyone', '🎉'],
+  ];
+  for (const [text, expected] of cases) {
+    assert.equal(pickReaction(text, { always: true }), expected, `for "${text}"`);
+  }
+  // Without always (merchant path) none of the rich categories react.
+  for (const [text] of cases) {
+    assert.equal(pickReaction(text), null, `merchant path must stay narrow for "${text}"`);
+  }
+});
+
+test('pickReaction always mode: rng adds variety and avoid prevents back-to-back repeats', () => {
+  // rng pinned to the last pool element
+  const last = () => 0.9999;
+  assert.equal(pickReaction('شكرا', { always: true, rng: last }), '🌹');
+  assert.equal(pickReaction('تمام', { always: true, rng: last }), '🆗');
+
+  // avoid removes the previous emoji from the candidates
+  assert.equal(pickReaction('مرحبا', { always: true, avoid: '👋' }), '🌟');
+  assert.equal(pickReaction('مرحبا', { always: true, avoid: '👋', rng: () => 0 }), '🌟');
+
+  // avoid with a single-candidate pool still never returns the avoided emoji
+  assert.equal(pickReaction('هههه', { always: true, avoid: '😂', rng: () => 0 }), '🤣');
+
+  // rng = 0 keeps the deterministic head
+  assert.equal(pickReaction('بكام الاشتراك', { always: true, rng: () => 0 }), '💰');
 });

@@ -523,7 +523,8 @@ test('message reactions fire only when bound bot whatsappReactionsTool.enabled i
     reply: async () => {},
   });
   await flush();
-  assert.deepEqual(reactionsWhenEnabled, ['🙏']);
+  assert.equal(reactionsWhenEnabled.length, 1);
+  assert.ok(['🙏', '💐', '🌹'].includes(reactionsWhenEnabled[0]), `expected thanks pool, got ${reactionsWhenEnabled[0]}`);
 
   await service.disconnect();
 });
@@ -769,15 +770,26 @@ test('platform session reacts to every clean inbound message (always mode) but n
     reply: async () => {},
   });
 
-  // Category-less clean message gets the neutral default reaction
+  // Price question gets a money-pool reaction (rich mode)
   client.emit('message', makeMsg('msg-always-1', 'عايز اعرف اسعار الباقات عندكم'));
   await flush();
-  assert.deepEqual(reactions, ['👍']);
+  assert.equal(reactions.length, 1);
+  assert.ok(['💰', '🤑'].includes(reactions[0]), `expected money pool, got ${reactions[0]}`);
 
   // Complaint / anger still suppresses the reaction entirely
   client.emit('message', makeMsg('msg-always-2', 'عندي مشكلة كبيرة ومحتاج استرجاع'));
   await flush();
-  assert.deepEqual(reactions, ['👍'], 'complaint must not be reacted to');
+  assert.equal(reactions.length, 1, 'complaint must not be reacted to');
+
+  // Consecutive reactions to the same sender never repeat
+  client.emit('message', makeMsg('msg-always-3', 'مرحبا'));
+  await flush();
+  client.emit('message', makeMsg('msg-always-4', 'اهلا وسهلا'));
+  await flush();
+  assert.equal(reactions.length, 3);
+  assert.ok(['👋', '🌟', '😊'].includes(reactions[1]));
+  assert.ok(['👋', '🌟', '😊'].includes(reactions[2]));
+  assert.notEqual(reactions[1], reactions[2], 'avoid must prevent repeating the previous reaction');
 
   await service.disconnect();
 });

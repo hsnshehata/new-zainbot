@@ -361,6 +361,161 @@ const GREETING_PHRASES = [
   'howdy',
 ];
 
+// Rich variety pools, used ONLY in always mode (the platform session).
+// The merchant path (always off) keeps the single deterministic emojis above.
+// First element of each pool is the deterministic default; opts.rng and
+// opts.avoid add variety so consecutive reactions never repeat.
+const RICH_POOLS = Object.freeze({
+  ORDER: ['✅', '🛒', '📦'],
+  THANKS: ['🙏', '💐', '🌹'],
+  ACK: ['👍', '👌', '🆗'],
+  GREETING: ['👋', '🌟', '😊'],
+  LAUGH: ['😂', '🤣'],
+  CELEBRATE: ['🎉', '🥳', '👏'],
+  LOVE: ['❤️', '😍', '🥰'],
+  FIRE: ['🔥', '🤩'],
+  WOW: ['😮', '🤯'],
+  MONEY: ['💰', '🤑'],
+  WAIT: ['⏳', '🕐'],
+  QUESTION: ['🤔', '👀'],
+  DEFAULT: ['👍', '👌', '🙌', '✨', '🙂'],
+});
+
+// Celebration / congrats (normalized)
+const CELEBRATE_PHRASES = [
+  'مبروك',
+  'الف مبروك',
+  'تهانينا',
+  'اتهنينا',
+  'congrats',
+  'congratulations',
+  'well done',
+  'proud of you',
+];
+
+// Affection / praise (normalized)
+const LOVE_PHRASES = [
+  'حبيبي',
+  'يا حبيبي',
+  'يا قلبي',
+  'عاش',
+  'تعيش',
+  'بحبك',
+  'بحبها',
+  'جميل جدا',
+  'love',
+  'love it',
+  'i love',
+];
+
+// Fire / impressive (normalized)
+const FIRE_PHRASES = [
+  'جامد',
+  'جامده',
+  'نار',
+  'علي نار',
+  'تحفه',
+  'روعه',
+  'فخم',
+  'فخمه',
+  'خرافي',
+  'خرافيه',
+  'أسطوري',
+  'اسطوري',
+  'fire',
+  'lit',
+  'dope',
+  'amazing',
+  'incredible',
+];
+
+// Surprise / disbelief (normalized)
+const WOW_PHRASES = [
+  'مش مصدق',
+  'لا ايه',
+  'ولا يومك',
+  'بجد',
+  'جدع',
+  'معقول',
+  'معقوله',
+  'wow',
+  'omg',
+  'no way',
+  'unbelievable',
+  'really',
+];
+
+// Price / cost questions (normalized)
+const MONEY_PHRASES = [
+  'بكام',
+  'بكام ده',
+  'سعر',
+  'اسعار',
+  'السعر',
+  'الاسعار',
+  'التكلفه',
+  'تكلفه',
+  'فلوس',
+  'بفلوس',
+  'الاشتراك',
+  'باقات',
+  'الباقات',
+  'price',
+  'prices',
+  'pricing',
+  'cost',
+  'how much',
+];
+
+// Wait / hold on (normalized)
+const WAIT_PHRASES = [
+  'استنى',
+  'استني',
+  'استنا',
+  'اصبر',
+  'لحظه',
+  'لحظه واحده',
+  'ثانيه',
+  'ثانيه واحده',
+  'دقيقه',
+  'دقيقه واحده',
+  'واحده',
+  'wait',
+  'one sec',
+  'one second',
+  'hold on',
+  'just a moment',
+];
+
+// Question openers (normalized, word-boundary matched)
+const QUESTION_PHRASES = [
+  'هل',
+  'ليه',
+  'لي',
+  'ازاي',
+  'ازي',
+  'امتى',
+  'فين',
+  'ايه',
+  'ايه رايك',
+  'مين',
+  'كام',
+  'ممكن',
+  'ينفع',
+  'what',
+  'why',
+  'how',
+  'when',
+  'where',
+  'which',
+  'can i',
+  'could you',
+  'is it',
+  'are you',
+  'do you',
+  'does it',
+];
+
 function normalizeText(text) {
   return text
     .trim()
@@ -401,15 +556,46 @@ function matchesAnyPhrase(padded, phrases) {
   return false;
 }
 
+// Laughter is checked on the RAW text: normalization collapses repeated
+// letters (هههه -> ه), so a normalized check can never match.
+function hasLaughter(rawText) {
+  return /(هه|خخ|😂|🤣|haha|hehe|lol|lmao|xd)/i.test(rawText);
+}
+
+// Pick one emoji from a pool: deterministic first element by default, random
+// when opts.rng is supplied, and never opts.avoid unless the pool has no
+// alternative (so consecutive reactions to the same sender do not repeat).
+function pickFromPool(pool, opts) {
+  if (!Array.isArray(pool) || pool.length === 0) return null;
+  const avoid = typeof opts?.avoid === 'string' ? opts.avoid : null;
+  let candidates = pool;
+  if (avoid && pool.length > 1) {
+    const filtered = pool.filter((emoji) => emoji !== avoid);
+    if (filtered.length > 0) candidates = filtered;
+  }
+  const rng = typeof opts?.rng === 'function' ? opts.rng : null;
+  const idx = rng ? Math.floor(rng() * candidates.length) % candidates.length : 0;
+  return candidates[idx];
+}
+
+function isQuestion(rawTrimmed, padded) {
+  if (/[?؟]\s*$/.test(rawTrimmed)) return true;
+  return matchesAnyPhrase(padded, QUESTION_PHRASES);
+}
+
 /**
  * Deterministically picks an emoji reaction for an inbound customer message,
  * or returns null when no reaction is appropriate.
  *
  * @param {string} text - Inbound message text.
- * @param {{ maxLength?: number, always?: boolean }} [opts] - Classifier
- *   overrides. `always: true` returns the neutral DEFAULT reaction for any
- *   clean message that matches no category; negative/complaint signals still
- *   suppress all reactions either way.
+ * @param {{ maxLength?: number, always?: boolean, avoid?: string, rng?: Function }} [opts]
+ *   - `always: true` (platform session) enables the rich meaning-based pools
+ *     and reacts to any clean message; negative/complaint signals still
+ *     suppress all reactions either way.
+ *   - `avoid` (always mode): an emoji not to pick, used to avoid repeating
+ *     the previous reaction to the same sender.
+ *   - `rng` (always mode): injectable randomness for pool variety; without
+ *     it the first pool element is picked deterministically.
  * @returns {string|null}
  */
 function pickReaction(text, opts = {}) {
@@ -435,29 +621,68 @@ function pickReaction(text, opts = {}) {
     return null;
   }
 
+  if (!always) {
+    // Merchant path: original four categories, single deterministic emojis.
+    if (matchesAnyPhrase(padded, ORDER_BOOKING_PHRASES)) {
+      return REACTIONS.ORDER;
+    }
+    if (matchesAnyPhrase(padded, THANKS_PHRASES)) {
+      return REACTIONS.THANKS;
+    }
+    if (matchesAnyPhrase(padded, ACK_PHRASES)) {
+      return REACTIONS.ACK;
+    }
+    if (matchesAnyPhrase(padded, GREETING_PHRASES)) {
+      return REACTIONS.GREETING;
+    }
+    return null;
+  }
+
+  // Always mode (platform session): rich, meaning-based variety.
+  if (hasLaughter(trimmed)) {
+    return pickFromPool(RICH_POOLS.LAUGH, opts);
+  }
+  if (matchesAnyPhrase(padded, CELEBRATE_PHRASES)) {
+    return pickFromPool(RICH_POOLS.CELEBRATE, opts);
+  }
   if (matchesAnyPhrase(padded, ORDER_BOOKING_PHRASES)) {
-    return REACTIONS.ORDER;
+    return pickFromPool(RICH_POOLS.ORDER, opts);
+  }
+  if (matchesAnyPhrase(padded, MONEY_PHRASES)) {
+    return pickFromPool(RICH_POOLS.MONEY, opts);
+  }
+  if (matchesAnyPhrase(padded, LOVE_PHRASES)) {
+    return pickFromPool(RICH_POOLS.LOVE, opts);
   }
   if (matchesAnyPhrase(padded, THANKS_PHRASES)) {
-    return REACTIONS.THANKS;
+    return pickFromPool(RICH_POOLS.THANKS, opts);
+  }
+  if (matchesAnyPhrase(padded, FIRE_PHRASES)) {
+    return pickFromPool(RICH_POOLS.FIRE, opts);
+  }
+  if (matchesAnyPhrase(padded, WOW_PHRASES)) {
+    return pickFromPool(RICH_POOLS.WOW, opts);
+  }
+  if (matchesAnyPhrase(padded, WAIT_PHRASES)) {
+    return pickFromPool(RICH_POOLS.WAIT, opts);
   }
   if (matchesAnyPhrase(padded, ACK_PHRASES)) {
-    return REACTIONS.ACK;
+    return pickFromPool(RICH_POOLS.ACK, opts);
   }
   if (matchesAnyPhrase(padded, GREETING_PHRASES)) {
-    return REACTIONS.GREETING;
+    return pickFromPool(RICH_POOLS.GREETING, opts);
+  }
+  if (isQuestion(trimmed, padded)) {
+    return pickFromPool(RICH_POOLS.QUESTION, opts);
   }
 
-  if (always) {
-    return REACTIONS.DEFAULT;
-  }
-
-  return null;
+  return pickFromPool(RICH_POOLS.DEFAULT, opts);
 }
 
 module.exports = {
   DEFAULT_MAX_LENGTH,
   REACTIONS,
+  RICH_POOLS,
   normalizeText,
   pickReaction,
 };
