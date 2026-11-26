@@ -41,6 +41,8 @@ test('isChatCapableModelId keeps chat/reasoning families and drops non-chat mode
     'gpt-image-1',
     'omni-moderation-latest',
     'babbage-002',
+    'o3-pro',
+    'o3-pro-2025-06-10',
     'ft:gpt-4o-mini:org:custom:123',
     '',
     null,

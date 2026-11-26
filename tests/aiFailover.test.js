@@ -115,3 +115,18 @@ test('with no configured keys it fails fast before any provider call', async () 
   await assert.rejects(getAiCompletion(OPTIONS, null), /لا توجد مفاتيح تشغيل نشطة/);
   assert.equal(called, false);
 });
+
+test('adaptChatParamsForModel translates max_tokens only for families that require it', () => {
+  const { adaptChatParamsForModel } = require('../server/services/aiFailover');
+  const base = { model: 'x', messages: [], max_tokens: 100, response_format: null };
+  for (const id of ['gpt-6.2-sol', 'gpt-6.1-terra', 'gpt-6-astra', 'gpt-5.6-luna', 'o3', 'o4-mini', 'chat-latest', 'gpt-10-future']) {
+    const adapted = adaptChatParamsForModel(id, { ...base, model: id });
+    assert.equal(adapted.max_completion_tokens, 100, `expected translation for ${id}`);
+    assert.equal('max_tokens' in adapted, false, `max_tokens must be dropped for ${id}`);
+  }
+  for (const id of ['gpt-4o-mini', 'gpt-4.1-mini', 'gpt-4.1-nano-2025-04-14', 'chatgpt-4o-latest']) {
+    const adapted = adaptChatParamsForModel(id, { ...base, model: id });
+    assert.equal(adapted.max_tokens, 100, `legacy param must stay for ${id}`);
+    assert.equal('max_completion_tokens' in adapted, false, `no new param for ${id}`);
+  }
+});

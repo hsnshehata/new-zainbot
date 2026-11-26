@@ -46,14 +46,30 @@ const autoOrchestrator = createAiCompletionOrchestrator({
       );
     }
     const client = getClient(normalizedProvider, apiKey, baseUrl);
-    return client.chat.completions.create({
+    return client.chat.completions.create(adaptChatParamsForModel(modelId, {
       model: modelId,
       messages: options.messages,
       max_tokens: options.max_tokens,
       response_format: options.response_format
-    });
+    }));
   },
 });
+
+// Newer OpenAI families (o-series reasoning models, gpt-5+, gpt-6+, and the
+// chat-latest alias) reject the legacy max_tokens parameter with a 400
+// ('Unsupported parameter: max_tokens ... Use max_completion_tokens'). Older
+// chat models (gpt-4o, gpt-4.1, chatgpt-4o-latest) still accept max_tokens, so
+// the param is translated only for the families that require it.
+const REQUIRES_MAX_COMPLETION_TOKENS = /^(o\d|chat-latest|gpt-([5-9]|[1-9]\d))/;
+
+function adaptChatParamsForModel(model, params) {
+  const modelId = String(model || '').toLowerCase();
+  if (params && params.max_tokens != null && REQUIRES_MAX_COMPLETION_TOKENS.test(modelId)) {
+    const { max_tokens, ...rest } = params;
+    return { ...rest, max_completion_tokens: max_tokens };
+  }
+  return params;
+}
 
 // Cache helper to store clients and save overhead
 const clientCache = {};
@@ -160,12 +176,12 @@ async function getAiCompletion(options, bot = null, useBackup = false) {
           response = await callAnthropicDirect(keyToUse, modelToUse, options.messages, options.max_tokens, options.response_format);
         } else {
           const client = getClient(providerToUse, keyToUse, baseUrlToUse);
-          response = await client.chat.completions.create({
+          response = await client.chat.completions.create(adaptChatParamsForModel(modelToUse || options.model || 'gpt-4o-mini', {
             model: modelToUse || options.model || 'gpt-4o-mini',
             messages: options.messages,
             max_tokens: options.max_tokens,
             response_format: options.response_format
-          });
+          }));
         }
         recordLegacyUsage({
           requestId,
@@ -252,12 +268,12 @@ async function getAiCompletion(options, bot = null, useBackup = false) {
         );
       } else {
         const client = getClient(keyDoc.provider, keyDoc.apiKey, keyDoc.baseUrl);
-        response = await client.chat.completions.create({
+        response = await client.chat.completions.create(adaptChatParamsForModel(keyDoc.defaultModel || options.model || 'gpt-4o-mini', {
           model: keyDoc.defaultModel || options.model || 'gpt-4o-mini',
           messages: options.messages,
           max_tokens: options.max_tokens,
           response_format: options.response_format
-        });
+        }));
       }
 
       await keyDoc.markSuccess();
@@ -357,5 +373,6 @@ async function recordLegacyUsage({ requestId, bot, keyDoc, options, response, at
 }
 
 module.exports = {
-  getAiCompletion
+  getAiCompletion,
+  adaptChatParamsForModel,
 };
