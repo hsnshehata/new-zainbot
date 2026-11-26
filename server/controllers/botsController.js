@@ -424,6 +424,7 @@ exports.deleteBot = async (req, res) => {
     bot.isActive = false;
     bot.archivedAt = new Date();
     await bot.save();
+    invalidateBotCache(bot._id);
     logger.info('bot_archived', {
       botId: req.params.id,
       actorUserId: req.auth.actorUserId,

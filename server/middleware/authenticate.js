@@ -55,6 +55,8 @@ module.exports = async function authenticate(req, res, next) {
         role: validated.subject.role,
         username: validated.subject.username,
         sessionVersion: Number(validated.subject.sessionVersion || 0),
+        subscriptionTier: validated.subject.subscriptionTier || 'free',
+        subscriptionType: validated.subject.subscriptionType || 'free',
       };
       req.auth = {
         actorUserId,
@@ -71,7 +73,7 @@ module.exports = async function authenticate(req, res, next) {
 
     const userId = decoded.sub || decoded.userId;
     const user = await User.findById(userId)
-      .select('_id username role status isVerified +sessionVersion')
+      .select('_id username role status isVerified subscriptionTier subscriptionType +sessionVersion')
       .lean();
 
     if (!user || user.status === 'deleted') {
@@ -103,6 +105,8 @@ module.exports = async function authenticate(req, res, next) {
       role: user.role,
       username: user.username,
       sessionVersion: Number(user.sessionVersion || 0),
+      subscriptionTier: user.subscriptionTier || 'free',
+      subscriptionType: user.subscriptionType || 'free',
     };
 
     req.user = normalizedUser;

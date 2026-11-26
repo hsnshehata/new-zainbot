@@ -111,7 +111,7 @@ function createImpersonationService(options = {}) {
   async function findUser(userId) {
     let query = UserModel.findById(userId);
     if (query && typeof query.select === 'function') {
-      query = query.select('_id username role status +sessionVersion');
+      query = query.select('_id username role status subscriptionTier subscriptionType +sessionVersion');
     }
     if (query && typeof query.lean === 'function') {
       query = query.lean();

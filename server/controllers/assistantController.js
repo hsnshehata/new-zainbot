@@ -20,6 +20,8 @@ const Booking = require('../models/Booking');
 const Product = require('../models/Product');
 const Customer = require('../models/Customer');
 const Conversation = require('../models/Conversation');
+const AiCredential = require('../models/AiCredential');
+const ProviderKey = require('../models/ProviderKey');
 const AppError = require('../utils/appError');
 const logger = require('../logger');
 const { createAssistantService } = require('../services/assistantService');
@@ -32,7 +34,7 @@ const MAX_REMINDER_LENGTH = 500;
 const HISTORY_CAP = 40;
 const MAX_REMINDERS_PER_USER = 100;
 
-const keyResolver = createAiKeyResolver({});
+const keyResolver = createAiKeyResolver({ AiCredential, ProviderKey });
 
 const dataTools = createAssistantDataTools({
   models: { Sale, Expense, Order, ChatOrder, Booking, Product, Customer, Conversation, Bot, Store },

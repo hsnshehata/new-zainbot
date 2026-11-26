@@ -277,7 +277,15 @@ async function createOrUpdateFromExtraction({
     }).sort({ createdAt: -1 });
   }
 
-  if (!existingBooking && customerPhone) {
+  if (!existingBooking && sourceUserId && channel === 'web') {
+    existingBooking = await Booking.findOne({
+      botId,
+      sourceUserId,
+      status: { $in: ['pending', 'confirmed', 'rescheduled'] },
+    }).sort({ createdAt: -1 });
+  }
+
+  if (!existingBooking && customerPhone && channel !== 'web') {
     existingBooking = await Booking.findOne({
       botId,
       customerPhone,

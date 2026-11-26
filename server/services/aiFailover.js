@@ -10,13 +10,19 @@ const AiTierEntitlement = require('../models/AiTierEntitlement');
 const AiUserOverride = require('../models/AiUserOverride');
 const AiModelCatalog = require('../models/AiModelCatalog');
 const AiCredential = require('../models/AiCredential');
+const ProviderKey = require('../models/ProviderKey');
 const AiUsageEvent = require('../models/AiUsageEvent');
-const { createAiKeyResolver } = require('./aiKeyResolver');
+const aiKeyResolverModule = require('./aiKeyResolver');
+const { createAiKeyResolver } = aiKeyResolverModule;
+const normalizeProvider = aiKeyResolverModule.normalizeProvider || ((provider) => {
+  const value = String(provider || '').toLowerCase();
+  return value === 'google' ? 'gemini' : value;
+});
 const {
   createAiCompletionOrchestrator,
 } = require('./aiCompletionOrchestrator');
 
-const keyResolver = createAiKeyResolver({});
+const keyResolver = createAiKeyResolver({ AiCredential, ProviderKey });
 
 const autoOrchestrator = createAiCompletionOrchestrator({
   models: {
@@ -29,7 +35,8 @@ const autoOrchestrator = createAiCompletionOrchestrator({
   },
   userLoader: (userId) => User.findById(userId).select('subscriptionTier').lean(),
   sendCompletion: async ({ provider, apiKey, baseUrl, modelId, options }) => {
-    if (provider === 'anthropic') {
+    const normalizedProvider = normalizeProvider(provider);
+    if (normalizedProvider === 'anthropic') {
       return callAnthropicDirect(
         apiKey,
         modelId,
@@ -38,7 +45,7 @@ const autoOrchestrator = createAiCompletionOrchestrator({
         options.response_format
       );
     }
-    const client = getClient(provider, apiKey, baseUrl);
+    const client = getClient(normalizedProvider, apiKey, baseUrl);
     return client.chat.completions.create({
       model: modelId,
       messages: options.messages,
@@ -52,26 +59,27 @@ const autoOrchestrator = createAiCompletionOrchestrator({
 const clientCache = {};
 
 function getClient(provider, apiKey, baseUrl) {
-  const cacheKey = `${provider}_${apiKey}_${baseUrl || ''}`;
+  const normalizedProvider = normalizeProvider(provider);
+  const cacheKey = `${normalizedProvider}_${apiKey}_${baseUrl || ''}`;
   if (clientCache[cacheKey]) {
     return clientCache[cacheKey];
   }
 
   let client;
-  if (provider === 'openai') {
+  if (normalizedProvider === 'openai') {
     client = new OpenAI({ apiKey });
-  } else if (provider === 'gemini') {
+  } else if (normalizedProvider === 'gemini') {
     // Gemini supports OpenAI compatibility endpoint
     client = new OpenAI({
       apiKey,
       baseURL: baseUrl || 'https://generativelanguage.googleapis.com/v1beta/openai/'
     });
-  } else if (provider === 'openrouter') {
+  } else if (normalizedProvider === 'openrouter') {
     client = new OpenAI({
       apiKey,
       baseURL: baseUrl || 'https://openrouter.ai/api/v1'
     });
-  } else if (provider === 'custom') {
+  } else if (normalizedProvider === 'custom') {
     client = new OpenAI({
       apiKey,
       baseURL: baseUrl
@@ -148,7 +156,7 @@ async function getAiCompletion(options, bot = null, useBackup = false) {
       const usageKeyDoc = { provider: providerToUse, defaultModel: modelToUse };
       try {
         let response;
-        if (providerToUse === 'anthropic') {
+        if (normalizeProvider(providerToUse) === 'anthropic') {
           response = await callAnthropicDirect(keyToUse, modelToUse, options.messages, options.max_tokens, options.response_format);
         } else {
           const client = getClient(providerToUse, keyToUse, baseUrlToUse);
@@ -234,7 +242,7 @@ async function getAiCompletion(options, bot = null, useBackup = false) {
       logger.info(`🤖 Attempting completion using ${keyDoc.source} key: ${keyDoc.name} (${keyDoc.provider})`);
       let response;
 
-      if (keyDoc.provider === 'anthropic') {
+      if (normalizeProvider(keyDoc.provider) === 'anthropic') {
         response = await callAnthropicDirect(
           keyDoc.apiKey,
           keyDoc.defaultModel || options.model,

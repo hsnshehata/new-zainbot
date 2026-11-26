@@ -146,6 +146,11 @@ const handleMessage = async (req, res) => {
         continue;
       }
 
+      if (bot.isActive === false || bot.archivedAt) {
+        logger.warn('ig_bot_inactive', { botId: bot._id, name: bot.name });
+        continue;
+      }
+
       const isTokenValid = await validateAccessToken(decryptChannelToken(bot.instagramApiKey));
       if (!isTokenValid) {
         logger.error('ig_bot_token_invalid', { botId: bot._id });
@@ -224,9 +229,9 @@ const handleMessage = async (req, res) => {
           }
 
           logger.info('ig_add_label', { userId: prefixedSenderId });
-          conversation.labels = conversation.labels || [];
-          if (!conversation.labels.includes('new_message')) {
-            conversation.labels.push('new_message');
+          conversation.labels = Array.isArray(conversation.labels) ? conversation.labels : [];
+          if (!conversation.labels.some((label) => label && label.name === 'new_message')) {
+            conversation.labels.push({ name: 'new_message', timestamp: new Date() });
             await conversation.save();
           }
 
@@ -373,9 +378,9 @@ const handleMessage = async (req, res) => {
             }
 
             logger.info('ig_comment_add_label', { userId: prefixedCommenterId });
-            conversation.labels = conversation.labels || [];
-            if (!conversation.labels.includes('new_comment')) {
-              conversation.labels.push('new_comment');
+            conversation.labels = Array.isArray(conversation.labels) ? conversation.labels : [];
+            if (!conversation.labels.some((label) => label && label.name === 'new_comment')) {
+              conversation.labels.push({ name: 'new_comment', timestamp: new Date() });
               await conversation.save();
             }
 

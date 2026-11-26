@@ -6,7 +6,12 @@ const FormData = require('form-data');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs').promises;
 const path = require('path');
+const dns = require('dns').promises;
+const net = require('net');
+const http = require('http');
+const https = require('https');
 const NodeCache = require('node-cache');
+const webhookUrlGuard = require('./services/webhookUrlGuard');
 const Bot = require('./models/Bot');
 const Rule = require('./models/Rule');
 const Conversation = require('./models/Conversation');
@@ -97,27 +102,168 @@ function getCurrentTime() {
   return new Date().toLocaleString('ar-EG', { timeZone: 'Africa/Cairo' });
 }
 
-// دالة لتحميل الصورة وتحويلها إلى base64
-const getMediaAuthHeader = (channel) => {
-  if (channel === 'whatsapp' && process.env.WHATSAPP_ACCESS_TOKEN) {
+// Only attach Meta/WhatsApp platform tokens when fetching over HTTPS from the
+// provider's own media CDN hosts. Never attach tokens on web or untrusted hosts.
+const WHATSAPP_MEDIA_HOSTS = ['graph.facebook.com', 'lookaside.fbsbx.com', 'fbsbx.com', 'mmg.whatsapp.net', 'whatsapp.net'];
+const META_MEDIA_HOSTS = ['graph.facebook.com', 'graph.instagram.com', 'lookaside.fbsbx.com', 'fbsbx.com', 'fbcdn.net', 'cdninstagram.com'];
+
+function hostMatchesAllowlist(hostname, allowlist) {
+  const host = String(hostname || '').toLowerCase().replace(/\.$/, '');
+  if (!host) return false;
+  return allowlist.some((allowed) => host === allowed || host.endsWith(`.${allowed}`));
+}
+
+const getMediaAuthHeader = (channel, mediaUrl) => {
+  if (typeof mediaUrl !== 'string' || !mediaUrl) return {};
+  let parsed;
+  try {
+    parsed = new URL(mediaUrl);
+  } catch {
+    return {};
+  }
+  if (parsed.protocol !== 'https:') return {};
+  const hostname = parsed.hostname.replace(/^\[|\]$/g, '');
+  if (channel === 'whatsapp' && process.env.WHATSAPP_ACCESS_TOKEN && hostMatchesAllowlist(hostname, WHATSAPP_MEDIA_HOSTS)) {
     return { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}` };
   }
-  if (process.env.FACEBOOK_ACCESS_TOKEN) {
+  if ((channel === 'facebook' || channel === 'instagram') && process.env.FACEBOOK_ACCESS_TOKEN && hostMatchesAllowlist(hostname, META_MEDIA_HOSTS)) {
     return { Authorization: `Bearer ${process.env.FACEBOOK_ACCESS_TOKEN}` };
   }
   return {};
 };
 
-async function fetchImageAsBase64(imageUrl, channel = 'web') {
+async function assertSafeMediaUrl(rawUrl, opts = {}) {
+  const resolve = opts.resolve || (async (hostname) => dns.lookup(hostname, { all: true, verbatim: true }));
+  const checkPrivateIp = typeof webhookUrlGuard?.isPrivateIp === 'function'
+    ? webhookUrlGuard.isPrivateIp
+    : () => true;
+
+  const fail = (message) => {
+    const err = new Error(message);
+    err.code = 'MEDIA_URL_BLOCKED';
+    throw err;
+  };
+
+  if (typeof rawUrl !== 'string' || rawUrl.length > 4096) {
+    fail('Media URL is invalid');
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    fail('Media URL is invalid');
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    fail('Media URL protocol is not allowed');
+  }
+
+  if (parsed.username || parsed.password) {
+    fail('Media URL credentials are not allowed');
+  }
+
+  const hostname = parsed.hostname.replace(/^\[|\]$/g, '').toLowerCase();
+  if (
+    !hostname ||
+    hostname === 'localhost' ||
+    hostname.endsWith('.localhost') ||
+    hostname.endsWith('.local') ||
+    hostname.endsWith('.internal')
+  ) {
+    fail('Media URL points to a blocked internal host');
+  }
+
+  if (net.isIP(hostname)) {
+    if (checkPrivateIp(hostname)) {
+      fail('Media URL points to a blocked private IP');
+    }
+    return { url: parsed, hostname, addresses: null };
+  }
+
+  let addresses;
+  try {
+    addresses = await resolve(hostname);
+  } catch {
+    fail('Media URL hostname could not be resolved');
+  }
+  if (!Array.isArray(addresses) || addresses.length === 0) {
+    fail('Media URL hostname could not be resolved');
+  }
+  for (const entry of addresses) {
+    if (checkPrivateIp(entry.address)) {
+      fail('Media URL resolves to a blocked private IP');
+    }
+  }
+  return { url: parsed, hostname, addresses };
+}
+
+function buildPinnedMediaAgent(protocol, hostname, addresses) {
+  const AgentCtor = protocol === 'http:' ? http.Agent : https.Agent;
+  if (!addresses) {
+    return new AgentCtor();
+  }
+  const vetted = addresses.map((a) => ({
+    address: a.address,
+    family: a.family || (net.isIPv6(a.address) ? 6 : 4),
+  }));
+  let cursor = 0;
+  const lookup = (requestedHostname, _options, callback) => {
+    if (String(requestedHostname || '').toLowerCase() !== hostname) {
+      return callback(new Error('mediaUrlGuard: unexpected hostname'));
+    }
+    const chosen = vetted[cursor % vetted.length];
+    cursor += 1;
+    callback(null, chosen.address, chosen.family);
+  };
+  return new AgentCtor({ lookup });
+}
+
+async function fetchSafeMedia(rawUrl, channel = 'web', extraHeaders = {}, opts = {}) {
+  let currentUrl = rawUrl;
+  const maxHops = 3;
+  for (let hop = 0; hop <= maxHops; hop += 1) {
+    const { url, hostname, addresses } = await assertSafeMediaUrl(currentUrl, opts);
+    const agent = buildPinnedMediaAgent(url.protocol, hostname, addresses);
+    const requestConfig = {
+      responseType: 'arraybuffer',
+      maxRedirects: 0,
+      timeout: 15000,
+      validateStatus: (status) => status >= 200 && status < 400,
+      headers: {
+        ...extraHeaders,
+        ...getMediaAuthHeader(channel, currentUrl),
+      },
+      ...(url.protocol === 'http:' ? { httpAgent: agent } : { httpsAgent: agent }),
+    };
+    const response = await axios.get(currentUrl, requestConfig);
+    if ([301, 302, 303, 307, 308].includes(response.status) && response.headers?.location) {
+      if (hop === maxHops) {
+        const err = new Error('Too many media redirects');
+        err.code = 'MEDIA_URL_BLOCKED';
+        throw err;
+      }
+      currentUrl = new URL(response.headers.location, currentUrl).toString();
+      continue;
+    }
+    if (response.status >= 200 && response.status < 300) {
+      return response;
+    }
+    const err = new Error(`Unexpected media response status ${response.status}`);
+    err.status = response.status;
+    throw err;
+  }
+}
+
+async function fetchImageAsBase64(imageUrl, channel = 'web', opts = {}) {
   try {
     if (isDataUrl(imageUrl)) return imageUrl;
-    const response = await axios.get(imageUrl, {
-      responseType: 'arraybuffer',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        ...getMediaAuthHeader(channel),
-      },
-    });
+    const response = await fetchSafeMedia(
+      imageUrl,
+      channel,
+      { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      opts
+    );
 
     const imageBuffer = Buffer.from(response.data);
     const base64Image = imageBuffer.toString('base64');
@@ -130,13 +276,13 @@ async function fetchImageAsBase64(imageUrl, channel = 'web') {
 }
 
 // احتفظ بالاسم القديم للتوافق مع الاستدعاءات الحالية
-async function downloadImageToBase64(imageUrl, channel = 'web') {
-  return fetchImageAsBase64(imageUrl, channel);
+async function downloadImageToBase64(imageUrl, channel = 'web', opts = {}) {
+  return fetchImageAsBase64(imageUrl, channel, opts);
 }
 
-async function transcribeAudio(audioUrl, channel = 'web') {
+async function transcribeAudio(audioUrl, channel = 'web', opts = {}) {
   try {
-    logger.info('🎙️ Starting audio transcription with LemonFox', { audioUrl });
+    logger.info('🎙️ Starting audio transcription with LemonFox', { hasAudioUrl: Boolean(audioUrl) });
     let audioBuffer;
     let filename = 'audio.mp4';
     let contentType = 'audio/mp4';
@@ -167,9 +313,9 @@ async function transcribeAudio(audioUrl, channel = 'web') {
       const ext = mime?.split('/')[1] || 'mp4';
       filename = `audio.${ext}`;
       contentType = mime;
-    } else if (audioUrl && audioUrl.startsWith('http')) {
-      logger.info('📥 Fetching audio file', { audioUrl });
-      const audioResponse = await axios.get(audioUrl, { responseType: 'arraybuffer', headers: getMediaAuthHeader(channel) });
+    } else if (typeof audioUrl === 'string' && /^https?:\/\//i.test(audioUrl)) {
+      logger.info('📥 Fetching audio file', { hasAudioUrl: true });
+      const audioResponse = await fetchSafeMedia(audioUrl, channel, {}, opts);
       audioBuffer = Buffer.from(audioResponse.data);
       const respMime = audioResponse.headers?.['content-type'];
       if (respMime) {
@@ -178,7 +324,7 @@ async function transcribeAudio(audioUrl, channel = 'web') {
         if (ext) filename = `audio.${ext}`;
       }
     } else {
-      logger.error('❌ Invalid or missing audioUrl', { audioUrl });
+      logger.error('❌ Invalid or missing audioUrl', { hasAudioUrl: Boolean(audioUrl) });
       throw new Error('Invalid audio URL');
     }
 
@@ -683,20 +829,27 @@ async function extractChatOrderIntent({ bot, channel, userMessageContent, conver
     const phoneFromThread = extractPhoneFromText(transcriptText) || extractPhoneFromText(userMessageContent);
 
     // جلب عميل سابق لملء البيانات الناقصة وتحديثها بأحدث قيمة
-    const existingCustomer = await ChatCustomer.findOne({
-      botId: bot._id,
-      $or: [
-        { sourceUserId },
-        parsed.customerPhone ? { phone: parsed.customerPhone } : null,
-        phoneFromThread ? { phone: phoneFromThread } : null,
-      ].filter(Boolean),
-    }).sort({ updatedAt: -1 });
+    // On the anonymous public web channel, scope customer and order lookups to
+    // the visitor's own session (sourceUserId / conversationId) so phone-only
+    // text cannot read, pre-fill, or cancel another customer's records.
+    const customerFilters = [];
+    if (sourceUserId) customerFilters.push({ sourceUserId });
+    if (channel !== 'web') {
+      if (parsed.customerPhone) customerFilters.push({ phone: parsed.customerPhone });
+      if (phoneFromThread) customerFilters.push({ phone: phoneFromThread });
+    }
+    const existingCustomer = customerFilters.length
+      ? await ChatCustomer.findOne({
+          botId: bot._id,
+          $or: customerFilters,
+        }).sort({ updatedAt: -1 })
+      : null;
 
     const latestOpenOrder = async () => {
       const filters = [];
       const phoneToUse = isValidPhone(parsed.customerPhone) ? parsed.customerPhone : phoneFromThread;
 
-      if (phoneToUse) filters.push({ customerPhone: phoneToUse });
+      if (channel !== 'web' && phoneToUse) filters.push({ customerPhone: phoneToUse });
       if (sourceUserId) filters.push({ sourceUserId });
       if (conversationId) filters.push({ conversationId });
 
@@ -1230,6 +1383,10 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
     const bot = await getBotWithCache(botId);
     let useBackup = false;
     if (bot && !isAssistantBotId) {
+      if (bot.isActive === false || bot.archivedAt) {
+        logger.info('bot_inactive_or_archived', { botId, conversationId: conversation._id });
+        return null;
+      }
       if (bot.autoReplyEnabled === false) {
         logger.info('bot_auto_reply_disabled', { botId, conversationId: conversation._id });
         return null;
@@ -1696,4 +1853,8 @@ module.exports = {
   normalizeDigits,
   isValidPhone,
   extractPhoneFromText,
+  getMediaAuthHeader,
+  assertSafeMediaUrl,
+  fetchImageAsBase64,
+  transcribeAudio,
 };

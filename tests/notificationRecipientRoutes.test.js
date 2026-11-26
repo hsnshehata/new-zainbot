@@ -32,7 +32,7 @@ stubModule('../server/services/telegramService', {
 });
 stubModule('../server/services/whatsappSessionManager', {
   getWhatsAppSessionManager: () => ({
-    sendDirectText: async (...args) => {
+    sendMessage: async (...args) => {
       waCalls.push(args);
       if (waBehavior.throw) throw waBehavior.throw;
       return { ok: true };

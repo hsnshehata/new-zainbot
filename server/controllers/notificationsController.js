@@ -9,7 +9,7 @@ const { getWhatsAppSessionManager } = require('../services/whatsappSessionManage
 
 const isFreeTier = (user) => {
   if (!user) return true;
-  const tier = user.planTier || 'free';
+  const tier = user.subscriptionTier || 'free';
   const sub = user.subscriptionType || 'free';
   return tier === 'free' && sub === 'free';
 };
@@ -84,7 +84,7 @@ async function markAsRead(req, res) {
 async function listRecipients(req, res) {
   try {
     const userId = req.user.userId;
-    const user = await User.findById(userId).select('planTier subscriptionType');
+    const user = await User.findById(userId).select('subscriptionTier subscriptionType');
     const free = isFreeTier(user);
 
     let query = { userId };
@@ -121,7 +121,7 @@ async function createRecipient(req, res) {
       return res.status(400).json({ message: 'القناة يجب أن تكون whatsapp أو telegram' });
     }
 
-    const user = await User.findById(userId).select('planTier subscriptionType');
+    const user = await User.findById(userId).select('subscriptionTier subscriptionType');
     const free = isFreeTier(user);
 
     if (free) {
@@ -244,7 +244,7 @@ async function testRecipient(req, res) {
         });
       }
       const waManager = getWhatsAppSessionManager();
-      await waManager.sendDirectText(recipient.botId, recipient.target, testMsg.replace(/<[^>]*>/g, ''));
+      await waManager.sendMessage(recipient.botId, recipient.target, testMsg.replace(/<[^>]*>/g, ''));
       return res.json({
         success: true,
         outcome: 'delivered',

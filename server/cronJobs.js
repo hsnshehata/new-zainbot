@@ -391,17 +391,20 @@ async function runBotSalesRecovery(botId) {
     const lastMessage = conv.messages[conv.messages.length - 1];
     if (lastMessage.role === 'assistant' && lastMessage.content.includes('أهلاً بحضرتك')) continue;
 
-    try {
-      if (conv.channel === 'whatsapp') {
+    if (conv.channel === 'whatsapp') {
+      const cleanPhone = String(conv.userId || '').replace(/[^0-9]/g, '');
+      if (!cleanPhone) {
+        logger.warn('abandoned_recovery_missing_phone', { convId: conv._id });
+        continue;
+      }
+      try {
         const { getWhatsAppSessionManager } = require('./services/whatsappSessionManager');
         const waManager = getWhatsAppSessionManager();
-        const cleanPhone = String(conv.userId || '').replace(/[^0-9]/g, '');
-        if (cleanPhone) {
-          await waManager.sendDirectText(String(bot._id), `${cleanPhone}@c.us`, followUpText);
-        }
+        await waManager.sendMessage(String(bot._id), `${cleanPhone}@c.us`, followUpText);
+      } catch (sendErr) {
+        logger.warn('abandoned_recovery_send_failed', { convId: conv._id, err: sendErr.message });
+        continue;
       }
-    } catch (sendErr) {
-      logger.warn('abandoned_recovery_send_failed', { convId: conv._id, err: sendErr.message });
     }
 
     conv.messages.push({

@@ -5,7 +5,7 @@ const Bot=require('../server/models/Bot');const User=require('../server/models/U
 const telegramCalls=[],whatsappCalls=[],records=[];
 function stub(p,exports){const id=require.resolve(p);require.cache[id]={id,filename:id,loaded:true,exports};}
 stub('../server/services/telegramService',{sendTelegramMessage:async(target,text)=>{telegramCalls.push({target,text});return {ok:true};}});
-stub('../server/services/whatsappSessionManager',{getWhatsAppSessionManager:()=>({sendDirectText:async(botId,target,text)=>{whatsappCalls.push({botId,target,text});}})});
+stub('../server/services/whatsappSessionManager',{getWhatsAppSessionManager:()=>({sendMessage:async(botId,target,text)=>{whatsappCalls.push({botId,target,text});}})});
 const {dispatchMultiChannelNotification,...formatters}=require('../server/services/notificationDispatcher');
 const RAW='حسن <b>خاص</b> & "quoted" &lt;literal&gt;';
 const ESC='حسن &lt;b&gt;خاص&lt;/b&gt; &amp; "quoted" &amp;lt;literal&amp;gt;';

@@ -103,6 +103,13 @@ const botSchema = new mongoose.Schema({
   // إعدادات إيقاف الردود بكلمة مفتاحية من المالك
   ownerPauseKeyword: { type: String, trim: true },
   ownerPauseDurationMinutes: { type: Number, default: 30 },
+  workingHours: {
+    type: new mongoose.Schema({
+      start: { type: String, trim: true },
+      end: { type: String, trim: true },
+    }, { _id: false }),
+    default: undefined,
+  },
   // إعدادات Webhook لإنستجرام
   instagramMessagingOptinsEnabled: { type: Boolean, default: true },
   instagramMessageReactionsEnabled: { type: Boolean, default: true },

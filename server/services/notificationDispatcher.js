@@ -79,9 +79,11 @@ async function dispatchMultiChannelNotification({ userId, botId, event, data = {
 
     if (!effectiveUserId) return { delivered: 0, failed: 0 };
 
-    // Fetch user plan tier to ensure limits
-    const user = await User.findById(effectiveUserId).select('planTier subscriptionType');
-    const isFree = !user || user.planTier === 'free' || user.subscriptionType === 'free';
+    // Fetch user subscription tier to ensure limits
+    const user = await User.findById(effectiveUserId).select('subscriptionTier subscriptionType');
+    const tier = user?.subscriptionTier || 'free';
+    const sub = user?.subscriptionType || 'free';
+    const isFree = !user || (tier === 'free' && sub === 'free');
 
     // Find all active recipients configured for this user/bot
     let query = {
@@ -182,7 +184,7 @@ async function dispatchMultiChannelNotification({ userId, botId, event, data = {
         const plainText = notificationPlainText(messageText);
         for (const rec of waRecipients) {
           try {
-            await waManager.sendDirectText(botId, rec.target, plainText);
+            await waManager.sendMessage(botId, rec.target, plainText);
             delivered++;
           } catch (waErr) {
             logger.warn('whatsapp_recipient_dispatch_failed', { target: rec.target, err: waErr.message });

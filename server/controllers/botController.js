@@ -73,12 +73,16 @@ exports.updateSettings = async (req, res) => {
       return res.status(403).json({ success: false, message: 'غير مصرح لك بتعديل هذا البوت' });
     }
 
+    let hasChanges = false;
     if (workingHours) {
       if (!workingHours.start || !workingHours.end || !isValidTimeFormat(workingHours.start) || !isValidTimeFormat(workingHours.end)) {
         logger.warn('⚠️ صيغة أوقات العمل غير صحيحة', { botId, workingHours });
         return res.status(400).json({ success: false, message: 'صيغة أوقات العمل غير صحيحة، يجب أن تكون HH:mm' });
       }
-      bot.workingHours = workingHours;
+      if (workingHours.start !== bot.workingHours?.start || workingHours.end !== bot.workingHours?.end) {
+        bot.workingHours = { start: workingHours.start, end: workingHours.end };
+        hasChanges = true;
+      }
     }
 
     const booleanFields = {
@@ -90,7 +94,6 @@ exports.updateSettings = async (req, res) => {
       commentsRepliesEnabled,
     };
 
-    let hasChanges = false;
     for (const [key, value] of Object.entries(booleanFields)) {
       if (value !== undefined) {
         if (typeof value !== 'boolean') {
@@ -149,7 +152,7 @@ exports.updateSettings = async (req, res) => {
       hasChanges = true;
     }
 
-    if (hasChanges || (workingHours && (workingHours.start !== bot.workingHours?.start || workingHours.end !== bot.workingHours?.end))) {
+    if (hasChanges) {
       await bot.save();
       logger.info('✅ تم تحديث إعدادات البوت بنجاح', { botId });
     } else {
