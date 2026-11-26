@@ -455,7 +455,7 @@ test('pickReaction always mode: rich meaning-based categories with deterministic
     ['استنى ثانيه واحده', '⏳'],
     ['ليه الرد اتاخر؟', '🤔'],
     ['how much is the plan', '💰'],
-    ['well done everyone', '🎉'],
+    ['congrats on the new baby', '🎉'],
   ];
   for (const [text, expected] of cases) {
     assert.equal(pickReaction(text, { always: true }), expected, `for "${text}"`);
