@@ -30,6 +30,19 @@ const botSchema = new mongoose.Schema({
   objectives: [{ type: String, trim: true, maxlength: 300 }],
   handoffKeywords: [{ type: String, trim: true, maxlength: 100 }],
   autoReplyEnabled: { type: Boolean, default: true },
+  replyMode: {
+    type: String,
+    enum: ['auto', 'copilot', 'manual'],
+    default: 'auto',
+  },
+  copilotSettings: {
+    notifyChannels: {
+      inApp: { type: Boolean, default: true },
+      whatsappToMerchant: { type: Boolean, default: false },
+      telegramToMerchant: { type: Boolean, default: false },
+    },
+    draftTtlMinutes: { type: Number, default: 60, min: 5, max: 1440 },
+  },
 
   // أدوات ومهارات الوكيل الذكي
   agentTools: {

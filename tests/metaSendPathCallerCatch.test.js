@@ -40,6 +40,7 @@ Module._load = function (request, parent) {
   if (/[\\/]services[\\/]channelTokenCrypto$/.test(rel)) return { decryptChannelToken: (v) => v };
   if (/[\\/]services[\\/]metaSendErrors$/.test(rel)) return realLoad.apply(this, arguments);
   if (/[\\/]services[\\/]channelGuard$/.test(rel)) return realLoad.apply(this, arguments);
+  if (/[\\/]services[\\/]channelDeliveryService$/.test(rel)) return realLoad.apply(this, arguments);
   if (/[\\/]models[\\/]Bot$/.test(rel)) return BotStub;
   if (/[\\/]models[\\/]Conversation$/.test(rel)) return Conversation;
   if (/[\\/]botEngine$/.test(rel)) return { processMessage: async () => 'AI reply', processFeedback: async () => null };

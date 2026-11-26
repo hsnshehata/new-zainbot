@@ -231,3 +231,47 @@ test('a ledger write failure never breaks the completion', async () => {
 
   assert.equal(response.choices[0].message.content, 'still-ok');
 });
+
+test('forwards feature, stage, operationId, agentRole, and useCase on legacy and user-key usage events', async () => {
+  reset();
+  state.keys = [fakeKey('main')];
+  state.createImpl = async () => ({
+    choices: [{ message: { content: 'tagged-ok' } }],
+    usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
+  });
+
+  const taggedOptions = {
+    messages: [{ role: 'user', content: 'draft' }],
+    feature: 'copilot',
+    stage: 'draft_generate',
+    operationId: 'draft-42',
+    agentRole: 'copilot_drafter',
+    useCase: 'chat_copilot',
+  };
+
+  await getAiCompletion(taggedOptions, BOT);
+  assert.equal(state.events.length, 1);
+  assert.equal(state.events[0].feature, 'copilot');
+  assert.equal(state.events[0].stage, 'draft_generate');
+  assert.equal(state.events[0].operationId, 'draft-42');
+  assert.equal(state.events[0].agentRole, 'copilot_drafter');
+  assert.equal(state.events[0].useCase, 'chat_copilot');
+
+  // Also verify user-key path forwards the same fields
+  const ownKeyBot = { ...BOT, userApiKey: 'user-own-key', userProvider: 'openai', userModel: 'gpt-4o-mini' };
+  await getAiCompletion({
+    messages: [{ role: 'user', content: 'extract' }],
+    feature: 'assistant_write_tools',
+    stage: 'intent_extract',
+    operationId: 'act-99',
+    agentRole: 'write_extractor',
+    useCase: 'assistant',
+  }, ownKeyBot);
+  assert.equal(state.events.length, 2);
+  assert.equal(state.events[1].source, 'user-key');
+  assert.equal(state.events[1].feature, 'assistant_write_tools');
+  assert.equal(state.events[1].stage, 'intent_extract');
+  assert.equal(state.events[1].operationId, 'act-99');
+  assert.equal(state.events[1].agentRole, 'write_extractor');
+  assert.equal(state.events[1].useCase, 'assistant');
+});

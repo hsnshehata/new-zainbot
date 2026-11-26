@@ -10,53 +10,7 @@ const messagesController = require("../controllers/messagesController");
 const logger = require("../logger");
 const { describeGraphFailure, describeCaughtError } = require('../services/metaSendErrors');
 const { getBotAccessFilter, loadAccessibleBot } = require("../middleware/botAccess");
-const {
-  getWhatsAppSessionManager,
-} = require("../services/whatsappSessionManager");
-
-// إرسال رد يدوي من موحد الرسائل عبر قناة المحادثة (أفضل جهد ممكن)
-async function deliverManualReply(conversation, text) {
-  const bot = await Bot.findById(conversation.botId).select(
-    "facebookApiKey instagramApiKey"
-  );
-  if (!bot) return false;
-
-  const cleanUserId = String(conversation.userId || "")
-    .replace(/^(facebook_|facebook_comment_|instagram_|instagram_comment_|whatsapp_)/, "")
-    .replace(/^comment_/, "");
-
-  if (conversation.channel === "whatsapp") {
-    const sessionManager = getWhatsAppSessionManager();
-    const chatId = String(conversation.userId || "").includes("@")
-      ? String(conversation.userId)
-      : `${cleanUserId.replace(/\D/g, "")}@c.us`;
-    if (!chatId.replace(/\D/g, "")) return false;
-    await sessionManager.sendMessage(String(conversation.botId), chatId, text);
-    return true;
-  }
-
-  if (!cleanUserId) return false;
-
-  if (conversation.channel === "facebook" && decryptChannelToken(bot.facebookApiKey)) {
-    const response = await axios.post(
-      "https://graph.facebook.com/v22.0/me/messages",
-      { recipient: { id: cleanUserId }, message: { text } },
-      { params: { access_token: decryptChannelToken(bot.facebookApiKey) }, timeout: 15_000 }
-    );
-    return Boolean(response.data?.recipient_id || response.data?.message_id);
-  }
-
-  if (conversation.channel === "instagram" && decryptChannelToken(bot.instagramApiKey)) {
-    const response = await axios.post(
-      "https://graph.instagram.com/v22.0/me/messages",
-      { recipient: { id: cleanUserId }, message: { text } },
-      { params: { access_token: decryptChannelToken(bot.instagramApiKey) }, timeout: 15_000 }
-    );
-    return Boolean(response.data?.recipient_id || response.data?.message_id);
-  }
-
-  return false;
-}
+const { deliverReply: deliverManualReply } = require("../services/channelDeliveryService");
 
 // دالة لجلب اسم المستخدم من فيسبوك، إنستجرام، أو واتساب
 async function getSocialUsername(userId, bot, platform) {

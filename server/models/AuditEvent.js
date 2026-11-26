@@ -166,3 +166,4 @@ auditEventSchema.index(
 );
 
 module.exports = mongoose.model('AuditEvent', auditEventSchema);
+module.exports.redactAuditText = redactAuditText;

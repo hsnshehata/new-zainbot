@@ -52,7 +52,23 @@ const userSchema = new mongoose.Schema({
     chatOrder: { type: Boolean, default: true },
     dailySummary: { type: Boolean, default: false },
   },
-  telegramLanguage: { type: String, enum: ['ar', 'en'], default: 'ar' }
+  telegramLanguage: { type: String, enum: ['ar', 'en'], default: 'ar' },
+  // إعدادات مساعد زين وأدوات التعديل (مغلقة افتراضياً)
+  assistantSettings: {
+    writeToolsEnabled: { type: Boolean, default: false },
+    allowedWriteTools: {
+      createOrder: { type: Boolean, default: false },
+      updateInventory: { type: Boolean, default: false },
+      messageCustomer: { type: Boolean, default: false },
+    },
+    verifiedWhatsappPhone: { type: String, trim: true, default: '' },
+    whatsappVerifiedAt: { type: Date, default: null },
+    whatsappLinkCodeHash: { type: String, select: false, default: '' },
+    whatsappLinkExpiresAt: { type: Date, select: false, default: null },
+    defaultBotId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bot', default: null },
+    defaultStoreId: { type: mongoose.Schema.Types.ObjectId, ref: 'Store', default: null },
+    updatedAt: { type: Date, default: null },
+  },
 }, {
   strict: true,
   toJSON: {
@@ -68,6 +84,10 @@ const userSchema = new mongoose.Schema({
       delete result.resetTokenHash;
       delete result.resetExpiresAt;
       delete result.resetSentAt;
+      if (result.assistantSettings && typeof result.assistantSettings === 'object') {
+        delete result.assistantSettings.whatsappLinkCodeHash;
+        delete result.assistantSettings.whatsappLinkExpiresAt;
+      }
       return result;
     }
   },
@@ -84,9 +104,24 @@ const userSchema = new mongoose.Schema({
       delete result.resetTokenHash;
       delete result.resetExpiresAt;
       delete result.resetSentAt;
+      if (result.assistantSettings && typeof result.assistantSettings === 'object') {
+        delete result.assistantSettings.whatsappLinkCodeHash;
+        delete result.assistantSettings.whatsappLinkExpiresAt;
+      }
       return result;
     }
   }
 });
+
+userSchema.index(
+  { 'assistantSettings.verifiedWhatsappPhone': 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      'assistantSettings.verifiedWhatsappPhone': { $type: 'string', $gt: '' },
+    },
+    name: 'user_verified_assistant_whatsapp_unique',
+  }
+);
 
 module.exports = mongoose.model('User', userSchema);

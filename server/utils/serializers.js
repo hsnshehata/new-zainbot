@@ -36,6 +36,12 @@ function serializeUser(user, options = {}) {
     delete value[field];
   }
 
+  if (value.assistantSettings && typeof value.assistantSettings === 'object') {
+    value.assistantSettings = { ...value.assistantSettings };
+    delete value.assistantSettings.whatsappLinkCodeHash;
+    delete value.assistantSettings.whatsappLinkExpiresAt;
+  }
+
   if (Array.isArray(value.bots)) {
     value.bots = options.includeBots
       ? value.bots.map((bot) => serializeBot(bot))

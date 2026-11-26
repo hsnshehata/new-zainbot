@@ -36,4 +36,10 @@ router.post('/reminders', assistantController.createReminder);
 router.patch('/reminders/:id/complete', assistantController.completeReminder);
 router.delete('/reminders/:id', assistantController.deleteReminder);
 
+// Phase 3 merchant assistant settings, verified WhatsApp link-code issuance, and audit log
+router.get('/settings', assistantController.getSettings);
+router.patch('/settings', assistantController.updateSettings);
+router.post('/whatsapp/link-code', assistantController.createWhatsappLinkCode);
+router.get('/audit', assistantController.listAudit);
+
 module.exports = router;

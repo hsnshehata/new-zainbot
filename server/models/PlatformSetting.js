@@ -23,6 +23,15 @@ const platformSettingSchema = new mongoose.Schema({
     trim: true,
     maxlength: 100,
   },
+  // Phase 3 global kill switches (both OFF by default).
+  assistantWriteToolsEnabled: {
+    type: Boolean,
+    default: false,
+  },
+  copilotEnabled: {
+    type: Boolean,
+    default: false,
+  },
 }, {
   timestamps: true,
   versionKey: false,

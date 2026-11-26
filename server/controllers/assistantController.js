@@ -6,9 +6,17 @@
 // conversation or reminder id from the request is ever trusted for
 // tenant scoping.
 
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 
+const User = require('../models/User');
 const AssistantConversation = require('../models/AssistantConversation');
+const {
+  ASSISTANT_AUDIT_EVENT_TYPES,
+  ASSISTANT_AUDIT_OUTCOMES,
+} = require('../models/AssistantActionAudit');
+const { ASSISTANT_WRITE_TOOLS } = require('../models/AssistantPendingAction');
+const PlatformWhatsAppSession = require('../models/PlatformWhatsAppSession');
 const Reminder = require('../models/Reminder');
 const Bot = require('../models/Bot');
 const Store = require('../models/Store');
@@ -28,11 +36,33 @@ const { createAssistantService } = require('../services/assistantService');
 const { createAssistantDataTools } = require('../services/assistantDataTools');
 const { getAiCompletion } = require('../services/aiFailover');
 const { createAiKeyResolver } = require('../services/aiKeyResolver');
+const {
+  isAssistantWriteToolsEnabled,
+  isCopilotEnabled,
+} = require('../services/platformSettingsService');
+const { listMerchantAudits } = require('../services/assistantActionAuditService');
+const {
+  maskPhone,
+  normalizePhoneToE164Digits,
+} = require('../services/phoneNormalize');
 
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_REMINDER_LENGTH = 500;
 const HISTORY_CAP = 40;
 const MAX_REMINDERS_PER_USER = 100;
+const WHATSAPP_LINK_CODE_TTL_MS = 10 * 60 * 1000;
+const WHATSAPP_LINK_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const ALLOWED_WRITE_TOOL_KEYS = Object.freeze([
+  'createOrder',
+  'updateInventory',
+  'messageCustomer',
+]);
+const PROTECTED_ASSISTANT_SETTING_FIELDS = Object.freeze([
+  'verifiedWhatsappPhone',
+  'whatsappVerifiedAt',
+  'whatsappLinkCodeHash',
+  'whatsappLinkExpiresAt',
+]);
 
 const keyResolver = createAiKeyResolver({ AiCredential, ProviderKey });
 
@@ -285,6 +315,265 @@ async function deleteReminder(req, res, next) {
   }
 }
 
+function formatAssistantSettings(rawSettings) {
+  const s = rawSettings && typeof rawSettings === 'object' ? rawSettings : {};
+  const tools = s.allowedWriteTools && typeof s.allowedWriteTools === 'object'
+    ? s.allowedWriteTools
+    : {};
+  const verifiedPhone = String(s.verifiedWhatsappPhone || '').trim();
+  return {
+    writeToolsEnabled: Boolean(s.writeToolsEnabled),
+    allowedWriteTools: {
+      createOrder: Boolean(tools.createOrder),
+      updateInventory: Boolean(tools.updateInventory),
+      messageCustomer: Boolean(tools.messageCustomer),
+    },
+    whatsappLinked: Boolean(verifiedPhone),
+    verifiedWhatsappPhoneMasked: verifiedPhone ? maskPhone(verifiedPhone) : '',
+    whatsappVerifiedAt: s.whatsappVerifiedAt || null,
+    defaultBotId: s.defaultBotId ? String(s.defaultBotId) : null,
+    defaultStoreId: s.defaultStoreId ? String(s.defaultStoreId) : null,
+    updatedAt: s.updatedAt || null,
+  };
+}
+
+function generateWhatsappLinkCode() {
+  let suffix = '';
+  for (let i = 0; i < 6; i += 1) {
+    suffix += WHATSAPP_LINK_CODE_ALPHABET[crypto.randomInt(0, WHATSAPP_LINK_CODE_ALPHABET.length)];
+  }
+  return `LINK-${suffix}`;
+}
+
+function hashWhatsappLinkCode(code) {
+  return crypto.createHash('sha256').update(String(code || '')).digest('hex');
+}
+
+async function getSettings(req, res, next) {
+  try {
+    const userId = req.user.userId;
+    const [user, platformWriteToolsEnabled, platformCopilotEnabled] = await Promise.all([
+      User.findById(userId).select('assistantSettings').lean(),
+      isAssistantWriteToolsEnabled(),
+      isCopilotEnabled(),
+    ]);
+    if (!user) {
+      throw new AppError('المستخدم غير موجود / User not found', 404, 'UserNotFound');
+    }
+
+    return res.json({
+      success: true,
+      settings: formatAssistantSettings(user.assistantSettings),
+      platform: {
+        assistantWriteToolsEnabled: platformWriteToolsEnabled,
+        copilotEnabled: platformCopilotEnabled,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function updateSettings(req, res, next) {
+  try {
+    const userId = req.user.userId;
+    const body = req.body && typeof req.body === 'object' ? req.body : {};
+
+    for (const forbidden of PROTECTED_ASSISTANT_SETTING_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(body, forbidden)) {
+        throw new AppError(
+          'لا يمكن تعديل ربط واتساب مباشرة من هذا المسار / WhatsApp verification cannot be modified directly',
+          400,
+          'AssistantWhatsappBindForbidden'
+        );
+      }
+    }
+
+    const $set = {};
+
+    if (body.writeToolsEnabled !== undefined) {
+      if (typeof body.writeToolsEnabled !== 'boolean') {
+        throw new AppError('قيمة writeToolsEnabled يجب أن تكون منطقية', 400, 'AssistantSettingsInvalid');
+      }
+      $set['assistantSettings.writeToolsEnabled'] = body.writeToolsEnabled;
+    }
+
+    if (body.allowedWriteTools !== undefined) {
+      if (!body.allowedWriteTools || typeof body.allowedWriteTools !== 'object' || Array.isArray(body.allowedWriteTools)) {
+        throw new AppError('قيمة allowedWriteTools غير صالحة', 400, 'AssistantSettingsInvalid');
+      }
+      for (const [key, val] of Object.entries(body.allowedWriteTools)) {
+        if (!ALLOWED_WRITE_TOOL_KEYS.includes(key) || typeof val !== 'boolean') {
+          throw new AppError(`إعداد الأداة غير صالح: ${key}`, 400, 'AssistantSettingsInvalid');
+        }
+        $set[`assistantSettings.allowedWriteTools.${key}`] = val;
+      }
+    }
+
+    if (body.defaultBotId !== undefined) {
+      if (body.defaultBotId === null || body.defaultBotId === '') {
+        $set['assistantSettings.defaultBotId'] = null;
+      } else {
+        if (!isValidObjectId(body.defaultBotId)) {
+          throw new AppError('معرّف البوت غير صالح / Invalid botId', 400, 'AssistantBotInvalid');
+        }
+        const ownedBot = await Bot.findOne({
+          _id: body.defaultBotId,
+          userId,
+          archivedAt: null,
+        }).select('_id').lean();
+        if (!ownedBot) {
+          throw new AppError('البوت غير موجود / Bot not found', 404, 'AssistantBotNotFound');
+        }
+        $set['assistantSettings.defaultBotId'] = ownedBot._id;
+      }
+    }
+
+    if (body.defaultStoreId !== undefined) {
+      if (body.defaultStoreId === null || body.defaultStoreId === '') {
+        $set['assistantSettings.defaultStoreId'] = null;
+      } else {
+        if (!isValidObjectId(body.defaultStoreId)) {
+          throw new AppError('معرّف المتجر غير صالح / Invalid storeId', 400, 'AssistantStoreInvalid');
+        }
+        const ownedStore = await Store.findOne({
+          _id: body.defaultStoreId,
+          userId,
+        }).select('_id').lean();
+        if (!ownedStore) {
+          throw new AppError('المتجر غير موجود / Store not found', 404, 'AssistantStoreNotFound');
+        }
+        $set['assistantSettings.defaultStoreId'] = ownedStore._id;
+      }
+    }
+
+    if (Object.keys($set).length === 0) {
+      throw new AppError('لا توجد إعدادات صالحة للتحديث / No valid settings provided', 400, 'AssistantSettingsEmpty');
+    }
+
+    $set['assistantSettings.updatedAt'] = new Date();
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set },
+      { new: true }
+    ).select('assistantSettings').lean();
+
+    if (!updatedUser) {
+      throw new AppError('المستخدم غير موجود / User not found', 404, 'UserNotFound');
+    }
+
+    const [platformWriteToolsEnabled, platformCopilotEnabled] = await Promise.all([
+      isAssistantWriteToolsEnabled(),
+      isCopilotEnabled(),
+    ]);
+
+    logger.info('assistant_settings_updated', {
+      userId: String(userId),
+      updatedKeys: Object.keys($set).length,
+    });
+
+    return res.json({
+      success: true,
+      settings: formatAssistantSettings(updatedUser.assistantSettings),
+      platform: {
+        assistantWriteToolsEnabled: platformWriteToolsEnabled,
+        copilotEnabled: platformCopilotEnabled,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function createWhatsappLinkCode(req, res, next) {
+  try {
+    const userId = req.user.userId;
+    const code = generateWhatsappLinkCode();
+    const codeHash = hashWhatsappLinkCode(code);
+    const expiresAt = new Date(Date.now() + WHATSAPP_LINK_CODE_TTL_MS);
+
+    const updated = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          'assistantSettings.whatsappLinkCodeHash': codeHash,
+          'assistantSettings.whatsappLinkExpiresAt': expiresAt,
+        },
+      },
+      { new: true }
+    ).select('_id').lean();
+
+    if (!updated) {
+      throw new AppError('المستخدم غير موجود / User not found', 404, 'UserNotFound');
+    }
+
+    let platformPhoneDigits = '';
+    try {
+      const session = await PlatformWhatsAppSession.findOne({ sessionId: 'platform' })
+        .select('phone connected')
+        .lean();
+      if (session?.phone) {
+        platformPhoneDigits = normalizePhoneToE164Digits(session.phone);
+      }
+    } catch (err) {
+      logger.warn('assistant_link_code_platform_phone_lookup_failed', { err: err?.message });
+    }
+
+    const waMeUrl = platformPhoneDigits
+      ? `https://wa.me/${platformPhoneDigits}?text=${encodeURIComponent(code)}`
+      : '';
+
+    logger.info('assistant_whatsapp_link_code_issued', {
+      userId: String(userId),
+      expiresAt: expiresAt.toISOString(),
+    });
+
+    return res.status(201).json({
+      success: true,
+      code,
+      expiresAt,
+      ttlSeconds: Math.floor(WHATSAPP_LINK_CODE_TTL_MS / 1000),
+      platformWhatsappPhone: platformPhoneDigits,
+      waMeUrl,
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function listAudit(req, res, next) {
+  try {
+    const userId = req.user.userId;
+    const eventType = ASSISTANT_AUDIT_EVENT_TYPES.includes(req.query?.eventType)
+      ? req.query.eventType
+      : '';
+    const toolName = ASSISTANT_WRITE_TOOLS.includes(req.query?.toolName)
+      ? req.query.toolName
+      : '';
+    const outcome = ASSISTANT_AUDIT_OUTCOMES.includes(req.query?.outcome)
+      ? req.query.outcome
+      : '';
+
+    const result = await listMerchantAudits({
+      merchantUserId: userId,
+      page: req.query?.page,
+      limit: req.query?.limit,
+      eventType,
+      toolName,
+      outcome,
+    });
+
+    return res.json({
+      success: true,
+      items: result.items,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   chat,
   listConversations,
@@ -294,4 +583,13 @@ module.exports = {
   createReminder,
   completeReminder,
   deleteReminder,
+  getSettings,
+  updateSettings,
+  createWhatsappLinkCode,
+  listAudit,
+  _internals: {
+    formatAssistantSettings,
+    generateWhatsappLinkCode,
+    hashWhatsappLinkCode,
+  },
 };

@@ -353,9 +353,9 @@ async function recordLegacyUsage({ requestId, bot, keyDoc, options, response, at
       provider: ['openai', 'google', 'gemini', 'anthropic', 'openrouter', 'custom'].includes(keyDoc.provider)
         ? keyDoc.provider
         : 'custom',
-      modelId: String(keyDoc.defaultModel || options.model || 'unknown'),
+      modelId: String(keyDoc.defaultModel || options?.model || 'unknown'),
       tier: 'legacy',
-      useCase: 'general',
+      useCase: options?.useCase || 'general',
       attempt,
       success,
       inputTokens,
@@ -366,6 +366,10 @@ async function recordLegacyUsage({ requestId, bot, keyDoc, options, response, at
       retryable: !success,
       fallbackUsed,
       source,
+      feature: options?.feature || null,
+      operationId: options?.operationId || null,
+      stage: options?.stage || null,
+      agentRole: options?.agentRole || null,
     });
   } catch (err) {
     logger.warn('ai_legacy_usage_record_failed', { err: err.message });

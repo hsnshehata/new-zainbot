@@ -7,6 +7,7 @@ const { directSuperadminOnly } = require('./adminImpersonation');
 const {
   normalizeEgyptianWhatsappNumber,
   normalizeOpenAiModelId,
+  normalizeBooleanSetting,
   resolveSubscriptionWhatsapp,
   resolveDefaultOpenAiModel,
   invalidatePlatformSettingsCache,
@@ -32,6 +33,8 @@ router.get('/', async (req, res) => {
         defaultOpenAiModel: config.defaultOpenAiModel || '',
         effectiveDefaultModel: resolvedModel.value,
         modelSource: resolvedModel.source,
+        assistantWriteToolsEnabled: Boolean(config.assistantWriteToolsEnabled),
+        copilotEnabled: Boolean(config.copilotEnabled),
         updatedAt: config.updatedAt,
       },
     });
@@ -74,6 +77,30 @@ router.put('/', auditMutation, async (req, res) => {
       config.defaultOpenAiModel = normalizedModel.value;
     }
 
+    if (req.body?.assistantWriteToolsEnabled !== undefined) {
+      const normalizedFlag = normalizeBooleanSetting(req.body.assistantWriteToolsEnabled);
+      if (!normalizedFlag.valid) {
+        return res.status(400).json({
+          success: false,
+          error: normalizedFlag.error,
+          message: normalizedFlag.message,
+        });
+      }
+      config.assistantWriteToolsEnabled = normalizedFlag.value;
+    }
+
+    if (req.body?.copilotEnabled !== undefined) {
+      const normalizedFlag = normalizeBooleanSetting(req.body.copilotEnabled);
+      if (!normalizedFlag.valid) {
+        return res.status(400).json({
+          success: false,
+          error: normalizedFlag.error,
+          message: normalizedFlag.message,
+        });
+      }
+      config.copilotEnabled = normalizedFlag.value;
+    }
+
     await config.save();
     invalidatePlatformSettingsCache();
 
@@ -85,6 +112,8 @@ router.put('/', auditMutation, async (req, res) => {
       actorUserId: req.auth?.actorUserId,
       hasSubscriptionWhatsappOverride: Boolean(config.subscriptionWhatsappNumber),
       hasDefaultModelOverride: Boolean(config.defaultOpenAiModel),
+      assistantWriteToolsEnabled: Boolean(config.assistantWriteToolsEnabled),
+      copilotEnabled: Boolean(config.copilotEnabled),
       source: resolved.source,
     });
 
@@ -97,6 +126,8 @@ router.put('/', auditMutation, async (req, res) => {
         defaultOpenAiModel: config.defaultOpenAiModel || '',
         effectiveDefaultModel: resolvedModel.value,
         modelSource: resolvedModel.source,
+        assistantWriteToolsEnabled: Boolean(config.assistantWriteToolsEnabled),
+        copilotEnabled: Boolean(config.copilotEnabled),
         updatedAt: config.updatedAt,
       },
     });
