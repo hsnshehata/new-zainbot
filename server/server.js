@@ -28,6 +28,8 @@ const integrationsRoutes = require('./routes/integrations');
 const adminKeysRoutes = require('./routes/adminKeys');
 const landingDemoRoutes = require('./routes/landingDemo');
 const adminLandingDemoRoutes = require('./routes/adminLandingDemo');
+const adminPlatformSettingsRoutes = require('./routes/adminPlatformSettings');
+const { getEffectiveSubscriptionWhatsapp } = require('./services/platformSettingsService');
 const {
   createAdminImpersonationRouter,
 } = require('./routes/adminImpersonation');
@@ -363,16 +365,17 @@ const authenticatedPaths = [
 app.use(authenticatedPaths, authenticate, accountLimiter);
 
 // Route لجلب GOOGLE_CLIENT_ID + public subscription info (no secrets)
-app.get('/api/config', (req, res) => {
+app.get('/api/config', async (req, res) => {
   let plans = {};
   try {
     // eslint-disable-next-line global-require
     const { PLANS } = require('./config/plans');
     plans = Object.fromEntries(Object.values(PLANS).map((p) => [p.tier, { monthlyEGP: p.monthlyEGP, yearlyEGP: p.yearlyEGP, agents: p.agents === Infinity ? -1 : p.agents }]));
   } catch (e) { plans = {}; }
+  const { value: subscribeWhatsapp } = await getEffectiveSubscriptionWhatsapp();
   res.json({
     googleClientId: process.env.GOOGLE_CLIENT_ID,
-    subscribeWhatsapp: process.env.SUBSCRIPTION_WHATSAPP_NUMBER || '',
+    subscribeWhatsapp,
     paymentMethods: ['instapay', 'vodafone_cash', 'orange_money', 'etisalat_cash'],
     plans,
   });
@@ -424,6 +427,7 @@ app.use('/api/integrations', integrationsRoutes);
 app.use('/api/admin/keys', adminKeysRoutes);
 app.use('/api/admin/system', require('./routes/adminSystem'));
 app.use('/api/admin/landing-demo', adminLandingDemoRoutes);
+app.use('/api/admin/platform-settings', adminPlatformSettingsRoutes);
 app.use('/api/landing-demo', landingDemoRoutes);
 app.use('/api/ai', require('./routes/aiModels'));
 app.use(

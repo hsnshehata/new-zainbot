@@ -257,16 +257,18 @@ router.put('/requests/:id', authenticate, requireDirectActorRole('superadmin'), 
 });
 
 // GET /api/subscriptions/plans — public plans + payment info (no auth)
-router.get('/plans', (req, res) => {
+router.get('/plans', async (req, res) => {
   const { PLANS, subscriptionConfig } = require('../config/plans');
+  const { getEffectiveSubscriptionWhatsapp } = require('../services/platformSettingsService');
   const cfg = subscriptionConfig();
+  const { value: whatsappNumber } = await getEffectiveSubscriptionWhatsapp();
   return res.json({
     success: true,
     data: {
       plans: Object.values(PLANS),
       payment: {
         methods: ['instapay', 'vodafone_cash', 'orange_money', 'etisalat_cash'],
-        whatsappNumber: cfg.whatsappNumber,
+        whatsappNumber: whatsappNumber || cfg.whatsappNumber,
         instapayAccount: cfg.instapayAccount,
         cashWallet: cfg.cashWallet,
         note: 'التفعيل يدوي حالياً: ادفع ثم أرسل صورة التحويل على واتساب.',

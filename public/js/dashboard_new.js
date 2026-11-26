@@ -667,6 +667,22 @@
       landing_demo_saved_ok: 'Saved successfully!',
       landing_demo_save_failed: 'Could not save the settings.',
       landing_demo_updated_at: 'Last updated',
+      admin_subtab_platform_settings: 'Platform Settings',
+      platform_settings_title: 'Platform Settings',
+      platform_settings_desc: 'Manage global platform contact settings used on the landing and pricing pages without redeploying.',
+      platform_settings_whatsapp_label: 'Subscription WhatsApp number',
+      platform_settings_whatsapp_placeholder: 'e.g. 01012345678 or +201012345678',
+      platform_settings_whatsapp_hint: 'Accepted Egyptian formats: 01xxxxxxxxx, 201xxxxxxxxx, or +201xxxxxxxxx. Leave empty to use the server default.',
+      platform_settings_effective_label: 'Current effective number',
+      platform_settings_effective_empty: 'Not set',
+      platform_settings_source_label: 'Source',
+      platform_settings_source_database: 'Database override',
+      platform_settings_source_env: 'Server default (env)',
+      platform_settings_source_empty: 'Not configured',
+      platform_settings_save_btn: 'Save settings',
+      platform_settings_saved_ok: 'Saved successfully!',
+      platform_settings_save_failed: 'Could not save the settings.',
+      platform_settings_updated_at: 'Last updated',
       model_select_heading: 'AI Model',
       model_select_desc: 'Choose Auto to let the platform pick the best available model for your plan, or select a specific model from the list enabled for your account.',
       model_select_label: 'Model',
@@ -1796,6 +1812,22 @@
       landing_demo_saved_ok: 'تم الحفظ بنجاح!',
       landing_demo_save_failed: 'تعذر حفظ الإعدادات.',
       landing_demo_updated_at: 'آخر تحديث',
+      admin_subtab_platform_settings: 'إعدادات المنصة',
+      platform_settings_title: 'إعدادات المنصة',
+      platform_settings_desc: 'إدارة إعدادات التواصل العامة للمنصة الظاهرة في الصفحة الرئيسية وصفحة الباقات بدون الحاجة لإعادة النشر.',
+      platform_settings_whatsapp_label: 'رقم واتساب الاشتراكات',
+      platform_settings_whatsapp_placeholder: 'مثال: 01012345678 أو +201012345678',
+      platform_settings_whatsapp_hint: 'الصيغ المصرية المقبولة: 01xxxxxxxxx أو 201xxxxxxxxx أو +201xxxxxxxxx. اتركه فارغاً لاستخدام الإعداد الافتراضي للسيرفر.',
+      platform_settings_effective_label: 'الرقم الفعّال حالياً',
+      platform_settings_effective_empty: 'غير محدد',
+      platform_settings_source_label: 'المصدر',
+      platform_settings_source_database: 'قاعدة البيانات',
+      platform_settings_source_env: 'الإعداد الافتراضي للسيرفر',
+      platform_settings_source_empty: 'غير مضبوط',
+      platform_settings_save_btn: 'حفظ الإعدادات',
+      platform_settings_saved_ok: 'تم الحفظ بنجاح!',
+      platform_settings_save_failed: 'تعذر حفظ الإعدادات.',
+      platform_settings_updated_at: 'آخر تحديث',
       model_select_heading: 'موديل الذكاء الاصطناعي',
       model_select_desc: 'اختر "تلقائي" ليختار النظام أفضل موديل متاح لباقتك، أو حدد موديلاً معيناً من القائمة المفعّلة لحسابك.',
       model_select_label: 'الموديل',
@@ -6748,6 +6780,7 @@
     { id: 'adminTabNotifyBtn', sectionId: 'adminSectionNotify', onLoad: null },
     { id: 'adminTabSubsBtn', sectionId: 'adminSectionSubs', onLoad: loadAdminSubs },
     { id: 'adminTabLandingDemoBtn', sectionId: 'adminSectionLandingDemo', onLoad: loadAdminLandingDemo },
+    { id: 'adminTabPlatformSettingsBtn', sectionId: 'adminSectionPlatformSettings', onLoad: loadAdminPlatformSettings },
   ].map((entry) => ({ ...entry, button: document.getElementById(entry.id), section: document.getElementById(entry.sectionId) }))
     .filter((entry) => entry.button && entry.section);
 
@@ -7223,6 +7256,80 @@
         }
       } finally {
         landingDemoSaveBtn.disabled = false;
+        setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 4000);
+      }
+    });
+  }
+
+  // --- Platform settings ---
+  function renderAdminPlatformSettings(cfg) {
+    const t = translations[currentLanguage] || translations.en;
+    const inputEl = document.getElementById('platformSettingsWhatsappInput');
+    const effectiveEl = document.getElementById('platformSettingsEffectiveVal');
+    const sourceEl = document.getElementById('platformSettingsSourceVal');
+    const updatedEl = document.getElementById('platformSettingsUpdatedAt');
+    if (inputEl) inputEl.value = cfg.subscriptionWhatsappNumber || '';
+    if (effectiveEl) {
+      effectiveEl.textContent = cfg.effectiveWhatsappNumber || t.platform_settings_effective_empty;
+    }
+    if (sourceEl) {
+      const sourceLabel = cfg.source === 'database'
+        ? t.platform_settings_source_database
+        : cfg.source === 'env'
+          ? t.platform_settings_source_env
+          : t.platform_settings_source_empty;
+      sourceEl.textContent = sourceLabel;
+    }
+    if (updatedEl) {
+      updatedEl.textContent = cfg.updatedAt
+        ? `${t.platform_settings_updated_at}: ${formatDate(cfg.updatedAt)}`
+        : '';
+    }
+  }
+
+  async function loadAdminPlatformSettings() {
+    try {
+      const res = await apiFetch('/api/admin/platform-settings');
+      if (!(res && res.success)) return;
+      renderAdminPlatformSettings(res.data || {});
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  const platformSettingsSaveBtn = document.getElementById('platformSettingsSaveBtn');
+  if (platformSettingsSaveBtn) {
+    platformSettingsSaveBtn.addEventListener('click', async () => {
+      const t = translations[currentLanguage] || translations.en;
+      const statusEl = document.getElementById('platformSettingsStatusMsg');
+      const payload = {
+        subscriptionWhatsappNumber: document.getElementById('platformSettingsWhatsappInput')?.value || '',
+      };
+      try {
+        platformSettingsSaveBtn.disabled = true;
+        if (statusEl) statusEl.textContent = '';
+        const res = await apiFetch('/api/admin/platform-settings', { method: 'PUT', body: JSON.stringify(payload) });
+        if (res && res.success) {
+          renderAdminPlatformSettings(res.data || {});
+          subscriptionConfigSnapshot = null;
+          if (statusEl) {
+            statusEl.style.color = 'var(--green)';
+            statusEl.textContent = t.platform_settings_saved_ok;
+          }
+        } else {
+          if (statusEl) {
+            statusEl.style.color = 'var(--red)';
+            statusEl.textContent = (res && res.message) || t.platform_settings_save_failed;
+          }
+        }
+      } catch (e) {
+        console.error(e);
+        if (statusEl) {
+          statusEl.style.color = 'var(--red)';
+          statusEl.textContent = t.platform_settings_save_failed;
+        }
+      } finally {
+        platformSettingsSaveBtn.disabled = false;
         setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 4000);
       }
     });
