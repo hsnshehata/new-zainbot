@@ -49,6 +49,9 @@ const botSchema = new mongoose.Schema({
       notifyOnOrder: { type: Boolean, default: true },
       notifyOnBooking: { type: Boolean, default: true }
     },
+    whatsappReactionsTool: {
+      enabled: { type: Boolean, default: false }
+    },
     telegramNotificationTool: {
       enabled: { type: Boolean, default: true },
       notifyOnOrder: { type: Boolean, default: true },

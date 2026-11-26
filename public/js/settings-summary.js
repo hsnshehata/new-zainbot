@@ -90,6 +90,7 @@
         bookingTool: tx('set_tool_booking'),
         orderTrackingTool: tx('set_tool_orders'),
         whatsappNotificationTool: tx('set_tool_wa'),
+        whatsappReactionsTool: tx('set_tool_wa_reactions'),
         telegramNotificationTool: tx('set_tool_tg'),
         salesRecoveryTool: tx('set_tool_recovery'),
         dailyDigestTool: tx('set_tool_digest'),

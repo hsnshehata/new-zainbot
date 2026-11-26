@@ -5,10 +5,12 @@ const QRCode = require('qrcode');
 const { Client, RemoteAuth } = require('whatsapp-web.js');
 const { MongoStore } = require('wwebjs-mongo');
 
+const Bot = require('../models/Bot');
 const ChannelConnection = require('../models/ChannelConnection');
 const Conversation = require('../models/Conversation');
 const logger = require('../logger');
 const { processMessage } = require('../botEngine');
+const { pickReaction } = require('./whatsappReactions');
 const {
   createRuntimeLeaseService,
 } = require('./runtimeLeaseService');
@@ -86,12 +88,15 @@ function createWhatsAppSessionManager(options = {}) {
   const ClientClass = options.ClientClass || Client;
   const RemoteAuthClass = options.RemoteAuthClass || RemoteAuth;
   const MongoStoreClass = options.MongoStoreClass || MongoStore;
+  const BotModel = options.BotModel || Bot;
   const ConnectionModel = options.ConnectionModel || ChannelConnection;
   const ConversationModel = options.ConversationModel || Conversation;
   const mongooseInstance = options.mongooseInstance || mongoose;
   const leaseService = options.leaseService || createRuntimeLeaseService();
   const qrToDataURL = options.qrToDataURL || QRCode.toDataURL;
   const processIncomingMessage = options.processIncomingMessage || processMessage;
+  const getBot = options.getBot || (async (botId) => BotModel.findById(botId).select('agentTools.whatsappReactionsTool').lean());
+  const pickMessageReaction = options.pickReaction || pickReaction;
   const log = options.logger || logger;
   const now = options.now || (() => new Date());
   const runtimes = new Map();
@@ -175,6 +180,24 @@ function createWhatsAppSessionManager(options = {}) {
 
     const isImage = message.type === 'image';
     const isVoice = message.type === 'audio' || message.type === 'ptt';
+    const messageText = message.body || (isImage ? '[صورة]' : isVoice ? '[رسالة صوتية]' : '');
+
+    // Best-effort native WhatsApp reaction; swallows all errors so replies are unaffected.
+    const reactionEmoji = pickMessageReaction(messageText);
+    if (reactionEmoji && typeof message.react === 'function') {
+      try {
+        const bot = await getBot(runtime.botId);
+        if (bot?.agentTools?.whatsappReactionsTool?.enabled === true) {
+          await message.react(reactionEmoji);
+        }
+      } catch (error) {
+        log.warn('whatsapp_message_reaction_failed', {
+          botId: runtime.botId,
+          error: safeErrorCode(error),
+        });
+      }
+    }
+
     let mediaDataUrl = null;
     if (isImage || isVoice) {
       const media = await message.downloadMedia();
@@ -186,7 +209,7 @@ function createWhatsAppSessionManager(options = {}) {
     const reply = await processIncomingMessage(
       runtime.botId,
       message.from,
-      message.body || (isImage ? '[صورة]' : isVoice ? '[رسالة صوتية]' : ''),
+      messageText,
       isImage,
       isVoice,
       messageId || null,

@@ -266,9 +266,9 @@ test('E05h: agentForm labels match their field ids (lifecycle intact)', () => {
 
 test('E05h: agent toggles/skills wrap natively; no help invented', () => {
   const form = formInner('agentForm');
-  // 7 tool toggles + 5 skills + auto-reply: wrapping labels name them.
+  // 8 tool toggles + 5 skills + auto-reply: wrapping labels name them.
   const toolToggles = [...form.matchAll(/<label[^>]*>\s*<input id="(agentTool[A-Za-z]+|agentAutoReplyEnabled)" type="checkbox"/g)];
-  assert.equal(toolToggles.length, 8, `Expected 8 wrapped tool/auto-reply toggles, found ${toolToggles.length}`);
+  assert.equal(toolToggles.length, 9, `Expected 9 wrapped tool/auto-reply toggles, found ${toolToggles.length}`);
   const skills = [...form.matchAll(/<label class="checkbox-item"><input type="checkbox" name="agentSkill"/g)];
   assert.equal(skills.length, 5, `Expected 5 wrapped skill checkboxes, found ${skills.length}`);
   assert.doesNotMatch(form, /aria-describedby/, 'no per-field help exists to link');

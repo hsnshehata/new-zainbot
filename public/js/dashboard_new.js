@@ -311,6 +311,7 @@
       set_tool_booking: 'Bookings & appointments',
       set_tool_orders: 'Order tracking',
       set_tool_wa: 'WhatsApp alerts',
+      set_tool_wa_reactions: 'WhatsApp emoji reactions',
       set_tool_tg: 'Telegram alerts',
       set_tool_recovery: 'Abandoned sales recovery',
       set_tool_digest: 'Daily digest',
@@ -799,6 +800,8 @@
       agent_booking_service_label: 'Default Service / Purpose',
       agent_tool_orders_title: 'Order Tracking & Management Tool',
       agent_tool_wa_title: 'Instant WhatsApp Notifications Tool',
+      agent_tool_wa_reactions_title: 'Emoji reactions on WhatsApp messages',
+      agent_tool_wa_reactions_hint: 'Automatically react with an emoji to customer thanks, greetings, confirmations, and order requests.',
       agent_tool_tg_title: 'Instant Telegram Notifications Tool',
       agent_skills_section_title: 'Agent Skills',
       skill_sales: 'Smart Sales Consultant',
@@ -1456,6 +1459,7 @@
       set_tool_booking: 'الحجوزات والمواعيد',
       set_tool_orders: 'تتبع الطلبات',
       set_tool_wa: 'تنبيهات واتساب',
+      set_tool_wa_reactions: 'تفاعلات الإيموجي على واتساب',
       set_tool_tg: 'تنبيهات تليجرام',
       set_tool_recovery: 'استعادة المبيعات المتروكة',
       set_tool_digest: 'التقرير اليومي',
@@ -1944,6 +1948,8 @@
       agent_booking_service_label: 'الخدمة الافتراضية / الغرض',
       agent_tool_orders_title: 'أداة تتبع وإدارة الطلبات',
       agent_tool_wa_title: 'أداة إرسال إشعارات واتساب الفورية',
+      agent_tool_wa_reactions_title: 'التفاعل بالإيموجي على رسائل واتساب',
+      agent_tool_wa_reactions_hint: 'تفاعل تلقائياً بإيموجي مناسب مع رسائل الشكر والتحية والتأكيد وطلبات الشراء والحجز من العملاء.',
       agent_tool_tg_title: 'أداة إرسال إشعارات تيليجرام الفورية',
       agent_skills_section_title: 'مهارات الوكيل',
       skill_sales: 'استشاري مبيعات ذكي',
@@ -6189,6 +6195,7 @@
       const toolBooking = document.getElementById('agentToolBooking');
       const toolOrders = document.getElementById('agentToolOrders');
       const toolWa = document.getElementById('agentToolWhatsapp');
+      const toolWaReactions = document.getElementById('agentToolWhatsappReactions');
       const toolTg = document.getElementById('agentToolTelegram');
 
       if (hasExplicitTools) {
@@ -6203,6 +6210,7 @@
         if (toolWa) toolWa.checked = !isFree;
         if (toolTg) toolTg.checked = !isFree;
       }
+      if (toolWaReactions) toolWaReactions.checked = tools.whatsappReactionsTool?.enabled === true;
 
       const bookingHours = document.getElementById('agentBookingWorkingHours');
       if (bookingHours) bookingHours.value = tools.bookingTool?.workingHours || '09:00 - 22:00';
@@ -6248,6 +6256,8 @@
       if (toolOrders) toolOrders.checked = true;
       const toolWa = document.getElementById('agentToolWhatsapp');
       if (toolWa) toolWa.checked = !isFree;
+      const toolWaReactions = document.getElementById('agentToolWhatsappReactions');
+      if (toolWaReactions) toolWaReactions.checked = false;
       const toolTg = document.getElementById('agentToolTelegram');
       if (toolTg) toolTg.checked = !isFree;
 
@@ -6308,6 +6318,9 @@
       },
       whatsappNotificationTool: {
         enabled: document.getElementById('agentToolWhatsapp')?.checked === true,
+      },
+      whatsappReactionsTool: {
+        enabled: document.getElementById('agentToolWhatsappReactions')?.checked === true,
       },
       telegramNotificationTool: {
         enabled: document.getElementById('agentToolTelegram')?.checked === true,
