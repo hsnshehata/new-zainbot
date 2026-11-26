@@ -10,6 +10,8 @@ WORKDIR /app
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 
 COPY package.json package-lock.json ./
+# patch-package (postinstall) needs the patches present during npm ci
+COPY patches/ ./patches/
 RUN npm ci
 
 COPY public/ ./public/
@@ -36,6 +38,8 @@ RUN apt-get update \
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+# patch-package (postinstall) needs the patches present during npm ci
+COPY patches/ ./patches/
 RUN npm ci --omit=dev
 
 COPY --chown=node:node . .

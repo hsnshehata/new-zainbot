@@ -19,6 +19,16 @@ const QR_TTL_MS = 2 * 60 * 1000;
 const LEASE_RENEW_INTERVAL_MS = 30_000;
 const BACKUP_SYNC_INTERVAL_MS = 60_000;
 const RECENT_MESSAGE_TTL_MS = 10 * 60 * 1000;
+// After `authenticated`, wwebjs normally fires `ready` within seconds.
+// Upstream bug wwebjs/whatsapp-web.js#201946: a transient iframe race
+// (pdf-viewer teardown) makes exposeFunction reject inside
+// attachEventListeners, the rejection is swallowed and `ready` never
+// fires - the client then sits in "connecting" forever with no error.
+// The library patch in patches/ retries the race; this watchdog is the
+// safety net: restart the runtime when `ready` still does not arrive.
+const READY_WATCHDOG_MS = 60_000;
+const READY_WATCHDOG_RETRY_DELAY_MS = 5_000;
+const READY_WATCHDOG_MAX_RESTARTS = 3;
 
 class WhatsAppSessionError extends Error {
   constructor(code, message, statusCode = 400) {
@@ -99,9 +109,15 @@ function createWhatsAppSessionManager(options = {}) {
   const pickMessageReaction = options.pickReaction || pickReaction;
   const log = options.logger || logger;
   const now = options.now || (() => new Date());
+  const readyWatchdogMs = options.readyWatchdogMs ?? READY_WATCHDOG_MS;
+  const readyWatchdogRetryDelayMs = options.readyWatchdogRetryDelayMs
+    ?? READY_WATCHDOG_RETRY_DELAY_MS;
+  const readyWatchdogMaxRestarts = options.readyWatchdogMaxRestarts
+    ?? READY_WATCHDOG_MAX_RESTARTS;
   const runtimes = new Map();
   const pendingStarts = new Map();
   const recentMessages = new Map();
+  const readyWatchdogAttempts = new Map();
 
   const workDirectory = path.resolve(
     options.workDirectory
@@ -228,10 +244,63 @@ function createWhatsAppSessionManager(options = {}) {
     });
   }
 
+  function clearReadyWatchdog(runtime) {
+    if (runtime?.readyWatchdogTimer) {
+      clearTimeout(runtime.readyWatchdogTimer);
+      runtime.readyWatchdogTimer = null;
+    }
+  }
+
+  function armReadyWatchdog(runtime) {
+    clearReadyWatchdog(runtime);
+    if (!readyWatchdogMs) return;
+    runtime.readyWatchdogTimer = setTimeout(() => {
+      handleReadyWatchdog(runtime.botId).catch((error) => {
+        log.warn('whatsapp_ready_watchdog_failed', {
+          botId: runtime.botId,
+          error: safeErrorCode(error),
+        });
+      });
+    }, readyWatchdogMs);
+    runtime.readyWatchdogTimer.unref?.();
+  }
+
+  async function handleReadyWatchdog(botId) {
+    const key = String(botId);
+    const runtime = runtimes.get(key);
+    if (!runtime) return;
+    const attempt = (readyWatchdogAttempts.get(key) || 0) + 1;
+    readyWatchdogAttempts.set(key, attempt);
+    if (attempt > readyWatchdogMaxRestarts) {
+      const error = new Error(
+        'WhatsApp client did not become ready after authentication retries'
+      );
+      error.code = 'WHATSAPP_READY_WATCHDOG_EXHAUSTED';
+      readyWatchdogAttempts.delete(key);
+      await failRuntime(runtime, error, true);
+      return;
+    }
+    log.warn('whatsapp_ready_watchdog_restart', {
+      botId: runtime.botId,
+      attempt,
+    });
+    const userId = runtime.userId;
+    await stopRuntime(key, { logout: false, release: true });
+    setTimeout(() => {
+      connect({ botId: key, userId }).catch((error) => {
+        log.warn('whatsapp_ready_watchdog_failed', {
+          botId: key,
+          error: safeErrorCode(error),
+        });
+      });
+    }, readyWatchdogRetryDelayMs).unref?.();
+  }
+
   async function stopRuntime(botId, { logout = false, release = true } = {}) {
     const runtime = runtimes.get(String(botId));
     if (!runtime) return;
     runtimes.delete(String(botId));
+    clearReadyWatchdog(runtime);
     if (runtime.leaseTimer) clearInterval(runtime.leaseTimer);
 
     try {
@@ -308,9 +377,12 @@ function createWhatsAppSessionManager(options = {}) {
         'health.errorCode': '',
       }).catch(() => {});
       notifyStatusWaiters(runtime);
+      armReadyWatchdog(runtime);
     });
 
     client.on('ready', async () => {
+      clearReadyWatchdog(runtime);
+      readyWatchdogAttempts.delete(String(botId));
       runtime.qrCode = null;
       runtime.qrExpiresAt = null;
       const readyAt = now();
@@ -523,6 +595,7 @@ function createWhatsAppSessionManager(options = {}) {
 
   async function disconnect(botId) {
     const normalizedBotId = String(botId);
+    readyWatchdogAttempts.delete(normalizedBotId);
     await stopRuntime(normalizedBotId, { logout: true, release: true });
     const disconnectedAt = now();
     const connection = await updateConnection(normalizedBotId, {

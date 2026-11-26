@@ -152,3 +152,97 @@ test('manager exposes real QR and ready states and preserves sessions on shutdow
   assert.equal(client.logoutCalls, 0);
   assert.equal(released.length, 1);
 });
+
+test('ready watchdog restarts a runtime stuck after authenticated and gives up after max restarts', async () => {
+  FakeClient.instances.length = 0;
+  const ConnectionModel = createConnectionModel();
+  const logs = { warn: [], error: [] };
+  const manager = createWhatsAppSessionManager({
+    ClientClass: FakeClient,
+    RemoteAuthClass: FakeRemoteAuth,
+    MongoStoreClass: FakeMongoStore,
+    ConnectionModel,
+    ConversationModel: { async exists() { return false; } },
+    mongooseInstance: {},
+    leaseService: {
+      async acquire() { return { ownerId: 'worker-1' }; },
+      async renew() { return { ownerId: 'worker-1' }; },
+      async release() {},
+    },
+    qrToDataURL: async (value) => `data:image/png;base64,${value}`,
+    processIncomingMessage: async () => 'reply',
+    logger: {
+      info() {},
+      warn(...args) { logs.warn.push(args); },
+      error(...args) { logs.error.push(args); },
+    },
+    workDirectory: '.test-whatsapp-runtime',
+    readyWatchdogMs: 30,
+    readyWatchdogRetryDelayMs: 5,
+    readyWatchdogMaxRestarts: 2,
+  });
+
+  await manager.connect({ botId: BOT_ID, userId: USER_ID });
+  const first = FakeClient.instances[0];
+  first.emit('authenticated');
+  // first watchdog fire: runtime destroyed and a fresh one starts
+  await new Promise((resolve) => setTimeout(resolve, 120));
+  assert.equal(first.destroyCalls, 1);
+  assert.equal(FakeClient.instances.length, 2);
+  assert.equal(logs.warn.filter((a) => a[0] === 'whatsapp_ready_watchdog_restart').length, 1);
+
+  const second = FakeClient.instances[1];
+  second.emit('authenticated');
+  await new Promise((resolve) => setTimeout(resolve, 120));
+  assert.equal(second.destroyCalls, 1);
+  assert.equal(FakeClient.instances.length, 3);
+
+  // third stall exceeds max restarts: relink_required, no further runtime
+  const third = FakeClient.instances[2];
+  third.emit('authenticated');
+  await new Promise((resolve) => setTimeout(resolve, 120));
+  assert.equal(FakeClient.instances.length, 3);
+  const status = await manager.getStatus(BOT_ID);
+  assert.equal(status.status, 'relink_required');
+  assert.equal(status.requiresRelink, true);
+
+  await manager.shutdown();
+});
+
+test('ready watchdog disarms when ready arrives in time', async () => {
+  FakeClient.instances.length = 0;
+  const ConnectionModel = createConnectionModel();
+  const manager = createWhatsAppSessionManager({
+    ClientClass: FakeClient,
+    RemoteAuthClass: FakeRemoteAuth,
+    MongoStoreClass: FakeMongoStore,
+    ConnectionModel,
+    ConversationModel: { async exists() { return false; } },
+    mongooseInstance: {},
+    leaseService: {
+      async acquire() { return { ownerId: 'worker-1' }; },
+      async renew() { return { ownerId: 'worker-1' }; },
+      async release() {},
+    },
+    qrToDataURL: async (value) => `data:image/png;base64,${value}`,
+    processIncomingMessage: async () => 'reply',
+    logger: { info() {}, warn() {}, error() {} },
+    workDirectory: '.test-whatsapp-runtime',
+    readyWatchdogMs: 40,
+    readyWatchdogRetryDelayMs: 5,
+    readyWatchdogMaxRestarts: 1,
+  });
+
+  await manager.connect({ botId: BOT_ID, userId: USER_ID });
+  const client = FakeClient.instances[0];
+  client.emit('authenticated');
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  client.emit('ready');
+  await new Promise((resolve) => setTimeout(resolve, 120));
+  assert.equal(client.destroyCalls, 0);
+  assert.equal(FakeClient.instances.length, 1);
+  const status = await manager.getStatus(BOT_ID);
+  assert.equal(status.status, 'connected');
+
+  await manager.shutdown();
+});
