@@ -29,6 +29,8 @@ const adminKeysRoutes = require('./routes/adminKeys');
 const landingDemoRoutes = require('./routes/landingDemo');
 const adminLandingDemoRoutes = require('./routes/adminLandingDemo');
 const adminPlatformSettingsRoutes = require('./routes/adminPlatformSettings');
+const adminPlatformWhatsappRoutes = require('./routes/adminPlatformWhatsapp');
+const platformWhatsappSession = require('./services/platformWhatsappSession');
 const { getEffectiveSubscriptionWhatsapp } = require('./services/platformSettingsService');
 const {
   createAdminImpersonationRouter,
@@ -428,6 +430,7 @@ app.use('/api/admin/keys', adminKeysRoutes);
 app.use('/api/admin/system', require('./routes/adminSystem'));
 app.use('/api/admin/landing-demo', adminLandingDemoRoutes);
 app.use('/api/admin/platform-settings', adminPlatformSettingsRoutes);
+app.use('/api/admin/platform-whatsapp', adminPlatformWhatsappRoutes);
 app.use('/api/landing-demo', landingDemoRoutes);
 app.use('/api/ai', require('./routes/aiModels'));
 app.use(
@@ -743,6 +746,9 @@ function installFatalProcessHandlers() {
     }
     await whatsappSessionManager.shutdown().catch((error) => {
       logger.error('whatsapp_shutdown_failed', { error: error.message });
+    });
+    await platformWhatsappSession.shutdown().catch((error) => {
+      logger.error('platform_whatsapp_shutdown_failed', { error: error.message });
     });
     await mongoose.disconnect().catch((error) => {
       logger.error('mongodb_shutdown_failed', { error: error.message });

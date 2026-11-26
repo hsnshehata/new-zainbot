@@ -684,6 +684,27 @@
       platform_settings_saved_ok: 'Saved successfully!',
       platform_settings_save_failed: 'Could not save the settings.',
       platform_settings_updated_at: 'Last updated',
+      platform_wa_title: 'Platform WhatsApp',
+      platform_wa_desc: 'Singleton platform WhatsApp session auto-bound to ZainBot Main to answer incoming platform messages directly.',
+      platform_wa_connected_phone_label: 'Connected number',
+      platform_wa_health_label: 'Session health',
+      platform_wa_status_connected: 'Connected',
+      platform_wa_status_qr_ready: 'Scan QR Code',
+      platform_wa_status_loading: 'Starting...',
+      platform_wa_status_authenticating: 'Authenticating...',
+      platform_wa_status_disconnected: 'Disconnected',
+      platform_wa_health_healthy: 'Healthy',
+      platform_wa_health_recovering: 'Recovering',
+      platform_wa_health_unresponsive: 'Unresponsive',
+      platform_wa_health_disconnected: 'Offline',
+      platform_wa_qr_prompt: 'Scan the QR code from WhatsApp on your phone to connect the platform',
+      platform_wa_qr_steps: 'Open WhatsApp on your phone > Linked Devices > Link a Device > Scan the code above. Auto-refreshes every 3 seconds.',
+      platform_wa_connect_btn: 'Connect Platform WhatsApp',
+      platform_wa_disconnect_btn: 'Disconnect',
+      platform_wa_connecting_msg: 'Starting WhatsApp session...',
+      platform_wa_connected_msg: 'Platform WhatsApp is connected.',
+      platform_wa_disconnected_msg: 'Platform WhatsApp disconnected.',
+      platform_wa_error_msg: 'Could not update platform WhatsApp session.',
       model_select_heading: 'AI Model',
       model_select_desc: 'Choose Auto to let the platform pick the best available model for your plan, or select a specific model from the list enabled for your account.',
       model_select_label: 'Model',
@@ -1832,6 +1853,27 @@
       platform_settings_saved_ok: 'تم الحفظ بنجاح!',
       platform_settings_save_failed: 'تعذر حفظ الإعدادات.',
       platform_settings_updated_at: 'آخر تحديث',
+      platform_wa_title: 'WhatsApp المنصة',
+      platform_wa_desc: 'جلسة واتساب موحدة للمنصة مربوطة تلقائياً ببوت ZainBot Main للرد على استفسارات الزوار مباشرة بدون اختيار بوت.',
+      platform_wa_connected_phone_label: 'الرقم المتصل',
+      platform_wa_health_label: 'حالة الجلسة',
+      platform_wa_status_connected: 'متصل',
+      platform_wa_status_qr_ready: 'جاهز للمسح (QR)',
+      platform_wa_status_loading: 'جاري التشغيل...',
+      platform_wa_status_authenticating: 'جاري التحقق...',
+      platform_wa_status_disconnected: 'غير متصل',
+      platform_wa_health_healthy: 'مستقرة',
+      platform_wa_health_recovering: 'جاري الاستعادة',
+      platform_wa_health_unresponsive: 'غير مستجيبة',
+      platform_wa_health_disconnected: 'غير متصلة',
+      platform_wa_qr_prompt: 'امسح رمز QR من واتساب الموبايل لربط المنصة',
+      platform_wa_qr_steps: 'افتح واتساب على موبايلك > الأجهزة المرتبطة > ربط جهاز > امسح الكود اللي فوق. بيتحدث تلقائياً كل 3 ثواني.',
+      platform_wa_connect_btn: 'ربط واتساب المنصة',
+      platform_wa_disconnect_btn: 'فصل الاتصال',
+      platform_wa_connecting_msg: 'جاري تشغيل جلسة واتساب المنصة...',
+      platform_wa_connected_msg: 'واتساب المنصة متصل وشغّال بنجاح.',
+      platform_wa_disconnected_msg: 'تم فصل واتساب المنصة بنجاح.',
+      platform_wa_error_msg: 'حصلت مشكلة في تحديث جلسة واتساب المنصة.',
       model_select_heading: 'موديل الذكاء الاصطناعي',
       model_select_desc: 'اختر "تلقائي" ليختار النظام أفضل موديل متاح لباقتك، أو حدد موديلاً معيناً من القائمة المفعّلة لحسابك.',
       model_select_label: 'الموديل',
@@ -6798,6 +6840,9 @@
     .filter((entry) => entry.button && entry.section);
 
   function activateAdminSubtab(active) {
+    if (active?.sectionId !== 'adminSectionPlatformSettings') {
+      stopPlatformWaPolling();
+    }
     adminSubtabs.forEach((entry) => {
       const isActive = entry === active;
       entry.button.classList.toggle('active', isActive);
@@ -7303,11 +7348,210 @@
   async function loadAdminPlatformSettings() {
     try {
       const res = await apiFetch('/api/admin/platform-settings');
-      if (!(res && res.success)) return;
-      renderAdminPlatformSettings(res.data || {});
+      if (res && res.success) {
+        renderAdminPlatformSettings(res.data || {});
+      }
     } catch (e) {
       console.error(e);
     }
+    loadAdminPlatformWhatsapp();
+  }
+
+  // --- Platform WhatsApp singleton session ---
+  let platformWaPollTimer = null;
+
+  function stopPlatformWaPolling() {
+    if (platformWaPollTimer) {
+      clearInterval(platformWaPollTimer);
+      platformWaPollTimer = null;
+    }
+  }
+
+  function startPlatformWaPolling() {
+    if (platformWaPollTimer) return;
+    platformWaPollTimer = setInterval(() => {
+      const section = document.getElementById('adminSectionPlatformSettings');
+      if (!section || section.style.display === 'none') {
+        stopPlatformWaPolling();
+        return;
+      }
+      loadAdminPlatformWhatsapp({ silent: true });
+    }, 3000);
+  }
+
+  function renderAdminPlatformWhatsapp(data) {
+    const t = translations[currentLanguage] || translations.en;
+    const status = data?.status || 'disconnected';
+    const badgeEl = document.getElementById('platformWaStatusBadge');
+    const phoneEl = document.getElementById('platformWaPhoneVal');
+    const healthEl = document.getElementById('platformWaHealthVal');
+    const updatedEl = document.getElementById('platformWaUpdatedAt');
+    const qrBoxEl = document.getElementById('platformWaQrBox');
+    const qrImgEl = document.getElementById('platformWaQrImg');
+    const connectBtn = document.getElementById('platformWaConnectBtn');
+    const disconnectBtn = document.getElementById('platformWaDisconnectBtn');
+
+    if (badgeEl) {
+      const statusMap = {
+        connected: {
+          label: t.platform_wa_status_connected,
+          color: 'var(--green)',
+          bg: 'rgba(16,185,129,0.14)',
+          border: 'rgba(16,185,129,0.45)',
+        },
+        qr_ready: {
+          label: t.platform_wa_status_qr_ready,
+          color: 'var(--orange)',
+          bg: 'rgba(245,158,11,0.14)',
+          border: 'rgba(245,158,11,0.45)',
+        },
+        loading: {
+          label: t.platform_wa_status_loading,
+          color: 'var(--orange)',
+          bg: 'rgba(245,158,11,0.1)',
+          border: 'rgba(245,158,11,0.35)',
+        },
+        authenticating: {
+          label: t.platform_wa_status_authenticating,
+          color: 'var(--orange)',
+          bg: 'rgba(245,158,11,0.1)',
+          border: 'rgba(245,158,11,0.35)',
+        },
+        disconnected: {
+          label: t.platform_wa_status_disconnected,
+          color: 'var(--text-muted)',
+          bg: 'rgba(255,255,255,0.04)',
+          border: 'var(--glass-border)',
+        },
+      };
+      const style = statusMap[status] || statusMap.disconnected;
+      badgeEl.textContent = style.label;
+      badgeEl.style.color = style.color;
+      badgeEl.style.background = style.bg;
+      badgeEl.style.borderColor = style.border;
+    }
+
+    if (phoneEl) {
+      phoneEl.textContent = data?.phone ? data.phone : '—';
+    }
+
+    if (healthEl) {
+      const healthMap = {
+        healthy: t.platform_wa_health_healthy,
+        recovering: t.platform_wa_health_recovering,
+        unresponsive: t.platform_wa_health_unresponsive,
+        disconnected: t.platform_wa_health_disconnected,
+      };
+      healthEl.textContent = healthMap[data?.healthStatus] || healthMap.disconnected;
+    }
+
+    if (updatedEl) {
+      updatedEl.textContent = data?.updatedAt
+        ? `${t.platform_settings_updated_at}: ${formatDate(data.updatedAt)}`
+        : '';
+    }
+
+    const showQr = Boolean(data?.hasQr && data?.qrCodeData && status !== 'connected');
+    if (qrBoxEl && qrImgEl) {
+      if (showQr) {
+        qrImgEl.src = data.qrCodeData;
+        qrBoxEl.style.display = 'block';
+      } else {
+        qrBoxEl.style.display = 'none';
+        qrImgEl.removeAttribute('src');
+      }
+    }
+
+    if (connectBtn) {
+      connectBtn.disabled = status === 'connected';
+    }
+    if (disconnectBtn) {
+      disconnectBtn.disabled = status === 'disconnected';
+    }
+
+    if (status === 'qr_ready' || status === 'loading' || status === 'authenticating') {
+      startPlatformWaPolling();
+    } else {
+      stopPlatformWaPolling();
+    }
+  }
+
+  async function loadAdminPlatformWhatsapp(opts = {}) {
+    try {
+      const res = await apiFetch('/api/admin/platform-whatsapp/status');
+      if (res && res.success) {
+        renderAdminPlatformWhatsapp(res.data || {});
+      }
+    } catch (e) {
+      if (!opts.silent) console.error(e);
+    }
+  }
+
+  const platformWaConnectBtn = document.getElementById('platformWaConnectBtn');
+  if (platformWaConnectBtn) {
+    platformWaConnectBtn.addEventListener('click', async () => {
+      const t = translations[currentLanguage] || translations.en;
+      const msgEl = document.getElementById('platformWaStatusMsg');
+      try {
+        platformWaConnectBtn.disabled = true;
+        if (msgEl) {
+          msgEl.style.color = 'var(--text-muted)';
+          msgEl.textContent = t.platform_wa_connecting_msg;
+        }
+        const res = await apiFetch('/api/admin/platform-whatsapp/connect-qr', { method: 'POST' });
+        if (res && res.success) {
+          renderAdminPlatformWhatsapp(res.data || {});
+          if (msgEl) {
+            msgEl.style.color = 'var(--green)';
+            msgEl.textContent = res.data?.connected ? t.platform_wa_connected_msg : '';
+          }
+        } else if (msgEl) {
+          msgEl.style.color = 'var(--red)';
+          msgEl.textContent = (res && res.message) || t.platform_wa_error_msg;
+        }
+      } catch (e) {
+        console.error(e);
+        if (msgEl) {
+          msgEl.style.color = 'var(--red)';
+          msgEl.textContent = t.platform_wa_error_msg;
+        }
+      } finally {
+        if (document.getElementById('platformWaStatusBadge')?.textContent !== t.platform_wa_status_connected) {
+          platformWaConnectBtn.disabled = false;
+        }
+      }
+    });
+  }
+
+  const platformWaDisconnectBtn = document.getElementById('platformWaDisconnectBtn');
+  if (platformWaDisconnectBtn) {
+    platformWaDisconnectBtn.addEventListener('click', async () => {
+      const t = translations[currentLanguage] || translations.en;
+      const msgEl = document.getElementById('platformWaStatusMsg');
+      try {
+        platformWaDisconnectBtn.disabled = true;
+        stopPlatformWaPolling();
+        const res = await apiFetch('/api/admin/platform-whatsapp/disconnect', { method: 'POST' });
+        if (res && res.success) {
+          renderAdminPlatformWhatsapp(res.data || {});
+          if (msgEl) {
+            msgEl.style.color = 'var(--green)';
+            msgEl.textContent = t.platform_wa_disconnected_msg;
+          }
+        } else if (msgEl) {
+          msgEl.style.color = 'var(--red)';
+          msgEl.textContent = (res && res.message) || t.platform_wa_error_msg;
+        }
+      } catch (e) {
+        console.error(e);
+        if (msgEl) {
+          msgEl.style.color = 'var(--red)';
+          msgEl.textContent = t.platform_wa_error_msg;
+        }
+      } finally {
+        setTimeout(() => { if (msgEl) msgEl.textContent = ''; }, 4000);
+      }
+    });
   }
 
   const platformSettingsSaveBtn = document.getElementById('platformSettingsSaveBtn');

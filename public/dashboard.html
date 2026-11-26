@@ -2575,6 +2575,33 @@
                 <span id="platformSettingsStatusMsg" style="font-size:13px;"></span>
               </div>
             </div>
+
+            <!-- Platform WhatsApp Singleton Session (auto-bound to ZainBot Main) -->
+            <div class="glass-card" id="platformWhatsappCard" style="max-width:760px; margin-top:20px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:8px;">
+                <h3 style="font-size:18px; font-weight:700; margin:0;"><i class="fab fa-whatsapp" style="color:var(--green);"></i> <span data-i18n="platform_wa_title">WhatsApp المنصة</span></h3>
+                <span id="platformWaStatusBadge" style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:999px; font-size:12px; font-weight:600; border:1px solid var(--glass-border); background:rgba(255,255,255,0.04); color:var(--text-muted);" data-i18n="platform_wa_status_disconnected">غير متصل</span>
+              </div>
+              <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;" data-i18n="platform_wa_desc">جلسة واتساب موحدة للمنصة مربوطة تلقائياً ببوت ZainBot Main للرد على استفسارات الزوار مباشرة بدون اختيار بوت.</p>
+
+              <div id="platformWaMetaRow" style="margin-bottom:14px; padding:10px 12px; border-radius:8px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.02); font-size:13px; display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
+                <span><strong data-i18n="platform_wa_connected_phone_label">الرقم المتصل</strong>: <code id="platformWaPhoneVal" dir="ltr">—</code></span>
+                <span><strong data-i18n="platform_wa_health_label">حالة الجلسة</strong>: <span id="platformWaHealthVal" style="color:var(--text-muted);">—</span></span>
+                <span id="platformWaUpdatedAt" style="font-size:12px; color:var(--text-muted);"></span>
+              </div>
+
+              <div id="platformWaQrBox" style="display:none; margin-bottom:16px; padding:16px; border-radius:10px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.03); text-align:center;">
+                <p style="font-size:13px; font-weight:600; margin-bottom:10px;" data-i18n="platform_wa_qr_prompt">امسح رمز QR من واتساب الموبايل لربط المنصة</p>
+                <img id="platformWaQrImg" alt="رمز QR لواتساب المنصة" style="width:220px; height:220px; border-radius:8px; background:#fff; padding:8px; display:inline-block;" />
+                <p style="font-size:12px; color:var(--text-muted); margin-top:10px; margin-bottom:0;" data-i18n="platform_wa_qr_steps">افتح واتساب على موبايلك &gt; الأجهزة المرتبطة &gt; ربط جهاز &gt; امسح الكود اللي فوق. بيتحدث تلقائياً كل 3 ثواني.</p>
+              </div>
+
+              <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <button id="platformWaConnectBtn" type="button" class="btn btn-primary btn-sm" style="background:var(--green); color:#000; border-color:var(--green); font-weight:600;"><i class="fas fa-qrcode"></i> <span data-i18n="platform_wa_connect_btn">ربط واتساب المنصة</span></button>
+                <button id="platformWaDisconnectBtn" type="button" class="btn btn-secondary btn-sm" style="color:var(--red); border-color:rgba(239,68,68,0.4);"><i class="fas fa-unlink"></i> <span data-i18n="platform_wa_disconnect_btn">فصل الاتصال</span></button>
+                <span id="platformWaStatusMsg" style="font-size:13px;"></span>
+              </div>
+            </div>
           </div>
         </section>
 
