@@ -15,6 +15,14 @@ const platformSettingSchema = new mongoose.Schema({
     trim: true,
     maxlength: 32,
   },
+  // Platform default OpenAI chat model, used when a bot has no model of its
+  // own. Empty string = inherit the built-in server default (gpt-4o-mini).
+  defaultOpenAiModel: {
+    type: String,
+    default: '',
+    trim: true,
+    maxlength: 100,
+  },
 }, {
   timestamps: true,
   versionKey: false,

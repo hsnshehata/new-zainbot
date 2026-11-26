@@ -364,3 +364,85 @@ test('Admin dashboard markup and i18n include Platform Settings subtab with real
   assert.match(js, /platform_settings_whatsapp_label:\s*'رقم واتساب الاشتراكات'/);
   assert.match(js, /\/api\/admin\/platform-settings/);
 });
+
+test('PUT /api/admin/platform-settings accepts, validates, and clears defaultOpenAiModel; GET exposes effective model', async () => {
+  const adminToken = tokenFor(makeUser('507f191e810c19729de86003', 'superadmin'));
+
+  const doc = {
+    key: 'platform_settings',
+    subscriptionWhatsappNumber: '',
+    defaultOpenAiModel: '',
+    updatedAt: new Date('2026-11-26T12:00:00.000Z'),
+    async save() { return this; },
+  };
+  PlatformSetting.getConfig = async () => doc;
+
+  // Default when nothing is stored
+  const initial = await request(app)
+    .get('/api/admin/platform-settings')
+    .set('Authorization', `Bearer ${adminToken}`);
+  assert.equal(initial.status, 200);
+  assert.equal(initial.body.data.defaultOpenAiModel, '');
+  assert.equal(initial.body.data.effectiveDefaultModel, 'gpt-4o-mini');
+  assert.equal(initial.body.data.modelSource, 'default');
+
+  // Valid model id round-trips
+  const saved = await request(app)
+    .put('/api/admin/platform-settings')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ defaultOpenAiModel: 'gpt-4.1-2025-04-14' });
+  assert.equal(saved.status, 200);
+  assert.equal(doc.defaultOpenAiModel, 'gpt-4.1-2025-04-14');
+  assert.equal(saved.body.data.defaultOpenAiModel, 'gpt-4.1-2025-04-14');
+  assert.equal(saved.body.data.effectiveDefaultModel, 'gpt-4.1-2025-04-14');
+  assert.equal(saved.body.data.modelSource, 'database');
+
+  // Invalid model ids are rejected with an Arabic message and never save
+  const invalidModels = ['gpt 4o mini', 'model!', 'a'.repeat(101), 42, '-leading-dash'];
+  for (const bad of invalidModels) {
+    const res = await request(app)
+      .put('/api/admin/platform-settings')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ defaultOpenAiModel: bad });
+    assert.equal(res.status, 400, `Expected 400 for "${bad}", got ${res.status}`);
+    assert.equal(res.body.error, 'INVALID_OPENAI_MODEL');
+    assert.match(res.body.message, /[؀-ۿ]/, 'Error message must be in Arabic');
+    assert.equal(doc.defaultOpenAiModel, 'gpt-4.1-2025-04-14', 'Invalid input must not overwrite the saved model');
+  }
+
+  // Empty string clears back to the built-in default
+  const cleared = await request(app)
+    .put('/api/admin/platform-settings')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ defaultOpenAiModel: '' });
+  assert.equal(cleared.status, 200);
+  assert.equal(doc.defaultOpenAiModel, '');
+  assert.equal(cleared.body.data.effectiveDefaultModel, 'gpt-4o-mini');
+  assert.equal(cleared.body.data.modelSource, 'default');
+});
+
+test('GET /api/admin/platform-settings/openai-models requires direct superadmin and never leaks the key', async () => {
+  const userToken = tokenFor(makeUser('507f191e810c19729de86004', 'user'));
+  const res = await request(app)
+    .get('/api/admin/platform-settings/openai-models')
+    .set('Authorization', `Bearer ${userToken}`);
+  assert.ok([401, 403].includes(res.status), `Expected 401/403, got ${res.status}`);
+  assert.equal(res.body.success, false);
+});
+
+test('getPlatformDefaultOpenAiModel falls back to gpt-4o-mini when unset and reads the cached override', async () => {
+  const { getPlatformDefaultOpenAiModel } = require('../server/services/platformSettingsService');
+
+  PlatformSetting.getConfig = async () => ({ key: 'platform_settings', defaultOpenAiModel: '' });
+  invalidatePlatformSettingsCache();
+  assert.equal(await getPlatformDefaultOpenAiModel(), 'gpt-4o-mini');
+
+  PlatformSetting.getConfig = async () => ({ key: 'platform_settings', defaultOpenAiModel: 'gpt-4.1' });
+  invalidatePlatformSettingsCache();
+  assert.equal(await getPlatformDefaultOpenAiModel(), 'gpt-4.1');
+
+  // A settings read failure must never break the reply path
+  PlatformSetting.getConfig = async () => { throw new Error('db down'); };
+  invalidatePlatformSettingsCache();
+  assert.equal(await getPlatformDefaultOpenAiModel(), 'gpt-4o-mini');
+});

@@ -2,7 +2,10 @@ const logger = require('../logger');
 const PlatformSetting = require('../models/PlatformSetting');
 
 const PLATFORM_SETTINGS_CACHE_TTL_MS = 60 * 1000;
+const DEFAULT_OPENAI_MODEL = 'gpt-4o-mini';
 const INVALID_WHATSAPP_MESSAGE_AR = 'رقم واتساب غير صحيح. أدخل رقماً مصرياً بصيغة 01xxxxxxxxx أو 201xxxxxxxxx أو +201xxxxxxxxx، أو اترك الحقل فارغاً لاستخدام الإعداد الافتراضي.';
+const INVALID_MODEL_MESSAGE_AR = 'اسم الموديل غير صحيح. اختر موديلاً من القائمة أو اترك الحقل فارغاً لاستخدام الافتراضي.';
+const OPENAI_MODEL_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$/;
 
 // Small in-memory cache (60s TTL) so public /api/config reads do not hit
 // MongoDB on every landing page load. Refreshes naturally by TTL and is
@@ -62,6 +65,7 @@ async function getCachedPlatformSettings() {
   const doc = await PlatformSetting.getConfig();
   settingsCache = {
     subscriptionWhatsappNumber: String(doc?.subscriptionWhatsappNumber || '').trim(),
+    defaultOpenAiModel: String(doc?.defaultOpenAiModel || '').trim(),
   };
   settingsCacheAt = now;
   return settingsCache;
@@ -82,11 +86,53 @@ function invalidatePlatformSettingsCache() {
   settingsCacheAt = 0;
 }
 
+function normalizeOpenAiModelId(raw) {
+  if (raw === null || raw === undefined) {
+    return { valid: true, value: '' };
+  }
+  if (typeof raw !== 'string') {
+    return { valid: false, error: 'INVALID_OPENAI_MODEL', message: INVALID_MODEL_MESSAGE_AR };
+  }
+  const trimmed = raw.trim();
+  if (trimmed === '') {
+    return { valid: true, value: '' };
+  }
+  if (!OPENAI_MODEL_ID_PATTERN.test(trimmed)) {
+    return { valid: false, error: 'INVALID_OPENAI_MODEL', message: INVALID_MODEL_MESSAGE_AR };
+  }
+  return { valid: true, value: trimmed };
+}
+
+function resolveDefaultOpenAiModel(dbValue) {
+  const fromDb = String(dbValue || '').trim();
+  if (fromDb) {
+    return { value: fromDb, source: 'database' };
+  }
+  return { value: DEFAULT_OPENAI_MODEL, source: 'default' };
+}
+
+// Platform default chat model for bots with no model of their own. Read on
+// every AI reply through the 60s cache; falls back to the built-in default
+// when unset or when the settings read fails (never blocks a reply).
+async function getPlatformDefaultOpenAiModel() {
+  try {
+    const cached = await getCachedPlatformSettings();
+    return resolveDefaultOpenAiModel(cached.defaultOpenAiModel).value;
+  } catch (err) {
+    logger.warn('platform_settings_model_read_failed', { err: err.message });
+    return DEFAULT_OPENAI_MODEL;
+  }
+}
+
 module.exports = {
   PLATFORM_SETTINGS_CACHE_TTL_MS,
+  DEFAULT_OPENAI_MODEL,
   normalizeEgyptianWhatsappNumber,
+  normalizeOpenAiModelId,
   resolveSubscriptionWhatsapp,
+  resolveDefaultOpenAiModel,
   getCachedPlatformSettings,
   getEffectiveSubscriptionWhatsapp,
+  getPlatformDefaultOpenAiModel,
   invalidatePlatformSettingsCache,
 };

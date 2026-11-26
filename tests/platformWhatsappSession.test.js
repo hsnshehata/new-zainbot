@@ -719,12 +719,65 @@ test('Admin dashboard Platform Settings section includes Platform WhatsApp Arabi
   assert.match(sectionHtml, /id="platformWaQrImg"/);
   assert.match(sectionHtml, /id="platformWaConnectBtn"/);
   assert.match(sectionHtml, /id="platformWaDisconnectBtn"/);
-  // Must NOT introduce a bot selector inside platform settings
-  assert.doesNotMatch(sectionHtml, /<select\b/i, 'Platform WhatsApp UI must not have a bot selector');
+  // Must NOT introduce a bot selector inside the Platform WhatsApp card
+  const waCardMatch = sectionHtml.match(/id="platformWhatsappCard"[\s\S]*?<\/section>/);
+  const waCardHtml = waCardMatch ? waCardMatch[0] : sectionHtml.slice(sectionHtml.indexOf('id="platformWhatsappCard"'));
+  assert.doesNotMatch(waCardHtml, /<select\b/i, 'Platform WhatsApp UI must not have a bot selector');
+
+  // Platform default model dropdown lives in the general settings card
+  assert.match(sectionHtml, /id="platformSettingsDefaultModelSelect"/);
+  assert.match(sectionHtml, /platform_settings_model_label/);
+  assert.match(js, /\/api\/admin\/platform-settings\/openai-models/);
+  assert.match(js, /defaultOpenAiModel/);
 
   assert.match(js, /\/api\/admin\/platform-whatsapp\/status/);
   assert.match(js, /\/api\/admin\/platform-whatsapp\/connect-qr/);
   assert.match(js, /\/api\/admin\/platform-whatsapp\/disconnect/);
   assert.match(js, /platform_wa_title:\s*'WhatsApp المنصة'/);
   assert.match(js, /3000/);
+});
+
+test('platform session reacts to every clean inbound message (always mode) but never to complaints', async () => {
+  FakeClient.instances.length = 0;
+  const SessionModel = createSessionModel();
+  const service = createPlatformWhatsappSession({
+    ClientClass: FakeClient,
+    NoAuthClass: FakeNoAuth,
+    SessionModel,
+    ConversationModel: { async exists() { return false; } },
+    getBot: async () => ({
+      agentTools: { whatsappReactionsTool: { enabled: true } },
+    }),
+    processIncomingMessage: async () => 'تمام',
+    fsModule: fakeFs,
+    logger: silentLogger,
+    browserlessUrl: '',
+  });
+
+  const client = await service.init();
+  client.emit('ready');
+  await flush();
+
+  const reactions = [];
+  const makeMsg = (id, body) => ({
+    fromMe: false,
+    from: '20111222333@c.us',
+    type: 'chat',
+    body,
+    id: { _serialized: id },
+    react: async (emoji) => { reactions.push(emoji); },
+    reply: async () => {},
+  });
+
+  // Category-less clean message gets the neutral default reaction
+  client.emit('message', makeMsg('msg-always-1', 'عايز اعرف اسعار الباقات عندكم'));
+  await flush();
+  assert.deepEqual(reactions, ['👍']);
+
+  // Complaint / anger still suppresses the reaction entirely
+  client.emit('message', makeMsg('msg-always-2', 'عندي مشكلة كبيرة ومحتاج استرجاع'));
+  await flush();
+  assert.deepEqual(reactions, ['👍'], 'complaint must not be reacted to');
+
+  await service.disconnect();
 });

@@ -28,6 +28,7 @@ const { upsertChatCustomerProfile } = require('./controllers/chatCustomersContro
 const bookingsController = require('./controllers/bookingsController');
 const logger = require('./logger');
 const { getAiCompletion } = require('./services/aiFailover');
+const { getPlatformDefaultOpenAiModel } = require('./services/platformSettingsService');
 const { checkPlanLimitsAndIncrement, settleMessageQuota } = require('./services/billingLimits');
 const { dispatchWebhook } = require('./services/webhookDispatcher');
 const { dispatchMultiChannelNotification } = require('./services/notificationDispatcher');
@@ -1708,9 +1709,12 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
             { role: 'user', content: userMessageContent },
           ];
           logger.info('📤 Sending to OpenAI for processing', { messageLength: (userMessageContent || '').length });
+          // Platform default model (admin-editable in Platform Settings); a
+          // bot with its own model/key still overrides this in aiFailover.
+          const platformDefaultModel = await getPlatformDefaultOpenAiModel();
           const response = await withTimeout(
             getAiCompletion({
-              model: 'gpt-4o-mini',
+              model: platformDefaultModel,
               messages,
               max_tokens: 2000,
             }, bot, useBackup),

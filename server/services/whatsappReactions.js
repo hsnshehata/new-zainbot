@@ -9,6 +9,9 @@ const REACTIONS = Object.freeze({
   GREETING: '👋',
   ACK: '👍',
   ORDER: '✅',
+  // Neutral fallback for messages that match no category, used only when the
+  // caller opts into reacting to every inbound message (opts.always).
+  DEFAULT: '👍',
 });
 
 // Negative / complaint / anger / problem signals.
@@ -403,7 +406,10 @@ function matchesAnyPhrase(padded, phrases) {
  * or returns null when no reaction is appropriate.
  *
  * @param {string} text - Inbound message text.
- * @param {{ maxLength?: number }} [opts] - Optional classifier overrides.
+ * @param {{ maxLength?: number, always?: boolean }} [opts] - Classifier
+ *   overrides. `always: true` returns the neutral DEFAULT reaction for any
+ *   clean message that matches no category; negative/complaint signals still
+ *   suppress all reactions either way.
  * @returns {string|null}
  */
 function pickReaction(text, opts = {}) {
@@ -412,11 +418,13 @@ function pickReaction(text, opts = {}) {
   const trimmed = text.trim();
   if (!trimmed) return null;
 
+  const always = opts?.always === true;
   const maxLength = typeof opts?.maxLength === 'number' ? opts.maxLength : DEFAULT_MAX_LENGTH;
-  if (trimmed.length > maxLength) return null;
+  if (!always && trimmed.length > maxLength) return null;
 
-  // Never react to media-only placeholder text such as [صورة] or [رسالة صوتية].
-  if (/^\[[^\]]+\]$/.test(trimmed)) return null;
+  // Never react to media-only placeholder text such as [صورة] or [رسالة صوتية],
+  // except in always mode where a neutral reaction on media is intended.
+  if (!always && /^\[[^\]]+\]$/.test(trimmed)) return null;
 
   const normalized = normalizeText(trimmed);
   if (!normalized) return null;
@@ -438,6 +446,10 @@ function pickReaction(text, opts = {}) {
   }
   if (matchesAnyPhrase(padded, GREETING_PHRASES)) {
     return REACTIONS.GREETING;
+  }
+
+  if (always) {
+    return REACTIONS.DEFAULT;
   }
 
   return null;

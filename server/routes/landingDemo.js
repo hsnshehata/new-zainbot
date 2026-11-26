@@ -3,6 +3,7 @@ const rateLimit = require('express-rate-limit');
 const logger = require('../logger');
 const LandingDemoConfig = require('../models/LandingDemoConfig');
 const { getAiCompletion } = require('../services/aiFailover');
+const { getPlatformDefaultOpenAiModel } = require('../services/platformSettingsService');
 const { describeCaughtError } = require('../services/metaSendErrors');
 
 const router = express.Router();
@@ -191,6 +192,7 @@ router.post('/chat', async (req, res) => {
       });
     }
 
+    const platformDefaultModel = await getPlatformDefaultOpenAiModel();
     const completion = await withTimeout(
       getAiCompletion({
         messages: [
@@ -198,7 +200,7 @@ router.post('/chat', async (req, res) => {
           ...history,
           { role: 'user', content: message },
         ],
-        model: 'gpt-4o-mini',
+        model: platformDefaultModel,
         max_tokens: 700,
       }, null),
       AI_TIMEOUT_MS,

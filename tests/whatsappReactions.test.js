@@ -418,3 +418,30 @@ test('handleIncomingMessage skips react() for complaints, media-only, and duplic
   assert.deepEqual(reactCalls, ['👋']);
   assert.equal(replyCalls.length, 3);
 });
+
+test('pickReaction always mode reacts to every clean message, keeps category emojis, and still suppresses complaints', () => {
+  // Unknown clean text: null by default, neutral fallback in always mode.
+  assert.equal(pickReaction('عايز اعرف اسعار الباقات'), null);
+  assert.equal(pickReaction('عايز اعرف اسعار الباقات', { always: true }), REACTIONS.DEFAULT);
+
+  // Media-only placeholders: skipped by default, reacted in always mode.
+  assert.equal(pickReaction('[صورة]'), null);
+  assert.equal(pickReaction('[صورة]', { always: true }), REACTIONS.DEFAULT);
+
+  // Over-length messages: skipped by default, reacted in always mode.
+  const longText = 'أ '.repeat(200).trim();
+  assert.equal(pickReaction(longText), null);
+  assert.equal(pickReaction(longText, { always: true }), REACTIONS.DEFAULT);
+
+  // Category matches keep their specific emoji even in always mode.
+  assert.equal(pickReaction('شكرا جزيلا', { always: true }), REACTIONS.THANKS);
+  assert.equal(pickReaction('مرحبا', { always: true }), REACTIONS.GREETING);
+
+  // Complaints / anger / refunds stay silent in always mode too.
+  assert.equal(pickReaction('عندي مشكلة كبيرة في الأوردر', { always: true }), null);
+  assert.equal(pickReaction('عايز استرجاع فلوسي 😡', { always: true }), null);
+
+  // Empty input stays silent either way.
+  assert.equal(pickReaction('', { always: true }), null);
+  assert.equal(pickReaction('   ', { always: true }), null);
+});

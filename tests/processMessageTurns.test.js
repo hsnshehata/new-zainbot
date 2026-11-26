@@ -53,6 +53,7 @@ Module._load = function (request, parent) {
       return { choices: [{ message: { content } }] };
     } };
   }
+  if (/[\\/]services[\\/]platformSettingsService$/.test(rel)) return { getPlatformDefaultOpenAiModel: async () => 'gpt-4o-mini' };
   if (/[\\/]services[\\/]billingLimits$/.test(rel)) return { checkPlanLimitsAndIncrement: async () => ({ allowed: true, useBackup: false }), settleMessageQuota: async () => {} };
   if (/[\\/]services[\\/]webhookDispatcher$/.test(rel)) return { dispatchWebhook: () => {} };
   if (/[\\/]services[\\/]notificationDispatcher$/.test(rel)) return { dispatchMultiChannelNotification: async () => ({ delivered: 0, failed: 0 }) };

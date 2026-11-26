@@ -684,6 +684,15 @@
       platform_settings_saved_ok: 'Saved successfully!',
       platform_settings_save_failed: 'Could not save the settings.',
       platform_settings_updated_at: 'Last updated',
+      platform_settings_model_label: 'Default OpenAI model',
+      platform_settings_model_hint: 'Used for bots that have no model of their own. The list is fetched live from OpenAI; choose "Server default" to keep gpt-4o-mini.',
+      platform_settings_model_server_default: 'Server default (gpt-4o-mini)',
+      platform_settings_model_loading: 'Loading models from OpenAI...',
+      platform_settings_model_load_failed: 'Could not load the live model list; the current value is kept.',
+      platform_settings_effective_model_label: 'Current effective model',
+      platform_settings_model_source_label: 'Source',
+      platform_settings_model_source_database: 'Database override',
+      platform_settings_model_source_default: 'Server default',
       platform_wa_title: 'Platform WhatsApp',
       platform_wa_desc: 'Singleton platform WhatsApp session auto-bound to ZainBot Main to answer incoming platform messages directly.',
       platform_wa_connected_phone_label: 'Connected number',
@@ -1853,6 +1862,15 @@
       platform_settings_saved_ok: 'تم الحفظ بنجاح!',
       platform_settings_save_failed: 'تعذر حفظ الإعدادات.',
       platform_settings_updated_at: 'آخر تحديث',
+      platform_settings_model_label: 'موديل OpenAI الافتراضي',
+      platform_settings_model_hint: 'يُستخدم للبوتات التي ليس لها موديل خاص. القائمة تُجلب مباشرة من OpenAI؛ اختر "افتراضي السيرفر" للإبقاء على gpt-4o-mini.',
+      platform_settings_model_server_default: 'افتراضي السيرفر (gpt-4o-mini)',
+      platform_settings_model_loading: 'جاري تحميل الموديلات من OpenAI...',
+      platform_settings_model_load_failed: 'تعذر تحميل قائمة الموديلات المباشرة؛ سيتم الاحتفاظ بالقيمة الحالية.',
+      platform_settings_effective_model_label: 'الموديل الفعّال حالياً',
+      platform_settings_model_source_label: 'المصدر',
+      platform_settings_model_source_database: 'قاعدة البيانات',
+      platform_settings_model_source_default: 'افتراضي السيرفر',
       platform_wa_title: 'WhatsApp المنصة',
       platform_wa_desc: 'جلسة واتساب موحدة للمنصة مربوطة تلقائياً ببوت ZainBot Main للرد على استفسارات الزوار مباشرة بدون اختيار بوت.',
       platform_wa_connected_phone_label: 'الرقم المتصل',
@@ -7326,7 +7344,29 @@
     const effectiveEl = document.getElementById('platformSettingsEffectiveVal');
     const sourceEl = document.getElementById('platformSettingsSourceVal');
     const updatedEl = document.getElementById('platformSettingsUpdatedAt');
+    const modelSelectEl = document.getElementById('platformSettingsDefaultModelSelect');
+    const effectiveModelEl = document.getElementById('platformSettingsEffectiveModelVal');
+    const modelSourceEl = document.getElementById('platformSettingsModelSourceVal');
     if (inputEl) inputEl.value = cfg.subscriptionWhatsappNumber || '';
+    if (effectiveModelEl) {
+      effectiveModelEl.textContent = cfg.effectiveDefaultModel || 'gpt-4o-mini';
+    }
+    if (modelSourceEl) {
+      modelSourceEl.textContent = cfg.modelSource === 'database'
+        ? t.platform_settings_model_source_database
+        : t.platform_settings_model_source_default;
+    }
+    if (modelSelectEl) {
+      const savedModel = cfg.defaultOpenAiModel || '';
+      const hasOption = Array.from(modelSelectEl.options).some((opt) => opt.value === savedModel);
+      if (savedModel && !hasOption) {
+        const opt = document.createElement('option');
+        opt.value = savedModel;
+        opt.textContent = savedModel;
+        modelSelectEl.appendChild(opt);
+      }
+      modelSelectEl.value = savedModel;
+    }
     if (effectiveEl) {
       effectiveEl.textContent = cfg.effectiveWhatsappNumber || t.platform_settings_effective_empty;
     }
@@ -7354,7 +7394,51 @@
     } catch (e) {
       console.error(e);
     }
+    loadAdminOpenAiModels();
     loadAdminPlatformWhatsapp();
+  }
+
+  // Live OpenAI model list for the default-model dropdown. The current saved
+  // value is preserved even if the live list fails to load.
+  async function loadAdminOpenAiModels() {
+    const t = translations[currentLanguage] || translations.en;
+    const modelSelectEl = document.getElementById('platformSettingsDefaultModelSelect');
+    if (!modelSelectEl) return;
+    const previousValue = modelSelectEl.value;
+    modelSelectEl.innerHTML = '';
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = t.platform_settings_model_server_default;
+    modelSelectEl.appendChild(defaultOpt);
+    try {
+      const res = await apiFetch('/api/admin/platform-settings/openai-models');
+      const models = res && res.success && res.data && Array.isArray(res.data.models) ? res.data.models : [];
+      for (const m of models) {
+        if (!m || !m.id) continue;
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.id;
+        modelSelectEl.appendChild(opt);
+      }
+      if (!models.length) {
+        const noteOpt = document.createElement('option');
+        noteOpt.value = '';
+        noteOpt.disabled = true;
+        noteOpt.textContent = t.platform_settings_model_load_failed;
+        modelSelectEl.appendChild(noteOpt);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    if (previousValue && Array.from(modelSelectEl.options).some((opt) => opt.value === previousValue)) {
+      modelSelectEl.value = previousValue;
+    } else if (previousValue) {
+      const opt = document.createElement('option');
+      opt.value = previousValue;
+      opt.textContent = previousValue;
+      modelSelectEl.appendChild(opt);
+      modelSelectEl.value = previousValue;
+    }
   }
 
   // --- Platform WhatsApp singleton session ---
@@ -7563,6 +7647,7 @@
       const statusEl = document.getElementById('platformSettingsStatusMsg');
       const payload = {
         subscriptionWhatsappNumber: document.getElementById('platformSettingsWhatsappInput')?.value || '',
+        defaultOpenAiModel: document.getElementById('platformSettingsDefaultModelSelect')?.value || '',
       };
       try {
         platformSettingsSaveBtn.disabled = true;

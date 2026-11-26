@@ -2565,6 +2565,15 @@
                 <input id="platformSettingsWhatsappInput" type="text" class="form-control" maxlength="32" dir="ltr" data-i18n-placeholder="platform_settings_whatsapp_placeholder" placeholder="e.g. 01012345678 or +201012345678" />
                 <small style="color:var(--text-muted);" data-i18n="platform_settings_whatsapp_hint">Accepted Egyptian formats: 01xxxxxxxxx, 201xxxxxxxxx, or +201xxxxxxxxx. Leave empty to use the server default.</small>
               </div>
+              <div class="form-group">
+                <label for="platformSettingsDefaultModelSelect" data-i18n="platform_settings_model_label">Default OpenAI model</label>
+                <select id="platformSettingsDefaultModelSelect" class="form-control" dir="ltr"></select>
+                <small style="color:var(--text-muted);" data-i18n="platform_settings_model_hint">Used for bots that have no model of their own. The list is fetched live from OpenAI; choose "Server default" to keep gpt-4o-mini.</small>
+              </div>
+              <div style="margin-bottom:16px; padding:10px 12px; border-radius:8px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.02); font-size:13px; display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
+                <span><strong data-i18n="platform_settings_effective_model_label">Current effective model</strong>: <code id="platformSettingsEffectiveModelVal" dir="ltr">—</code></span>
+                <span><strong data-i18n="platform_settings_model_source_label">Source</strong>: <span id="platformSettingsModelSourceVal" style="color:var(--text-muted);">—</span></span>
+              </div>
               <div style="margin-bottom:16px; padding:10px 12px; border-radius:8px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.02); font-size:13px; display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
                 <span><strong data-i18n="platform_settings_effective_label">Current effective number</strong>: <code id="platformSettingsEffectiveVal" dir="ltr">—</code></span>
                 <span><strong data-i18n="platform_settings_source_label">Source</strong>: <span id="platformSettingsSourceVal" style="color:var(--text-muted);">—</span></span>

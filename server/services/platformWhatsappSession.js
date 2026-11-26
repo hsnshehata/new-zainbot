@@ -303,7 +303,10 @@ function createPlatformWhatsappSession(options = {}) {
     const messageText = message.body || (isImage ? '[صورة]' : isVoice ? '[رسالة صوتية]' : '');
 
     // Best-effort native WhatsApp reaction when enabled on the bound platform bot.
-    const reactionEmoji = pickMessageReaction(messageText);
+    // The platform session reacts to every clean inbound message (always
+    // mode); complaint/anger signals still suppress the reaction inside
+    // pickReaction, and merchant sessions keep the category-only default.
+    const reactionEmoji = pickMessageReaction(messageText, { always: true });
     if (reactionEmoji && typeof message.react === 'function') {
       try {
         const bot = await getBot(botId);
