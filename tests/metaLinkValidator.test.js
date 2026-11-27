@@ -222,4 +222,90 @@ describe('link-social route validation hook', () => {
       botsRouter._setMetaLinkValidatorForTests();
     }
   });
+
+  test('webhook subscribe failure returns 502 and the bot is never saved', async () => {
+    const handler = findLinkSocialHandler(botsRouter);
+    const Bot = require('../server/models/Bot');
+    const originalFindByIdAndUpdate = Bot.findByIdAndUpdate;
+    let saveCalls = 0;
+    Bot.findByIdAndUpdate = async () => {
+      saveCalls += 1;
+      return null;
+    };
+
+    botsRouter._setMetaLinkValidatorForTests({
+      validateFacebook: async () => ({ ok: true }),
+      validateInstagram: async () => ({ ok: true }),
+    });
+    botsRouter._setFacebookWebhookSubscriberForTests(async () => {
+      const error = new Error('nope');
+      error.code = 'FACEBOOK_SUBSCRIBE_FAILED';
+      throw error;
+    });
+
+    try {
+      const req = {
+        params: { id: '507f1f77bcf86cd799439011' },
+        body: { facebookApiKey: 'token', facebookPageId: '111' },
+        requestId: 'request-link-social-2',
+        auth: { actorUserId: 'user-1' },
+        bot: {},
+      };
+      const res = createResponse();
+      await handler(req, res, () => {});
+
+      assert.equal(res.statusCode, 502);
+      assert.equal(res.body.success, false);
+      assert.equal(res.body.error, 'FACEBOOK_SUBSCRIBE_FAILED');
+      assert.equal(saveCalls, 0);
+    } finally {
+      Bot.findByIdAndUpdate = originalFindByIdAndUpdate;
+      botsRouter._setMetaLinkValidatorForTests();
+      botsRouter._setFacebookWebhookSubscriberForTests();
+    }
+  });
+
+  test('validation runs before webhook subscribe, then the bot is saved', async () => {
+    const handler = findLinkSocialHandler(botsRouter);
+    const Bot = require('../server/models/Bot');
+    const originalFindByIdAndUpdate = Bot.findByIdAndUpdate;
+    const order = [];
+    Bot.findByIdAndUpdate = async () => {
+      order.push('save');
+      return { _id: '507f1f77bcf86cd799439011' };
+    };
+
+    botsRouter._setMetaLinkValidatorForTests({
+      validateFacebook: async () => {
+        order.push('validate');
+        return { ok: true };
+      },
+      validateInstagram: async () => ({ ok: true }),
+    });
+    botsRouter._setFacebookWebhookSubscriberForTests(async ({ pageId, accessToken }) => {
+      order.push('subscribe');
+      assert.equal(pageId, '111');
+      assert.equal(accessToken, 'token');
+    });
+
+    try {
+      const req = {
+        params: { id: '507f1f77bcf86cd799439011' },
+        body: { facebookApiKey: 'token', facebookPageId: '111' },
+        requestId: 'request-link-social-3',
+        auth: { actorUserId: 'user-1' },
+        bot: {},
+      };
+      const res = createResponse();
+      await handler(req, res, () => {});
+
+      assert.deepEqual(order, ['validate', 'subscribe', 'save']);
+      assert.equal(res.statusCode, 200);
+      assert.equal(res.body.success, true);
+    } finally {
+      Bot.findByIdAndUpdate = originalFindByIdAndUpdate;
+      botsRouter._setMetaLinkValidatorForTests();
+      botsRouter._setFacebookWebhookSubscriberForTests();
+    }
+  });
 });

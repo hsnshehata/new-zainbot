@@ -126,6 +126,46 @@ function _setMetaLinkValidatorForTests(validator) {
   metaLinkValidator = validator || defaultMetaLinkValidator;
 }
 
+// Subscribe a Facebook page to this app's webhook events after linking.
+// Without this the connect "succeeds" but no message ever reaches the bot.
+// Injectable for tests.
+const FACEBOOK_WEBHOOK_FIELDS = [
+  'messages',
+  'messaging_postbacks',
+  'messaging_optins',
+  'messaging_optouts',
+  'messaging_referrals',
+  'message_edits',
+  'message_reactions',
+  'inbox_labels',
+  'messaging_customer_information',
+  'response_feedback',
+  'messaging_integrity',
+  'feed',
+].join(',');
+
+async function defaultFacebookWebhookSubscriber({ pageId, accessToken }) {
+  const configuredVersion = process.env.META_GRAPH_API_VERSION?.trim();
+  const graphVersion = /^v\d+\.\d+$/.test(configuredVersion || '') ? configuredVersion : 'v24.0';
+  const response = await axios.post(
+    `https://graph.facebook.com/${graphVersion}/${pageId}/subscribed_apps`,
+    { subscribed_fields: FACEBOOK_WEBHOOK_FIELDS, access_token: accessToken },
+    { timeout: 10_000 }
+  );
+  if (!response.data?.success) {
+    const error = new Error('Facebook webhook subscription was not confirmed');
+    error.code = 'FACEBOOK_SUBSCRIBE_FAILED';
+    throw error;
+  }
+  logger.info('facebook_webhook_subscribe_succeeded', { pageId });
+}
+
+let facebookWebhookSubscriber = defaultFacebookWebhookSubscriber;
+
+function _setFacebookWebhookSubscriberForTests(subscriber) {
+  facebookWebhookSubscriber = subscriber || defaultFacebookWebhookSubscriber;
+}
+
 // دالة لتحويل توكن قصير المدى لتوكن طويل المدى
 const convertToLongLivedToken = async (shortLivedToken) => {
   const appId = process.env.FACEBOOK_APP_ID?.trim();
@@ -255,6 +295,22 @@ router.post('/:id/link-social', authenticate, validateBody(linkSocialSchema), as
       updateData.facebookApiKey = finalFacebookApiKey;
       updateData.facebookPageId = facebookPageId;
       updateData.lastFacebookTokenRefresh = new Date();
+
+      // Subscribe the page to this app's webhook events; otherwise the link
+      // looks successful but inbound Messenger messages never arrive.
+      try {
+        await facebookWebhookSubscriber({ pageId: facebookPageId, accessToken: finalFacebookApiKey });
+      } catch (subscribeErr) {
+        logger.warn('social_link_facebook_subscribe_failed', {
+          botId,
+          errorCode: subscribeErr.code || 'FACEBOOK_SUBSCRIBE_FAILED',
+        });
+        return res.status(subscribeErr.code === 'FACEBOOK_APP_NOT_CONFIGURED' ? 503 : 502).json({
+          success: false,
+          error: subscribeErr.code || 'FACEBOOK_SUBSCRIBE_FAILED',
+          message: 'فشل في الاشتراك في Webhook Events',
+        });
+      }
     }
 
     // لو إنستجرام
@@ -363,3 +419,4 @@ router.delete('/:id', authenticate, botsController.deleteBot);
 
 module.exports = router;
 module.exports._setMetaLinkValidatorForTests = _setMetaLinkValidatorForTests;
+module.exports._setFacebookWebhookSubscriberForTests = _setFacebookWebhookSubscriberForTests;

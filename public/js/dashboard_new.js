@@ -8497,7 +8497,7 @@
 
         const res = await apiFetch(`/api/bots/${currentBot._id}/link-social`, {
           method: 'POST',
-          body: JSON.stringify({ facebookApiKey, facebookPageId })
+          body: JSON.stringify({ facebookApiKey, facebookPageId, convertToLongLived: true })
         });
         if (res && res.success) {
           closeChannelModal();
