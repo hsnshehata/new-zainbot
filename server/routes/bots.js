@@ -16,6 +16,15 @@ const { createMetaLinkValidator } = require('../services/metaLinkValidator');
 logger.info('✅ Initializing bots routes');
 
 // مخططات التحقق
+const copilotSettingsSchema = Joi.object({
+  notifyChannels: Joi.object({
+    inApp: Joi.boolean().optional(),
+    whatsappToMerchant: Joi.boolean().optional(),
+    telegramToMerchant: Joi.boolean().optional(),
+  }).optional(),
+  draftTtlMinutes: Joi.number().integer().min(5).max(1440).optional(),
+}).optional();
+
 const createBotSchema = Joi.object({
   name: Joi.string().min(2).max(80).required(),
   userId: Joi.string().length(24).optional(),
@@ -31,6 +40,8 @@ const createBotSchema = Joi.object({
   objectives: Joi.array().items(Joi.string().max(300)).max(20).default([]),
   handoffKeywords: Joi.array().items(Joi.string().max(100)).max(50).default([]),
   autoReplyEnabled: Joi.boolean().default(true),
+  replyMode: Joi.string().valid('auto', 'copilot', 'manual').default('auto'),
+  copilotSettings: copilotSettingsSchema,
   agentTools: Joi.object().unknown(true).optional(),
   agentSkills: Joi.array().items(Joi.alternatives().try(
     Joi.string().max(100),
@@ -58,6 +69,8 @@ const updateBotSchema = Joi.object({
   objectives: Joi.array().items(Joi.string().max(300)).max(20).optional(),
   handoffKeywords: Joi.array().items(Joi.string().max(100)).max(50).optional(),
   autoReplyEnabled: Joi.boolean().optional(),
+  replyMode: Joi.string().valid('auto', 'copilot', 'manual').optional(),
+  copilotSettings: copilotSettingsSchema,
   agentTools: Joi.object().unknown(true).optional(),
   agentSkills: Joi.array().items(Joi.alternatives().try(
     Joi.string().max(100),

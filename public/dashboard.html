@@ -907,6 +907,7 @@
         <button type="button" class="menu-item" data-target="page-inbox">
           <i class="fas fa-inbox"></i>
           <span data-i18n="menu_inbox">Omnichannel Inbox</span>
+          <span id="inboxPendingDraftsBadge" class="badge" style="display:none; margin-inline-start:auto; background:rgba(6,182,212,0.2); color:var(--cyan); border:1px solid rgba(6,182,212,0.45); font-size:11px; padding:2px 7px; border-radius:999px;">0</span>
         </button>
         <button type="button" class="menu-item" data-target="page-training">
           <i class="fas fa-brain"></i>
@@ -1710,7 +1711,10 @@
           <div class="inbox-layout">
             <!-- Active chats listing -->
             <div class="chat-list">
-              <div class="chat-list-header" data-i18n="inbox_chat_list_title">Conversations Feed</div>
+              <div class="chat-list-header" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                <span data-i18n="inbox_chat_list_title">Conversations Feed</span>
+                <span id="inboxPendingCountBadge" class="badge" style="display:none; background:rgba(6,182,212,0.18); color:var(--cyan); border:1px solid rgba(6,182,212,0.4); font-size:11px; padding:2px 8px; border-radius:999px;"></span>
+              </div>
               <div id="chatListContainer" style="flex:1; overflow-y:auto;">
                 <!-- Chat items loaded dynamically -->
                 <div style="padding:20px; text-align:center; color:var(--text-muted);" data-i18n="inbox_empty">No conversations found.</div>
@@ -1739,6 +1743,30 @@
                 <div style="margin:auto; text-align:center; color:var(--text-muted);">
                   <i class="fas fa-comments" style="font-size:48px; margin-bottom:12px;"></i>
                   <p data-i18n="select_chat_instructions">Select a conversation from the feed to view history and chat.</p>
+                </div>
+              </div>
+
+              <!-- Copilot Pending Draft Approval Card -->
+              <div id="copilotDraftCard" style="display:none; margin:0 16px 12px; padding:14px 16px; border-radius:12px; background:rgba(6,182,212,0.08); border:1px solid rgba(6,182,212,0.35);">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+                  <div style="display:flex; align-items:center; gap:8px; font-weight:700; font-size:13px; color:var(--cyan);">
+                    <i class="fas fa-wand-magic-sparkles"></i>
+                    <span data-i18n="copilot_card_title">Suggested Copilot Draft</span>
+                  </div>
+                  <span id="copilotDraftTime" style="font-size:11px; color:var(--text-muted);"></span>
+                </div>
+                <div id="copilotDraftSnippet" style="display:none; font-size:12px; color:var(--text-muted); margin-bottom:8px; padding:6px 10px; border-radius:8px; background:rgba(255,255,255,0.03);"></div>
+                <div id="copilotDraftPreview" style="font-size:14px; line-height:1.6; white-space:pre-wrap; padding:10px 12px; border-radius:8px; background:rgba(0,0,0,0.22); border:1px solid var(--glass-border); margin-bottom:10px;"></div>
+                <div id="copilotDraftEditWrap" style="display:none; margin-bottom:10px;">
+                  <textarea id="copilotEditTextarea" class="form-control" rows="4" data-i18n-placeholder="copilot_edit_placeholder" placeholder="Edit the suggested reply before sending..."></textarea>
+                </div>
+                <div id="copilotDraftActions" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                  <button type="button" id="copilotSendBtn" class="btn btn-primary btn-sm" style="background:var(--cyan); color:#000; border-color:var(--cyan); font-weight:600;"><i class="fas fa-paper-plane"></i> <span data-i18n="copilot_btn_send">Send</span></button>
+                  <button type="button" id="copilotEditBtn" class="btn btn-secondary btn-sm"><i class="fas fa-pen"></i> <span data-i18n="copilot_btn_edit_send">Edit & Send</span></button>
+                  <button type="button" id="copilotConfirmEditBtn" class="btn btn-primary btn-sm" style="display:none; background:var(--cyan); color:#000; border-color:var(--cyan); font-weight:600;"><i class="fas fa-check"></i> <span data-i18n="copilot_btn_confirm_edit">Send edited reply</span></button>
+                  <button type="button" id="copilotCancelEditBtn" class="btn btn-secondary btn-sm" style="display:none;"><span data-i18n="copilot_btn_cancel_edit">Cancel edit</span></button>
+                  <button type="button" id="copilotRegenerateBtn" class="btn btn-secondary btn-sm"><i class="fas fa-rotate"></i> <span data-i18n="copilot_btn_regenerate">Regenerate</span></button>
+                  <button type="button" id="copilotDiscardBtn" class="btn btn-secondary btn-sm" style="border-color:rgba(239,68,68,0.4); color:var(--red); margin-inline-start:auto;"><i class="fas fa-times"></i> <span data-i18n="copilot_btn_discard">Discard</span></button>
                 </div>
               </div>
 
@@ -2125,6 +2153,21 @@
               <button type="button" id="openTrainingFromSettingsBtn" class="btn btn-secondary btn-sm" data-i18n="set_open_training">Open AI Training</button>
             </div>
             <div id="settingsInstructionsSummary" class="settings-summary-grid"></div>
+            <div style="margin-top:18px; padding-top:16px; border-top:1px solid var(--glass-border);">
+              <div class="db-responsive-grid" style="display:grid; grid-template-columns:1fr auto; gap:12px; align-items:end;">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label for="botReplyModeSelect" data-i18n="agent_reply_mode_label">Reply Mode</label>
+                  <select id="botReplyModeSelect" class="form-control">
+                    <option value="auto" data-i18n="reply_mode_auto">Auto-reply</option>
+                    <option value="copilot" data-i18n="reply_mode_copilot">Copilot mode (approve before sending)</option>
+                    <option value="manual" data-i18n="reply_mode_manual">Manual only</option>
+                  </select>
+                </div>
+                <button type="button" id="saveBotReplyModeBtn" class="btn btn-primary btn-sm" data-i18n="reply_mode_save_btn">Save reply mode</button>
+              </div>
+              <p style="font-size:12px; color:var(--text-muted); margin-top:8px; margin-bottom:0;" data-i18n="reply_mode_copilot_hint">Copilot mode supports WhatsApp, Facebook, and Instagram; live web chat stays manual.</p>
+              <span id="botReplyModeMsg" style="display:block; margin-top:6px; font-size:12px;"></span>
+            </div>
           </div>
 
           <!-- ===== Section 2: Agent Capabilities (Tools & Skills of active agent) ===== -->
@@ -2981,7 +3024,17 @@
             </div>
           </div>
 
-          <label style="display:flex; align-items:center; gap:8px; margin-top:16px;"><input id="agentAutoReplyEnabled" type="checkbox" checked /> <span data-i18n="agent_auto_reply">AI auto-reply enabled</span></label>
+          <div class="form-group" style="margin-top:16px; border-top:1px solid var(--glass-border); padding-top:16px;">
+            <label for="agentReplyMode" data-i18n="agent_reply_mode_label">Reply Mode</label>
+            <select id="agentReplyMode" class="form-control">
+              <option value="auto" data-i18n="reply_mode_auto">Auto-reply</option>
+              <option value="copilot" data-i18n="reply_mode_copilot">Copilot mode (approve before sending)</option>
+              <option value="manual" data-i18n="reply_mode_manual">Manual only</option>
+            </select>
+            <small style="display:block; margin-top:6px; color:var(--text-muted); font-size:12px;" data-i18n="reply_mode_copilot_hint">Copilot mode supports WhatsApp, Facebook, and Instagram; live web chat stays manual.</small>
+          </div>
+
+          <label style="display:flex; align-items:center; gap:8px; margin-top:12px;"><input id="agentAutoReplyEnabled" type="checkbox" checked /> <span data-i18n="agent_auto_reply">AI auto-reply enabled</span></label>
         </div>
         <div class="db-modal-footer"><button class="btn btn-secondary btn-sm agent-modal-close" type="button" data-i18n="btn_cancel">Cancel</button><button class="btn btn-primary btn-sm" type="submit" data-i18n="agent_save">Save agent</button></div>
       </form>

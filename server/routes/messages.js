@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const router = express.Router();
 const Conversation = require("../models/Conversation");
 const Bot = require("../models/Bot");
+const CopilotDraft = require("../models/CopilotDraft");
 const authenticate = require("../middleware/authenticate");
 const axios = require("axios");
 const messagesController = require("../controllers/messagesController");
@@ -162,6 +163,30 @@ router.get("/conversations", authenticate, loadAccessibleBot, async (req, res) =
       .sort({ "messages.timestamp": -1, updatedAt: -1, _id: -1 })
       .lean();
 
+    // Enrich conversations with active pending CopilotDrafts (best-effort)
+    const pendingDraftByConv = new Map();
+    if (conversations.length > 0) {
+      try {
+        const convIds = conversations.map((c) => c._id);
+        const now = new Date();
+        const pendingDrafts = await CopilotDraft.find({
+          conversationId: { $in: convIds },
+          status: "pending",
+          expiresAt: { $gt: now },
+        })
+          .sort({ createdAt: -1 })
+          .lean();
+        for (const draft of pendingDrafts) {
+          const key = String(draft.conversationId);
+          if (!pendingDraftByConv.has(key)) {
+            pendingDraftByConv.set(key, draft);
+          }
+        }
+      } catch (draftErr) {
+        logger.warn("conversations_pending_draft_enrich_failed", { err: draftErr?.message || String(draftErr) });
+      }
+    }
+
     // Normalize messages to ensure legacy and modern fields (role/sender, content/text) are both present
     const normalizedData = conversations.map((conv) => {
       const normalizedMessages = (conv.messages || []).map((m) => {
@@ -177,9 +202,12 @@ router.get("/conversations", authenticate, loadAccessibleBot, async (req, res) =
           timestamp: m.timestamp || m.createdAt || new Date(),
         };
       });
+      const pendingDraft = pendingDraftByConv.get(String(conv._id)) || null;
       return {
         ...conv,
         messages: normalizedMessages,
+        pendingDraft,
+        hasPendingDraft: Boolean(pendingDraft),
       };
     });
 

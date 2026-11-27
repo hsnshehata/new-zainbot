@@ -212,7 +212,7 @@ exports.clearFeedbackByType = async (req, res) => {
 
 // إنشاء بوت جديد
 exports.createBot = async (req, res) => {
-  const { name, userId, facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, subscriptionType, welcomeMessage, agentType, description, customInstructions, objectives, handoffKeywords, autoReplyEnabled, agentTools, agentSkills } = req.body;
+  const { name, userId, facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, subscriptionType, welcomeMessage, agentType, description, customInstructions, objectives, handoffKeywords, autoReplyEnabled, replyMode, copilotSettings, agentTools, agentSkills } = req.body;
 
   if (!name) {
     return res.status(400).json({ message: 'اسم البوت مطلوب' });
@@ -261,6 +261,11 @@ exports.createBot = async (req, res) => {
       });
     }
 
+    const resolvedReplyMode = ['auto', 'copilot', 'manual'].includes(replyMode) ? replyMode : 'auto';
+    const resolvedAutoReply = autoReplyEnabled !== undefined
+      ? autoReplyEnabled
+      : resolvedReplyMode !== 'manual';
+
     const bot = new Bot({
       name,
       userId: ownerUserId,
@@ -275,7 +280,9 @@ exports.createBot = async (req, res) => {
       customInstructions,
       objectives,
       handoffKeywords,
-      autoReplyEnabled,
+      autoReplyEnabled: resolvedAutoReply,
+      replyMode: resolvedReplyMode,
+      ...(copilotSettings ? { copilotSettings } : {}),
       agentTools,
       agentSkills: normalizedSkills,
     });
@@ -293,7 +300,7 @@ exports.createBot = async (req, res) => {
 
 // تعديل بوت
 exports.updateBot = async (req, res) => {
-  const { name, userId, facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, isActive, autoStopDate, subscriptionType, welcomeMessage, agentType, description, customInstructions, objectives, handoffKeywords, autoReplyEnabled, userApiKey, userProvider, userModel, userBaseUrl, backupApiKey, backupProvider, backupModel, backupBaseUrl, agentTools, agentSkills } = req.body;
+  const { name, userId, facebookApiKey, facebookPageId, instagramApiKey, instagramPageId, isActive, autoStopDate, subscriptionType, welcomeMessage, agentType, description, customInstructions, objectives, handoffKeywords, autoReplyEnabled, replyMode, copilotSettings, userApiKey, userProvider, userModel, userBaseUrl, backupApiKey, backupProvider, backupModel, backupBaseUrl, agentTools, agentSkills } = req.body;
 
   try {
     logger.info('bot_update_attempt', { botId: req.params.id, userId: req.user.userId, payloadKeys: Object.keys(req.body || {}) });
@@ -378,7 +385,28 @@ exports.updateBot = async (req, res) => {
     bot.customInstructions = customInstructions !== undefined ? customInstructions : bot.customInstructions;
     bot.objectives = objectives !== undefined ? objectives : bot.objectives;
     bot.handoffKeywords = handoffKeywords !== undefined ? handoffKeywords : bot.handoffKeywords;
-    bot.autoReplyEnabled = autoReplyEnabled !== undefined ? autoReplyEnabled : bot.autoReplyEnabled;
+    if (replyMode !== undefined && ['auto', 'copilot', 'manual'].includes(replyMode)) {
+      bot.replyMode = replyMode;
+      if (autoReplyEnabled === undefined) {
+        bot.autoReplyEnabled = replyMode !== 'manual';
+      }
+    }
+    if (autoReplyEnabled !== undefined) {
+      bot.autoReplyEnabled = autoReplyEnabled;
+    }
+    if (copilotSettings && typeof copilotSettings === 'object') {
+      const currentCopilot = bot.copilotSettings?.toObject
+        ? bot.copilotSettings.toObject()
+        : (bot.copilotSettings || {});
+      bot.copilotSettings = {
+        notifyChannels: {
+          inApp: copilotSettings.notifyChannels?.inApp ?? currentCopilot.notifyChannels?.inApp ?? true,
+          whatsappToMerchant: copilotSettings.notifyChannels?.whatsappToMerchant ?? currentCopilot.notifyChannels?.whatsappToMerchant ?? false,
+          telegramToMerchant: copilotSettings.notifyChannels?.telegramToMerchant ?? currentCopilot.notifyChannels?.telegramToMerchant ?? false,
+        },
+        draftTtlMinutes: copilotSettings.draftTtlMinutes ?? currentCopilot.draftTtlMinutes ?? 60,
+      };
+    }
     bot.userApiKey = userApiKey !== undefined ? userApiKey : bot.userApiKey;
     bot.userProvider = userProvider !== undefined ? userProvider : bot.userProvider;
     bot.userModel = userModel !== undefined ? userModel : bot.userModel;

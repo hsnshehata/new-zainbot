@@ -69,11 +69,16 @@
       var objectives = Array.isArray(bot.objectives) ? bot.objectives.filter(Boolean) : [];
       var keywords = Array.isArray(bot.handoffKeywords) ? bot.handoffKeywords.filter(Boolean) : [];
       var welcome = String(bot.welcomeMessage || '').trim();
+      var replyMode = bot.replyMode || (bot.autoReplyEnabled === false ? 'manual' : 'auto');
+      var replyModeLabel = replyMode === 'copilot'
+        ? tx('reply_mode_copilot')
+        : (replyMode === 'manual' ? tx('reply_mode_manual') : tx('reply_mode_auto'));
       box.innerHTML =
         '<div class="set-summary-row"><span class="set-summary-label">' + esc(tx('set_label_welcome')) + '</span><span class="set-summary-value">' + (welcome ? esc(welcome.slice(0, 80)) : esc(tx('set_value_not_set'))) + '</span></div>' +
         '<div class="set-summary-row"><span class="set-summary-label">' + esc(tx('set_label_persona_rules')) + '</span><span class="set-summary-value">' + (lines ? esc(lines + ' ' + tx('set_unit_lines')) : esc(tx('set_value_not_set'))) + '</span></div>' +
         '<div class="set-summary-row"><span class="set-summary-label">' + esc(tx('set_label_objectives')) + '</span><span class="set-summary-value">' + (objectives.length ? esc(objectives.join(' · ')) : esc(tx('set_value_not_set'))) + '</span></div>' +
         '<div class="set-summary-row"><span class="set-summary-label">' + esc(tx('set_label_handoff')) + '</span><span class="set-summary-value">' + (keywords.length ? esc(keywords.join(', ')) : esc(tx('set_value_not_set'))) + '</span></div>' +
+        '<div class="set-summary-row"><span class="set-summary-label">' + esc(tx('agent_reply_mode_label')) + '</span><span class="set-summary-value">' + esc(replyModeLabel) + '</span></div>' +
         '<div class="set-summary-row"><span class="set-summary-label">' + esc(tx('set_label_auto_reply')) + '</span><span class="set-summary-value">' + chip(tx('set_label_auto_reply'), bot.autoReplyEnabled !== false) + '</span></div>';
     }
 

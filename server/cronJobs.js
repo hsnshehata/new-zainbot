@@ -677,6 +677,25 @@ const checkExpiredAssistantActions = () => {
   }, { timezone: 'Africa/Cairo' });
 };
 
+// انتهاء صلاحية مسودات وضع المساعدة (Copilot) المعلّقة كل 5 دقائق.
+async function expireStaleCopilotDrafts({ now = new Date(), limit = 100 } = {}) {
+  const { expireStaleDrafts } = require('./services/copilotService');
+  return expireStaleDrafts({ now, limit });
+}
+
+const checkExpiredCopilotDrafts = () => {
+  return cron.schedule('*/5 * * * *', async () => {
+    try {
+      const result = await expireStaleCopilotDrafts();
+      if (result.expired > 0) {
+        logger.info('⏰ Expired stale copilot drafts.', result);
+      }
+    } catch (err) {
+      logger.error('❌ Error expiring stale copilot drafts', { err: err.message });
+    }
+  }, { timezone: 'Africa/Cairo' });
+};
+
 module.exports = {
   checkAutoStopBots,
   refreshInstagramTokens,
@@ -692,4 +711,6 @@ module.exports = {
   sendDueReminders,
   expireStaleAssistantActions,
   checkExpiredAssistantActions,
+  expireStaleCopilotDrafts,
+  checkExpiredCopilotDrafts,
 };

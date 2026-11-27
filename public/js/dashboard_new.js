@@ -1385,7 +1385,32 @@
       assistant_tool_create_order: 'Create new orders',
       assistant_tool_update_inventory: 'Update product inventory',
       assistant_tool_message_customer: 'Send message to a customer',
-      assistant_settings_saved: 'Assistant settings saved'
+      assistant_settings_saved: 'Assistant settings saved',
+      agent_reply_mode_label: 'Reply Mode',
+      reply_mode_auto: 'Auto-reply',
+      reply_mode_copilot: 'Copilot mode (approve before sending)',
+      reply_mode_manual: 'Manual only',
+      reply_mode_copilot_hint: 'Copilot mode supports WhatsApp, Facebook, and Instagram; live web chat stays manual.',
+      reply_mode_save_btn: 'Save reply mode',
+      reply_mode_saved: 'Reply mode updated',
+      reply_mode_save_failed: 'Failed to update reply mode',
+      copilot_draft_badge: 'Draft ready',
+      copilot_pending_count: 'Pending drafts',
+      copilot_card_title: 'Suggested Copilot Draft',
+      copilot_customer_asked: 'Customer message:',
+      copilot_btn_send: 'Send',
+      copilot_btn_edit_send: 'Edit & Send',
+      copilot_btn_confirm_edit: 'Send edited reply',
+      copilot_btn_cancel_edit: 'Cancel edit',
+      copilot_btn_discard: 'Discard',
+      copilot_btn_regenerate: 'Regenerate',
+      copilot_edit_placeholder: 'Edit the suggested reply before sending...',
+      copilot_sent_success: 'Reply approved and sent',
+      copilot_edited_sent_success: 'Edited reply sent',
+      copilot_discarded_success: 'Draft discarded',
+      copilot_regenerated_success: 'New draft generated',
+      copilot_channels_disabled: 'External channels are disabled on this server (CHANNELS_MODE=off). Draft was not sent.',
+      copilot_action_failed: 'Could not complete Copilot action'
     },
     ar: {
       menu_assistant: 'مساعد زين',
@@ -2557,7 +2582,32 @@
       idea_status_running: 'جارٍ التحليل',
       idea_status_completed: 'مكتمل',
       idea_status_partial: 'مكتمل جزئياً',
-      idea_status_failed: 'فشل'
+      idea_status_failed: 'فشل',
+      agent_reply_mode_label: 'وضع الرد',
+      reply_mode_auto: 'رد تلقائي',
+      reply_mode_copilot: 'وضع المساعدة Copilot (موافقة قبل الإرسال)',
+      reply_mode_manual: 'يدوي',
+      reply_mode_copilot_hint: 'وضع المساعدة (Copilot) يدعم واتساب وفيسبوك وإنستجرام؛ دردشة الويب الفورية تبقى يدوية.',
+      reply_mode_save_btn: 'حفظ وضع الرد',
+      reply_mode_saved: 'تم تحديث وضع الرد',
+      reply_mode_save_failed: 'تعذّر تحديث وضع الرد',
+      copilot_draft_badge: 'مسودة جاهزة',
+      copilot_pending_count: 'مسودات معلّقة',
+      copilot_card_title: 'مسودة رد مقترحة (Copilot)',
+      copilot_customer_asked: 'رسالة العميل:',
+      copilot_btn_send: 'إرسال',
+      copilot_btn_edit_send: 'تعديل وإرسال',
+      copilot_btn_confirm_edit: 'إرسال بعد التعديل',
+      copilot_btn_cancel_edit: 'إلغاء التعديل',
+      copilot_btn_discard: 'تجاهل',
+      copilot_btn_regenerate: 'إعادة توليد',
+      copilot_edit_placeholder: 'عدّل الرد المقترح قبل الإرسال...',
+      copilot_sent_success: 'تم اعتماد الرد وإرساله للعميل',
+      copilot_edited_sent_success: 'تم إرسال الرد بعد التعديل',
+      copilot_discarded_success: 'تم تجاهل المسودة',
+      copilot_regenerated_success: 'تم توليد مسودة جديدة',
+      copilot_channels_disabled: 'القنوات الخارجية معطّلة على هذا الخادم؛ لم يتم إرسال المسودة.',
+      copilot_action_failed: 'تعذّر إتمام إجراء المسودة'
     }
   };
 
@@ -2713,6 +2763,10 @@
     // E04: user navigation moves focus to the page heading. Background
     // refresh call sites omit the flag, so data reloads never steal focus.
     if (opts && opts.focusHeading) focusPageHeading(tabId);
+
+    if (tabId !== 'page-inbox' && typeof stopCopilotPolling === 'function') {
+      stopCopilotPolling();
+    }
 
     // Load data specific to this page
     if (tabId === 'page-overview') {
@@ -3190,6 +3244,10 @@
   function resetInboxForNoBot() {
     selectedConversationId = null;
     conversations = [];
+    copilotDraftsByConvId.clear();
+    stopCopilotPolling();
+    updatePendingDraftsBadges();
+    hideCopilotDraftCard();
     const chatListContainer = document.getElementById('chatListContainer');
     if (chatListContainer && window.ZainBotFeedback) {
       window.ZainBotFeedback.renderState(chatListContainer, { phase: 'no-bot', key: 'inbox_no_bot' }, { t: dashboardT });
@@ -3221,11 +3279,21 @@
       if (run !== inboxRun || String(currentBot?._id) !== botId) return;
       if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
         conversations = res.data;
+        syncCopilotDraftsFromConversations();
         renderChatList();
+        if (selectedConversationId) {
+          const active = conversations.find((c) => String(c._id) === String(selectedConversationId));
+          if (active) renderCopilotDraftCard(active);
+        }
+        startCopilotPolling();
       } else if (res && res.success) {
         conversations = [];
         selectedConversationId = null;
+        copilotDraftsByConvId.clear();
+        updatePendingDraftsBadges();
+        hideCopilotDraftCard();
         setComposerEnabled(false);
+        startCopilotPolling();
         if (window.ZainBotFeedback) {
           window.ZainBotFeedback.renderState(chatListContainer, { phase: 'empty', key: 'inbox_empty' }, { t: dashboardT });
         } else {
@@ -3250,7 +3318,13 @@
     chatListContainer.innerHTML = '';
     const t = translations[currentLanguage] || translations.en;
 
-    conversations.forEach(chat => {
+    const sortedConversations = [...conversations].sort((a, b) => {
+      const aHas = copilotDraftsByConvId.has(String(a._id)) ? 1 : 0;
+      const bHas = copilotDraftsByConvId.has(String(b._id)) ? 1 : 0;
+      return bHas - aHas;
+    });
+
+    sortedConversations.forEach(chat => {
       const item = document.createElement('div');
       item.className = `chat-item ${selectedConversationId === chat._id ? 'active' : ''}`;
       
@@ -3264,6 +3338,11 @@
       else if (chat.channel === 'facebook') { channelIcon = 'fa-brands fa-facebook-messenger'; channelColor = 'var(--blue)'; }
       else if (chat.channel === 'telegram') { channelIcon = 'fa-brands fa-telegram'; channelColor = 'var(--blue)'; }
 
+      const hasDraft = copilotDraftsByConvId.has(String(chat._id));
+      const draftBadge = hasDraft
+        ? `<span class="badge copilot-draft-pill" style="font-size:10px; margin-inline-start:6px; background:rgba(6,182,212,0.22); color:var(--cyan); border:1px solid rgba(6,182,212,0.45); padding:2px 6px;">${escapeHtml(t.copilot_draft_badge)}</span>`
+        : '';
+
       const categoryBadge = chat.category 
         ? `<span class="badge" style="font-size:10px; margin-inline-start:6px; background:rgba(6,182,212,0.15); color:var(--cyan); border:1px solid rgba(6,182,212,0.3); padding:2px 6px;">${escapeHtml(chat.category)}</span>`
         : '';
@@ -3274,9 +3353,9 @@
           <span class="chat-channel-badge" style="background:${channelColor};"><i class="${channelIcon}"></i></span>
         </div>
         <div class="chat-item-details" style="flex:1; min-width:0;">
-          <div class="chat-item-name" style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="chat-item-name" style="display:flex; justify-content:space-between; align-items:center; gap:4px;">
             <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(chat.username || t.inbox_default_name)}</span>
-            ${categoryBadge}
+            <span style="display:inline-flex; align-items:center; flex-shrink:0;">${draftBadge}${categoryBadge}</span>
           </div>
           <div class="chat-item-preview">${escapeHtml(lastMsg)}</div>
         </div>
@@ -3288,6 +3367,7 @@
 
       chatListContainer.appendChild(item);
     });
+    updatePendingDraftsBadges();
   }
 
   async function selectChat(chat) {
@@ -3305,7 +3385,7 @@
     document.getElementById('chatSendBtn').removeAttribute('disabled');
     const autoReplyToggle = document.getElementById('autoReplyToggle');
     autoReplyToggle.removeAttribute('disabled');
-    autoReplyToggle.checked = chat.autoReply !== false; // default true
+    autoReplyToggle.checked = chat.isHumanHandling !== true; // true when AI/Copilot active, false when handed off to human
 
     // Render messages
     const msgContainer = document.getElementById('chatMessagesContainer');
@@ -3334,6 +3414,9 @@
     });
 
     msgContainer.scrollTop = msgContainer.scrollHeight;
+    copilotEditMode = false;
+    copilotEditingDraftId = null;
+    renderCopilotDraftCard(chat);
   }
 
   // Handle take-over manual reply
@@ -3440,12 +3523,375 @@
     autoReplyToggleEl.addEventListener('change', async () => {
       if (!selectedConversationId) return;
       try {
+        const nextIsHuman = !autoReplyToggleEl.checked;
         await apiFetch(`/api/messages/conversations/${selectedConversationId}/handoff`, {
           method: 'PATCH',
-          body: JSON.stringify({ isHumanHandling: !autoReplyToggleEl.checked })
+          body: JSON.stringify({ isHumanHandling: nextIsHuman })
         });
+        const target = conversations.find((c) => String(c._id) === String(selectedConversationId));
+        if (target) target.isHumanHandling = nextIsHuman;
       } catch (e) {
         console.error(e);
+      }
+    });
+  }
+
+  // ===== Copilot Pending Drafts (Inbox One-Tap Approval + Visibility-Aware Polling) =====
+  const COPILOT_POLL_INTERVAL_MS = 12000;
+  const copilotDraftsByConvId = new Map();
+  let copilotPollTimer = null;
+  let copilotEditMode = false;
+  let copilotEditingDraftId = null;
+
+  function isInboxTabActive() {
+    const page = document.getElementById('page-inbox');
+    return Boolean(page && page.classList.contains('active'));
+  }
+
+  function updatePendingDraftsBadges() {
+    const count = copilotDraftsByConvId.size;
+    const t = translations[currentLanguage] || translations.en;
+    const menuBadge = document.getElementById('inboxPendingDraftsBadge');
+    if (menuBadge) {
+      menuBadge.textContent = String(count);
+      menuBadge.style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+    const headerBadge = document.getElementById('inboxPendingCountBadge');
+    if (headerBadge) {
+      headerBadge.textContent = count > 0 ? `${count} ${t.copilot_pending_count}` : '';
+      headerBadge.style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+  }
+
+  function syncCopilotDraftsFromConversations() {
+    copilotDraftsByConvId.clear();
+    conversations.forEach((chat) => {
+      if (chat && chat.pendingDraft && chat.pendingDraft._id) {
+        copilotDraftsByConvId.set(String(chat._id), chat.pendingDraft);
+      }
+    });
+    updatePendingDraftsBadges();
+  }
+
+  function hideCopilotDraftCard() {
+    const card = document.getElementById('copilotDraftCard');
+    if (card) card.style.display = 'none';
+    copilotEditMode = false;
+    copilotEditingDraftId = null;
+  }
+
+  function setCopilotCardEditMode(editing, draft) {
+    copilotEditMode = Boolean(editing);
+    copilotEditingDraftId = editing && draft ? String(draft._id) : null;
+    const previewEl = document.getElementById('copilotDraftPreview');
+    const editWrap = document.getElementById('copilotDraftEditWrap');
+    const textarea = document.getElementById('copilotEditTextarea');
+    const sendBtn = document.getElementById('copilotSendBtn');
+    const editBtn = document.getElementById('copilotEditBtn');
+    const confirmEditBtn = document.getElementById('copilotConfirmEditBtn');
+    const cancelEditBtn = document.getElementById('copilotCancelEditBtn');
+    const regenBtn = document.getElementById('copilotRegenerateBtn');
+
+    if (previewEl) previewEl.style.display = editing ? 'none' : 'block';
+    if (editWrap) editWrap.style.display = editing ? 'block' : 'none';
+    if (editing && textarea && draft) {
+      textarea.value = draft.suggestedReply || '';
+      textarea.focus();
+    }
+    if (sendBtn) sendBtn.style.display = editing ? 'none' : 'inline-flex';
+    if (editBtn) editBtn.style.display = editing ? 'none' : 'inline-flex';
+    if (confirmEditBtn) confirmEditBtn.style.display = editing ? 'inline-flex' : 'none';
+    if (cancelEditBtn) cancelEditBtn.style.display = editing ? 'inline-flex' : 'none';
+    if (regenBtn) regenBtn.style.display = editing ? 'none' : 'inline-flex';
+  }
+
+  function renderCopilotDraftCard(chat) {
+    const card = document.getElementById('copilotDraftCard');
+    if (!card) return;
+    const targetChat = chat || conversations.find((c) => String(c._id) === String(selectedConversationId));
+    if (!targetChat) {
+      hideCopilotDraftCard();
+      return;
+    }
+    const draft = copilotDraftsByConvId.get(String(targetChat._id));
+    if (!draft) {
+      hideCopilotDraftCard();
+      return;
+    }
+
+    const t = translations[currentLanguage] || translations.en;
+    card.style.display = 'block';
+    card.dataset.draftId = String(draft._id);
+
+    const timeEl = document.getElementById('copilotDraftTime');
+    if (timeEl && draft.createdAt) {
+      try {
+        timeEl.textContent = new Date(draft.createdAt).toLocaleTimeString(
+          currentLanguage === 'ar' ? 'ar-EG' : 'en-US',
+          { hour: '2-digit', minute: '2-digit' }
+        );
+      } catch (_e) {
+        timeEl.textContent = '';
+      }
+    }
+
+    const snippetEl = document.getElementById('copilotDraftSnippet');
+    if (snippetEl) {
+      if (draft.customerMessageSnippet) {
+        snippetEl.textContent = `${t.copilot_customer_asked} ${draft.customerMessageSnippet}`;
+        snippetEl.style.display = 'block';
+      } else {
+        snippetEl.style.display = 'none';
+      }
+    }
+
+    const previewEl = document.getElementById('copilotDraftPreview');
+    if (previewEl) {
+      previewEl.textContent = draft.suggestedReply || '';
+    }
+
+    // Preserve active editing session if polling refreshed the same draft
+    if (copilotEditMode && copilotEditingDraftId === String(draft._id)) {
+      return;
+    }
+    setCopilotCardEditMode(false, draft);
+  }
+
+  async function refreshCopilotDrafts({ silent = true } = {}) {
+    if (!currentBot || document.hidden || !isInboxTabActive()) return;
+    const botId = String(currentBot._id);
+    try {
+      const res = await dashboardRequest(`/api/copilot/drafts?botId=${encodeURIComponent(botId)}`);
+      if (!res || !res.success || !Array.isArray(res.drafts) || String(currentBot?._id) !== botId) return;
+      const nextMap = new Map();
+      res.drafts.forEach((draft) => {
+        const convKey = String(draft.conversationId);
+        if (!nextMap.has(convKey)) nextMap.set(convKey, draft);
+      });
+      copilotDraftsByConvId.clear();
+      nextMap.forEach((draft, key) => copilotDraftsByConvId.set(key, draft));
+      conversations.forEach((chat) => {
+        const d = copilotDraftsByConvId.get(String(chat._id)) || null;
+        chat.pendingDraft = d;
+        chat.hasPendingDraft = Boolean(d);
+      });
+      renderChatList();
+      if (selectedConversationId) {
+        const active = conversations.find((c) => String(c._id) === String(selectedConversationId));
+        if (active) renderCopilotDraftCard(active);
+      }
+    } catch (err) {
+      if (!silent) console.error('copilot_drafts_poll_error', err);
+    }
+  }
+
+  function stopCopilotPolling() {
+    if (copilotPollTimer) {
+      clearInterval(copilotPollTimer);
+      copilotPollTimer = null;
+    }
+  }
+
+  function startCopilotPolling() {
+    stopCopilotPolling();
+    if (!currentBot || !isInboxTabActive() || document.hidden) return;
+    copilotPollTimer = setInterval(() => {
+      if (document.hidden || !isInboxTabActive()) {
+        stopCopilotPolling();
+        return;
+      }
+      refreshCopilotDrafts({ silent: true });
+    }, COPILOT_POLL_INTERVAL_MS);
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopCopilotPolling();
+    } else if (isInboxTabActive() && currentBot) {
+      refreshCopilotDrafts({ silent: true });
+      startCopilotPolling();
+    }
+  });
+
+  function getActiveCopilotDraft() {
+    if (!selectedConversationId) return null;
+    return copilotDraftsByConvId.get(String(selectedConversationId)) || null;
+  }
+
+  async function runCopilotDraftAction(actionKey, buttons, fn) {
+    const core = window.ZainBotRequest;
+    const run = core && typeof core.runExclusive === 'function'
+      ? (k, op) => core.runExclusive(k, op)
+      : (_k, op) => op();
+    const feedback = window.ZainBotFeedback;
+    const guarded = feedback && typeof feedback.withPending === 'function'
+      ? () => feedback.withPending(actionKey, buttons.filter(Boolean), fn)
+      : fn;
+    return run(actionKey, guarded);
+  }
+
+  function handleCopilotAfterSend(chatId, sentText, delivered, isEdited) {
+    const t = translations[currentLanguage] || translations.en;
+    copilotDraftsByConvId.delete(String(chatId));
+    const target = conversations.find((c) => String(c._id) === String(chatId));
+    if (target) {
+      target.pendingDraft = null;
+      target.hasPendingDraft = false;
+      target.messages = target.messages || [];
+      target.messages.push({ role: 'assistant', content: sentText, timestamp: new Date().toISOString() });
+    }
+    if (String(selectedConversationId) === String(chatId)) {
+      hideCopilotDraftCard();
+      appendReplyBubble(sentText, delivered === false, t);
+    }
+    renderChatList();
+    notifyDashboard('success', isEdited ? 'copilot_edited_sent_success' : 'copilot_sent_success');
+  }
+
+  function handleCopilotErrorResponse(res) {
+    if (res && (res.code === 'CHANNELS_DISABLED' || res.error === 'CHANNELS_DISABLED')) {
+      notifyDashboard('error', 'copilot_channels_disabled');
+      return;
+    }
+    notifyDashboard('error', 'copilot_action_failed');
+  }
+
+  const copilotSendBtn = document.getElementById('copilotSendBtn');
+  const copilotEditBtn = document.getElementById('copilotEditBtn');
+  const copilotConfirmEditBtn = document.getElementById('copilotConfirmEditBtn');
+  const copilotCancelEditBtn = document.getElementById('copilotCancelEditBtn');
+  const copilotDiscardBtn = document.getElementById('copilotDiscardBtn');
+  const copilotRegenerateBtn = document.getElementById('copilotRegenerateBtn');
+
+  if (copilotSendBtn) {
+    copilotSendBtn.addEventListener('click', async () => {
+      const draft = getActiveCopilotDraft();
+      const chatId = selectedConversationId ? String(selectedConversationId) : '';
+      if (!draft || !chatId) return;
+      try {
+        await runCopilotDraftAction(`copilot-send:${draft._id}`, [copilotSendBtn, copilotEditBtn, copilotDiscardBtn, copilotRegenerateBtn], async () => {
+          const res = await dashboardRequest(`/api/copilot/drafts/${draft._id}/send`, {
+            method: 'POST',
+            body: JSON.stringify({ mode: 'approve' }),
+          }, { operation: 'mutation' });
+          if (!res || !res.success) {
+            handleCopilotErrorResponse(res);
+            return;
+          }
+          handleCopilotAfterSend(chatId, draft.suggestedReply, res.delivered, false);
+        });
+      } catch (err) {
+        console.error('copilot_send_failed', err);
+        handleCopilotErrorResponse(err?.data || err);
+      }
+    });
+  }
+
+  if (copilotEditBtn) {
+    copilotEditBtn.addEventListener('click', () => {
+      const draft = getActiveCopilotDraft();
+      if (!draft) return;
+      setCopilotCardEditMode(true, draft);
+    });
+  }
+
+  if (copilotCancelEditBtn) {
+    copilotCancelEditBtn.addEventListener('click', () => {
+      const draft = getActiveCopilotDraft();
+      setCopilotCardEditMode(false, draft);
+    });
+  }
+
+  if (copilotConfirmEditBtn) {
+    copilotConfirmEditBtn.addEventListener('click', async () => {
+      const draft = getActiveCopilotDraft();
+      const chatId = selectedConversationId ? String(selectedConversationId) : '';
+      const textarea = document.getElementById('copilotEditTextarea');
+      const editedText = textarea ? textarea.value.trim() : '';
+      if (!draft || !chatId || !editedText) return;
+      try {
+        await runCopilotDraftAction(`copilot-edit:${draft._id}`, [copilotConfirmEditBtn, copilotCancelEditBtn, copilotDiscardBtn], async () => {
+          const res = await dashboardRequest(`/api/copilot/drafts/${draft._id}/edit-and-send`, {
+            method: 'POST',
+            body: JSON.stringify({ editedReply: editedText }),
+          }, { operation: 'mutation' });
+          if (!res || !res.success) {
+            handleCopilotErrorResponse(res);
+            return;
+          }
+          handleCopilotAfterSend(chatId, editedText, res.delivered, true);
+        });
+      } catch (err) {
+        console.error('copilot_edit_send_failed', err);
+        handleCopilotErrorResponse(err?.data || err);
+      }
+    });
+  }
+
+  if (copilotDiscardBtn) {
+    copilotDiscardBtn.addEventListener('click', async () => {
+      const draft = getActiveCopilotDraft();
+      const chatId = selectedConversationId ? String(selectedConversationId) : '';
+      if (!draft || !chatId) return;
+      try {
+        await runCopilotDraftAction(`copilot-discard:${draft._id}`, [copilotDiscardBtn, copilotSendBtn, copilotEditBtn, copilotConfirmEditBtn, copilotRegenerateBtn], async () => {
+          const res = await dashboardRequest(`/api/copilot/drafts/${draft._id}/discard`, {
+            method: 'POST',
+          }, { operation: 'mutation' });
+          if (!res || !res.success) {
+            handleCopilotErrorResponse(res);
+            return;
+          }
+          copilotDraftsByConvId.delete(chatId);
+          const target = conversations.find((c) => String(c._id) === chatId);
+          if (target) {
+            target.pendingDraft = null;
+            target.hasPendingDraft = false;
+          }
+          if (String(selectedConversationId) === chatId) {
+            hideCopilotDraftCard();
+          }
+          renderChatList();
+          notifyDashboard('success', 'copilot_discarded_success');
+        });
+      } catch (err) {
+        console.error('copilot_discard_failed', err);
+        handleCopilotErrorResponse(err?.data || err);
+      }
+    });
+  }
+
+  if (copilotRegenerateBtn) {
+    copilotRegenerateBtn.addEventListener('click', async () => {
+      const draft = getActiveCopilotDraft();
+      const chatId = selectedConversationId ? String(selectedConversationId) : '';
+      if (!draft || !chatId) return;
+      try {
+        await runCopilotDraftAction(`copilot-regen:${draft._id}`, [copilotRegenerateBtn, copilotSendBtn, copilotEditBtn, copilotDiscardBtn], async () => {
+          const res = await dashboardRequest(`/api/copilot/drafts/${draft._id}/regenerate`, {
+            method: 'POST',
+          }, { operation: 'mutation' });
+          if (!res || !res.success || !res.draft) {
+            handleCopilotErrorResponse(res);
+            return;
+          }
+          copilotDraftsByConvId.set(chatId, res.draft);
+          const target = conversations.find((c) => String(c._id) === chatId);
+          if (target) {
+            target.pendingDraft = res.draft;
+            target.hasPendingDraft = true;
+          }
+          if (String(selectedConversationId) === chatId) {
+            copilotEditMode = false;
+            copilotEditingDraftId = null;
+            renderCopilotDraftCard(target);
+          }
+          renderChatList();
+          notifyDashboard('success', 'copilot_regenerated_success');
+        });
+      } catch (err) {
+        console.error('copilot_regenerate_failed', err);
+        handleCopilotErrorResponse(err?.data || err);
       }
     });
   }
@@ -6133,7 +6579,11 @@
       title.textContent = bot.name;
       title.style.marginBottom = '6px';
       const meta = document.createElement('p');
-      meta.textContent = `${String(bot.agentType || 'customer_support').replaceAll('_', ' ')} · ${bot.autoReplyEnabled === false ? t.agent_autoreply_off : t.agent_autoreply_on}`;
+      const botMode = bot.replyMode || (bot.autoReplyEnabled === false ? 'manual' : 'auto');
+      const botModeLabel = botMode === 'copilot'
+        ? t.reply_mode_copilot
+        : (botMode === 'manual' ? t.reply_mode_manual : t.reply_mode_auto);
+      meta.textContent = `${String(bot.agentType || 'customer_support').replaceAll('_', ' ')} · ${botModeLabel}`;
       meta.style.cssText = 'font-size:12px; color:var(--text-muted); margin-bottom:12px;';
       const description = document.createElement('p');
       description.textContent = bot.description || bot.welcomeMessage || t.agent_no_description;
@@ -6288,7 +6738,10 @@
       document.getElementById('agentInstructions').value = bot.customInstructions || '';
       document.getElementById('agentObjectives').value = Array.isArray(bot.objectives) ? bot.objectives.join('\n') : '';
       document.getElementById('agentHandoffKeywords').value = Array.isArray(bot.handoffKeywords) ? bot.handoffKeywords.join(', ') : '';
-      document.getElementById('agentAutoReplyEnabled').checked = bot.autoReplyEnabled !== false;
+      const resolvedReplyMode = bot.replyMode || (bot.autoReplyEnabled === false ? 'manual' : 'auto');
+      const replyModeEl = document.getElementById('agentReplyMode');
+      if (replyModeEl) replyModeEl.value = resolvedReplyMode;
+      document.getElementById('agentAutoReplyEnabled').checked = resolvedReplyMode !== 'manual' && bot.autoReplyEnabled !== false;
 
       // Tools population
       const tools = bot.agentTools || {};
@@ -6387,6 +6840,8 @@
       document.querySelectorAll('input[name="agentSkill"]').forEach((chk) => {
         chk.checked = true;
       });
+      const replyModeEl = document.getElementById('agentReplyMode');
+      if (replyModeEl) replyModeEl.value = 'auto';
     }
 
     enforceToolAndSkillTierLimits();
@@ -6399,6 +6854,21 @@
   });
   document.querySelectorAll('input[name="agentSkill"]').forEach(chk => {
     chk.addEventListener('change', enforceToolAndSkillTierLimits);
+  });
+
+  document.getElementById('agentReplyMode')?.addEventListener('change', (e) => {
+    const mode = e.target.value;
+    const autoChk = document.getElementById('agentAutoReplyEnabled');
+    if (autoChk) autoChk.checked = mode !== 'manual';
+  });
+  document.getElementById('agentAutoReplyEnabled')?.addEventListener('change', (e) => {
+    const replyModeEl = document.getElementById('agentReplyMode');
+    if (!replyModeEl) return;
+    if (!e.target.checked) {
+      replyModeEl.value = 'manual';
+    } else if (replyModeEl.value === 'manual') {
+      replyModeEl.value = 'auto';
+    }
   });
 
   document.getElementById('createAgentBtn')?.addEventListener('click', () => openAgentModal());
@@ -6456,6 +6926,7 @@
       customInstructions: document.getElementById('agentInstructions').value.trim(),
       objectives: splitValues(document.getElementById('agentObjectives').value, '\n'),
       handoffKeywords: splitValues(document.getElementById('agentHandoffKeywords').value, ','),
+      replyMode: document.getElementById('agentReplyMode')?.value || (document.getElementById('agentAutoReplyEnabled').checked ? 'auto' : 'manual'),
       autoReplyEnabled: document.getElementById('agentAutoReplyEnabled').checked,
       agentTools,
       agentSkills: selectedSkills,
@@ -8352,8 +8823,76 @@
   // F05: summary chunk loads on FIRST settings entry; init() wires once and
   // repaints every entry (replaces the refreshActiveBot-patch freshness).
   // Rendering into hidden boxes on a late resolve is benign (correct data).
+  function syncSettingsReplyModeControl() {
+    const selectEl = document.getElementById('botReplyModeSelect');
+    const saveBtn = document.getElementById('saveBotReplyModeBtn');
+    const msgEl = document.getElementById('botReplyModeMsg');
+    if (!selectEl) return;
+    if (!currentBot) {
+      selectEl.value = 'auto';
+      selectEl.disabled = true;
+      if (saveBtn) saveBtn.disabled = true;
+      if (msgEl) msgEl.textContent = '';
+      return;
+    }
+    selectEl.disabled = false;
+    if (saveBtn) saveBtn.disabled = false;
+    selectEl.value = currentBot.replyMode || (currentBot.autoReplyEnabled === false ? 'manual' : 'auto');
+    if (msgEl) msgEl.textContent = '';
+  }
+
+  document.getElementById('saveBotReplyModeBtn')?.addEventListener('click', async () => {
+    if (!currentBot) return;
+    const selectEl = document.getElementById('botReplyModeSelect');
+    const msgEl = document.getElementById('botReplyModeMsg');
+    const saveBtn = document.getElementById('saveBotReplyModeBtn');
+    const t = translations[currentLanguage] || translations.en;
+    const replyMode = selectEl ? selectEl.value : 'auto';
+    if (!['auto', 'copilot', 'manual'].includes(replyMode)) return;
+    try {
+      if (saveBtn) saveBtn.disabled = true;
+      const res = await dashboardRequest(`/api/bots/${currentBot._id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          replyMode,
+          autoReplyEnabled: replyMode !== 'manual',
+        }),
+      }, { operation: 'mutation' });
+      if (!res || !res.success) {
+        if (msgEl) {
+          msgEl.style.color = 'var(--red)';
+          msgEl.textContent = t.reply_mode_save_failed;
+        }
+        return;
+      }
+      currentBot.replyMode = res.data?.replyMode || replyMode;
+      currentBot.autoReplyEnabled = res.data?.autoReplyEnabled ?? (replyMode !== 'manual');
+      const idx = workspaceBots.findIndex((b) => String(b._id) === String(currentBot._id));
+      if (idx !== -1) {
+        workspaceBots[idx].replyMode = currentBot.replyMode;
+        workspaceBots[idx].autoReplyEnabled = currentBot.autoReplyEnabled;
+      }
+      if (window.ZainBotSettingsSummary && typeof window.ZainBotSettingsSummary.init === 'function') {
+        window.ZainBotSettingsSummary.init();
+      }
+      if (msgEl) {
+        msgEl.style.color = 'var(--green)';
+        msgEl.textContent = t.reply_mode_saved;
+      }
+    } catch (err) {
+      console.error('reply_mode_save_error', err);
+      if (msgEl) {
+        msgEl.style.color = 'var(--red)';
+        msgEl.textContent = t.reply_mode_save_failed;
+      }
+    } finally {
+      if (saveBtn) saveBtn.disabled = false;
+    }
+  });
+
   function enterSettingsTab() {
     loadSettingsData();
+    syncSettingsReplyModeControl();
     if (!window.ZainBotDashboardAssets || typeof window.ZainBotDashboardAssets.loadFeature !== 'function') return;
     window.ZainBotDashboardAssets.loadFeature('settingsSummary').then(() => {
       if (window.ZainBotSettingsSummary && typeof window.ZainBotSettingsSummary.init === 'function') {

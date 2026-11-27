@@ -28,7 +28,9 @@ const { upsertChatCustomerProfile } = require('./controllers/chatCustomersContro
 const bookingsController = require('./controllers/bookingsController');
 const logger = require('./logger');
 const { getAiCompletion } = require('./services/aiFailover');
-const { getPlatformDefaultOpenAiModel } = require('./services/platformSettingsService');
+const platformSettingsService = require('./services/platformSettingsService');
+const { getPlatformDefaultOpenAiModel } = platformSettingsService;
+const copilotService = require('./services/copilotService');
 const { checkPlanLimitsAndIncrement, settleMessageQuota } = require('./services/billingLimits');
 const { dispatchWebhook } = require('./services/webhookDispatcher');
 const { dispatchMultiChannelNotification } = require('./services/notificationDispatcher');
@@ -1280,6 +1282,7 @@ async function autoClassifyConversation({ bot, conversation, userMessageContent 
 }
 
 async function processMessage(botId, userId, message, isImage = false, isVoice = false, messageId = null, channel = 'web', mediaUrl = null) {
+  let isCopilotMode = false;
   try {
     logger.info('process_message_received', { hasUserId: Boolean(userId) });
 
@@ -1382,13 +1385,21 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
 
     // إضافة بيانات المتجر إذا كان البوت مرتبط بمتجر
     const bot = await getBotWithCache(botId);
+    const effectiveReplyMode = (!isAssistantBotId && bot?.replyMode) ? bot.replyMode : 'auto';
+    isCopilotMode = !isAssistantBotId && effectiveReplyMode === 'copilot';
+    const isManualMode = !isAssistantBotId && effectiveReplyMode === 'manual';
+    let copilotFailClosed = false;
     let useBackup = false;
     if (bot && !isAssistantBotId) {
       if (bot.isActive === false || bot.archivedAt) {
         logger.info('bot_inactive_or_archived', { botId, conversationId: conversation._id });
         return null;
       }
-      if (bot.autoReplyEnabled === false) {
+      if (isManualMode) {
+        logger.info('bot_manual_reply_mode', { botId, conversationId: conversation._id });
+        return null;
+      }
+      if (!isCopilotMode && bot.autoReplyEnabled === false) {
         logger.info('bot_auto_reply_disabled', { botId, conversationId: conversation._id });
         return null;
       }
@@ -1413,6 +1424,15 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
         }).catch((err) => logger.warn('handoff_alert_dispatch_failed', { err: describeCaughtError(err) }));
 
         return null;
+      }
+      if (isCopilotMode) {
+        const platformCopilotOn = typeof platformSettingsService.isCopilotEnabled === 'function'
+          ? await platformSettingsService.isCopilotEnabled()
+          : false;
+        if (!platformCopilotOn) {
+          logger.info('copilot_disabled_fail_closed', { botId, conversationId: conversation._id });
+          copilotFailClosed = true;
+        }
       }
       if (bot.agentType || bot.description || bot.customInstructions || bot.objectives?.length || bot.agentSkills?.length || bot.agentTools) {
         systemPrompt += `\nAgent profile: ${bot.agentType || 'customer_support'}.\n`;
@@ -1446,12 +1466,19 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
         }
         if (bot.customInstructions) systemPrompt += `Owner-configured agent instructions:\n${bot.customInstructions}\n`;
       }
-      const limitResult = await checkPlanLimitsAndIncrement(bot);
-      if (!limitResult.allowed) {
-        logger.warn('🚫 Subscription limits hit, blocking bot message', { botId, userId: finalUserId });
-        return limitResult.message;
+      if (!copilotFailClosed) {
+        const limitResult = await checkPlanLimitsAndIncrement(bot);
+        if (!limitResult.allowed) {
+          logger.warn('🚫 Subscription limits hit, blocking bot message', { botId, userId: finalUserId });
+          if (isCopilotMode) {
+            copilotFailClosed = true;
+          } else {
+            return limitResult.message;
+          }
+        } else {
+          useBackup = limitResult.useBackup;
+        }
       }
-      useBackup = limitResult.useBackup;
 
       dispatchWebhook(bot.userId, bot._id, 'message.received', {
         channel: finalChannel,
@@ -1526,7 +1553,7 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
       userMessageContent = placeholderForMedia(isImage, isVoice);
     }
 
-    if (isVoice) {
+    if (isVoice && !copilotFailClosed) {
       try {
         const voiceSource = mediaUrl || message;
         if (voiceSource && (voiceSource.startsWith('http') || isDataUrl(voiceSource))) {
@@ -1536,70 +1563,84 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
           logger.info('💬 Transcribed audio message', { transcriptLength: (userMessageContent || '').length });
         } else {
           logger.warn('⚠️ No valid mediaUrl or audio payload for voice', { hasMediaUrl: !!mediaUrl, messageLength: (message || '').length });
-          return 'عذرًا، لم أتمكن من تحليل الصوت بسبب رابط غير صالح. أرسل المقطع الصوتي من جديد أو اكتب النص.';
+          return isCopilotMode ? null : 'عذرًا، لم أتمكن من تحليل الصوت بسبب رابط غير صالح. أرسل المقطع الصوتي من جديد أو اكتب النص.';
         }
       } catch (err) {
         logger.error('voice_transcription_failed', { err: describeCaughtError(err) });
-        return 'عذرًا، لم أتمكن من تحليل المقطع الصوتي. حاول إرساله مرة أخرى أو اكتب النص.';
+        return isCopilotMode ? null : 'عذرًا، لم أتمكن من تحليل المقطع الصوتي. حاول إرساله مرة أخرى أو اكتب النص.';
       }
+    } else if (isVoice) {
+      userMessageContent = message || placeholderForMedia(false, true);
     } else if (isImage) {
       userMessageContent = message || mediaUrl || '[صورة]';
       if (isDataUrl(userMessageContent)) userMessageContent = placeholderForMedia(true, false);
       logger.info('🖼️ Image message', { contentLength: (userMessageContent || '').length });
     }
 
+    const incomingMessageId = messageId || `msg_${uuidv4()}`;
     conversation.messages.push({ 
       role: 'user', 
       content: userMessageContent, 
       timestamp: new Date(),
-      messageId: messageId || `msg_${uuidv4()}` 
+      messageId: incomingMessageId 
     });
 
     await conversation.save();
     logger.info('💬 User message added to conversation', { messageLength: (userMessageContent || '').length });
 
+    // Copilot fail-closed guard: when platform copilotEnabled is false (or quota
+    // exceeded in copilot mode), inbound message is persisted, mutating extractors
+    // and AI generation are skipped, and we unconditionally return null.
+    if (copilotFailClosed) {
+      return null;
+    }
+
     // استخراج بيانات الطلب من المحادثة الحالية وحفظها في قاعدة البيانات
     let extractionResult = null;
     let bookingResult = null;
     try {
-      // بناء النسخة المحدثة من transcript بعد إضافة آخر رسالة
-      const updatedTranscript = conversation.messages
-        .filter((msg) => !isDataUrl(msg.content))
-        .map((msg) => ({
-          role: msg.role,
-          content: msg.content.length > 2000 ? `${msg.content.slice(0, 2000)}...` : msg.content,
-          timestamp: msg.timestamp,
-        }));
-      
-      extractionResult = await extractChatOrderIntent({
-        bot,
-        channel: finalChannel,
-        userMessageContent,
-        conversationId: conversation._id,
-        sourceUserId: finalUserId,
-        sourceUsername: finalUsername,
-        messageId: messageId || `msg_${uuidv4()}`,
-        transcript: updatedTranscript,
-        conversation,
-      });
+      // في وضع Copilot نتخطى المستخلصات المغيّرة للبيانات (الطلبات والحجوزات)
+      // ونكتفي بالسياق للقراءة فقط وتصنيف المحادثة.
+      if (!isCopilotMode) {
+        // بناء النسخة المحدثة من transcript بعد إضافة آخر رسالة
+        const updatedTranscript = conversation.messages
+          .filter((msg) => !isDataUrl(msg.content))
+          .map((msg) => ({
+            role: msg.role,
+            content: msg.content.length > 2000 ? `${msg.content.slice(0, 2000)}...` : msg.content,
+            timestamp: msg.timestamp,
+          }));
+        
+        extractionResult = await extractChatOrderIntent({
+          bot,
+          channel: finalChannel,
+          userMessageContent,
+          conversationId: conversation._id,
+          sourceUserId: finalUserId,
+          sourceUsername: finalUsername,
+          messageId: incomingMessageId,
+          transcript: updatedTranscript,
+          conversation,
+        });
 
-      if (extractionResult?.chatOrder) {
-        logger.info('✅ Chat order auto-saved after message processing', { orderId: extractionResult.chatOrder._id });
-      }
+        if (extractionResult?.chatOrder) {
+          logger.info('✅ Chat order auto-saved after message processing', { orderId: extractionResult.chatOrder._id });
+        }
 
-      // استخراج بيانات المواعيد والحجوزات إن وجدت
-      bookingResult = await extractBookingIntent({
-        bot,
-        channel: finalChannel,
-        userMessageContent,
-        conversationId: conversation._id,
-        sourceUserId: finalUserId,
-        sourceUsername: finalUsername,
-        transcript: updatedTranscript,
-      });
+        // استخراج بيانات المواعيد والحجوزات إن وجدت
+        bookingResult = await extractBookingIntent({
+          bot,
+          channel: finalChannel,
+          userMessageContent,
+          conversationId: conversation._id,
+          sourceUserId: finalUserId,
+          sourceUsername: finalUsername,
+          transcript: updatedTranscript,
+        });
 
-      if (bookingResult?.booking) {
-        logger.info('booking_extraction_saved', { bookingId: bookingResult.booking._id, outcome: bookingResult.outcome });
+        if (bookingResult?.booking) {
+          logger.info('booking_extraction_saved', { bookingId: bookingResult.booking._id, outcome: bookingResult.outcome });
+        }
       }
 
       // تصنيف المحادثة التلقائي وإضافة الشارات والبادجات
@@ -1652,7 +1693,7 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
     if (isImage) {
         if (!mediaUrl) {
           logger.error('❌ Missing mediaUrl for image');
-          return 'عذرًا، لم أتمكن من تحليل الصورة بسبب رابط غير صالح.';
+          return isCopilotMode ? null : 'عذرًا، لم أتمكن من تحليل الصورة بسبب رابط غير صالح.';
         }
 
         let imageDataUrl;
@@ -1666,11 +1707,11 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
             imageDataUrl = await downloadImageToBase64(mediaUrl, finalChannel);
           } catch (err) {
             logger.error('image_media_download_failed', { err: describeCaughtError(err) });
-            return 'عذرًا، لم أتمكن من تحميل الصورة. حاول إرسالها مرة أخرى.';
+            return isCopilotMode ? null : 'عذرًا، لم أتمكن من تحميل الصورة. حاول إرسالها مرة أخرى.';
           }
         } else {
           logger.error('image_media_url_invalid', { hasMediaUrl: Boolean(mediaUrl) });
-          return 'عذرًا، رابط الصورة غير مدعوم. أرسل صورة جديدة من فضلك.';
+          return isCopilotMode ? null : 'عذرًا، رابط الصورة غير مدعوم. أرسل صورة جديدة من فضلك.';
         }
 
         try {
@@ -1689,17 +1730,20 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
                 },
               ],
               max_tokens: 1000,
+              feature: isCopilotMode ? 'copilot' : 'chat_reply',
+              stage: isCopilotMode ? 'draft_generate' : 'reply',
+              operationId: String(conversation._id),
             }, bot, useBackup),
             20000 // timeout 20 ثانية
           );
           reply = response.choices[0].message.content || 'عذرًا، لم أتمكن من تحليل الصورة.';
-          logger.info('🖼️ Image processed', { reply });
+          logger.info('🖼️ Image processed', { replyLength: (reply || '').length });
         } catch (err) {
           logger.error('image_analysis_error', { err: describeCaughtError(err) });
           // Quota is reserved before generation (checkPlanLimitsAndIncrement above);
           // refund the reservation once when the billable completion itself fails.
           if (bot && !isAssistantBotId) await settleMessageQuota({ userId: bot.userId });
-          return 'عذرًا، لم أتمكن من تحليل الصورة. حاول مرة أخرى أو أرسل صورة أخرى.';
+          return isCopilotMode ? null : 'عذرًا، لم أتمكن من تحليل الصورة. حاول مرة أخرى أو أرسل صورة أخرى.';
         }
       } else {
         try {
@@ -1717,6 +1761,9 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
               model: platformDefaultModel,
               messages,
               max_tokens: 2000,
+              feature: isCopilotMode ? 'copilot' : 'chat_reply',
+              stage: isCopilotMode ? 'draft_generate' : 'reply',
+              operationId: String(conversation._id),
             }, bot, useBackup),
             20000 // timeout 20 ثانية
           );
@@ -1727,7 +1774,7 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
           // Quota is reserved before generation (checkPlanLimitsAndIncrement above);
           // refund the reservation once when the billable completion itself fails.
           if (bot && !isAssistantBotId) await settleMessageQuota({ userId: bot.userId });
-          return 'عذرًا، حدث خطأ أثناء معالجة طلبك. حاول مرة أخرى.';
+          return isCopilotMode ? null : 'عذرًا، حدث خطأ أثناء معالجة طلبك. حاول مرة أخرى.';
         }
       }
 
@@ -1736,6 +1783,30 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
     // booking keyword also matched (e.g. "ميعاد تسليم الاوردر").
     const bookingTalk = isBookingQuery(userMessageContent) && !/(طلب|اوردر|أوردر|order)/i.test(userMessageContent || '');
     reply = enforceTruthfulOrderReply(reply, extractionResult, bookingResult, { bookingTalk });
+
+    // Copilot mode fork: persist draft for human approval and NEVER auto-send
+    // (returns null across all channels; never pushes assistant message or fires message.sent).
+    if (isCopilotMode) {
+      if (reply && String(reply).trim() && typeof copilotService.createDraftForMessage === 'function') {
+        try {
+          await copilotService.createDraftForMessage({
+            bot,
+            conversation,
+            suggestedReply: reply,
+            triggerMessageId: incomingMessageId,
+            customerMessageSnippet: userMessageContent,
+            customerName: finalUsername || conversation.username || '',
+          });
+        } catch (draftErr) {
+          logger.error('copilot_draft_create_failed', {
+            botId,
+            conversationId: conversation._id,
+            err: describeCaughtError(draftErr),
+          });
+        }
+      }
+      return null;
+    }
 
     const responseMessageId = `response_${messageId || uuidv4()}`;
     conversation.messages.push({ 
@@ -1760,7 +1831,7 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
     return reply;
   } catch (err) {
     logger.error('process_message_error', { err: describeCaughtError(err) });
-    return 'عذرًا، حدث خطأ أثناء معالجة طلبك. حاول مرة أخرى.';
+    return isCopilotMode ? null : 'عذرًا، حدث خطأ أثناء معالجة طلبك. حاول مرة أخرى.';
   }
 }
 

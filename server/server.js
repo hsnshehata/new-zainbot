@@ -54,6 +54,7 @@ const telegramRoutes = require('./routes/telegram');
 const whatsappRoutes = require('./routes/whatsapp');
 const ideaCouncilRoutes = require('./routes/ideaCouncil');
 const assistantRoutes = require('./routes/assistant');
+const copilotRoutes = require('./routes/copilot');
 const {
   startIdeaEvaluationWorker,
 } = require('./services/ideaEvaluationWorker');
@@ -80,6 +81,7 @@ const {
   cleanupOldLogs,
   checkDueReminders,
   checkExpiredAssistantActions,
+  checkExpiredCopilotDrafts,
 } = require('./cronJobs');
 const authenticate = require('./middleware/authenticate');
 const { loadAccessibleBot } = require('./middleware/botAccess');
@@ -346,6 +348,7 @@ const authenticatedPaths = [
   '/api/upload',
   '/api/idea-council',
   '/api/assistant',
+  '/api/copilot',
 ];
 // Public storefront endpoints. The routers below intentionally leave
 // these handlers unauthenticated for anonymous shoppers (see the
@@ -443,6 +446,7 @@ app.use(
 app.use('/api/admin/ai', createAiControlPlaneRouter());
 app.use('/api/idea-council', ideaCouncilRoutes);
 app.use('/api/assistant', assistantRoutes);
+app.use('/api/copilot', copilotRoutes);
 app.use('/api/onboarding-events', require('./routes/onboardingMetrics').onboardingEventsRouter);
 app.use('/api/onboarding-metrics', require('./routes/onboardingMetrics').onboardingMetricsRouter);
 app.use('/', indexRoutes);
@@ -805,6 +809,7 @@ function startBackgroundJobs() {
   cleanupOldLogs();
   checkDueReminders();
   checkExpiredAssistantActions();
+  checkExpiredCopilotDrafts();
   startIdeaEvaluationWorker();
   startOrderOpsSweep();
   return true;
