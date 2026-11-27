@@ -161,7 +161,7 @@ test('chat: missing message is rejected before any AI or DB work', async () => {
   reset();
   const res = mockRes();
   const { captured, next } = captureNext();
-  await controller.chat({ user: { userId: OWNER }, body: {} }, res, next);
+  await controller.chat({ user: { userId: OWNER, subscriptionTier: 'pro' }, body: {} }, res, next);
   assert.equal(captured.error.statusCode, 400);
   assert.equal(state.answerCalls.length, 0);
 });
@@ -170,7 +170,7 @@ test('chat: over-long message is rejected', async () => {
   reset();
   const res = mockRes();
   const { captured, next } = captureNext();
-  await controller.chat({ user: { userId: OWNER }, body: { message: 'x'.repeat(2001) } }, res, next);
+  await controller.chat({ user: { userId: OWNER, subscriptionTier: 'pro' }, body: { message: 'x'.repeat(2001) } }, res, next);
   assert.equal(captured.error.statusCode, 400);
 });
 
@@ -178,7 +178,7 @@ test('chat: invalid conversation id is rejected', async () => {
   reset();
   const res = mockRes();
   const { captured, next } = captureNext();
-  await controller.chat({ user: { userId: OWNER }, body: { message: 'hi', conversationId: 'nope' } }, res, next);
+  await controller.chat({ user: { userId: OWNER, subscriptionTier: 'pro' }, body: { message: 'hi', conversationId: 'nope' } }, res, next);
   assert.equal(captured.error.statusCode, 400);
 });
 
@@ -186,7 +186,7 @@ test('chat: conversation lookup is scoped to the authenticated owner', async () 
   reset();
   const res = mockRes();
   const { captured, next } = captureNext();
-  await controller.chat({ user: { userId: OWNER }, body: { message: 'hi', conversationId: CONV_ID } }, res, next);
+  await controller.chat({ user: { userId: OWNER, subscriptionTier: 'pro' }, body: { message: 'hi', conversationId: CONV_ID } }, res, next);
   assert.equal(String(state.convFindOneQuery.user), OWNER);
   assert.equal(captured.error.statusCode, 404);
 });
@@ -195,7 +195,7 @@ test('chat: new conversation persists both turns and returns the reply', async (
   reset();
   const res = mockRes();
   const { next } = captureNext();
-  await controller.chat({ user: { userId: OWNER }, body: { message: 'كام المبيعات؟' } }, res, next);
+  await controller.chat({ user: { userId: OWNER, subscriptionTier: 'pro' }, body: { message: 'كام المبيعات؟' } }, res, next);
   assert.equal(res.body.success, true);
   assert.equal(res.body.reply, 'رد ثابت');
   assert.equal(state.savedConversations.length, 1);
@@ -214,7 +214,7 @@ test('chat: existing conversation passes prior turns as history', async () => {
   });
   const res = mockRes();
   const { next } = captureNext();
-  await controller.chat({ user: { userId: OWNER }, body: { message: 'تابع', conversationId: CONV_ID } }, res, next);
+  await controller.chat({ user: { userId: OWNER, subscriptionTier: 'pro' }, body: { message: 'تابع', conversationId: CONV_ID } }, res, next);
   assert.equal(res.body.success, true);
   assert.deepEqual(state.answerCalls[0].history, [
     { role: 'user', content: 'old q' },

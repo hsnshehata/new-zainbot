@@ -1,3 +1,5 @@
+const { isFreeTier, FREE_LIMITS, MESSAGES } = require('../services/freePlanLimits');
+const ChannelConnection = require('../models/ChannelConnection');
 const express = require('express');
 const authenticate = require('../middleware/authenticate');
 const { loadAccessibleBot } = require('../middleware/botAccess');
@@ -79,6 +81,19 @@ router.get('/session', loadAccessibleBot, async (req, res) => {
 
 router.post('/connect-qr', loadAccessibleBot, async (req, res) => {
   try {
+    if (isFreeTier(req.user)) {
+      // One WhatsApp number per free account. Reconnecting the same bot is always allowed.
+      const others = await ChannelConnection.countDocuments({
+        userId: req.bot.userId,
+        channel: 'whatsapp',
+        mode: 'whatsapp_web_qr',
+        botId: { $ne: req.bot._id },
+        status: { $ne: 'disconnected' },
+      });
+      if (others >= FREE_LIMITS.whatsappChannels) {
+        return res.status(403).json({ success: false, error: 'FREE_PLAN_LIMIT', kind: 'whatsappChannels', limit: FREE_LIMITS.whatsappChannels, message: MESSAGES.whatsappChannels });
+      }
+    }
     const data = await manager.connect({
       botId: req.bot._id,
       userId: req.bot.userId,

@@ -32,6 +32,7 @@ const Conversation = require('../models/Conversation');
 const AiCredential = require('../models/AiCredential');
 const ProviderKey = require('../models/ProviderKey');
 const AppError = require('../utils/appError');
+const { reserveAssistantMessage } = require('../services/freePlanLimits');
 const logger = require('../logger');
 const { createAssistantService } = require('../services/assistantService');
 const { createAssistantDataTools } = require('../services/assistantDataTools');
@@ -210,6 +211,12 @@ async function chat(req, res, next) {
     const userId = req.user.userId;
     const actorUserId = req.user.actorUserId || userId;
     const message = readMessage(req.body);
+    {
+      const quota = await reserveAssistantMessage(User, { _id: userId, role: req.user.role, subscriptionTier: req.user.subscriptionTier });
+      if (!quota.allowed) {
+        return res.status(429).json({ success: false, error: quota.error, kind: quota.kind, limit: quota.limit, message: quota.message });
+      }
+    }
     const conversationId = req.body?.conversationId;
     const language = detectMessageLanguage(message);
 

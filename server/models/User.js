@@ -40,6 +40,8 @@ const userSchema = new mongoose.Schema({
   monthlyMessagesUsed: { type: Number, default: 0 },
   dailyMessagesUsed: { type: Number, default: 0 },
   lastUsageReset: { type: Date, default: Date.now },
+  assistantMessagesToday: { type: Number, default: 0 },
+  assistantUsageDay: { type: Date, default: null },
   subscriptionEndDate: { type: Date },
   // تكامل تيليجرام
   telegramUserId: { type: String, unique: true, sparse: true, default: undefined },

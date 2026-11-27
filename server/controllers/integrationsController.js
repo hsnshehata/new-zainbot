@@ -1,3 +1,4 @@
+const { checkCountLimit, denyResponse } = require('../services/freePlanLimits');
 // server/controllers/integrationsController.js
 const crypto = require('crypto');
 const mongoose = require('mongoose');
@@ -33,6 +34,10 @@ exports.generateApiKey = async (req, res) => {
     if (!name) {
       return res.status(400).json({ success: false, message: 'برجاء تحديد اسم لمفتاح الوصول.' });
     }
+
+    const keyCount = await ApiKey.countDocuments({ userId: req.user.userId });
+    const verdict = checkCountLimit(req.user, 'apiKeys', keyCount);
+    if (!verdict.allowed) return denyResponse(res, verdict);
 
     const randomKey = `zb_live_${crypto.randomBytes(24).toString('hex')}`;
     const newKey = await ApiKey.create({

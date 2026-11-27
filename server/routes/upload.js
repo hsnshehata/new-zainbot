@@ -1,3 +1,4 @@
+const { freeUploadSizeGuard } = require('../services/freePlanLimits');
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
@@ -19,7 +20,7 @@ const upload = multer({
 });
 
 // Endpoint لرفع الصورة
-router.post('/', upload.single('image'), async (req, res) => {
+router.post('/', upload.single('image'), freeUploadSizeGuard, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'لم يتم رفع أي صورة' });
