@@ -81,3 +81,20 @@ test('Paid Plans (Growth / Enterprise) allow unlimited tools and skills', () => 
     assert.equal(result.allowed, true, `tier ${tier} should allow unlimited`);
   }
 });
+
+test('Free Plan update: a bot already over the limit can save without enabling more tools', () => {
+  const current = {
+    bookingTool: { enabled: true },
+    orderTrackingTool: { enabled: true },
+    whatsappNotificationTool: { enabled: true },
+    telegramNotificationTool: { enabled: true },
+    messageClassificationTool: { enabled: true },
+  };
+  assert.equal(validateToolsAndSkillsLimits('free', current, [], undefined, current).allowed, true);
+  const fewer = { ...current, telegramNotificationTool: { enabled: false } };
+  assert.equal(validateToolsAndSkillsLimits('free', fewer, [], undefined, current).allowed, true);
+  const more = { ...current, salesRecoveryTool: { enabled: true } };
+  const result = validateToolsAndSkillsLimits('free', more, [], undefined, current);
+  assert.equal(result.allowed, false);
+  assert.equal(result.error, 'FREE_PLAN_TOOLS_LIMIT');
+});
