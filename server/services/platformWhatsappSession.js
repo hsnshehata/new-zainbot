@@ -19,7 +19,7 @@ const {
 } = require('../config/blockedSenders');
 
 const PLATFORM_SESSION_ID = 'platform';
-const DEFAULT_PLATFORM_BOT_ID = '6a5fe76cb80db97e78937854';
+const { DEFAULT_PLATFORM_BOT_ID, getPlatformBotId } = require('./platformBotId');
 const DEFAULT_PROFILE_DIR = '/data/wa-platform-profile';
 const BROWSERLESS_PROFILE_DIR = '/workspace/wa-sessions/session-zainbot-platform';
 const BROWSERLESS_PROFILE_MATCH = 'session-zainbot-platform';
@@ -38,9 +38,6 @@ const HEARTBEAT_PROBE_TIMEOUT_MS = 8_000;
 const HEARTBEAT_RECONNECT_COOLDOWN_MS = 2 * 60 * 1000;
 const RECENT_MESSAGE_TTL_MS = 10 * 60 * 1000;
 
-function getPlatformBotId() {
-  return (process.env.PLATFORM_WHATSAPP_BOT_ID || '').trim() || DEFAULT_PLATFORM_BOT_ID;
-}
 
 function resolveProfileDir(overrideDir) {
   return (overrideDir || process.env.WA_PLATFORM_PROFILE_DIR || '').trim() || DEFAULT_PROFILE_DIR;
