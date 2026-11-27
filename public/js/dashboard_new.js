@@ -503,9 +503,12 @@
       chan_status_paused: 'Auto-reply disabled',
       chan_status_not_setup: 'Not configured',
       chan_status_unverified: 'Configured — live connection unverified',
+      chan_status_fb_verified: 'Connected — messages received',
       chan_status_wa_connected: 'Session reports connected — delivery unverified',
+      chan_status_wa_verified: 'Connected — real messages flowing',
+      chan_status_ig_verified: 'Connected — messages received',
       chan_status_wa_attention: 'Session needs attention — reconnect or check QR',
-      chan_status_tg_linked: 'Account linked — delivery unverified',
+      chan_status_tg_linked: 'Connected — account linked',
       wa_relink_banner_title: 'WhatsApp needs reconnecting',
       wa_relink_banner_desc: 'Your WhatsApp session was disconnected or needs attention. Reconnect now to keep receiving messages — your previous settings are kept.',
       wa_relink_banner_action: 'Reconnect WhatsApp',
@@ -1748,9 +1751,12 @@
       chan_status_paused: 'الرد الآلي متوقف',
       chan_status_not_setup: 'غير مهيأ',
       chan_status_unverified: 'إعدادات محفوظة — الاتصال الفعلي غير مؤكد',
+      chan_status_fb_verified: 'متصل — وصلت رسائل فعلية',
       chan_status_wa_connected: 'الجلسة تظهر متصلة — تسليم الرسائل غير مؤكد',
+      chan_status_wa_verified: 'متصل — رسائل فعلية تصل',
+      chan_status_ig_verified: 'متصل — وصلت رسائل فعلية',
       chan_status_wa_attention: 'الجلسة تحتاج متابعة — أعد الربط أو افحص رمز QR',
-      chan_status_tg_linked: 'الحساب مربوط — تسليم الرسائل غير مؤكد',
+      chan_status_tg_linked: 'متصل — الحساب مربوط',
       wa_relink_banner_title: 'واتساب يحتاج إعادة ربط',
       wa_relink_banner_desc: 'انقطعت جلسة واتساب أو تحتاج إلى متابعة. أعد الربط الآن لاستمرار استقبال الرسائل — إعداداتك السابقة محفوظة.',
       wa_relink_banner_action: 'إعادة ربط واتساب',
@@ -4270,17 +4276,18 @@
 
   // Only the WhatsApp session and Telegram account link have status endpoints.
   // Meta page IDs are configuration, not evidence of a live connection.
-  function deriveChannelStates(bot, whatsapp, telegram) {
+  function deriveChannelStates(bot, whatsapp, telegram, activity) {
     if (bot.isActive === false) return Object.fromEntries(
       ['whatsapp', 'facebook', 'instagram', 'telegram'].map(channel => [channel, 'inactive'])
     );
     const connections = bot.connections || {};
+    const hasActivity = (channel) => Boolean(activity && activity[channel] && activity[channel].verified);
     const states = {
       whatsapp: whatsapp == null ? 'unavailable'
-        : whatsapp.status === 'connected' ? 'wa_connected'
+        : whatsapp.status === 'connected' ? (hasActivity('whatsapp') ? 'wa_verified' : 'wa_connected')
           : whatsapp.status === 'disconnected' && !connections.whatsapp ? 'not_setup' : 'wa_attention',
-      facebook: connections.facebook ? 'unverified' : 'not_setup',
-      instagram: connections.instagram ? 'unverified' : 'not_setup',
+      facebook: connections.facebook ? (hasActivity('facebook') ? 'fb_verified' : 'unverified') : 'not_setup',
+      instagram: connections.instagram ? (hasActivity('instagram') ? 'ig_verified' : 'unverified') : 'not_setup',
       telegram: telegram == null ? 'unavailable' : telegram.linked ? 'tg_linked' : 'not_setup'
     };
     if (bot.autoReplyEnabled === false) {
@@ -4296,14 +4303,14 @@
     for (const [channel, state] of Object.entries(states)) {
       const card = document.getElementById(`channel-card-${channel}`);
       if (!card) continue;
-      card.classList.toggle('connected', state === 'wa_connected' || state === 'tg_linked');
-      card.classList.toggle('available', state !== 'wa_connected' && state !== 'tg_linked');
+      card.classList.toggle('connected', ['wa_connected', 'wa_verified', 'tg_linked', 'fb_verified', 'ig_verified'].includes(state));
+      card.classList.toggle('available', !['wa_connected', 'wa_verified', 'tg_linked', 'fb_verified', 'ig_verified'].includes(state));
       const label = card.querySelector('.channel-status');
       if (label) label.textContent = copy[`chan_status_${state}`];
     }
     const count = document.getElementById('statConnectedChannels');
     if (count) count.textContent = ['whatsapp', 'telegram'].filter(channel =>
-      ['wa_connected', 'tg_linked'].includes(states[channel])
+      ['wa_connected', 'wa_verified', 'tg_linked'].includes(states[channel])
     ).length;
     const waRelinkBanner = document.getElementById('waRelinkBanner');
     if (waRelinkBanner) waRelinkBanner.hidden = states.whatsapp !== 'wa_attention';
@@ -4319,14 +4326,16 @@
         if (label) label.textContent = (translations[currentLanguage] || translations.en).chan_status_checking;
       }
     }
-    const [wa, tg] = await Promise.allSettled([
+    const [wa, tg, act] = await Promise.allSettled([
       apiFetch(`/api/whatsapp/session?botId=${encodeURIComponent(botId)}`),
-      apiFetch(`/api/telegram/status?botId=${encodeURIComponent(botId)}`)
+      apiFetch(`/api/telegram/status?botId=${encodeURIComponent(botId)}`),
+      apiFetch(`/api/bots/${encodeURIComponent(botId)}/channel-activity`)
     ]);
     if (String(currentBot?._id) !== botId) return;
     const whatsapp = wa.status === 'fulfilled' && wa.value?.success ? wa.value.data : null;
     const telegram = tg.status === 'fulfilled' && typeof tg.value?.linked === 'boolean' ? tg.value : null;
-    const states = deriveChannelStates(bot, whatsapp, telegram);
+    const activity = act.status === 'fulfilled' && act.value?.success ? act.value.data : null;
+    const states = deriveChannelStates(bot, whatsapp, telegram, activity);
     channelStatusSnapshot = { botId, states };
     renderChannelStatuses(states);
   }

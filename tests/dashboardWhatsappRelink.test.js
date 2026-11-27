@@ -72,7 +72,10 @@ test('banner copy exists in English and Arabic with no hardcoded accessible labe
 
 test('banner shows only for wa_attention; checking/connected need nothing', () => {
   assert.match(script, /waRelinkBanner\)[\s\S]{0,120}hidden = states\.whatsapp !== 'wa_attention'/);
-  assert.match(script, /whatsapp\.status === 'connected' \? 'wa_connected'/);
+  assert.match(
+    script,
+    /whatsapp\.status === 'connected' \? \(hasActivity\('whatsapp'\) \? 'wa_verified' : 'wa_connected'\)/
+  );
   assert.match(
     script,
     /whatsapp\.status === 'disconnected' && !connections\.whatsapp \? 'not_setup' : 'wa_attention'/
@@ -94,6 +97,10 @@ test('banner shows only for wa_attention; checking/connected need nothing', () =
   assert.equal(derive(withConfig, { status: 'disconnected' }, null).whatsapp, 'wa_attention');
   assert.equal(derive({ connections: {} }, { status: 'disconnected' }, null).whatsapp, 'not_setup');
   assert.equal(derive(withConfig, { status: 'connected' }, null).whatsapp, 'wa_connected');
+  assert.equal(
+    derive(withConfig, { status: 'connected' }, null, { whatsapp: { verified: true } }).whatsapp,
+    'wa_verified'
+  );
   assert.equal(derive(withConfig, null, null).whatsapp, 'unavailable');
 });
 

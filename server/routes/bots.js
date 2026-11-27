@@ -212,6 +212,9 @@ router.get('/', authenticate, botsController.getBots);
 
 router.use('/:id', authenticate, loadAccessibleBot);
 
+// حالة نشاط القنوات (إثبات اتصال فعلي بالرسائل)
+router.get('/:id/channel-activity', authenticate, botsController.getChannelActivity);
+
 // جلب بوت معين بناءً على الـ ID
 router.get('/:id', authenticate, async (req, res) => {
   try {

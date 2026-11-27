@@ -1,6 +1,7 @@
 const Bot = require('../models/Bot');
 const User = require('../models/User');
 const Feedback = require('../models/Feedback');
+const Conversation = require('../models/Conversation');
 const axios = require('axios');
 const logger = require('../logger');
 const { redactSensitive } = require('../utils/logSanitize');
@@ -45,6 +46,33 @@ exports.getBots = async (req, res) => {
 };
 
 // جلب التقييمات بناءً على botId مع اسم المستخدم من فيسبوك/إنستجرام
+// نشاط القنوات الحقيقي: وجود رسائل فعلية في قناة يثبت أن الاتصال يعمل فعلًا
+const ACTIVITY_CHANNELS = ['whatsapp', 'facebook', 'instagram', 'telegram'];
+
+exports.getChannelActivity = async (req, res) => {
+  try {
+    const botId = req.bot._id;
+    const entries = await Promise.all(ACTIVITY_CHANNELS.map(async (channel) => {
+      const conversation = await Conversation.findOne(
+        { botId, channel, 'messages.0': { $exists: true } },
+        { 'messages.timestamp': 1 }
+      ).lean();
+      let lastAt = null;
+      if (conversation && Array.isArray(conversation.messages)) {
+        for (const message of conversation.messages) {
+          const ts = message && message.timestamp ? new Date(message.timestamp) : null;
+          if (ts && !Number.isNaN(ts.getTime()) && (!lastAt || ts > lastAt)) lastAt = ts;
+        }
+      }
+      return [channel, { verified: Boolean(conversation), lastAt }];
+    }));
+    res.json({ success: true, data: Object.fromEntries(entries) });
+  } catch (err) {
+    logger.error('channel_activity_failed', { botId: req.bot && req.bot._id, err });
+    res.status(500).json({ success: false, message: 'خطأ في السيرفر' });
+  }
+};
+
 exports.getFeedback = async (req, res) => {
   try {
     const botId = req.params.id;
