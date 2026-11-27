@@ -3,6 +3,7 @@ const { processMessage } = require("../botEngine");
 const WhatsAppSession = require("../models/WhatsAppSession");
 const mongoose = require("mongoose");
 const { describeCaughtError } = require("../services/metaSendErrors");
+const { recordBlockedSenderHit } = require("../config/blockedSenders");
 // Module scope: the outer catch below also logs, and a block-scoped logger made that catch throw a ReferenceError.
 const logger = require("../logger");
 
@@ -37,6 +38,12 @@ const processWebhook = async (req, res) => {
 
         const userId = messageData.from; // WhatsApp user ID
         const messageId = messageData.id; // Unique message ID
+
+        const blockedHitCount = recordBlockedSenderHit(userId);
+        if (blockedHitCount > 0) {
+          logger.debug('whatsapp_cloud_blocked_sender_ignored', { hits: blockedHitCount });
+          return res.sendStatus(200); // Acknowledge but never process/reply
+        }
         let message = "";
         let isImage = false;
         let isVoice = false;

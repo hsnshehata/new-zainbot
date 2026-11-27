@@ -12,6 +12,14 @@ const logger = require('../logger');
 const { processMessage } = require('../botEngine');
 const { pickReaction } = require('./whatsappReactions');
 const {
+  createAutoReplyGuard,
+  isOwnNumberMessage,
+} = require('../utils/autoReplyGuard');
+const {
+  getBlockedSenders,
+  recordBlockedSenderHit,
+} = require('../config/blockedSenders');
+const {
   createRuntimeLeaseService,
 } = require('./runtimeLeaseService');
 
@@ -118,6 +126,8 @@ function createWhatsAppSessionManager(options = {}) {
   const pendingStarts = new Map();
   const recentMessages = new Map();
   const readyWatchdogAttempts = new Map();
+  const autoReplyGuard = options.autoReplyGuard || createAutoReplyGuard();
+  const blockedSenders = options.blockedSenders || getBlockedSenders();
 
   const workDirectory = path.resolve(
     options.workDirectory
@@ -180,11 +190,18 @@ function createWhatsAppSessionManager(options = {}) {
   }
 
   async function handleIncomingMessage(runtime, message) {
+    const blockedHitCount = recordBlockedSenderHit(message?.from, blockedSenders);
+    if (blockedHitCount > 0) {
+      log.debug('whatsapp_blocked_sender_ignored', { hits: blockedHitCount });
+      return;
+    }
     if (
       !message
       || message.fromMe
       || message.isStatus
       || message.from === 'status@broadcast'
+      || (typeof message.from === 'string' && message.from.endsWith('@g.us'))
+      || isOwnNumberMessage(message.from, runtime?.ownWid)
     ) {
       return;
     }
@@ -234,7 +251,17 @@ function createWhatsAppSessionManager(options = {}) {
     );
 
     if (typeof reply === 'string' && reply.trim()) {
-      await message.reply(reply);
+      const gate = autoReplyGuard.allowAndRecord(runtime.botId, message.from);
+      if (gate.allowed) {
+        await message.reply(reply);
+      } else {
+        log.warn('whatsapp_auto_reply_blocked', {
+          botId: runtime.botId,
+          from: message.from,
+          reason: gate.reason,
+          cooldownUntil: gate.cooldownUntil,
+        });
+      }
     }
 
     await updateConnection(runtime.botId, {
@@ -387,6 +414,7 @@ function createWhatsAppSessionManager(options = {}) {
       runtime.qrExpiresAt = null;
       const readyAt = now();
       const externalAccountId = client.info?.wid?.user || '';
+      runtime.ownWid = client.info?.wid?._serialized || '';
       await updateConnection(botId, {
         status: 'connected',
         requiresRelink: false,

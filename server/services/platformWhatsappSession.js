@@ -9,6 +9,14 @@ const Bot = require('../models/Bot');
 const Conversation = require('../models/Conversation');
 const logger = require('../logger');
 const { pickReaction } = require('./whatsappReactions');
+const {
+  createAutoReplyGuard,
+  isOwnNumberMessage,
+} = require('../utils/autoReplyGuard');
+const {
+  getBlockedSenders,
+  recordBlockedSenderHit,
+} = require('../config/blockedSenders');
 
 const PLATFORM_SESSION_ID = 'platform';
 const DEFAULT_PLATFORM_BOT_ID = '6a5fe76cb80db97e78937854';
@@ -190,6 +198,9 @@ function createPlatformWhatsappSession(options = {}) {
   let pendingInit = null;
   let latestQrRaw = null;
   let latestQrDataUrl = null;
+  let ownWid = '';
+  const autoReplyGuard = options.autoReplyGuard || createAutoReplyGuard();
+  const blockedSenders = options.blockedSenders || getBlockedSenders();
   let manualDisconnect = false;
   let reconnectTimer = null;
   let reconnectAttempts = 0;
@@ -298,12 +309,18 @@ function createPlatformWhatsappSession(options = {}) {
   }
 
   async function handleIncomingMessage(message) {
+    const blockedHitCount = recordBlockedSenderHit(message?.from, blockedSenders);
+    if (blockedHitCount > 0) {
+      log.debug('platform_whatsapp_blocked_sender_ignored', { hits: blockedHitCount });
+      return;
+    }
     if (
       !message
       || message.fromMe
       || message.isStatus
       || message.from === 'status@broadcast'
       || (typeof message.from === 'string' && message.from.endsWith('@g.us'))
+      || isOwnNumberMessage(message.from, ownWid)
     ) {
       return;
     }
@@ -334,7 +351,18 @@ function createPlatformWhatsappSession(options = {}) {
         });
         if (routed && routed.handled) {
           if (typeof routed.reply === 'string' && routed.reply.trim() && typeof message.reply === 'function') {
-            await message.reply(routed.reply);
+            const gate = autoReplyGuard.allowAndRecord(botId, message.from);
+            if (gate.allowed) {
+              await message.reply(routed.reply);
+            } else {
+              log.warn('platform_whatsapp_auto_reply_blocked', {
+                botId,
+                from: message.from,
+                reason: gate.reason,
+                cooldownUntil: gate.cooldownUntil,
+                route: 'merchant',
+              });
+            }
           }
           return;
         }
@@ -392,7 +420,18 @@ function createPlatformWhatsappSession(options = {}) {
     );
 
     if (typeof reply === 'string' && reply.trim() && typeof message.reply === 'function') {
-      await message.reply(reply);
+      const gate = autoReplyGuard.allowAndRecord(botId, message.from);
+      if (gate.allowed) {
+        await message.reply(reply);
+      } else {
+        log.warn('platform_whatsapp_auto_reply_blocked', {
+          botId,
+          from: message.from,
+          reason: gate.reason,
+          cooldownUntil: gate.cooldownUntil,
+          route: 'bot',
+        });
+      }
     }
   }
 
@@ -687,6 +726,7 @@ function createPlatformWhatsappSession(options = {}) {
           let phone = '';
           try {
             phone = client.info?.me?.user || client.info?.wid?.user || '';
+            ownWid = client.info?.wid?._serialized || '';
           } catch (_e) {
             phone = '';
           }
