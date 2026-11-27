@@ -36,6 +36,8 @@ const { dispatchWebhook } = require('./services/webhookDispatcher');
 const { dispatchMultiChannelNotification } = require('./services/notificationDispatcher');
 const { describeCaughtError } = require('./services/metaSendErrors');
 const { buildProductContext, buildStorefrontUrl, effectiveProductPrice, normalize: normalizeCatalogText, tokens: catalogTokens } = require('./services/productContext');
+const conversationPolicy = require('./services/conversationPolicy');
+const { getPlatformBotId } = require('./services/platformBotId');
 
 // معرف المساعد الداخلي لتخطي هوكات الطلبات
 const ASSISTANT_BOT_ID = process.env.ASSISTANT_BOT_ID || '688ebdc24f6bd5cf70cb071d';
@@ -1595,8 +1597,32 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
       return null;
     }
 
+    // إيقاف/استئناف الرد بطلب العميل: حتمي ولا يعتمد على النموذج. رسالة "اسكت/كفاية/stop"
+    // القصيرة تكتم المحادثة (رد تأكيد واحد ثم صمت) و"كمل/start" تفتحها من جديد.
+    if (bot && !isAssistantBotId && !isCopilotMode) {
+      const mutedNow = conversation.mutedUntil && new Date(conversation.mutedUntil) > new Date();
+      if (mutedNow) {
+        if (conversationPolicy.detectResumeRequest(userMessageContent)) {
+          conversation.mutedUntil = undefined;
+          await conversation.save();
+          logger.info('conversation_resumed_by_customer', { conversationId: conversation._id });
+        } else {
+          logger.info('🔇 Conversation muted, skipping bot reply', { conversationId: conversation._id, muteUntil: new Date(conversation.mutedUntil).toISOString() });
+          return null;
+        }
+      } else if (conversationPolicy.detectStopRequest(userMessageContent)) {
+        conversation.mutedUntil = new Date(Date.now() + conversationPolicy.STOP_MUTE_MS);
+        const ack = conversationPolicy.stopAckReply(userMessageContent);
+        conversation.messages.push({ role: 'assistant', content: ack, timestamp: new Date(), messageId: `response_${messageId || uuidv4()}` });
+        await conversation.save();
+        logger.info('conversation_muted_by_customer_stop', { conversationId: conversation._id, until: conversation.mutedUntil.toISOString() });
+        return ack;
+      }
+    }
+
     // استخراج بيانات الطلب من المحادثة الحالية وحفظها في قاعدة البيانات
     let extractionResult = null;
+    const storelessBot = Boolean(bot && !isAssistantBotId && !bot.storeId);
     let bookingResult = null;
     try {
       // في وضع Copilot نتخطى المستخلصات المغيّرة للبيانات (الطلبات والحجوزات)
@@ -1611,7 +1637,8 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
             timestamp: msg.timestamp,
           }));
         
-        extractionResult = await extractChatOrderIntent({
+        // بوت بلا متجر/كتالوج (مثل بوت المنصة نفسه) ليس عنده طلبات منتجات: لا استخلاص ولا رفض "بلا سعر رسمي".
+        if (!storelessBot) extractionResult = await extractChatOrderIntent({
           bot,
           channel: finalChannel,
           userMessageContent,
@@ -1657,6 +1684,14 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
     // حالة الطلب الصادقة بعد الاستخلاص وقبل توليد الرد: النموذج يرى نتيجة الحفظ
     // الفعلية (محفوظ/قيد المراجعة/بيانات ناقصة/عناصر بلا سعر/فشل حفظ) ولا يؤكد
     // طلبًا لم يُحفظ فعليًا.
+    if (bot && !isAssistantBotId) {
+      systemPrompt += conversationPolicy.STYLE_NOTE;
+      if (storelessBot) {
+        systemPrompt += String(bot._id) === getPlatformBotId()
+          ? conversationPolicy.PLATFORM_SUBSCRIPTION_NOTE
+          : conversationPolicy.STORELESS_ORDER_NOTE;
+      }
+    }
     const orderStateNote = buildOrderStateNote(extractionResult);
     if (orderStateNote) {
       systemPrompt += orderStateNote;
@@ -1783,6 +1818,7 @@ async function processMessage(botId, userId, message, isImage = false, isVoice =
     // booking keyword also matched (e.g. "ميعاد تسليم الاوردر").
     const bookingTalk = isBookingQuery(userMessageContent) && !/(طلب|اوردر|أوردر|order)/i.test(userMessageContent || '');
     reply = enforceTruthfulOrderReply(reply, extractionResult, bookingResult, { bookingTalk });
+    reply = conversationPolicy.stripRepeatedHelpOffer(reply, conversation.messages.some((m) => m.role === 'assistant'));
 
     // Copilot mode fork: persist draft for human approval and NEVER auto-send
     // (returns null across all channels; never pushes assistant message or fires message.sent).
