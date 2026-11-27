@@ -4285,7 +4285,7 @@
     const states = {
       whatsapp: whatsapp == null ? 'unavailable'
         : whatsapp.status === 'connected' ? (hasActivity('whatsapp') ? 'wa_verified' : 'wa_connected')
-          : whatsapp.status === 'disconnected' && !connections.whatsapp ? 'not_setup' : 'wa_attention',
+          : whatsapp.status === 'disconnected' && !connections.whatsapp && !hasActivity('whatsapp') ? 'not_setup' : 'wa_attention',
       facebook: connections.facebook ? (hasActivity('facebook') ? 'fb_verified' : 'unverified') : 'not_setup',
       instagram: connections.instagram ? (hasActivity('instagram') ? 'ig_verified' : 'unverified') : 'not_setup',
       telegram: telegram == null ? 'unavailable' : telegram.linked ? 'tg_linked' : 'not_setup'

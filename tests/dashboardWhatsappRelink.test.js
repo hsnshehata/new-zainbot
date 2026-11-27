@@ -78,7 +78,7 @@ test('banner shows only for wa_attention; checking/connected need nothing', () =
   );
   assert.match(
     script,
-    /whatsapp\.status === 'disconnected' && !connections\.whatsapp \? 'not_setup' : 'wa_attention'/
+    /whatsapp\.status === 'disconnected' && !connections\.whatsapp && !hasActivity\('whatsapp'\) \? 'not_setup' : 'wa_attention'/
   );
   // Channel-status + catalog + onboarding renderers are preserved.
   assert.match(script, /copy\[`chan_status_\$\{state\}`\]/);
@@ -96,6 +96,11 @@ test('banner shows only for wa_attention; checking/connected need nothing', () =
   assert.equal(derive(withConfig, { status: 'degraded' }, null).whatsapp, 'wa_attention');
   assert.equal(derive(withConfig, { status: 'disconnected' }, null).whatsapp, 'wa_attention');
   assert.equal(derive({ connections: {} }, { status: 'disconnected' }, null).whatsapp, 'not_setup');
+  // real message history means the channel was set up: show attention, not "not configured"
+  assert.equal(
+    derive({ connections: {} }, { status: 'disconnected' }, null, { whatsapp: { verified: true } }).whatsapp,
+    'wa_attention'
+  );
   assert.equal(derive(withConfig, { status: 'connected' }, null).whatsapp, 'wa_connected');
   assert.equal(
     derive(withConfig, { status: 'connected' }, null, { whatsapp: { verified: true } }).whatsapp,
