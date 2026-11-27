@@ -1230,6 +1230,38 @@ function createPlatformWhatsappSession(options = {}) {
     return activeClient;
   }
 
+  async function sendMessage(to, text) {
+    // Lazy require avoids circular load-time dependencies and allows test stubs.
+    // eslint-disable-next-line global-require
+    const channelGuard = options.channelGuard || require('./channelGuard');
+    if (!channelGuard.anyChannelsEnabled()) {
+      return { ok: false, reason: 'channels_disabled' };
+    }
+    const body = String(text || '').trim();
+    if (!to || !body) {
+      return { ok: false, reason: 'missing_parameters' };
+    }
+    // eslint-disable-next-line global-require
+    const { toWhatsappChatId } = require('./phoneNormalize');
+    const chatId = toWhatsappChatId(to);
+    if (!chatId) {
+      return { ok: false, reason: 'invalid_target' };
+    }
+    if (!activeClient || typeof activeClient.sendMessage !== 'function') {
+      return { ok: false, reason: 'session_not_ready' };
+    }
+    try {
+      await activeClient.sendMessage(chatId, body);
+      return { ok: true, chatId };
+    } catch (err) {
+      log.warn('platform_whatsapp_send_message_failed', {
+        sessionId,
+        error: err?.message || String(err),
+      });
+      return { ok: false, reason: 'send_failed' };
+    }
+  }
+
   return {
     init,
     getStatus,
@@ -1237,6 +1269,7 @@ function createPlatformWhatsappSession(options = {}) {
     waitForQrOrReady,
     disconnect,
     getClient,
+    sendMessage,
     checkSessionHealth,
     startWhatsAppHeartbeat,
     stopWhatsAppHeartbeat,
@@ -1277,6 +1310,7 @@ module.exports = {
   waitForQrOrReady: (...args) => defaultSession.waitForQrOrReady(...args),
   disconnect: (...args) => defaultSession.disconnect(...args),
   getClient: (...args) => defaultSession.getClient(...args),
+  sendMessage: (...args) => defaultSession.sendMessage(...args),
   checkSessionHealth: (...args) => defaultSession.checkSessionHealth(...args),
   startWhatsAppHeartbeat: (...args) => defaultSession.startWhatsAppHeartbeat(...args),
   stopWhatsAppHeartbeat: (...args) => defaultSession.stopWhatsAppHeartbeat(...args),

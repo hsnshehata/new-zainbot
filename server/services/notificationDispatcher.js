@@ -4,6 +4,7 @@ const Bot = require('../models/Bot');
 const User = require('../models/User');
 const logger = require('../logger');
 const { sendTelegramMessage } = require('./telegramService');
+const channelGuard = require('./channelGuard');
 
 // Dynamic values are text, never Telegram markup. Escape at the rendering
 // boundary; keep original stored values untouched for other channels.
@@ -62,6 +63,54 @@ function formatDailyDigestNotificationMessage(data, botName = 'ZainBot AI') {
     `🕒 <b>التاريخ:</b> ${new Date().toLocaleDateString('ar-EG', { timeZone: 'Africa/Cairo' })}`;
 }
 
+const COPILOT_CHANNEL_LABELS = {
+  whatsapp: 'واتساب',
+  facebook: 'فيسبوك',
+  instagram: 'إنستجرام',
+  web: 'دردشة الويب',
+  telegram: 'تيليجرام',
+};
+
+function formatCopilotDraftNotificationMessage(data = {}, botName = 'ZainBot AI') {
+  const rawChannel = String(data.channel || '').trim().toLowerCase();
+  const channelLabel = COPILOT_CHANNEL_LABELS[rawChannel] || (data.channel ? String(data.channel) : 'محادثة');
+  const customerName = data.customerName || data.username || 'عميل';
+  const snippet = data.customerMessageSnippet || data.message || '';
+  const suggestedReply = data.suggestedReply || '';
+  const draftCode = data.draftCode ? String(data.draftCode).trim() : '';
+
+  let msg = `💬 <b>مسودة رد جديدة (${escapeTelegramHtml(botName)})</b>\n\n` +
+    `👤 <b>العميل:</b> ${escapeTelegramHtml(customerName)} (${escapeTelegramHtml(channelLabel)})\n`;
+
+  if (snippet) {
+    msg += `📩 <b>سؤاله:</b> «${escapeTelegramHtml(snippet)}»\n`;
+  }
+  if (suggestedReply) {
+    msg += `📝 <b>الرد المقترح:</b>\n«${escapeTelegramHtml(suggestedReply)}»\n`;
+  }
+  if (draftCode) {
+    msg += `\nرد بـ:\n` +
+      `• <b>إرسال ${escapeTelegramHtml(draftCode)}</b> (إرسال فوري)\n` +
+      `• <b>تعديل ${escapeTelegramHtml(draftCode)}: النص الجديد</b>\n` +
+      `• <b>تجاهل ${escapeTelegramHtml(draftCode)}</b>`;
+  }
+
+  return msg.trim();
+}
+
+function buildCopilotTelegramInlineKeyboard(draftId) {
+  const id = String(draftId || '').trim();
+  if (!id) return undefined;
+  return {
+    inline_keyboard: [
+      [
+        { text: '✅ إرسال', callback_data: `cp_send:${id}` },
+        { text: '❌ تجاهل', callback_data: `cp_drop:${id}` },
+      ],
+    ],
+  };
+}
+
 /**
  * Dispatch an alert message to all matching WhatsApp and Telegram recipients
  */
@@ -73,14 +122,99 @@ async function dispatchMultiChannelNotification({ userId, botId, event, data = {
     let bot = null;
 
     if (botId) {
-      bot = await Bot.findById(botId).select('userId name telegramUserId');
+      bot = await Bot.findById(botId).select('userId name telegramUserId copilotSettings');
       if (bot && !effectiveUserId) effectiveUserId = bot.userId;
     }
 
     if (!effectiveUserId) return { delivered: 0, failed: 0 };
 
-    // Fetch user subscription tier to ensure limits
-    const user = await User.findById(effectiveUserId).select('subscriptionTier subscriptionType');
+    // Fetch user subscription tier and optional verified WhatsApp phone / Telegram ID
+    const user = await User.findById(effectiveUserId).select(
+      'subscriptionTier subscriptionType telegramUserId assistantSettings.verifiedWhatsappPhone'
+    );
+
+    const botName = bot?.name || 'ZainBot AI';
+
+    // Dedicated strictly opt-in mobile approval flow for Copilot drafts:
+    // - Never sends to generic NotificationRecipients or merchant WhatsApp bots
+    // - Telegram 1-tap inline buttons only when bot.copilotSettings.notifyChannels.telegramToMerchant === true
+    // - ZainBot Main WhatsApp only when bot.copilotSettings.notifyChannels.whatsappToMerchant === true
+    //   AND merchant has verifiedWhatsappPhone (Slice 3)
+    // - Respects CHANNELS_MODE (channelGuard) and fails silent on errors
+    if (event === 'copilot_draft') {
+      const notifyChannels = bot?.copilotSettings?.notifyChannels || {};
+      const notificationTitle = `💬 مسودة رد جديدة (${botName})`;
+      const messageText = formatCopilotDraftNotificationMessage(data, botName);
+
+      if (notifyChannels.inApp !== false && !data.skipInApp) {
+        try {
+          const plainSnippet = notificationPlainText(messageText).slice(0, 500);
+          await Notification.create({
+            user: effectiveUserId,
+            title: notificationTitle,
+            message: plainSnippet,
+            isRead: false,
+          });
+        } catch (notifErr) {
+          logger.warn('in_app_notification_creation_failed', { err: notifErr.message });
+        }
+      }
+
+      const channelsAllowed = botId
+        ? channelGuard.isBotAllowed(botId)
+        : channelGuard.anyChannelsEnabled();
+      if (!channelsAllowed) {
+        return { delivered: 0, failed: 0, skipped: 'channels_disabled' };
+      }
+
+      let delivered = 0;
+      let failed = 0;
+
+      // 1. Optional opt-in Telegram 1-tap approval to owning merchant's linked Telegram chat
+      if (notifyChannels.telegramToMerchant === true) {
+        const telegramTarget = String(bot?.telegramUserId || user?.telegramUserId || '').trim();
+        if (telegramTarget) {
+          try {
+            const replyMarkup = buildCopilotTelegramInlineKeyboard(data.draftId);
+            const extra = replyMarkup ? { reply_markup: replyMarkup } : {};
+            const result = await sendTelegramMessage(telegramTarget, messageText, extra);
+            if (result && result.ok) delivered++;
+            else failed++;
+          } catch (err) {
+            logger.warn('copilot_telegram_dispatch_failed', {
+              botId: String(botId || ''),
+              err: err?.message || String(err),
+            });
+            failed++;
+          }
+        }
+      }
+
+      // 2. Optional opt-in ZainBot Main WhatsApp alert to merchant's verified linked phone
+      if (notifyChannels.whatsappToMerchant === true) {
+        const verifiedPhone = String(user?.assistantSettings?.verifiedWhatsappPhone || '').trim();
+        if (verifiedPhone) {
+          try {
+            // Lazy require avoids circular load-time dependencies and allows test stubs
+            // eslint-disable-next-line global-require
+            const platformWhatsappSession = require('./platformWhatsappSession');
+            const plainText = notificationPlainText(messageText);
+            const waResult = await platformWhatsappSession.sendMessage(verifiedPhone, plainText);
+            if (waResult && waResult.ok !== false) delivered++;
+            else failed++;
+          } catch (waErr) {
+            logger.warn('copilot_platform_whatsapp_dispatch_failed', {
+              botId: String(botId || ''),
+              err: waErr?.message || String(waErr),
+            });
+            failed++;
+          }
+        }
+      }
+
+      return { delivered, failed };
+    }
+
     const tier = user?.subscriptionTier || 'free';
     const sub = user?.subscriptionType || 'free';
     const isFree = !user || (tier === 'free' && sub === 'free');
@@ -105,7 +239,6 @@ async function dispatchMultiChannelNotification({ userId, botId, event, data = {
     }
 
     // Build notification message text in Arabic & English friendly format
-    const botName = bot?.name || 'ZainBot AI';
     let messageText = '';
     let notificationTitle = `تنبيه من ${botName}`;
 
@@ -209,4 +342,5 @@ module.exports = {
   formatBookingNotificationMessage,
   formatComplaintNotificationMessage,
   formatDailyDigestNotificationMessage,
+  formatCopilotDraftNotificationMessage,
 };

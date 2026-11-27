@@ -82,6 +82,11 @@ function createCopilotService(deps = {}) {
     deps.channelDeliveryService || require('./channelDeliveryService')
   );
   const auditService = deps.assistantActionAuditService || assistantActionAuditService;
+  const getNotificationDispatcher = () => (
+    // Lazy require avoids circular load-time dependencies and allows test stubs.
+    // eslint-disable-next-line global-require
+    deps.notificationDispatcher || require('./notificationDispatcher')
+  );
   const log = deps.logger || logger;
   const codeGenerator = deps.generateDraftCode || generateDraftCode;
 
@@ -235,8 +240,22 @@ function createCopilotService(deps = {}) {
     const resolvedCustomerName = String(customerName || conversation.username || '').trim().slice(0, 120);
     const channel = normalizeChannel(conversation.channel);
 
+    let draftCode = String(codeGenerator());
+    if (!deps.generateDraftCode && typeof CopilotDraftModel?.exists === 'function') {
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        const collision = await CopilotDraftModel.exists({
+          merchantUserId: bot.userId,
+          draftCode,
+          status: 'pending',
+          expiresAt: { $gt: now },
+        });
+        if (!collision) break;
+        draftCode = String(codeGenerator());
+      }
+    }
+
     const draft = await CopilotDraftModel.create({
-      draftCode: String(codeGenerator()),
+      draftCode,
       botId: bot._id,
       merchantUserId: bot.userId,
       conversationId: conversation._id,
@@ -276,8 +295,9 @@ function createCopilotService(deps = {}) {
       triggerMessageId: String(triggerMessageId || ''),
     });
 
-    // In-app notification only (Slice 5 owns mobile WhatsApp/Telegram alerts)
-    if (bot.copilotSettings?.notifyChannels?.inApp !== false && typeof NotificationModel?.create === 'function') {
+    // In-app notification (default on unless merchant disabled inApp)
+    const notifyChannels = bot.copilotSettings?.notifyChannels || {};
+    if (notifyChannels.inApp !== false && typeof NotificationModel?.create === 'function') {
       try {
         const displayName = resolvedCustomerName || 'عميل';
         await NotificationModel.create({
@@ -292,6 +312,37 @@ function createCopilotService(deps = {}) {
         log.warn('copilot_inapp_notification_failed', {
           draftId: String(draft._id),
           err: notifErr?.message || String(notifErr),
+        });
+      }
+    }
+
+    // Optional opt-in mobile notifications (Telegram 1-tap & ZainBot Main WhatsApp).
+    // Strictly opt-in per bot.copilotSettings.notifyChannels and fail-silent so
+    // notification errors NEVER break draft creation.
+    if (notifyChannels.telegramToMerchant === true || notifyChannels.whatsappToMerchant === true) {
+      try {
+        const dispatcher = getNotificationDispatcher();
+        if (dispatcher && typeof dispatcher.dispatchMultiChannelNotification === 'function') {
+          await dispatcher.dispatchMultiChannelNotification({
+            userId: bot.userId,
+            botId: bot._id,
+            event: 'copilot_draft',
+            data: {
+              draftId: String(draft._id),
+              draftCode: draft.draftCode,
+              conversationId: String(conversation._id),
+              channel,
+              customerName: resolvedCustomerName || 'عميل',
+              customerMessageSnippet: snippet,
+              suggestedReply: trimmedReply,
+              skipInApp: true,
+            },
+          });
+        }
+      } catch (mobileNotifErr) {
+        log.warn('copilot_mobile_notification_failed', {
+          draftId: String(draft._id),
+          err: mobileNotifErr?.message || String(mobileNotifErr),
         });
       }
     }
@@ -388,6 +439,7 @@ function createCopilotService(deps = {}) {
     actorUserId,
     editedReply = null,
     approvedVia = 'dashboard_inbox',
+    decisionMessageId = '',
     now = new Date(),
   }) {
     const actor = actorUserId || merchantUserId;
@@ -672,7 +724,7 @@ function createCopilotService(deps = {}) {
         ? 'تم تعديل مسودة Copilot وإرسالها للعميل.'
         : 'تم اعتماد مسودة Copilot وإرسالها للعميل.',
       triggerMessageId: claimed.triggerMessageId,
-      decisionMessageId: deliveredMessageId,
+      decisionMessageId: String(decisionMessageId || deliveredMessageId),
     });
 
     return {
@@ -689,6 +741,7 @@ function createCopilotService(deps = {}) {
     merchantUserId,
     actorUserId,
     approvedVia = 'dashboard_inbox',
+    decisionMessageId = '',
     now = new Date(),
   }) {
     const actor = actorUserId || merchantUserId;
@@ -775,6 +828,7 @@ function createCopilotService(deps = {}) {
       },
       summary: 'تم تجاهل مسودة Copilot ولم يتم إرسال أي رد.',
       triggerMessageId: discarded.triggerMessageId,
+      decisionMessageId: String(decisionMessageId || ''),
     });
 
     return {
@@ -782,6 +836,107 @@ function createCopilotService(deps = {}) {
       httpStatus: 200,
       draft: discarded,
     };
+  }
+
+  async function findDraftByCodeForMerchant({
+    merchantUserId,
+    draftCode,
+    now = new Date(),
+  }) {
+    if (!isValidObjectId(merchantUserId)) return null;
+    const code = String(draftCode || '').trim();
+    if (!code) return null;
+
+    const activeQuery = CopilotDraftModel.findOne({
+      merchantUserId,
+      draftCode: code,
+      status: 'pending',
+      expiresAt: { $gt: now },
+    });
+    const active = await runQuery(
+      activeQuery && typeof activeQuery.sort === 'function'
+        ? activeQuery.sort({ createdAt: -1 })
+        : activeQuery
+    );
+    if (active) return active;
+
+    const recentQuery = CopilotDraftModel.findOne({
+      merchantUserId,
+      draftCode: code,
+    });
+    return runQuery(
+      recentQuery && typeof recentQuery.sort === 'function'
+        ? recentQuery.sort({ createdAt: -1 })
+        : recentQuery
+    );
+  }
+
+  async function approveAndSendDraftByCode({
+    merchantUserId,
+    actorUserId,
+    draftCode,
+    editedReply = null,
+    approvedVia = 'whatsapp_platform',
+    decisionMessageId = '',
+    now = new Date(),
+  }) {
+    const code = String(draftCode || '').trim();
+    const draft = await findDraftByCodeForMerchant({
+      merchantUserId,
+      draftCode: code,
+      now,
+    });
+    if (!draft) {
+      return {
+        ok: false,
+        httpStatus: 404,
+        errorCode: 'DRAFT_NOT_FOUND',
+        message: `لا توجد مسودة معلّقة بالرمز ${code}.`,
+      };
+    }
+
+    return approveAndSendDraft({
+      draftId: draft._id,
+      merchantUserId,
+      actorUserId,
+      editedReply,
+      approvedVia,
+      decisionMessageId,
+      now,
+    });
+  }
+
+  async function discardDraftByCode({
+    merchantUserId,
+    actorUserId,
+    draftCode,
+    approvedVia = 'whatsapp_platform',
+    decisionMessageId = '',
+    now = new Date(),
+  }) {
+    const code = String(draftCode || '').trim();
+    const draft = await findDraftByCodeForMerchant({
+      merchantUserId,
+      draftCode: code,
+      now,
+    });
+    if (!draft) {
+      return {
+        ok: false,
+        httpStatus: 404,
+        errorCode: 'DRAFT_NOT_FOUND',
+        message: `لا توجد مسودة معلّقة بالرمز ${code}.`,
+      };
+    }
+
+    return discardDraft({
+      draftId: draft._id,
+      merchantUserId,
+      actorUserId,
+      approvedVia,
+      decisionMessageId,
+      now,
+    });
   }
 
   async function regenerateDraft({
@@ -939,8 +1094,11 @@ function createCopilotService(deps = {}) {
     generateDraftReply,
     createDraftForMessage,
     listPendingDrafts,
+    findDraftByCodeForMerchant,
     approveAndSendDraft,
+    approveAndSendDraftByCode,
     discardDraft,
+    discardDraftByCode,
     regenerateDraft,
     expireSingleDraft,
     expireStaleDrafts,
@@ -954,8 +1112,11 @@ module.exports = {
   generateDraftReply: defaultCopilotService.generateDraftReply,
   createDraftForMessage: defaultCopilotService.createDraftForMessage,
   listPendingDrafts: defaultCopilotService.listPendingDrafts,
+  findDraftByCodeForMerchant: defaultCopilotService.findDraftByCodeForMerchant,
   approveAndSendDraft: defaultCopilotService.approveAndSendDraft,
+  approveAndSendDraftByCode: defaultCopilotService.approveAndSendDraftByCode,
   discardDraft: defaultCopilotService.discardDraft,
+  discardDraftByCode: defaultCopilotService.discardDraftByCode,
   regenerateDraft: defaultCopilotService.regenerateDraft,
   expireSingleDraft: defaultCopilotService.expireSingleDraft,
   expireStaleDrafts: defaultCopilotService.expireStaleDrafts,

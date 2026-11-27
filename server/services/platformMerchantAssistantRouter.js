@@ -57,6 +57,9 @@ const {
 } = require('./phoneNormalize');
 
 const LINK_CODE_REGEX = /^LINK-([A-Z0-9]{6})$/i;
+const COPILOT_SEND_REGEX = /^(?:إرسال|ارسال|send)\s+#?(\d{4,8})$/i;
+const COPILOT_DISCARD_REGEX = /^(?:تجاهل|discard|ignore)\s+#?(\d{4,8})$/i;
+const COPILOT_EDIT_HEAD_REGEX = /^(?:تعديل|edit)\s+#?(\d{4,8})\s*[:：]/i;
 const DEDUP_TTL_MS = 10 * 60 * 1000;
 const DEDUP_MAX_ENTRIES = 5000;
 
@@ -65,6 +68,48 @@ function parseLinkCodeMessage(text) {
   const match = normalized.match(LINK_CODE_REGEX);
   if (!match) return null;
   return `LINK-${match[1].toUpperCase()}`;
+}
+
+/**
+ * Parses code-scoped Copilot mobile approval commands over ZainBot Main WhatsApp:
+ *   - `إرسال <code>` (or `ارسال <code>` / `send <code>`)
+ *   - `تعديل <code>: <new text>` (or `edit <code>: <new text>`)
+ *   - `تجاهل <code>` (or `discard <code>` / `ignore <code>`)
+ *
+ * Requires an explicit numeric draft code so it NEVER collides with
+ * pending write-action confirm/reject regexes (`تأكيد` / `نعم` / `لا` / `إلغاء`)
+ * or natural write-tool instructions (`عدّل مخزون ...`).
+ */
+function parseCopilotDraftCommand(text) {
+  const trimmed = String(text || '').trim();
+  if (!trimmed) return null;
+
+  const normalizedAll = normalizeArabicDigits(trimmed);
+
+  const sendMatch = normalizedAll.match(COPILOT_SEND_REGEX);
+  if (sendMatch) {
+    return { action: 'send', draftCode: sendMatch[1] };
+  }
+
+  const discardMatch = normalizedAll.match(COPILOT_DISCARD_REGEX);
+  if (discardMatch) {
+    return { action: 'discard', draftCode: discardMatch[1] };
+  }
+
+  const firstNewline = trimmed.indexOf('\n');
+  const head = firstNewline === -1 ? trimmed : trimmed.slice(0, firstNewline);
+  const editMatch = normalizeArabicDigits(head).match(COPILOT_EDIT_HEAD_REGEX);
+  if (editMatch) {
+    const colonIdx = trimmed.search(/[:：]/);
+    const editedReply = colonIdx >= 0 ? trimmed.slice(colonIdx + 1).trim() : '';
+    return {
+      action: 'edit',
+      draftCode: editMatch[1],
+      editedReply,
+    };
+  }
+
+  return null;
 }
 
 function hashWhatsappLinkCode(code) {
@@ -180,6 +225,11 @@ function createPlatformMerchantAssistantRouter(deps = {}) {
   const pendingService = deps.pendingActionService || assistantPendingActionService;
   const writeTools = deps.writeTools || assistantWriteTools;
   const auditService = deps.auditService || assistantActionAuditService;
+  const getCopilotService = () => (
+    // Lazy require avoids circular load-time dependencies and allows DI in tests
+    // eslint-disable-next-line global-require
+    deps.copilotService || require('./copilotService')
+  );
   const resolveSenderPhone = deps.resolveSenderPhone || resolveSenderPhoneFromMessage;
   const log = deps.logger || logger;
   const nowFn = deps.now || (() => new Date());
@@ -531,6 +581,77 @@ function createPlatformMerchantAssistantRouter(deps = {}) {
       };
     }
 
+    // 4.5. Code-scoped Copilot mobile approval commands:
+    //      `إرسال <code>` / `تعديل <code>: <new text>` / `تجاهل <code>`
+    //      Distinct verbs + explicit numeric draftCode never collide with
+    //      pending write-action confirm/reject messages, and leave any active
+    //      pending write action completely untouched.
+    const copilotCmd = (!isImage && !isVoice && trimmedText)
+      ? parseCopilotDraftCommand(trimmedText)
+      : null;
+    if (copilotCmd) {
+      if (copilotCmd.action === 'edit' && !copilotCmd.editedReply) {
+        return {
+          handled: true,
+          reason: 'copilot_edit_empty',
+          merchantUserId: String(merchant._id),
+          reply: `يرجى كتابة نص الرد الجديد بعد النقطتين، مثال:\nتعديل ${copilotCmd.draftCode}: أهلاً بك!`,
+        };
+      }
+
+      const cpService = getCopilotService();
+
+      if (copilotCmd.action === 'send' || copilotCmd.action === 'edit') {
+        const isEdit = copilotCmd.action === 'edit';
+        const result = await cpService.approveAndSendDraftByCode({
+          merchantUserId: merchant._id,
+          actorUserId: merchant._id,
+          draftCode: copilotCmd.draftCode,
+          editedReply: isEdit ? copilotCmd.editedReply : null,
+          approvedVia: 'whatsapp_platform',
+          decisionMessageId: msgId,
+          now: currentNow,
+        });
+        const reply = result.ok
+          ? (isEdit
+            ? `✅ تم تعديل المسودة (${copilotCmd.draftCode}) وإرسال الرد للعميل بنجاح.`
+            : `✅ تم إرسال المسودة (${copilotCmd.draftCode}) للعميل بنجاح.`)
+          : result.message;
+        return {
+          handled: true,
+          reason: result.ok
+            ? (isEdit ? 'copilot_draft_edited_and_sent' : 'copilot_draft_sent')
+            : 'copilot_draft_send_failed',
+          merchantUserId: String(merchant._id),
+          copilotResult: result,
+          errorCode: result.ok ? undefined : result.errorCode,
+          reply,
+        };
+      }
+
+      if (copilotCmd.action === 'discard') {
+        const result = await cpService.discardDraftByCode({
+          merchantUserId: merchant._id,
+          actorUserId: merchant._id,
+          draftCode: copilotCmd.draftCode,
+          approvedVia: 'whatsapp_platform',
+          decisionMessageId: msgId,
+          now: currentNow,
+        });
+        const reply = result.ok
+          ? `❌ تم تجاهل المسودة (${copilotCmd.draftCode}) ولم يُرسل أي رد للعميل.`
+          : result.message;
+        return {
+          handled: true,
+          reason: result.ok ? 'copilot_draft_discarded' : 'copilot_draft_discard_failed',
+          merchantUserId: String(merchant._id),
+          copilotResult: result,
+          errorCode: result.ok ? undefined : result.errorCode,
+          reply,
+        };
+      }
+    }
+
     // 5. Intercept active pending write action for this merchant on whatsapp_platform
     const { pendingAction, expiredAction } = await pendingService.findActivePendingAction({
       merchantUserId: merchant._id,
@@ -709,6 +830,7 @@ function createPlatformMerchantAssistantRouter(deps = {}) {
   return {
     handleIncomingPlatformMessage,
     parseLinkCodeMessage,
+    parseCopilotDraftCommand,
     hashWhatsappLinkCode,
   };
 }
@@ -719,6 +841,7 @@ module.exports = {
   createPlatformMerchantAssistantRouter,
   handleIncomingPlatformMessage: defaultRouter.handleIncomingPlatformMessage,
   parseLinkCodeMessage,
+  parseCopilotDraftCommand,
   hashWhatsappLinkCode,
   LINK_CODE_REGEX,
 };

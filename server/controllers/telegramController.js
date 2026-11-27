@@ -1,9 +1,11 @@
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Bot = require('../models/Bot');
 const Rule = require('../models/Rule');
 const Order = require('../models/Order');
 const ChatOrder = require('../models/ChatOrder');
 const Conversation = require('../models/Conversation');
+const CopilotDraft = require('../models/CopilotDraft');
 const logger = require('../logger');
 const {
   BOT_USERNAME,
@@ -12,8 +14,132 @@ const {
   unlinkBot,
   updateBotPrefs,
   sendTelegramMessage,
+  answerCallbackQuery,
   getDestination,
 } = require('../services/telegramService');
+
+const COPILOT_CALLBACK_REGEX = /^(cp_send|cp_drop):([^\s]+)$/i;
+
+function parseCopilotCallbackData(rawData) {
+  const value = String(rawData || '').trim();
+  const match = value.match(COPILOT_CALLBACK_REGEX);
+  if (!match) return null;
+  return {
+    action: match[1].toLowerCase() === 'cp_send' ? 'send' : 'drop',
+    draftId: match[2],
+  };
+}
+
+async function handleCopilotCallback(callback, deps = {}) {
+  const parsed = parseCopilotCallbackData(callback?.data);
+  if (!parsed) return { handled: false };
+
+  // Lazy require allows test injection and avoids circular load-time deps.
+  // eslint-disable-next-line global-require
+  const guard = deps.channelGuard || require('../services/channelGuard');
+  if (!guard.anyChannelsEnabled()) {
+    return { handled: true, blocked: true, reason: 'channels_disabled' };
+  }
+
+  const DraftModel = deps.CopilotDraft || CopilotDraft;
+  const BotModel = deps.Bot || Bot;
+  const UserModel = deps.User || User;
+  // eslint-disable-next-line global-require
+  const cpService = deps.copilotService || require('../services/copilotService');
+  const sendMsg = deps.sendTelegramMessage || sendTelegramMessage;
+  const answerCb = deps.answerCallbackQuery || answerCallbackQuery;
+  const log = deps.logger || logger;
+
+  const chatId = String(callback?.message?.chat?.id ?? callback?.from?.id ?? '').trim();
+  const callbackId = callback?.id ? String(callback.id) : '';
+  if (!chatId) {
+    return { handled: true, ok: false, reason: 'missing_chat_id' };
+  }
+
+  const replyUser = async (text) => {
+    if (callbackId && typeof answerCb === 'function') {
+      await answerCb(callbackId, text).catch(() => {});
+    }
+    if (typeof sendMsg === 'function') {
+      await sendMsg(chatId, text).catch(() => {});
+    }
+  };
+
+  if (!mongoose.Types.ObjectId.isValid(parsed.draftId)) {
+    await replyUser('المسودة غير موجودة.');
+    return { handled: true, ok: false, reason: 'draft_not_found' };
+  }
+
+  const draft = await DraftModel.findById(parsed.draftId)
+    .select('_id botId merchantUserId status draftCode')
+    .lean();
+  if (!draft) {
+    await replyUser('المسودة غير موجودة.');
+    return { handled: true, ok: false, reason: 'draft_not_found' };
+  }
+
+  // Respect CHANNELS_MODE (off / allowlist) for the draft's owning bot
+  if (!guard.isBotAllowed(draft.botId)) {
+    return { handled: true, blocked: true, reason: 'channels_disabled' };
+  }
+
+  // Strict merchant ownership verification: Telegram chatId MUST match the
+  // owning bot's telegramUserId or the owning active merchant's telegramUserId.
+  const [bot, ownerUser] = await Promise.all([
+    BotModel.findById(draft.botId).select('_id userId telegramUserId').lean(),
+    UserModel.findById(draft.merchantUserId).select('_id status telegramUserId').lean(),
+  ]);
+
+  const botTg = String(bot?.telegramUserId || '').trim();
+  const userTg = String(ownerUser?.telegramUserId || '').trim();
+  const isOwnerValid = Boolean(
+    bot
+    && ownerUser
+    && ownerUser.status === 'active'
+    && String(bot.userId) === String(draft.merchantUserId)
+    && ((botTg && botTg === chatId) || (userTg && userTg === chatId))
+  );
+
+  if (!isOwnerValid) {
+    log.warn('telegram_copilot_callback_unauthorized', {
+      draftId: String(draft._id),
+      botId: String(draft.botId),
+    });
+    await replyUser('⛔ غير مصرح لك بالتعامل مع هذه المسودة.');
+    return { handled: true, ok: false, unauthorized: true, reason: 'unauthorized' };
+  }
+
+  const decisionMessageId = callbackId ? `tg_cb_${callbackId}` : '';
+
+  if (parsed.action === 'send') {
+    const result = await cpService.approveAndSendDraft({
+      draftId: draft._id,
+      merchantUserId: draft.merchantUserId,
+      actorUserId: draft.merchantUserId,
+      editedReply: null,
+      approvedVia: 'telegram',
+      decisionMessageId,
+    });
+    const feedback = result.ok
+      ? '✅ تم إرسال الرد المقترح للعميل بنجاح.'
+      : (result.message || 'تعذّر إرسال المسودة.');
+    await replyUser(feedback);
+    return { handled: true, ok: result.ok, action: 'send', result };
+  }
+
+  const result = await cpService.discardDraft({
+    draftId: draft._id,
+    merchantUserId: draft.merchantUserId,
+    actorUserId: draft.merchantUserId,
+    approvedVia: 'telegram',
+    decisionMessageId,
+  });
+  const feedback = result.ok
+    ? '❌ تم تجاهل المسودة ولم يُرسل أي رد للعميل.'
+    : (result.message || 'تعذّر تجاهل المسودة.');
+  await replyUser(feedback);
+  return { handled: true, ok: result.ok, action: 'drop', result };
+}
 
 // حالة محادثات تيليجرام (ذاكرة مؤقتة)
 const chatStates = new Map(); // chatId -> { step, rules: [], selectedRuleId }
@@ -474,6 +600,14 @@ exports.handleWebhook = async (req, res) => {
     {
       const guard = require('../services/channelGuard');
       if (!guard.anyChannelsEnabled()) return res.status(200).json({ ok: true });
+
+      // Handle Copilot 1-tap inline button callbacks (cp_send:<draftId> / cp_drop:<draftId>)
+      // with per-draft CHANNELS_MODE check, strict merchant ownership verification, and CAS fencing.
+      if (parseCopilotCallbackData(req.body?.callback_query?.data)) {
+        await handleCopilotCallback(req.body.callback_query);
+        return res.status(200).json({ ok: true });
+      }
+
       if (guard.mode() === 'allowlist') {
         const chat = req.body?.message?.chat || req.body?.callback_query?.message?.chat;
         const linked = chat ? await Bot.findOne({ telegramUserId: String(chat.id) }).select('_id') : null;
@@ -970,3 +1104,6 @@ exports.handleWebhook = async (req, res) => {
     return res.status(200).json({ ok: false });
   }
 };
+
+exports.parseCopilotCallbackData = parseCopilotCallbackData;
+exports.handleCopilotCallback = handleCopilotCallback;

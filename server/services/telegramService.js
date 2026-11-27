@@ -69,6 +69,22 @@ async function sendTelegramMessage(chatId, text, extra = {}) {
   }
 }
 
+async function answerCallbackQuery(callbackQueryId, text = '') {
+  if (!callbackQueryId) {
+    return { ok: false, reason: 'missing_parameters' };
+  }
+  try {
+    const url = getApiUrl('answerCallbackQuery');
+    const payload = { callback_query_id: String(callbackQueryId) };
+    if (text) payload.text = String(text).slice(0, 200);
+    const res = await axios.post(url, payload);
+    return { ok: true, data: res.data };
+  } catch (err) {
+    logger.error('Telegram answerCallbackQuery error', { err: describeCaughtError(err) });
+    return { ok: false, reason: 'send_failed' };
+  }
+}
+
 function buildLinkCode() {
   // Link codes authenticate account linking: use CSPRNG, not Math.random.
   const num = require('crypto').randomInt(100000, 1000000);
@@ -267,6 +283,7 @@ module.exports = {
   unlinkBot,
   updateBotPrefs,
   sendTelegramMessage,
+  answerCallbackQuery,
   notifyNewOrder,
   notifyOrderStatus,
   notifyChatOrder,
