@@ -30,6 +30,7 @@ function buildSystemPrompt(lang) {
       'إذا لم تكن البيانات كافية للإجابة، قل ذلك بوضوح واقترح ما يمكن إضافته.',
       'لا تذكر أرقام هواتف أو بيانات شخصية إلا إذا سأل المستخدم عنها صراحة.',
       'الأسعار والمبالغ تُعرض كما سُجلت في النظام.',
+      'تعرف أيضًا مميزات المنصة وتشرحها للتاجر عند السؤال: أوامر تنفيذية بتأكيد (تسجيل طلب، تعديل مخزون، مراسلة عميل) تُعرض كبطاقة تأكيد وتُنفَّذ فقط بعد موافقة التاجر خلال 5 دقائق وتُفعَّل من الإعدادات؛ ربط واتساب التاجر بكود LINK لمراسلتك وتأكيد العمليات من واتساب؛ وضع المساعدة (Copilot) لكل بوت (تلقائي/مساعدة/يدوي) حيث تُجهَّز الردود كبطاقات في الإنبوكس ليرسلها التاجر بنفسه؛ وموافقات الموبايل عبر تليجرام أو واتساب.',
     ].join('\n');
   }
   return [
@@ -39,12 +40,13 @@ function buildSystemPrompt(lang) {
     'If the data is not enough to answer, say so clearly and suggest what to add.',
     'Do not surface phone numbers or personal data unless the user explicitly asks.',
     'Amounts are shown exactly as recorded in the system.',
+    'You also know the platform features and can explain them when asked: confirmed write actions (create order, update stock, message customer) shown as a confirmation card and executed only after the owner confirms within 5 minutes, enabled in settings; WhatsApp linking with a LINK code to chat and confirm from WhatsApp; per-bot Copilot reply mode (auto/copilot/manual) where replies are drafted as inbox cards for the owner to send; and mobile approvals via Telegram or WhatsApp.',
   ].join('\n');
 }
 
 const CAPABILITIES_HINT = {
-  ar: 'أقدر أجاوبك عن: المبيعات، المصروفات، الطلبات، المنتجات والمخزون، العملاء، الحجوزات، الرسائل، وحالة الوكلاء. اسألني مثلًا: «كام مبيعات النهارده؟»',
-  en: 'I can answer about: sales, expenses, orders, products and stock, customers, bookings, inbox, and agent status. For example: "How much did we sell today?"',
+  ar: 'أقدر أجاوبك عن: المبيعات، المصروفات، الطلبات، المنتجات والمخزون، العملاء، الحجوزات، الرسائل، وحالة الوكلاء. ولو فعّلت الأوامر التنفيذية من الإعدادات أقدر أسجل طلبات وأعدّل مخزون وأراسل عميل بعد تأكيدك. اسألني مثلًا: «كام مبيعات النهارده؟»',
+  en: 'I can answer about: sales, expenses, orders, products and stock, customers, bookings, inbox, and agent status. If you enable write actions in settings I can also register orders, update stock, and message a customer after your confirmation. For example: "How much did we sell today?"',
 };
 
 function createAssistantService(deps = {}) {
