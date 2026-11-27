@@ -170,6 +170,9 @@ function createPlatformWhatsappSession(options = {}) {
     // Lazy-require avoids circular or test-time side effects when botEngine is mocked.
     require('../botEngine').processMessage(...args)
   ));
+  const handlePlatformMerchantMessage = options.handlePlatformMerchantMessage !== undefined
+    ? options.handlePlatformMerchantMessage
+    : ((payload) => require('./platformMerchantAssistantRouter').handleIncomingPlatformMessage(payload));
 
   const initTimeoutMs = options.initTimeoutMs ?? INIT_TIMEOUT_MS;
   const safetyTimeoutMs = options.safetyTimeoutMs ?? SAFETY_TIMEOUT_MS;
@@ -314,6 +317,34 @@ function createPlatformWhatsappSession(options = {}) {
     const isImage = message.type === 'image';
     const isVoice = message.type === 'audio' || message.type === 'ptt';
     const messageText = message.body || (isImage ? '[صورة]' : isVoice ? '[رسالة صوتية]' : '');
+
+    // Route verified merchants and LINK-XXXXXX verification codes to the
+    // Merchant Assistant BEFORE the normal ZainBot Main visitor flow.
+    // Non-merchant visitors & unresolvable senders return { handled: false }
+    // and fall through untouched to botEngine.processMessage.
+    if (typeof handlePlatformMerchantMessage === 'function') {
+      try {
+        const routed = await handlePlatformMerchantMessage({
+          message,
+          messageText,
+          messageId,
+          isImage,
+          isVoice,
+          now: now(),
+        });
+        if (routed && routed.handled) {
+          if (typeof routed.reply === 'string' && routed.reply.trim() && typeof message.reply === 'function') {
+            await message.reply(routed.reply);
+          }
+          return;
+        }
+      } catch (routerErr) {
+        log.error('platform_whatsapp_merchant_router_failed', {
+          botId,
+          error: routerErr?.message || String(routerErr),
+        });
+      }
+    }
 
     // Best-effort native WhatsApp reaction when enabled on the bound platform bot.
     // The platform session reacts to every clean inbound message (always

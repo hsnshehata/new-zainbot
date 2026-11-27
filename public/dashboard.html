@@ -1645,6 +1645,62 @@
                   <p style="color:var(--text-muted); font-size:12px;" data-i18n="assistant_reminder_empty">No reminders yet</p>
                 </div>
               </div>
+
+              <div id="assistantWhatsappLinkCard" class="assistant-whatsapp-card" style="background:var(--card-bg,rgba(255,255,255,0.03)); border:1px solid var(--border,rgba(255,255,255,0.08)); border-radius:16px; padding:16px;">
+                <h3 style="font-size:14px; margin-bottom:6px;">
+                  <i class="fab fa-whatsapp" style="color:#25D366;"></i>
+                  <span data-i18n="assistant_wa_link_title">Link WhatsApp to Zain Assistant</span>
+                </h3>
+                <p style="color:var(--text-muted); font-size:12px; line-height:1.6; margin-bottom:12px;" data-i18n="assistant_wa_link_desc">Link your WhatsApp number to chat with Zain Assistant via ZainBot Main. Write tools stay off until you enable them.</p>
+
+                <div id="assistantWaStatusRow" style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:12px; padding:8px 10px; border-radius:10px; background:rgba(255,255,255,0.03);">
+                  <span id="assistantWaStatusBadge" class="badge badge-secondary" data-i18n="assistant_wa_status_unlinked">Not linked</span>
+                  <span id="assistantWaLinkedPhone" dir="ltr" hidden style="font-family:monospace; font-size:12px; color:var(--cyan);"></span>
+                </div>
+
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+                  <button type="button" id="assistantWaGenerateCodeBtn" class="btn btn-primary btn-sm">
+                    <i class="fas fa-link"></i> <span data-i18n="assistant_wa_generate_code">Generate link code</span>
+                  </button>
+                  <button type="button" id="assistantWaUnlinkBtn" class="btn btn-secondary btn-sm" hidden>
+                    <i class="fas fa-unlink"></i> <span data-i18n="assistant_wa_unlink">Unlink</span>
+                  </button>
+                </div>
+
+                <div id="assistantWaCodeBox" hidden style="padding:12px; border-radius:10px; background:rgba(6,182,212,0.08); border:1px solid rgba(6,182,212,0.28); margin-bottom:12px; display:flex; flex-direction:column; gap:8px;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                    <code id="assistantWaCodeValue" dir="ltr" style="font-size:16px; font-weight:700; letter-spacing:1px; color:var(--cyan);"></code>
+                    <button type="button" id="assistantWaCopyCodeBtn" class="btn btn-secondary btn-sm" style="padding:2px 10px; font-size:11px;" data-i18n="assistant_wa_copy_code">Copy</button>
+                  </div>
+                  <p style="font-size:12px; color:var(--text-muted); line-height:1.6; margin:0;" data-i18n="assistant_wa_code_instructions">Send this code in a single message to ZainBot Main on WhatsApp within 10 minutes to complete linking.</p>
+                  <a id="assistantWaOpenLink" target="_blank" rel="noopener" hidden class="btn btn-secondary btn-sm" style="align-self:flex-start; text-decoration:none;">
+                    <i class="fab fa-whatsapp" style="color:#25D366;"></i> <span data-i18n="assistant_wa_open_whatsapp">Open WhatsApp & send code</span>
+                  </a>
+                </div>
+
+                <div id="assistantWriteToolsSettings" style="border-top:1px solid var(--border,rgba(255,255,255,0.08)); padding-top:12px; display:flex; flex-direction:column; gap:8px;">
+                  <div style="font-size:12px; font-weight:600;" data-i18n="assistant_write_tools_title">Assistant write tools</div>
+                  <p id="assistantWriteToolsPlatformNote" hidden style="font-size:11px; color:var(--orange,#f59e0b); margin:0;" data-i18n="assistant_write_tools_platform_off">Write tools are currently disabled at the platform level.</p>
+                  <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                    <input type="checkbox" id="assistantWriteToolsToggle">
+                    <span data-i18n="assistant_write_tools_enable">Enable write tools (always asks confirmation)</span>
+                  </label>
+                  <div style="display:flex; flex-direction:column; gap:6px; padding-inline-start:16px;">
+                    <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-muted); cursor:pointer;">
+                      <input type="checkbox" id="assistantToolCreateOrder">
+                      <span data-i18n="assistant_tool_create_order">Create new orders</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-muted); cursor:pointer;">
+                      <input type="checkbox" id="assistantToolUpdateInventory">
+                      <span data-i18n="assistant_tool_update_inventory">Update product inventory</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-muted); cursor:pointer;">
+                      <input type="checkbox" id="assistantToolMessageCustomer">
+                      <span data-i18n="assistant_tool_message_customer">Send message to a customer</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>

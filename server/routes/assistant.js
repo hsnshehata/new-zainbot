@@ -40,6 +40,7 @@ router.delete('/reminders/:id', assistantController.deleteReminder);
 router.get('/settings', assistantController.getSettings);
 router.patch('/settings', assistantController.updateSettings);
 router.post('/whatsapp/link-code', assistantController.createWhatsappLinkCode);
+router.delete('/whatsapp/link', assistantController.unlinkWhatsapp);
 router.get('/audit', assistantController.listAudit);
 
 // Phase 3 Slice 2: Explicit confirmation / rejection endpoints for pending write actions

@@ -11,10 +11,11 @@ const mongoose = require('mongoose');
 
 const User = require('../models/User');
 const AssistantConversation = require('../models/AssistantConversation');
+const AssistantActionAudit = require('../models/AssistantActionAudit');
 const {
   ASSISTANT_AUDIT_EVENT_TYPES,
   ASSISTANT_AUDIT_OUTCOMES,
-} = require('../models/AssistantActionAudit');
+} = AssistantActionAudit;
 const { ASSISTANT_WRITE_TOOLS } = require('../models/AssistantPendingAction');
 const PlatformWhatsAppSession = require('../models/PlatformWhatsAppSession');
 const Reminder = require('../models/Reminder');
@@ -40,7 +41,7 @@ const {
   isAssistantWriteToolsEnabled,
   isCopilotEnabled,
 } = require('../services/platformSettingsService');
-const { listMerchantAudits } = require('../services/assistantActionAuditService');
+const { listMerchantAudits, recordAudit } = require('../services/assistantActionAuditService');
 const pendingActionService = require('../services/assistantPendingActionService');
 const assistantWriteTools = require('../services/assistantWriteTools');
 const {
@@ -832,6 +833,23 @@ async function createWhatsappLinkCode(req, res, next) {
       expiresAt: expiresAt.toISOString(),
     });
 
+    const canAudit = (mongoose.connection && mongoose.connection.readyState === 1)
+      || AssistantActionAudit.create !== mongoose.Model.create;
+    if (canAudit) {
+      await recordAudit({
+        eventType: 'whatsapp_link.code_issued',
+        merchantUserId: userId,
+        actorUserId: req.user.actorUserId || userId,
+        channel: 'dashboard_assistant',
+        targetModel: 'User',
+        targetId: String(userId),
+        outcome: 'success',
+        beforeState: null,
+        afterState: { expiresAt: expiresAt.toISOString() },
+        summary: 'تم إصدار رمز ربط واتساب بمساعد زين.',
+      });
+    }
+
     return res.status(201).json({
       success: true,
       code,
@@ -839,6 +857,77 @@ async function createWhatsappLinkCode(req, res, next) {
       ttlSeconds: Math.floor(WHATSAPP_LINK_CODE_TTL_MS / 1000),
       platformWhatsappPhone: platformPhoneDigits,
       waMeUrl,
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function unlinkWhatsapp(req, res, next) {
+  try {
+    const userId = req.user.userId;
+    const actorUserId = req.user.actorUserId || userId;
+    const existing = await User.findById(userId).select('assistantSettings').lean();
+    if (!existing) {
+      throw new AppError('المستخدم غير موجود / User not found', 404, 'UserNotFound');
+    }
+
+    const previousMasked = existing.assistantSettings?.verifiedWhatsappPhone
+      ? maskPhone(existing.assistantSettings.verifiedWhatsappPhone)
+      : '';
+
+    const updated = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          'assistantSettings.verifiedWhatsappPhone': '',
+          'assistantSettings.whatsappVerifiedAt': null,
+          'assistantSettings.whatsappLinkCodeHash': '',
+          'assistantSettings.whatsappLinkExpiresAt': null,
+          'assistantSettings.updatedAt': new Date(),
+        },
+      },
+      { new: true }
+    ).select('assistantSettings').lean();
+
+    if (!updated) {
+      throw new AppError('المستخدم غير موجود / User not found', 404, 'UserNotFound');
+    }
+
+    const canAudit = (mongoose.connection && mongoose.connection.readyState === 1)
+      || AssistantActionAudit.create !== mongoose.Model.create;
+    if (canAudit) {
+      await recordAudit({
+        eventType: 'whatsapp_link.unlinked',
+        merchantUserId: userId,
+        actorUserId,
+        channel: 'dashboard_assistant',
+        targetModel: 'User',
+        targetId: String(userId),
+        outcome: 'success',
+        beforeState: { verifiedWhatsappPhoneMasked: previousMasked },
+        afterState: { verifiedWhatsappPhoneMasked: '' },
+        summary: 'تم إلغاء ربط رقم واتساب بمساعد زين.',
+      });
+    }
+
+    const [platformWriteToolsEnabled, platformCopilotEnabled] = await Promise.all([
+      isAssistantWriteToolsEnabled(),
+      isCopilotEnabled(),
+    ]);
+
+    logger.info('assistant_whatsapp_unlinked', {
+      userId: String(userId),
+      wasLinked: Boolean(previousMasked),
+    });
+
+    return res.json({
+      success: true,
+      settings: formatAssistantSettings(updated.assistantSettings),
+      platform: {
+        assistantWriteToolsEnabled: platformWriteToolsEnabled,
+        copilotEnabled: platformCopilotEnabled,
+      },
     });
   } catch (error) {
     return next(error);
@@ -889,6 +978,7 @@ module.exports = {
   getSettings,
   updateSettings,
   createWhatsappLinkCode,
+  unlinkWhatsapp,
   listAudit,
   confirmAction,
   rejectAction,

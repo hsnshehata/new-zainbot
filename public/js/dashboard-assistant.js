@@ -28,6 +28,7 @@
     let wired = false;
     let sending = false;
     let activeConversationId = null;
+    let latestLinkCode = '';
 
     function el(id) {
       return global.document.getElementById(id);
@@ -207,6 +208,136 @@
       }
     }
 
+    function renderSettings(data) {
+      const settings = (data && data.settings) || {};
+      const platform = (data && data.platform) || {};
+      const linked = Boolean(settings.whatsappLinked);
+
+      const badge = el('assistantWaStatusBadge');
+      if (badge) {
+        badge.textContent = linked ? t('assistant_wa_status_linked') : t('assistant_wa_status_unlinked');
+        badge.className = linked ? 'badge badge-success' : 'badge badge-secondary';
+      }
+
+      const phoneEl = el('assistantWaLinkedPhone');
+      if (phoneEl) {
+        phoneEl.textContent = linked ? (settings.verifiedWhatsappPhoneMasked || '') : '';
+        phoneEl.hidden = !linked;
+      }
+
+      const unlinkBtn = el('assistantWaUnlinkBtn');
+      if (unlinkBtn) {
+        unlinkBtn.hidden = !linked;
+      }
+
+      const platformNote = el('assistantWriteToolsPlatformNote');
+      if (platformNote) {
+        platformNote.hidden = platform.assistantWriteToolsEnabled === true;
+      }
+
+      const masterToggle = el('assistantWriteToolsToggle');
+      const tools = settings.allowedWriteTools || {};
+      const createOrderCb = el('assistantToolCreateOrder');
+      const updateInvCb = el('assistantToolUpdateInventory');
+      const msgCustCb = el('assistantToolMessageCustomer');
+      const writeEnabled = Boolean(settings.writeToolsEnabled);
+
+      if (masterToggle) masterToggle.checked = writeEnabled;
+      if (createOrderCb) {
+        createOrderCb.checked = Boolean(tools.createOrder);
+        createOrderCb.disabled = !writeEnabled;
+      }
+      if (updateInvCb) {
+        updateInvCb.checked = Boolean(tools.updateInventory);
+        updateInvCb.disabled = !writeEnabled;
+      }
+      if (msgCustCb) {
+        msgCustCb.checked = Boolean(tools.messageCustomer);
+        msgCustCb.disabled = !writeEnabled;
+      }
+    }
+
+    async function loadSettings() {
+      const data = await requestJson('/api/assistant/settings', {}, { operation: 'read' });
+      renderSettings(data);
+    }
+
+    async function generateWhatsappLinkCode() {
+      const btn = el('assistantWaGenerateCodeBtn');
+      if (btn) btn.disabled = true;
+      try {
+        const data = await requestJson('/api/assistant/whatsapp/link-code', { method: 'POST', body: JSON.stringify({}) }, { operation: 'mutation' });
+        if (data && data.code) {
+          latestLinkCode = data.code;
+          const codeBox = el('assistantWaCodeBox');
+          const codeValue = el('assistantWaCodeValue');
+          const openLink = el('assistantWaOpenLink');
+          if (codeValue) codeValue.textContent = data.code;
+          if (codeBox) codeBox.hidden = false;
+          if (openLink) {
+            const safeUrl = typeof data.waMeUrl === 'string' && /^https:\/\/wa\.me\/\d+/.test(data.waMeUrl)
+              ? data.waMeUrl
+              : '';
+            if (safeUrl) {
+              openLink.href = safeUrl;
+              openLink.hidden = false;
+            } else {
+              openLink.hidden = true;
+            }
+          }
+          notify('success', 'assistant_wa_code_generated');
+        } else {
+          notify('error', 'assistant_error');
+        }
+      } catch (_error) {
+        notify('error', 'assistant_error');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function unlinkWhatsapp() {
+      const btn = el('assistantWaUnlinkBtn');
+      if (btn) btn.disabled = true;
+      try {
+        const data = await requestJson('/api/assistant/whatsapp/link', { method: 'DELETE' }, { operation: 'mutation' });
+        latestLinkCode = '';
+        const codeBox = el('assistantWaCodeBox');
+        if (codeBox) codeBox.hidden = true;
+        renderSettings(data);
+        notify('success', 'assistant_wa_unlinked');
+      } catch (_error) {
+        notify('error', 'assistant_error');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function saveWriteToolsSettings() {
+      const masterToggle = el('assistantWriteToolsToggle');
+      const createOrderCb = el('assistantToolCreateOrder');
+      const updateInvCb = el('assistantToolUpdateInventory');
+      const msgCustCb = el('assistantToolMessageCustomer');
+      try {
+        const data = await requestJson('/api/assistant/settings', {
+          method: 'PATCH',
+          body: JSON.stringify({
+            writeToolsEnabled: Boolean(masterToggle && masterToggle.checked),
+            allowedWriteTools: {
+              createOrder: Boolean(createOrderCb && createOrderCb.checked),
+              updateInventory: Boolean(updateInvCb && updateInvCb.checked),
+              messageCustomer: Boolean(msgCustCb && msgCustCb.checked),
+            },
+          }),
+        }, { operation: 'mutation' });
+        renderSettings(data);
+        notify('success', 'assistant_settings_saved');
+      } catch (_error) {
+        notify('error', 'assistant_error');
+        loadSettings().catch(() => {});
+      }
+    }
+
     function setTyping(on) {
       const typing = el('assistantTyping');
       if (typing) typing.hidden = !on;
@@ -357,11 +488,42 @@
           addReminder(text, due);
         });
       }
+      const generateCodeBtn = el('assistantWaGenerateCodeBtn');
+      if (generateCodeBtn) {
+        generateCodeBtn.addEventListener('click', () => generateWhatsappLinkCode());
+      }
+      const unlinkBtn = el('assistantWaUnlinkBtn');
+      if (unlinkBtn) {
+        unlinkBtn.addEventListener('click', () => unlinkWhatsapp());
+      }
+      const copyCodeBtn = el('assistantWaCopyCodeBtn');
+      if (copyCodeBtn) {
+        copyCodeBtn.addEventListener('click', () => {
+          const code = latestLinkCode || (el('assistantWaCodeValue') ? el('assistantWaCodeValue').textContent : '');
+          if (!code) return;
+          if (global.navigator && global.navigator.clipboard && typeof global.navigator.clipboard.writeText === 'function') {
+            global.navigator.clipboard.writeText(code).then(() => {
+              notify('success', 'assistant_wa_code_copied');
+            }).catch(() => {});
+          }
+        });
+      }
+      for (const id of [
+        'assistantWriteToolsToggle',
+        'assistantToolCreateOrder',
+        'assistantToolUpdateInventory',
+        'assistantToolMessageCustomer',
+      ]) {
+        const input = el(id);
+        if (input) {
+          input.addEventListener('change', () => saveWriteToolsSettings());
+        }
+      }
     }
 
     async function load() {
       try {
-        await Promise.all([loadConversations(), loadReminders()]);
+        await Promise.all([loadConversations(), loadReminders(), loadSettings()]);
       } catch (_error) {
         notify('error', 'assistant_error');
       }
