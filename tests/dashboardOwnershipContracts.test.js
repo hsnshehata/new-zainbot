@@ -91,6 +91,7 @@ function ownerDoc(overrides = {}) {
     username: 'contract_owner',
     email: 'owner@example.com',
     whatsapp: '',
+    subscriptionTier: 'growth_1k',
     role: 'user',
     status: 'active',
     sessionVersion: 0,

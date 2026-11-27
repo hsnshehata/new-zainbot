@@ -1,3 +1,4 @@
+const { freeUploadSizeGuard } = require('../services/freePlanLimits');
 // /server/routes/products.js
 const express = require('express');
 const multer = require('multer');
@@ -43,10 +44,10 @@ router.use((req, res, next) => {
 });
 
 // إضافة منتج
-router.post('/:storeId/products', authenticate, upload, productController.createProduct);
+router.post('/:storeId/products', authenticate, upload, freeUploadSizeGuard, productController.createProduct);
 
 // تعديل منتج
-router.put('/:storeId/products/:productId', authenticate, upload, productController.updateProduct);
+router.put('/:storeId/products/:productId', authenticate, upload, freeUploadSizeGuard, productController.updateProduct);
 
 // حذف منتج
 router.delete('/:storeId/products/:productId', authenticate, productController.deleteProduct);

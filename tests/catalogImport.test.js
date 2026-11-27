@@ -111,7 +111,7 @@ test('configuration encrypts secrets and status never serializes credential fiel
   const invoke = async (fn, body = {}) => {
     const result = { code: 200 };
     const res = { status(code) { result.code = code; return this; }, json(value) { result.body = value; return this; } };
-    await fn({ params: { provider: 'shopify' }, body, user: { userId: '507f191e810c19729de860ec' }, catalogBot: { _id: botId, storeId } }, res);
+    await fn({ params: { provider: 'shopify' }, body, user: { userId: '507f191e810c19729de860ec', subscriptionTier: 'growth_1k' }, catalogBot: { _id: botId, storeId } }, res);
     return result;
   };
   try {
@@ -188,7 +188,7 @@ test('new owner gets unconfigured GET; first PUT provisions a store, retry reuse
   const handler = method => router.stack.find(layer => layer.route?.methods[method] && layer.route.path === '/bots/:botId/:provider').route.stack[0].handle;
   const perform = async (method, subjectId = userId) => {
     const req = {
-      method: method.toUpperCase(), params: { botId, provider: 'shopify' }, user: { userId: subjectId },
+      method: method.toUpperCase(), params: { botId, provider: 'shopify' }, user: { userId: subjectId, subscriptionTier: 'growth_1k' },
       auth: { isImpersonating: false },
       body: { origin: 'https://demo.myshopify.com', currency: 'USD', token: 'shpat_test_secret' },
     };

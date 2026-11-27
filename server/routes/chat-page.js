@@ -1,3 +1,4 @@
+const { freeUploadSizeGuard } = require('../services/freePlanLimits');
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
@@ -23,7 +24,7 @@ const upload = multer({
 // parsed as a link id).
 router.get('/admin/ownership-issues', authenticate, requireDirectSuperadmin, getChatPageOwnershipIssues);
 router.post('/', authenticate, createChatPage);
-router.put('/:id', authenticate, upload.single('logo'), updateChatPage);
+router.put('/:id', authenticate, upload.single('logo'), freeUploadSizeGuard, updateChatPage);
 router.get('/public/bot/:botId', getPublicLinkIdByBot);
 router.get('/bot/:botId', authenticate, getChatPageByBotId);
 // NOTE: no POST /feedback route here. The chat widget posts feedback to the

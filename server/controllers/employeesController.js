@@ -1,3 +1,4 @@
+const { checkCountLimit, denyResponse } = require('../services/freePlanLimits');
 const mongoose = require('mongoose');
 const Employee = require('../models/Employee');
 const Store = require('../models/Store');
@@ -49,6 +50,11 @@ exports.createEmployee = async (req, res) => {
   const { storeId } = req.params; const body = req.body; const file = req.file; const userId = req.user.userId; const role = req.user.role;
   try {
     await authorizeStoreAccess(storeId, userId, role);
+    {
+      const employeeCount = await Employee.countDocuments({ storeId });
+      const verdict = checkCountLimit(req.user, 'employeesPerStore', employeeCount);
+      if (!verdict.allowed) return denyResponse(res, verdict);
+    }
     const name = body.name || body.fullName || body.username;
     if (!name) return res.status(400).json({ message: 'اسم الموظف مطلوب' });
     const username = (body.username || '').toLowerCase().trim();

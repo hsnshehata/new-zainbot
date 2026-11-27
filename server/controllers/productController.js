@@ -1,3 +1,4 @@
+const { checkCountLimit, denyResponse } = require('../services/freePlanLimits');
 // /server/controllers/productController.js
 const Product = require('../models/Product');
 const Store = require('../models/Store');
@@ -107,6 +108,12 @@ exports.createProduct = async (req, res) => {
     } catch (e) {
       logger.warn('product_create_auth_failed', { storeId, userId, err: e.message });
       return res.status(e.status || 403).json({ message: e.message });
+    }
+
+    {
+      const productCount = await Product.countDocuments({ storeId });
+      const verdict = checkCountLimit(req.user, 'productsPerStore', productCount);
+      if (!verdict.allowed) return denyResponse(res, verdict);
     }
 
     // التحقق من الحقول المطلوبة

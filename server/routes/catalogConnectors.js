@@ -1,3 +1,4 @@
+const { isFreeTier, MESSAGES } = require('../services/freePlanLimits');
 const express = require('express');
 const mongoose = require('mongoose');
 const Bot = require('../models/Bot');
@@ -100,6 +101,11 @@ router.get('/bots/:botId/:provider', async (req, res) => {
 router.put('/bots/:botId/:provider', async (req, res) => {
   const { provider } = req.params;
   const { origin, currency, token, consumerKey, consumerSecret } = req.body || {};
+  if (isFreeTier(req.user)) {
+    // Paid-only feature. Free merchants who already configured this connector keep it.
+    const existing = await CatalogConnector.findOne({ botId: req.catalogBot._id, provider });
+    if (!existing) return res.status(403).json({ success: false, error: 'FREE_PLAN_LIMIT', kind: 'catalogConnectors', message: MESSAGES.catalogConnectors });
+  }
   if (!['EGP', 'USD', 'SAR'].includes(currency) ||
       (provider === 'shopify' ? typeof token !== 'string' || token.trim().length < 8 :
         typeof consumerKey !== 'string' || consumerKey.trim().length < 8 ||

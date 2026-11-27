@@ -28,7 +28,7 @@ const engineId=require.resolve('../server/botEngine');require.cache[engineId]={i
 const router=require('../server/routes/catalogConnectors');
 test.before(async()=>{
  db=await MongoMemoryServer.create();await mongoose.connect(db.getUri('catalog-route-local'));
- owner=await User.create({username:'synthetic_owner',email:'owner@synthetic.invalid',isVerified:true});foreign=await User.create({username:'synthetic_foreign',email:'foreign@synthetic.invalid',isVerified:true});admin=await User.create({username:'synthetic_admin',email:'admin@synthetic.invalid',role:'superadmin',isVerified:true});
+ owner=await User.create({username:'synthetic_owner',email:'owner@synthetic.invalid',subscriptionTier:'growth_1k',isVerified:true});foreign=await User.create({username:'synthetic_foreign',email:'foreign@synthetic.invalid',isVerified:true});admin=await User.create({username:'synthetic_admin',email:'admin@synthetic.invalid',role:'superadmin',isVerified:true});
  bot=await Bot.create({name:'Synthetic inventory',userId:owner._id});store=await Store.create({storeName:'Synthetic route store',storeLink:'synthetic-route',templateId:1,userId:owner._id,botId:bot._id});bot.storeId=store._id;await bot.save();
  connector=await Connector.create({botId:bot._id,storeId:store._id,provider:'woocommerce',origin:'https://synthetic.invalid',currency:'EGP',consumerKey:encryptCredentialSecret('synthetic-key',{context:buildCredentialContext(String(bot._id),'catalog-woo-key')}),consumerSecret:encryptCredentialSecret('synthetic-secret',{context:buildCredentialContext(String(bot._id),'catalog-woo-secret')})});
  product=await Product.create({storeId:store._id,productName:'Synthetic legacy',price:100,currency:'EGP',stock:8,importSource:'woocommerce',importSourceId:'17'});

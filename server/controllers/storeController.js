@@ -1,3 +1,4 @@
+const { checkCountLimit, denyResponse } = require('../services/freePlanLimits');
 // /server/controllers/storeController.js
 const Store = require('../models/Store');
 const Bot = require('../models/Bot');
@@ -62,6 +63,12 @@ exports.createStore = async (req, res) => {
     if (existingStore) {
       logger.warn('store_create_name_exists', { storeName });
       return res.status(400).json({ message: 'اسم المتجر موجود بالفعل' });
+    }
+
+    {
+      const storeCount = await Store.countDocuments({ userId });
+      const verdict = checkCountLimit(req.user, 'stores', storeCount);
+      if (!verdict.allowed) return denyResponse(res, verdict);
     }
 
     // تنظيف HTML لو موجود
