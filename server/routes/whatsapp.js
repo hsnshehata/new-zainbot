@@ -5,10 +5,48 @@ const {
   getWhatsAppSessionManager,
   WhatsAppSessionError,
 } = require('../services/whatsappSessionManager');
+const platformWhatsappSession = require('../services/platformWhatsappSession');
 const logger = require('../logger');
 
 const router = express.Router();
 const manager = getWhatsAppSessionManager();
+
+const PLATFORM_TO_SESSION_STATUS = {
+  connected: 'connected',
+  loading: 'connecting',
+  authenticating: 'connecting',
+  qr_ready: 'qr_required',
+  disconnected: 'disconnected',
+};
+
+// The platform WhatsApp number serves its bot through platformWhatsappSession,
+// not the per-bot QR manager — report that live state so the dashboard card
+// reflects the session that actually carries the messages.
+async function resolveSessionStatus(bot) {
+  if (String(bot._id) === platformWhatsappSession.getPlatformBotId()) {
+    const platform = await platformWhatsappSession.getStatus();
+    const mappedStatus = PLATFORM_TO_SESSION_STATUS[platform.status] || 'disconnected';
+    return {
+      id: null,
+      botId: String(bot._id),
+      channel: 'whatsapp',
+      mode: 'platform',
+      status: mappedStatus,
+      connected: Boolean(platform.connected),
+      externalAccount: platform.phone || '',
+      externalDisplayName: '',
+      requiresRelink: false,
+      restoredFromLegacy: false,
+      lastReadyAt: platform.connected ? platform.updatedAt || null : null,
+      lastDisconnectedAt: mappedStatus === 'disconnected' ? platform.updatedAt || null : null,
+      health: {
+        lastCheckAt: platform.lastHeartbeat || null,
+        lastSuccessAt: platform.connected ? platform.updatedAt || null : null,
+      },
+    };
+  }
+  return manager.getStatus(bot._id);
+}
 
 function sendManagerError(res, error, requestId) {
   if (error instanceof WhatsAppSessionError) {
@@ -32,7 +70,7 @@ router.use(authenticate);
 
 router.get('/session', loadAccessibleBot, async (req, res) => {
   try {
-    const data = await manager.getStatus(req.bot._id);
+    const data = await resolveSessionStatus(req.bot);
     return res.json({ success: true, data });
   } catch (error) {
     return sendManagerError(res, error, req.requestId);
@@ -66,3 +104,5 @@ router.post('/disconnect', loadAccessibleBot, async (req, res) => {
 });
 
 module.exports = router;
+module.exports.resolveSessionStatus = resolveSessionStatus;
+module.exports.PLATFORM_TO_SESSION_STATUS = PLATFORM_TO_SESSION_STATUS;
