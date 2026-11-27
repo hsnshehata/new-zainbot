@@ -45,13 +45,30 @@ const googleSchema = Joi.object({
 });
 
 // إعداد Nodemailer لإرسال ايميلات التفعيل
-const transporter = nodemailer.createTransport({
+const gmailTransport = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 });
+// Primary sender: Resend SMTP from noreply@zainbot.com when RESEND_API_KEY is set. Gmail is the fallback.
+const resendTransport = process.env.RESEND_API_KEY
+  ? nodemailer.createTransport({ host: 'smtp.resend.com', port: 465, secure: true, auth: { user: 'resend', pass: process.env.RESEND_API_KEY } })
+  : null;
+const MAIL_FROM = process.env.MAIL_FROM || 'ZainBot <noreply@zainbot.com>';
+const transporter = {
+  async sendMail(options) {
+    if (resendTransport) {
+      try {
+        return await resendTransport.sendMail({ from: MAIL_FROM, ...options });
+      } catch (err) {
+        logger.error('mail_primary_failed', { code: err && err.code, responseCode: err && err.responseCode, reason: String((err && (err.response || err.message)) || '').slice(0, 200) });
+      }
+    }
+    return gmailTransport.sendMail(options);
+  },
+};
 
 const recoveryLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-7', legacyHeaders: false,
   message: { success: false, message: 'طلبات كثيرة. حاول لاحقًا. / Too many requests. Try later.' } });
@@ -61,7 +78,32 @@ const hashToken = (token) => crypto.createHash('sha256').update(token).digest('h
 const makeToken = () => crypto.randomBytes(32).toString('hex');
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const publicUrl = () => (process.env.BASE_URL || 'https://new.zainbot.com').replace(/\/$/, '');
-const emailHtml = (url, label) => `<p>${label}</p><p><a href="${escapeHtml(url)}">${escapeHtml(url)}</a></p>`;
+const emailHtml = (url, label, opts = {}) => {
+  const safeUrl = escapeHtml(url);
+  const t = opts.texts || {
+    ar: { title: 'مرحبًا بك في زين بوت', body: 'اضغط على الزر لتفعيل حسابك. الرابط صالح لمدة ساعة.', button: 'تفعيل الحساب' },
+    en: { title: 'Welcome to ZainBot', body: 'Click the button to activate your account. The link is valid for one hour.', button: 'Activate account' },
+  };
+  return `<!doctype html><html><body style="margin:0;padding:0;background:#f4f6fb;font-family:Tahoma,Arial,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fb;padding:24px 12px;"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;overflow:hidden;">
+<tr><td style="background:#0b5cff;padding:20px 24px;color:#ffffff;font-size:22px;font-weight:bold;text-align:center;">ZainBot | زين بوت</td></tr>
+<tr><td dir="rtl" style="padding:24px 24px 8px;color:#1b1f2a;text-align:right;">
+<h2 style="margin:0 0 8px;font-size:20px;">${escapeHtml(t.ar.title)}</h2>
+<p style="margin:0;font-size:15px;line-height:1.7;">${escapeHtml(t.ar.body)}</p></td></tr>
+<tr><td align="center" style="padding:20px 24px;"><a href="${safeUrl}" style="display:inline-block;background:#0b5cff;color:#ffffff;text-decoration:none;font-size:16px;font-weight:bold;padding:12px 28px;border-radius:8px;">${escapeHtml(t.ar.button)} / ${escapeHtml(t.en.button)}</a></td></tr>
+<tr><td dir="ltr" style="padding:0 24px 8px;color:#1b1f2a;text-align:left;">
+<h3 style="margin:0 0 6px;font-size:16px;">${escapeHtml(t.en.title)}</h3>
+<p style="margin:0;font-size:14px;line-height:1.6;">${escapeHtml(t.en.body)}</p></td></tr>
+<tr><td style="padding:16px 24px 24px;color:#6b7280;font-size:12px;line-height:1.6;text-align:center;">
+If the button does not work, copy this link: <br><a href="${safeUrl}" style="color:#0b5cff;word-break:break-all;">${safeUrl}</a><br><br>
+إذا لم تطلب هذا البريد يمكنك تجاهله. / If you did not request this email, you can ignore it.</td></tr>
+</table></td></tr></table></body></html>`;
+};
+const RESET_TEXTS = {
+  ar: { title: 'استعادة كلمة المرور', body: 'اضغط على الزر لاختيار كلمة مرور جديدة. الرابط صالح لمدة ساعة.', button: 'استعادة كلمة المرور' },
+  en: { title: 'Reset your password', body: 'Click the button to choose a new password. The link is valid for one hour.', button: 'Reset password' },
+};
 
 async function sendVerification(user, token) {
   const url = `${publicUrl()}/login.html#verify=${token}`;
@@ -135,7 +177,7 @@ router.post('/register', validateBody(registerSchema), async (req, res) => {
     try {
       await sendVerification(user, token);
     } catch (mailError) {
-      logger.error('verification_delivery_failed', { userId: user._id });
+      logger.error('verification_delivery_failed', { userId: user._id, code: mailError && mailError.code, responseCode: mailError && mailError.responseCode, reason: String((mailError && (mailError.response || mailError.message)) || '').slice(0, 200) });
       return res.status(503).json({ message: 'تعذر إرسال البريد الآن. حسابك محفوظ؛ استخدم إعادة إرسال التفعيل لاحقًا. / Email unavailable. Your account is saved; request a new link later.', success: false });
     }
     await User.updateOne({ _id: user._id }, { $set: { verificationSentAt: new Date() } });
@@ -187,8 +229,8 @@ router.post('/resend-verification', recoveryLimiter, validateBody(emailSchema), 
       .select('+verificationTokenHash +verificationExpiresAt +verificationSentAt');
     if (user) {
       try { await sendVerification(user, token); }
-      catch (_) {
-        logger.error('verification_resend_delivery_failed', { userId: user._id });
+      catch (mailError) {
+        logger.error('verification_resend_delivery_failed', { userId: user._id, code: mailError && mailError.code, responseCode: mailError && mailError.responseCode });
         await restoreFailedDelivery(user, hashToken(token), ['verificationTokenHash', 'verificationExpiresAt', 'verificationSentAt']);
       }
     }
@@ -210,7 +252,7 @@ router.post('/forgot-password', recoveryLimiter, validateBody(emailSchema), asyn
     if (user) {
       const url = `${publicUrl()}/login.html#reset=${token}`;
       try { await transporter.sendMail({ to: user.email, subject: 'Reset your ZainBot password | استعادة كلمة مرور زين بوت',
-        html: emailHtml(url, 'Reset your password / استعد كلمة المرور') }); }
+        html: emailHtml(url, 'Reset your password / استعد كلمة المرور', { texts: RESET_TEXTS }) }); }
       catch (_) {
         logger.error('password_reset_delivery_failed', { userId: user._id });
         await restoreFailedDelivery(user, hashToken(token), ['resetTokenHash', 'resetExpiresAt', 'resetSentAt']);
