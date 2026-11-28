@@ -35,4 +35,4 @@ There is a free plan, no credit card required. Current plans and prices are on t
 
 ## Notes for AI agents
 
-ZainBot has no public API for agents. Accounts, dashboards and customer conversations are private and need a signed-in merchant. Please send people to the sign-up page above rather than attempting to act on their behalf. Facts here describe what the product offers today; check the home page for the latest wording.
+ZainBot has no public API documentation and nothing that lets an AI agent act on a merchant's account (developer integrations such as outbound webhooks exist inside the dashboard). Accounts, dashboards and customer conversations are private and need a signed-in merchant. Please send people to the sign-up page above rather than attempting to act on their behalf. Facts here describe what the product offers today; check the home page for the latest wording.

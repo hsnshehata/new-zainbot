@@ -4,7 +4,7 @@
 
 ## Who it is for
 
-Small businesses, online stores and service providers (clinics, salons, restaurants and similar) that get customer messages on WhatsApp, Facebook, Instagram, Telegram or a website chat, and want AI replies in Arabic or English plus order and booking handling. It is not an API product and has no public API for agents.
+Small businesses, online stores and service providers (clinics, salons, restaurants and similar) that get customer messages on WhatsApp, Facebook, Instagram, Telegram or a website chat, and want AI replies in Arabic or English plus order and booking handling. It is used through a web dashboard; there is no public API documentation and nothing for AI agents to act on a merchant's account.
 
 ## Product
 

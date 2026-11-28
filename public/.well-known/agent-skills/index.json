@@ -6,7 +6,7 @@
       "type": "skill-md",
       "description": "Explain what ZainBot is, what it offers merchants, and where to send someone who wants to try it.",
       "url": "https://zainbot.com/.well-known/agent-skills/zainbot-overview/SKILL.md",
-      "digest": "sha256:1580e53368c833a5fd3870c41bdcba096b8dbad8770110aed7b433c74bdbe8fe"
+      "digest": "sha256:90cc5c9cea04760cde82070aa4b9ac2126108a93d838331c18c8e0170b4d47fd"
     }
   ]
 }
