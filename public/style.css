@@ -1534,14 +1534,24 @@ html[dir="rtl"] .testimonial-card::before {
   margin: 0 auto;
 }
 .pricing-grid-5 {
-  grid-template-columns: repeat(5, 1fr);
-  max-width: 1400px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  max-width: 1160px;
+  align-items: stretch;
 }
-@media (max-width: 1200px) {
-  .pricing-grid-5 { grid-template-columns: repeat(3, 1fr); max-width: 1000px; }
+.pricing-grid-5 > .pricing-card { grid-column: span 2; min-width: 0; }
+.pricing-grid-5 > .pricing-card:nth-child(4) { grid-column: 2 / span 2; }
+.pricing-grid-5 > .pricing-card:nth-child(5) { grid-column: 4 / span 2; }
+@media (min-width: 1280px) {
+  .pricing-grid-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); max-width: 1320px; gap: 16px; }
+  .pricing-grid-5 > .pricing-card,
+  .pricing-grid-5 > .pricing-card:nth-child(4),
+  .pricing-grid-5 > .pricing-card:nth-child(5) { grid-column: auto; padding: 32px 20px; }
 }
-@media (max-width: 900px) {
-  .pricing-grid-5 { grid-template-columns: repeat(2, 1fr); max-width: 720px; }
+@media (max-width: 760px) {
+  .pricing-grid-5 { grid-template-columns: minmax(0, 1fr); max-width: 440px; }
+  .pricing-grid-5 > .pricing-card,
+  .pricing-grid-5 > .pricing-card:nth-child(4),
+  .pricing-grid-5 > .pricing-card:nth-child(5) { grid-column: auto; }
 }
 .billing-toggle {
   display: inline-flex;
@@ -1614,10 +1624,9 @@ html[dir="rtl"] .testimonial-card::before {
 .pricing-popular {
   border-color: rgba(124,58,237,0.4);
   background: linear-gradient(180deg, rgba(124,58,237,0.08), rgba(59,130,246,0.03));
-  transform: scale(1.04);
-  box-shadow: 0 20px 60px rgba(124,58,237,0.12), 0 0 40px rgba(124,58,237,0.06);
+  box-shadow: 0 0 0 1px rgba(124,58,237,0.5), 0 20px 60px rgba(124,58,237,0.12), 0 0 40px rgba(124,58,237,0.06);
 }
-.pricing-popular:hover { transform: scale(1.04) translateY(-4px); }
+.pricing-popular:hover { transform: translateY(-4px); }
 .popular-badge {
   position: absolute;
   top: -13px;
@@ -1651,7 +1660,7 @@ html[dir="rtl"] .testimonial-card::before {
   transition: opacity 0.2s;
 }
 .price-period { font-size: 16px; color: var(--text-muted); }
-.pricing-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; }
+.pricing-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; min-height: 4.2em; }
 .pricing-features {
   display: flex;
   flex-direction: column;
@@ -1661,11 +1670,11 @@ html[dir="rtl"] .testimonial-card::before {
 }
 .pricing-features li {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   font-size: 14px;
 }
-.pricing-features i { color: var(--green); font-size: 13px; min-width: 16px; flex-shrink: 0; }
+.pricing-features i { color: var(--green); font-size: 13px; min-width: 16px; flex-shrink: 0; margin-top: 4px; }
 .pricing-card .btn { margin-top: auto; }
 
 /* ===== FINAL CTA ===== */
@@ -1890,8 +1899,7 @@ html[dir="rtl"] .testimonial-card::before {
   .bento-grid { grid-template-columns: 1fr; }
   .bento-wide { grid-column: span 1; }
 
-  .pricing-grid { grid-template-columns: 1fr; max-width: 400px; }
-  .pricing-popular { transform: none; }
+  .pricing-grid:not(.pricing-grid-5) { grid-template-columns: 1fr; max-width: 400px; }
   .pricing-popular:hover { transform: translateY(-4px); }
 
   .metrics-list { grid-template-columns: 1fr; }
@@ -1972,3 +1980,6 @@ html[dir="rtl"] .testimonial-card::before {
 .faq-item { border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 16px 20px; background: rgba(255,255,255,0.03); }
 .faq-item summary { cursor: pointer; font-weight: 600; font-size: 17px; list-style-position: inside; }
 .faq-item p { margin: 12px 0 0; color: var(--text-muted); line-height: 1.7; }
+
+.pricing-popular .popular-badge { z-index: 2; }
+@media (max-width: 760px) { .pricing-desc { min-height: 0; } }
