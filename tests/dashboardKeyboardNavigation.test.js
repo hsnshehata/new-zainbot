@@ -127,10 +127,10 @@ function makeDoc() {
 
 test('menu items are native buttons preserving data-target and labels', () => {
   const buttons = [...dashboardHtml.matchAll(/<button type="button" class="menu-item[^"]*" data-target="([^"]+)"[^>]*>/g)];
-  assert.equal(buttons.length, 10, `Expected 10 menu buttons, found ${buttons.length}`);
+  assert.equal(buttons.length, 11, `Expected 11 menu buttons, found ${buttons.length}`);
   assert.deepEqual(
     buttons.map((m) => m[1]).sort(),
-    ['page-admin', 'page-agents', 'page-assistant', 'page-channels', 'page-idea-council', 'page-inbox', 'page-orders', 'page-overview', 'page-settings', 'page-training']
+    ['page-admin', 'page-agents', 'page-assistant', 'page-channels', 'page-idea-council', 'page-inbox', 'page-orders', 'page-overview', 'page-settings', 'page-store', 'page-training']
   );
   assert.doesNotMatch(dashboardHtml, /<div class="menu-item/, 'No div menu items may remain');
   assert.match(dashboardHtml, /<button type="button" class="menu-item active" data-target="page-overview" aria-current="page">/);

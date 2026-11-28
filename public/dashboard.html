@@ -921,6 +921,10 @@
           <i class="fas fa-shopping-bag"></i>
           <span data-i18n="menu_orders">Orders & Bookings</span>
         </button>
+        <button type="button" class="menu-item" data-target="page-store">
+          <i class="fas fa-store"></i>
+          <span data-i18n="menu_store">Store</span>
+        </button>
         <button type="button" class="menu-item" data-target="page-settings">
           <i class="fas fa-cog"></i>
           <span data-i18n="menu_settings">Settings & Billing</span>
@@ -2077,6 +2081,10 @@
         </section>
 
                 <!-- ==================== 6. SETTINGS & AGENT CONTROL CENTER (reorganized) ==================== -->
+        <section id="page-store" class="db-page">
+          <div id="storePageRoot"></div>
+        </section>
+
         <section id="page-settings" class="db-page">
           <h2 data-i18n="settings_billing_title" style="margin-bottom:8px;">Settings & Developer Integrations</h2>
           <p style="color:var(--text-muted); font-size:14px; margin-bottom:24px;" data-i18n="settings_intro_desc">All agent and workspace controls in one place, organized into ordered sections: Agent Instructions → Agent Capabilities → Notifications → AI Model → Developer Integrations → Account.</p>
@@ -3621,7 +3629,8 @@
   <script src="js/dashboard-request.js?v=20261005-d02"></script>
   <script src="js/dashboard-feedback.js?v=20261005-d03"></script>
   <script src="js/dashboard-assets.js?v=20261125-council"></script>
-  <script src="js/dashboard_new.js?v=20261125-council"></script>
+  <script src="js/dashboard-store.js?v=20261128-store"></script>
+  <script src="js/dashboard_new.js?v=20261128-store"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
