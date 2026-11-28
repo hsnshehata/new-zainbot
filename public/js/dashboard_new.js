@@ -195,6 +195,7 @@
   // State Management
   let currentUser = null;
   let currentBot = null;
+  let storeModule = null;
   let workspaceBots = [];
   let activeTab = 'page-overview';
   let currentLanguage = window.ZainbotLangPersistence.readStoredLanguage('ar');
@@ -223,6 +224,7 @@
       menu_training: 'AI Training',
       menu_channels: 'Connections',
       menu_orders: 'Orders & Bookings',
+      menu_store: 'Store',
       menu_settings: 'Settings & Billing',
       menu_admin: 'Super Admin Control',
       menu_agents: 'AI Agents',
@@ -1475,6 +1477,7 @@
       menu_training: 'تدريب الذكاء الاصطناعي',
       menu_channels: 'ربط القنوات',
       menu_orders: 'الطلبات والحجوزات',
+      menu_store: 'المتجر',
       menu_settings: 'الإعدادات والاشتراك',
       menu_admin: 'لوحة تحكم الأدمن',
       menu_agents: 'الوكلاء الذكيون',
@@ -2738,6 +2741,7 @@
     if (window.__zainbotRenderSettingsSummary) window.__zainbotRenderSettingsSummary();
     renderOnboarding();
     renderCatalogStatus();
+    if (storeModule) storeModule.refreshLanguage(currentLanguage);
     // Registry renderers (agents, recipients, admin table, inbox list) re-render
     // from in-memory state only: no fetch, no selectChat history load, and
     // filters/pagination/selection/drafts survive the switch.
@@ -2756,6 +2760,13 @@
   // the C03 adapter on language switch — no refetch, no state loss. Single
   // line so line-sliced wiring harnesses can execute it standalone.
   window.ZainBotDashboardI18n.registerLanguageRenderer('feedback', function () { if (window.ZainBotFeedback) window.ZainBotFeedback.refreshLanguage(window.ZainBotDashboardI18n.t); });
+
+  // Store setup page (public storefront). Self-contained module: dashboard-store.js
+  function enterStoreTab() {
+    if (!window.ZainBotStore || typeof window.ZainBotStore.create !== 'function') return;
+    if (!storeModule) storeModule = window.ZainBotStore.create({ request: dashboardRequest });
+    storeModule.open({ bot: currentBot, lang: currentLanguage });
+  }
 
   // Tab switching handler
   function switchTab(tabId, opts) {
@@ -2799,6 +2810,8 @@
       loadChannelsData();
     } else if (tabId === 'page-orders') {
       loadOrdersData();
+    } else if (tabId === 'page-store') {
+      enterStoreTab();
     } else if (tabId === 'page-settings') {
       enterSettingsTab();
     } else if (tabId === 'page-admin') {

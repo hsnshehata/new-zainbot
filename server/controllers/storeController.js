@@ -1,5 +1,6 @@
 const { checkCountLimit, denyResponse } = require('../services/freePlanLimits');
 // /server/controllers/storeController.js
+const mongoose = require('mongoose');
 const Store = require('../models/Store');
 const Bot = require('../models/Bot');
 const sanitizeHtml = require('sanitize-html');
@@ -390,5 +391,29 @@ exports.getStoreByLink = async (req, res) => {
   } catch (err) {
     logger.error('store_fetch_by_link_error', { err: err.message, stack: err.stack, storeLink });
     res.status(500).json({ message: 'خطأ في جلب المتجر: ' + (err.message || 'غير معروف') });
+  }
+};
+
+// المتجر الخاص بوكيل معيّن (للوحة التحكم): يعيد المتجر المرتبط بالبوت أو null.
+// لا يُنشئ أي شيء ولا يعدّل بيانات؛ القراءة فقط وللمالك أو superadmin.
+exports.getMyStore = async (req, res) => {
+  const { botId } = req.query;
+  const userId = req.user.userId;
+  try {
+    if (!botId || !mongoose.isValidObjectId(botId)) {
+      return res.status(400).json({ message: 'botId مطلوب' });
+    }
+    const bot = await Bot.findById(botId).select('userId storeId');
+    if (!bot || (req.user.role !== 'superadmin' && String(bot.userId) !== String(userId))) {
+      return res.status(404).json({ message: 'البوت غير موجود' });
+    }
+    let store = null;
+    if (bot.storeId) store = await Store.findById(bot.storeId);
+    if (!store) store = await Store.findOne({ botId: bot._id });
+    const storeCount = await Store.countDocuments({ userId: bot.userId });
+    return res.status(200).json({ store: store ? store.toObject() : null, storeCount });
+  } catch (err) {
+    logger.error('store_mine_error', { err: err.message, stack: err.stack });
+    return res.status(500).json({ message: 'تعذر جلب المتجر' });
   }
 };

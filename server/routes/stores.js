@@ -20,6 +20,9 @@ router.post('/', authenticate, storeController.createStore);
 // تعديل متجر
 router.put('/:storeId', authenticate, storeController.updateStore);
 
+// متجر الوكيل الحالي (للوحة التحكم). لازم قبل /:storeId
+router.get('/mine', authenticate, storeController.getMyStore);
+
 // جلب متجر بالـ ObjectId (للمالك)
 router.get('/:storeId', authenticate, storeController.getStore);
 
