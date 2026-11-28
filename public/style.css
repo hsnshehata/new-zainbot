@@ -1760,6 +1760,8 @@ html[dir="rtl"] .testimonial-card::before {
   background: rgba(124,58,237,0.1);
   border-color: rgba(124,58,237,0.3);
 }
+.footer-social a[href*="facebook.com"]:hover { color: #fff; background: #1877f2; border-color: #1877f2; }
+.footer-social a[href*="youtube.com"]:hover { color: #fff; background: #ff0000; border-color: #ff0000; }
 .footer-links {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
