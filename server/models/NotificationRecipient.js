@@ -44,6 +44,13 @@ const notificationRecipientSchema = new mongoose.Schema({
     ],
     default: ['order_created', 'booking_created'],
   }],
+  // 2 = the user chose every alert type explicitly (modal has all tick boxes).
+  // Missing = created before handoff/complaint/digest/low-stock were selectable;
+  // those channels receive the newer alert types by default (see dispatcher).
+  eventsVersion: {
+    type: Number,
+    default: undefined,
+  },
   isActive: {
     type: Boolean,
     default: true,

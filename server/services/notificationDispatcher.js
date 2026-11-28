@@ -119,9 +119,15 @@ const EVENT_SUBSCRIPTION_ALIASES = {
   human_handoff: ['handoff'],
 };
 
+// Alert types that could not be selected when older channels were created.
+// Those channels (no eventsVersion) get them by default; channels created with
+// the full modal (eventsVersion 2) only get what the user ticked.
+const LEGACY_DEFAULT_ON_EVENTS = new Set(['human_handoff', 'handoff', 'urgent_complaint', 'daily_digest', 'low_stock']);
+
 function recipientWantsEvent(recipient, event) {
   const subscribed = recipient && recipient.events;
   if (!event || !Array.isArray(subscribed) || subscribed.length === 0) return true;
+  if (LEGACY_DEFAULT_ON_EVENTS.has(event) && !(recipient && recipient.eventsVersion >= 2)) return true;
   if (subscribed.includes(event)) return true;
   return (EVENT_SUBSCRIPTION_ALIASES[event] || []).some((alias) => subscribed.includes(alias));
 }

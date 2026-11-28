@@ -35,12 +35,23 @@ test('recipientWantsEvent: chat_order matches the New Orders subscription', () =
 });
 
 test('recipientWantsEvent: human_handoff matches handoff; new events need their own subscription', () => {
-  assert.equal(recipientWantsEvent({ events: ['handoff'] }, 'human_handoff'), true);
-  assert.equal(recipientWantsEvent({ events: orderBookingDefaults }, 'human_handoff'), false);
-  assert.equal(recipientWantsEvent({ events: ['urgent_complaint'] }, 'urgent_complaint'), true);
-  assert.equal(recipientWantsEvent({ events: ['daily_digest'] }, 'daily_digest'), true);
-  assert.equal(recipientWantsEvent({ events: ['low_stock'] }, 'low_stock'), true);
-  assert.equal(recipientWantsEvent({ events: orderBookingDefaults }, 'daily_digest'), false);
+  const v2 = (events) => ({ events, eventsVersion: 2 });
+  assert.equal(recipientWantsEvent(v2(['handoff']), 'human_handoff'), true);
+  assert.equal(recipientWantsEvent(v2(orderBookingDefaults), 'human_handoff'), false);
+  assert.equal(recipientWantsEvent(v2(['urgent_complaint']), 'urgent_complaint'), true);
+  assert.equal(recipientWantsEvent(v2(['daily_digest']), 'daily_digest'), true);
+  assert.equal(recipientWantsEvent(v2(['low_stock']), 'low_stock'), true);
+  assert.equal(recipientWantsEvent(v2(orderBookingDefaults), 'daily_digest'), false);
+  assert.equal(recipientWantsEvent(v2(orderBookingDefaults), 'low_stock'), false);
+});
+
+test('existing channels (no eventsVersion) get the newer alert types without any migration', () => {
+  const legacy = { events: orderBookingDefaults };
+  for (const event of ['human_handoff', 'urgent_complaint', 'daily_digest', 'low_stock']) {
+    assert.equal(recipientWantsEvent(legacy, event), true, event);
+  }
+  // still not subscribed to unrelated booking events they never ticked
+  assert.equal(recipientWantsEvent({ events: ['order_created'] }, 'booking_cancelled'), false);
 });
 
 test('recipientWantsEvent: bookings unchanged, empty events means everything', () => {
@@ -65,8 +76,8 @@ test('chat order reaches a dashboard-added Telegram and WhatsApp recipient', asy
 test('daily digest only reaches recipients subscribed to it', async () => {
   telegramSent.length = 0; waSent.length = 0;
   recipientsInDb = [
-    { channel: 'telegram', target: '111', events: orderBookingDefaults },
-    { channel: 'whatsapp', target: '201000000001', events: ['daily_digest', 'urgent_complaint'] },
+    { channel: 'telegram', target: '111', events: orderBookingDefaults, eventsVersion: 2 },
+    { channel: 'whatsapp', target: '201000000001', events: ['daily_digest', 'urgent_complaint'], eventsVersion: 2 },
   ];
   const res = await dispatchMultiChannelNotification({ userId: 'u1', botId: 'b1', event: 'daily_digest', data: { ordersCount: 3 } });
   assert.equal(res.delivered, 1);
@@ -82,6 +93,23 @@ test('dashboard modal offers the new alert types in both languages', () => {
     const key = `ev_${value}`;
     assert.equal((js.match(new RegExp(`${key}:`, 'g')) || []).length, 2, `${key} has en and ar text`);
   }
+});
+
+test('legacy channel receives the daily digest on dispatch', async () => {
+  telegramSent.length = 0; waSent.length = 0;
+  recipientsInDb = [{ channel: 'whatsapp', target: '201000000001', events: orderBookingDefaults }];
+  const res = await dispatchMultiChannelNotification({ userId: 'u1', botId: 'b1', event: 'daily_digest', data: { ordersCount: 1 } });
+  assert.equal(res.delivered, 1);
+  assert.equal(waSent.length, 1);
+});
+
+test('recipient model: no eventsVersion by default on old documents, controller sets 2', () => {
+  const ctrl = fs.readFileSync(path.join(__dirname, '..', 'server', 'controllers', 'notificationsController.js'), 'utf8');
+  assert.match(ctrl, /eventsVersion: 2/);
+  delete require.cache[require.resolve('../server/models/NotificationRecipient')];
+  const Model = require('../server/models/NotificationRecipient');
+  const legacyDoc = new Model({ userId: '507f1f77bcf86cd799439011', channel: 'whatsapp', target: '1', events: ['order_created'] });
+  assert.equal(legacyDoc.eventsVersion, undefined);
 });
 
 test('recipient model accepts the new events', () => {
