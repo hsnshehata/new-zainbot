@@ -300,6 +300,8 @@ app.use(express.json({
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(auditMutation);
 
+app.use(require('./middleware/agentDiscovery').agentDiscovery);
+app.use('/.well-known/agent-skills', express.static(path.join(__dirname, '../public/.well-known/agent-skills'), { dotfiles: 'allow' }));
 app.use(express.static(path.join(__dirname, '../public')));
 
 // تطبيق Rate Limiting للجميع

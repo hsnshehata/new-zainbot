@@ -1,0 +1,19 @@
+# ZainBot
+
+> ZainBot (زين بوت) is an AI customer-conversation workspace for small businesses, in Arabic and English. Merchants build AI agents that answer customers across connected channels, and manage orders, bookings and follow-ups from one dashboard. There is a free plan, no credit card required.
+
+## Product
+
+- [Home page](https://zainbot.com/): overview, features, how it works, pricing, live chat preview
+- [Overview in Markdown](https://zainbot.com/agent/home.md): what the product does, in plain text
+- [Getting started guide](https://zainbot.com/help.html): first conversation guide
+
+## Start
+
+- [Create a free account](https://zainbot.com/register)
+- [Sign in](https://zainbot.com/login)
+
+## Optional
+
+- [Sitemap](https://zainbot.com/sitemap.xml)
+- [Agent skills index](https://zainbot.com/.well-known/agent-skills/index.json)
