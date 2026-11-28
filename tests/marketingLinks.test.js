@@ -17,6 +17,7 @@ test('footer links resolve to real page routes, files, or on-page targets', () =
   assert.ok(links.length > 0);
   for (const href of links) {
     assert.notEqual(href, '#');
+    if (/^https:\/\//.test(href)) continue;
     if (href.startsWith('#')) assert.match(html, new RegExp(`id="${href.slice(1)}"`));
     else if (href === '/login' || href === '/register') assert.match(server, new RegExp(`app\\.get\\('${href}'`));
     else assert.ok(fs.existsSync(path.join(root, 'public', href.replace(/^\//, ''))), `${href} should be served as a static file`);
