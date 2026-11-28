@@ -352,7 +352,7 @@
   // Prompt chips
   promptChips.forEach(chip => {
     chip.addEventListener('click', () => {
-      const prompt = chip.dataset.prompt;
+      const prompt = (currentLang === 'ar' && chip.dataset.promptAr) ? chip.dataset.promptAr : chip.dataset.prompt;
       handleUserMessage(prompt);
     });
   });
