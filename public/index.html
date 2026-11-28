@@ -22,13 +22,13 @@
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/manifest.json">
   <script type="application/ld+json">
-  {"@context": "https://schema.org", "@graph": [{"@type": "Organization", "@id": "https://zainbot.com/#organization", "name": "ZainBot", "alternateName": ["زين بوت", "ZainBot AI"], "url": "https://zainbot.com/", "logo": "https://zainbot.com/icon-192.png", "sameAs": ["https://www.youtube.com/@zainbotcom", "https://www.facebook.com/699481059909027"]}, {"@type": "WebSite", "@id": "https://zainbot.com/#website", "url": "https://zainbot.com/", "name": "ZainBot", "publisher": {"@id": "https://zainbot.com/#organization"}, "inLanguage": ["ar", "en"]}, {"@type": "SoftwareApplication", "@id": "https://zainbot.com/#app", "name": "ZainBot AI", "applicationCategory": "BusinessApplication", "operatingSystem": "Web", "url": "https://zainbot.com/", "publisher": {"@id": "https://zainbot.com/#organization"}, "inLanguage": ["ar", "en"], "description": "AI customer-conversation workspace for small businesses, in Arabic and English. Build AI agents that answer customers on WhatsApp, Facebook, Instagram, Telegram and a website widget, and manage orders, bookings and follow-ups from one dashboard.", "audience": {"@type": "BusinessAudience", "audienceType": "Small businesses and online stores that handle customer messages"}, "featureList": ["Unified inbox for WhatsApp, Facebook, Instagram, Telegram and website chat", "AI auto-replies trained on the business's own information", "Human handoff and follow-up workflow", "Orders and bookings from conversations", "Branded storefront with cash on delivery or WhatsApp order confirmation", "Owner alerts on WhatsApp or Telegram", "Manual Shopify and WooCommerce catalog import (read-only)"], "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EGP", "description": "Free plan, no credit card required"}}]}
+  {"@context": "https://schema.org", "@graph": [{"@type": "Organization", "@id": "https://zainbot.com/#organization", "name": "ZainBot", "alternateName": ["زين بوت", "ZainBot AI"], "url": "https://zainbot.com/", "logo": "https://zainbot.com/icon-192.png", "sameAs": ["https://www.youtube.com/@zainbotcom", "https://www.facebook.com/699481059909027"]}, {"@type": "WebSite", "@id": "https://zainbot.com/#website", "url": "https://zainbot.com/", "name": "ZainBot", "publisher": {"@id": "https://zainbot.com/#organization"}, "inLanguage": ["ar", "en"]}, {"@type": "SoftwareApplication", "@id": "https://zainbot.com/#app", "name": "ZainBot AI", "applicationCategory": "BusinessApplication", "operatingSystem": "Web", "url": "https://zainbot.com/", "publisher": {"@id": "https://zainbot.com/#organization"}, "inLanguage": ["ar", "en"], "description": "AI customer-conversation workspace for small businesses, in Arabic and English. Build AI agents that answer customers on WhatsApp, Facebook, Instagram, Telegram and a website widget, and manage orders, bookings and follow-ups from one dashboard.", "audience": {"@type": "BusinessAudience", "audienceType": "Small businesses and online stores that handle customer messages"}, "featureList": ["Unified inbox for WhatsApp, Facebook, Instagram, Telegram and website chat", "AI auto-replies trained on the business's own information", "Human handoff and follow-up workflow", "Orders and bookings from conversations", "Branded storefront with cash on delivery or WhatsApp order confirmation", "Owner alerts on WhatsApp or Telegram", "Manual Shopify and WooCommerce catalog import (read-only)"], "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EGP", "description": "Free plan, no credit card required"}}, {"@type": "FAQPage", "@id": "https://zainbot.com/#faq", "mainEntity": [{"@type": "Question", "name": "What is ZainBot?", "acceptedAnswer": {"@type": "Answer", "text": "ZainBot is an AI customer-conversation workspace for small businesses, built for Arabic and English. You build AI agents that answer customers, train them on your own information, and manage conversations, orders and bookings from one dashboard."}}, {"@type": "Question", "name": "Which channels does it work with?", "acceptedAnswer": {"@type": "Answer", "text": "WhatsApp, Facebook, Instagram, Telegram and a chat widget for your website. Messages from the connected channels arrive in one inbox."}}, {"@type": "Question", "name": "Is there a free plan?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The free plan costs 0 EGP and needs no credit card. It includes 1 AI agent, 25 messages per day and up to 3 agent tools. Paid plans add more agents, more messages and more alerts; see the pricing section above."}}, {"@type": "Question", "name": "Can a person take over from the AI?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Conversations can be handed off to a human, and a follow-up workflow keeps track of what needs a reply next."}}, {"@type": "Question", "name": "Can I import my Shopify or WooCommerce products?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, you can import a Shopify or WooCommerce catalog manually. The import is read-only: it reads your products and does not change your store."}}, {"@type": "Question", "name": "Does ZainBot have an API?", "acceptedAnswer": {"@type": "Answer", "text": "ZainBot is used mainly through its web dashboard. Developer integrations such as outbound webhooks are in the dashboard and the top plan lists API and webhook integrations. There is no public API documentation, and nothing that lets an AI agent act on a merchant's account."}}]}]}
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Cairo:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=20260926-langbtn">
+  <link rel="stylesheet" href="style.css?v=20261128-faq">
 </head>
 <body>
 
@@ -680,6 +680,42 @@
           <a id="subscribeWhatsappBtn" class="btn btn-primary" rel="noopener" data-i18n="pricing_payment_whatsapp" style="display:none" hidden>Ask about plans on WhatsApp</a>
           <span class="pricing-payment-methods" data-i18n="pricing_payment_methods">We accept: Instapay • Vodafone Cash • Orange Money • Etisalat Cash</span>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FAQ ===== -->
+  <section class="faq" id="faq">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-eyebrow" data-i18n="faq_eyebrow">FAQ</span>
+        <h2 data-i18n="faq_title">Common questions</h2>
+      </div>
+      <div class="faq-list">
+        <details class="faq-item reveal">
+          <summary data-i18n="faq_q1">What is ZainBot?</summary>
+          <p data-i18n="faq_a1">ZainBot is an AI customer-conversation workspace for small businesses, built for Arabic and English. You build AI agents that answer customers, train them on your own information, and manage conversations, orders and bookings from one dashboard.</p>
+        </details>
+        <details class="faq-item reveal">
+          <summary data-i18n="faq_q2">Which channels does it work with?</summary>
+          <p data-i18n="faq_a2">WhatsApp, Facebook, Instagram, Telegram and a chat widget for your website. Messages from the connected channels arrive in one inbox.</p>
+        </details>
+        <details class="faq-item reveal">
+          <summary data-i18n="faq_q3">Is there a free plan?</summary>
+          <p data-i18n="faq_a3">Yes. The free plan costs 0 EGP and needs no credit card. It includes 1 AI agent, 25 messages per day and up to 3 agent tools. Paid plans add more agents, more messages and more alerts; see the pricing section above.</p>
+        </details>
+        <details class="faq-item reveal">
+          <summary data-i18n="faq_q4">Can a person take over from the AI?</summary>
+          <p data-i18n="faq_a4">Yes. Conversations can be handed off to a human, and a follow-up workflow keeps track of what needs a reply next.</p>
+        </details>
+        <details class="faq-item reveal">
+          <summary data-i18n="faq_q5">Can I import my Shopify or WooCommerce products?</summary>
+          <p data-i18n="faq_a5">Yes, you can import a Shopify or WooCommerce catalog manually. The import is read-only: it reads your products and does not change your store.</p>
+        </details>
+        <details class="faq-item reveal">
+          <summary data-i18n="faq_q6">Does ZainBot have an API?</summary>
+          <p data-i18n="faq_a6">ZainBot is used mainly through its web dashboard. Developer integrations such as outbound webhooks are in the dashboard and the top plan lists API and webhook integrations. There is no public API documentation, and nothing that lets an AI agent act on a merchant's account.</p>
+        </details>
       </div>
     </div>
   </section>
