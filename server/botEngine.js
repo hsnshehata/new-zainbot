@@ -35,6 +35,7 @@ const { checkPlanLimitsAndIncrement, settleMessageQuota } = require('./services/
 const { dispatchWebhook } = require('./services/webhookDispatcher');
 const { dispatchMultiChannelNotification } = require('./services/notificationDispatcher');
 const { describeCaughtError } = require('./services/metaSendErrors');
+const { transcribeAudioBuffer } = require('./services/voiceTranscription');
 const { buildProductContext, buildStorefrontUrl, effectiveProductPrice, normalize: normalizeCatalogText, tokens: catalogTokens } = require('./services/productContext');
 const conversationPolicy = require('./services/conversationPolicy');
 const { getPlatformBotId } = require('./services/platformBotId');
@@ -287,7 +288,7 @@ async function downloadImageToBase64(imageUrl, channel = 'web', opts = {}) {
 
 async function transcribeAudio(audioUrl, channel = 'web', opts = {}) {
   try {
-    logger.info('🎙️ Starting audio transcription with LemonFox', { hasAudioUrl: Boolean(audioUrl) });
+    logger.info('🎙️ Starting audio transcription', { hasAudioUrl: Boolean(audioUrl) });
     let audioBuffer;
     let filename = 'audio.mp4';
     let contentType = 'audio/mp4';
@@ -333,25 +334,9 @@ async function transcribeAudio(audioUrl, channel = 'web', opts = {}) {
       throw new Error('Invalid audio URL');
     }
 
-    const body = new FormData();
-    body.append('file', audioBuffer, { filename, contentType });
-    body.append('language', 'arabic');
-    body.append('response_format', 'json');
-
-    logger.info('LemonFox API Key', { present: Boolean(process.env.LEMONFOX_API_KEY) });
-    const response = await axios.post(
-      'https://api.lemonfox.ai/v1/audio/transcriptions',
-      body,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.LEMONFOX_API_KEY}`,
-          ...body.getHeaders(),
-        },
-      }
-    );
-
-    logger.info('✅ Audio transcribed with LemonFox', { text: response.data.text });
-    return response.data.text;
+    const { text, provider } = await transcribeAudioBuffer({ buffer: audioBuffer, filename, contentType });
+    logger.info('✅ Audio transcribed', { provider, transcriptLength: text.length });
+    return text;
   } catch (err) {
     logger.error('voice_transcription_provider_error', { err: describeCaughtError(err) });
     throw new Error('عذرًا، لم أتمكن من تحليل الصوت. ممكن تبعتلي نص بدل الصوت؟');

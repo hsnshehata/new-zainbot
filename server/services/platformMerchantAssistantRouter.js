@@ -27,6 +27,8 @@ const crypto = require('crypto');
 const mongoose = require('mongoose');
 
 const User = require('../models/User');
+const { transcribeAudioBuffer } = require('./voiceTranscription');
+const { describeCaughtError } = require('./metaSendErrors');
 const Bot = require('../models/Bot');
 const Store = require('../models/Store');
 const Sale = require('../models/Sale');
@@ -217,6 +219,19 @@ function createDefaultAssistantRuntime() {
   return { assistantService, extractWriteArgs };
 }
 
+// Downloads the WhatsApp voice note and transcribes it (LemonFox, then OpenAI).
+async function defaultTranscribeVoice(message) {
+  if (!message || typeof message.downloadMedia !== 'function') {
+    throw new Error('voice_media_unavailable');
+  }
+  const media = await message.downloadMedia();
+  if (!media || !media.data) throw new Error('voice_media_empty');
+  return transcribeAudioBuffer({
+    buffer: Buffer.from(media.data, 'base64'),
+    contentType: media.mimetype || 'audio/ogg',
+  });
+}
+
 function createPlatformMerchantAssistantRouter(deps = {}) {
   const usesDefaultUserModel = !deps.User;
   const UserModel = deps.User || User;
@@ -230,6 +245,7 @@ function createPlatformMerchantAssistantRouter(deps = {}) {
     // eslint-disable-next-line global-require
     deps.copilotService || require('./copilotService')
   );
+  const transcribeVoice = deps.transcribeVoice || defaultTranscribeVoice;
   const resolveSenderPhone = deps.resolveSenderPhone || resolveSenderPhoneFromMessage;
   const log = deps.logger || logger;
   const nowFn = deps.now || (() => new Date());
@@ -523,7 +539,7 @@ function createPlatformMerchantAssistantRouter(deps = {}) {
 
     const currentNow = nowOverride instanceof Date ? nowOverride : nowFn();
     const rawText = typeof messageText === 'string' ? messageText : String(message.body || '');
-    const trimmedText = rawText.trim();
+    let trimmedText = rawText.trim();
     const msgId = String(messageId || message.id?._serialized || message.id?.$1 || '').trim();
 
     // 1. One-time LINK-XXXXXX verification flow (works before the phone is bound)
@@ -737,8 +753,41 @@ function createPlatformMerchantAssistantRouter(deps = {}) {
       };
     }
 
+    // 5.5. Voice note from a verified merchant: transcribe it and continue as
+    //      text (questions and write proposals only). Confirm/reject and Copilot
+    //      commands above stay text-only so a mis-heard word can never approve
+    //      an action.
+    if (isVoice && !isImage) {
+      let transcript = '';
+      try {
+        const result = await transcribeVoice(message);
+        transcript = String((result && result.text) || '').trim();
+        if (transcript) {
+          log.info('platform_merchant_voice_transcribed', {
+            merchantUserId: String(merchant._id),
+            provider: (result && result.provider) || 'unknown',
+            transcriptLength: transcript.length,
+          });
+        }
+      } catch (err) {
+        log.error('platform_merchant_voice_transcription_failed', {
+          merchantUserId: String(merchant._id),
+          err: describeCaughtError(err),
+        });
+      }
+      if (!transcript) {
+        return {
+          handled: true,
+          reason: 'voice_transcription_failed',
+          merchantUserId: String(merchant._id),
+          reply: 'عذرًا، لم أتمكن من سماع الرسالة الصوتية. ممكن تبعتها تاني أو تكتب سؤالك؟',
+        };
+      }
+      trimmedText = transcript;
+    }
+
     // 6. Non-text or empty message with no pending action
-    if (isImage || isVoice || !trimmedText) {
+    if (isImage || !trimmedText) {
       return {
         handled: true,
         reason: 'non_text_merchant_message',
