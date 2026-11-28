@@ -149,6 +149,7 @@ async function createRecipient(req, res) {
       target: target.trim(),
       label: (label || (channel === 'whatsapp' ? 'رقم واتساب للإشعارات' : 'حساب تيليجرام للإشعارات')).trim(),
       events: Array.isArray(events) && events.length ? events : ['order_created', 'booking_created'],
+      eventsVersion: 2,
       isActive: true,
     });
 

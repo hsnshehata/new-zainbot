@@ -111,6 +111,27 @@ function buildCopilotTelegramInlineKeyboard(draftId) {
   };
 }
 
+// Dispatched event names that a recipient subscribes to under another name.
+// chat_order (orders created in chat) is the "New Orders" subscription and
+// human_handoff is the "handoff" subscription.
+const EVENT_SUBSCRIPTION_ALIASES = {
+  chat_order: ['order_created'],
+  human_handoff: ['handoff'],
+};
+
+// Alert types that could not be selected when older channels were created.
+// Those channels (no eventsVersion) get them by default; channels created with
+// the full modal (eventsVersion 2) only get what the user ticked.
+const LEGACY_DEFAULT_ON_EVENTS = new Set(['human_handoff', 'handoff', 'urgent_complaint', 'daily_digest', 'low_stock']);
+
+function recipientWantsEvent(recipient, event) {
+  const subscribed = recipient && recipient.events;
+  if (!event || !Array.isArray(subscribed) || subscribed.length === 0) return true;
+  if (LEGACY_DEFAULT_ON_EVENTS.has(event) && !(recipient && recipient.eventsVersion >= 2)) return true;
+  if (subscribed.includes(event)) return true;
+  return (EVENT_SUBSCRIPTION_ALIASES[event] || []).some((alias) => subscribed.includes(alias));
+}
+
 /**
  * Dispatch an alert message to all matching WhatsApp and Telegram recipients
  */
@@ -230,7 +251,7 @@ async function dispatchMultiChannelNotification({ userId, botId, event, data = {
 
     // Filter by event if specified
     if (event) {
-      recipients = recipients.filter((r) => !r.events || r.events.length === 0 || r.events.includes(event));
+      recipients = recipients.filter((r) => recipientWantsEvent(r, event));
     }
 
     // If free tier, enforce max 1 recipient
@@ -338,6 +359,7 @@ async function dispatchMultiChannelNotification({ userId, botId, event, data = {
 
 module.exports = {
   dispatchMultiChannelNotification,
+  recipientWantsEvent,
   formatOrderNotificationMessage,
   formatBookingNotificationMessage,
   formatComplaintNotificationMessage,

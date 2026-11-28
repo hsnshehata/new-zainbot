@@ -148,7 +148,7 @@ test('E05e: checkbox group is named; each box has its wrapping label', () => {
   assert.match(form, /<label id="recipientEventsLabel"[^>]*data-i18n="label_rec_events"/);
   assert.match(form, /<div class="checkbox-group" role="group" aria-labelledby="recipientEventsLabel">/);
   const boxes = [...form.matchAll(/<label class="checkbox-item"><input type="checkbox"[^>]*\/> <span data-i18n="([^"]+)">/g)];
-  assert.equal(boxes.length, 5, `Expected 5 wrapped named checkboxes, found ${boxes.length}`);
+  assert.equal(boxes.length, 9, `Expected 9 wrapped named checkboxes, found ${boxes.length}`);
 });
 
 test('E05f: bookingForm labels match their field ids (lifecycle intact)', () => {
