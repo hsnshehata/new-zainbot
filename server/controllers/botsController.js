@@ -357,7 +357,7 @@ exports.updateBot = async (req, res) => {
     const currentOwner = await User.findById(bot.userId).select('subscriptionTier subscriptionType');
     const normalizedSkills = normalizeSkills(agentSkills);
     if (!isDirectSuperadmin && agentTools !== undefined) {
-      const verdict = validateToolsAndSkillsLimits(currentOwner?.subscriptionTier, agentTools, normalizedSkills, currentOwner?.subscriptionType);
+      const verdict = validateToolsAndSkillsLimits(currentOwner?.subscriptionTier, agentTools, normalizedSkills, currentOwner?.subscriptionType, bot.agentTools);
       if (!verdict.allowed) {
         return res.status(400).json({ success: false, error: verdict.error, message: verdict.message });
       }

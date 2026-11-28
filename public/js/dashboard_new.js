@@ -3056,12 +3056,19 @@
 
   // 1. OVERVIEW DATA LOADER
   const chatLinks = new Map();
-  function chatPageLink(botId) {
+  function chatPageLink(botId, options = {}) {
     const id = String(botId);
     if (!chatLinks.has(id)) {
-      const request = apiFetch(`/api/chat-page/bot/${encodeURIComponent(id)}`).then(res => {
-        if (!res?.success || !res.linkId) throw new Error('Chat page unavailable');
-        return `${window.location.origin}/chat/${encodeURIComponent(res.linkId)}`;
+      const request = apiFetch(`/api/chat-page/bot/${encodeURIComponent(id)}`).then(async res => {
+        if (res?.success && res.linkId) return `${window.location.origin}/chat/${encodeURIComponent(res.linkId)}`;
+        // The read endpoint never creates a page (404 for a new agent), and the background
+        // preload must not either. Only an explicit "open chat" click (options.create) creates
+        // the page; POST returns the existing page when there is one, so no duplicates.
+        if (!options.create) throw new Error('Chat page unavailable');
+        const created = await apiFetch('/api/chat-page/', { method: 'POST', body: JSON.stringify({ botId: id }) });
+        const createdLinkId = created && created.link ? String(created.link).split('/').filter(Boolean).pop() : '';
+        if (!createdLinkId) throw new Error('Chat page unavailable');
+        return `${window.location.origin}/chat/${encodeURIComponent(createdLinkId)}`;
       }).catch(err => { chatLinks.delete(id); throw err; });
       chatLinks.set(id, request);
     }
@@ -3154,7 +3161,7 @@
     const preview = window.open('', '_blank');
     if (preview) preview.opener = null;
     try {
-      const url = await chatPageLink(currentBot._id);
+      const url = await chatPageLink(currentBot._id, { create: true });
       if (preview) preview.location.href = url;
       else window.location.href = url;
     } catch (err) {
