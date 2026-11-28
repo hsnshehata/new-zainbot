@@ -118,7 +118,14 @@ function buildPlatformKnowledge() {
   ].join('\n');
 }
 
-function buildSystemPrompt(customInstructions) {
+function detectMessageLang(text, uiLang) {
+  const t = String(text || '');
+  if (/[\u0600-\u06FF]/.test(t)) return 'ar';
+  if (/[A-Za-z]/.test(t)) return 'en';
+  return uiLang === 'ar' ? 'ar' : 'en';
+}
+
+function buildSystemPrompt(customInstructions, replyLang) {
   const base = [
     buildPlatformKnowledge(),
     '',
@@ -131,9 +138,12 @@ function buildSystemPrompt(customInstructions) {
     '- When the visitor shows interest, encourage them to create a free workspace at /register (no credit card needed) or to start with the free plan.',
     '- Use at most one emoji per message, and only when it fits the tone.',
   ].join('\n');
+  const langRule = replyLang === 'ar'
+    ? '\n\nLanguage: reply in Arabic (friendly Egyptian-leaning Modern Arabic) for this message.'
+    : replyLang === 'en' ? '\n\nLanguage: reply in English for this message.' : '';
   const extra = String(customInstructions || '').trim();
-  if (!extra) return base;
-  return `${base}\n\nAdditional instructions from the platform team (highest priority, follow them unless they conflict with the security rules above):\n${extra}`;
+  if (!extra) return base + langRule;
+  return `${base}${langRule}\n\nAdditional instructions from the platform team (highest priority, follow them unless they conflict with the security rules above):\n${extra}`;
 }
 
 function sanitizeHistory(rawHistory) {
@@ -218,7 +228,7 @@ router.post('/chat', async (req, res) => {
     const completion = await withTimeout(
       getAiCompletion({
         messages: [
-          { role: 'system', content: buildSystemPrompt(config.instructions) },
+          { role: 'system', content: buildSystemPrompt(config.instructions, detectMessageLang(message, lang)) },
           ...history,
           { role: 'user', content: message },
         ],
@@ -262,5 +272,6 @@ router.post('/chat', async (req, res) => {
 module.exports = router;
 module.exports.invalidateConfigCache = invalidateConfigCache;
 module.exports.tryConsumeDailyQuota = tryConsumeDailyQuota;
+module.exports.detectMessageLang = detectMessageLang;
 module.exports.isOffTopicTechRequest = isOffTopicTechRequest;
 module.exports.offTopicRedirectMessage = offTopicRedirectMessage;
