@@ -134,6 +134,10 @@ test('fetchImageAsBase64 and transcribeAudio block SSRF before axios.get and str
   const prevWa = process.env.WHATSAPP_ACCESS_TOKEN;
   process.env.FACEBOOK_ACCESS_TOKEN = 'FB_SECRET_TOKEN_SENTINEL';
   process.env.WHATSAPP_ACCESS_TOKEN = 'WA_SECRET_TOKEN_SENTINEL';
+  const prevLemon = process.env.LEMONFOX_API_KEY;
+  const prevOpenai = process.env.OPENAI_API_KEY;
+  process.env.LEMONFOX_API_KEY = 'test-lemonfox-key';
+  delete process.env.OPENAI_API_KEY; // exercise the LemonFox path
 
   try {
     // 1. Metadata IP SSRF blocked before axios.get is ever called
@@ -196,6 +200,9 @@ test('fetchImageAsBase64 and transcribeAudio block SSRF before axios.get and str
     assert.equal(axiosGetCalls[0].config.headers.Authorization, 'Bearer WA_SECRET_TOKEN_SENTINEL');
     assert.equal(axiosGetCalls[1].config.headers.Authorization, undefined, 'token must not be forwarded on redirect to untrusted host');
   } finally {
+    if (prevLemon !== undefined) process.env.LEMONFOX_API_KEY = prevLemon;
+    else delete process.env.LEMONFOX_API_KEY;
+    if (prevOpenai !== undefined) process.env.OPENAI_API_KEY = prevOpenai;
     if (prevFb !== undefined) process.env.FACEBOOK_ACCESS_TOKEN = prevFb;
     else delete process.env.FACEBOOK_ACCESS_TOKEN;
     if (prevWa !== undefined) process.env.WHATSAPP_ACCESS_TOKEN = prevWa;
