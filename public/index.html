@@ -28,7 +28,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Cairo:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=20261128-pricing">
+  <link rel="stylesheet" href="style.css?v=20261128-pricing3">
 </head>
 <body>
 
@@ -570,7 +570,7 @@
         </div>
       </div>
 
-      <div class="pricing-grid pricing-grid-5 reveal" style="margin-top:40px;">
+      <div class="pricing-grid pricing-grid-3 reveal" style="margin-top:40px;">
         <!-- FREE PLAN -->
         <div class="pricing-card" data-plan="free">
           <div class="pricing-plan" data-i18n="plan_free_title">Free</div>
@@ -591,9 +591,15 @@
           <a href="/register?plan=free" class="btn btn-secondary btn-block plan-cta" data-plan="free" data-i18n="plan_free_btn">Start free</a>
         </div>
 
-        <!-- GROWTH LEVEL 1 -->
-        <div class="pricing-card pricing-popular" data-plan="growth_1k">
+        <!-- GROWTH (3 tiers in one column) -->
+        <div class="pricing-growth pricing-popular" data-growth>
           <div class="popular-badge" data-i18n="plan_growth_popular">Recommended for growth</div>
+          <div class="growth-tabs" role="tablist">
+            <button type="button" class="growth-tab active" role="tab" aria-selected="true" data-tier="growth_1k" data-i18n="growth_tab_1">Starter</button>
+            <button type="button" class="growth-tab" role="tab" aria-selected="false" data-tier="growth_10k" data-i18n="growth_tab_2">Plus</button>
+            <button type="button" class="growth-tab" role="tab" aria-selected="false" data-tier="growth_50k" data-i18n="growth_tab_3">Pro</button>
+          </div>
+        <div class="pricing-card growth-tier is-active" data-plan="growth_1k">
           <div class="pricing-plan" data-i18n="plan_growth_title">Growth Starter</div>
           <div class="pricing-price">
             <span class="price" data-monthly="199" data-yearly="1990">199</span>
@@ -613,7 +619,7 @@
         </div>
 
         <!-- GROWTH LEVEL 2 -->
-        <div class="pricing-card" data-plan="growth_10k">
+        <div class="pricing-card growth-tier" data-plan="growth_10k">
           <div class="pricing-plan" data-i18n="plan_growth2_title">Growth Plus</div>
           <div class="pricing-price">
             <span class="price" data-monthly="499" data-yearly="4990">499</span>
@@ -633,7 +639,7 @@
         </div>
 
         <!-- GROWTH LEVEL 3 -->
-        <div class="pricing-card" data-plan="growth_50k">
+        <div class="pricing-card growth-tier" data-plan="growth_50k">
           <div class="pricing-plan" data-i18n="plan_growth3_title">Growth Pro</div>
           <div class="pricing-price">
             <span class="price" data-monthly="999" data-yearly="9990">999</span>
@@ -650,6 +656,8 @@
             <li data-i18n="plan_growth3_f7"><i class="fas fa-check"></i> 100 Idea Council evaluations / mo + Live Web Research & 3 Defense Rounds</li>
           </ul>
           <a href="/register?plan=growth_50k" class="btn btn-primary btn-block plan-cta" data-plan="growth_50k" data-i18n="plan_growth3_btn">Create account to request</a>
+        </div>
+
         </div>
 
         <!-- ENTERPRISE PLAN -->

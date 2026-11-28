@@ -554,6 +554,9 @@
       plan_free_f6: '<i class="fas fa-check"></i> 3 Idea Council evaluations / mo',
       plan_free_f7: '<i class="fas fa-check"></i> 1 store (50 products), 2 employees, 1 WhatsApp number, 30 assistant messages/day',
       plan_free_btn: 'Start free',
+      growth_tab_1: 'Starter',
+      growth_tab_2: 'Plus',
+      growth_tab_3: 'Pro',
       plan_growth_popular: 'Recommended for growth',
       plan_growth_title: 'Growth Starter',
       plan_growth_price: '199',
@@ -816,6 +819,9 @@
       plan_free_f6: '<i class="fas fa-check"></i> 3 جلسات تقييم أفكار شهرياً (Idea Council)',
       plan_free_f7: '<i class="fas fa-check"></i> متجر واحد (50 منتج)، موظفان، رقم واتساب واحد، 30 رسالة يومياً لمساعد زين',
       plan_free_btn: 'ابدأ مجاناً',
+      growth_tab_1: 'أساسي',
+      growth_tab_2: 'متقدم',
+      growth_tab_3: 'احترافي',
       plan_growth_popular: 'مقترح للنمو',
       plan_growth_title: 'النمو الأساسي',
       plan_growth_price: '199',
@@ -970,6 +976,15 @@
   });
 
   /* ===== PRICING: billing toggle + manual subscribe via WhatsApp ===== */
+  document.querySelectorAll('[data-growth]').forEach(function (box) {
+    box.querySelectorAll('.growth-tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        var tier = tab.getAttribute('data-tier');
+        box.querySelectorAll('.growth-tab').forEach(function (t) { t.classList.toggle('active', t === tab); t.setAttribute('aria-selected', t === tab ? 'true' : 'false'); });
+        box.querySelectorAll('.growth-tier').forEach(function (c) { c.classList.toggle('is-active', c.getAttribute('data-plan') === tier); });
+      });
+    });
+  });
   let currentBilling = 'monthly';
   function refreshPricing() {
     document.querySelectorAll('.pricing-card .price').forEach(function (el) {
