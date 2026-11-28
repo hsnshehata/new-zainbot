@@ -16,7 +16,7 @@ Website: https://zainbot.com/
 - Training: the merchant adds FAQs, product information and guidance so replies follow the business context.
 - Follow-up workflow and handoff: conversations are organised by next action, and can be passed to a human at any time.
 - Orders and bookings: orders and appointments created from conversations show up in the dashboard.
-- Storefront: each store gets a branded landing page with a product catalog, cart and checkout (cash on delivery or order confirmation on WhatsApp).
+- Storefront pages: stores already set up with ZainBot have a public page with a product catalog, cart and checkout (cash on delivery, or send the order on WhatsApp). Self-service store setup in the dashboard is not available yet.
 - Zain Assistant: the merchant can ask questions about their own business in Arabic or English and set reminders.
 - Owner alerts: the merchant can connect their own WhatsApp number or Telegram account to receive alerts (orders, bookings, urgent complaints, daily report, low stock).
 - Idea Council: 8 AI critics stress-test a business idea and produce a validation plan.
