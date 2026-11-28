@@ -11,8 +11,13 @@ Disallow: /uploads/temp/
 Disallow: /server/
 Disallow: /node_modules/
 Disallow: /wazainbot/
-Allow: /.well-known/assetlinks.json
+Allow: /.well-known/
+Allow: /llms.txt
 Disallow: /*.json$
+Content-Signal: ai-train=no, search=yes, ai-input=yes
+
+# Content-Signal above (https://contentsignals.org/): search and AI answers may use the
+# public pages; training of AI models is not allowed.
 
 # تحديد موقع خريطة الموقع
 Sitemap: https://zainbot.com/sitemap.xml
