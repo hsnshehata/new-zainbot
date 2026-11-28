@@ -114,3 +114,8 @@ test('llms.txt links only to pages that exist in this repo or the sitemap', () =
   assert.ok(fs.existsSync(path.join(publicDir, 'help.html')));
   assert.ok(fs.existsSync(path.join(publicDir, 'register.html')));
 });
+
+test('google site verification file is exact', () => {
+  const body = fs.readFileSync(path.join(publicDir, 'googlee8383b2ba3f6d895.html'), 'utf8');
+  assert.equal(body.trim(), 'google-site-verification: googlee8383b2ba3f6d895.html');
+});
